@@ -28,6 +28,8 @@
 #include <Urho3D/Urho3D.h>
 #endif
 
+#include <atomic>
+
 namespace Urho3D
 {
 
@@ -50,9 +52,9 @@ struct RefCount
     }
 
     /// Reference count. If below zero, the object has been destroyed.
-    int refs_;
+    std::atomic_int32_t refs_;
     /// Weak reference count.
-    int weakRefs_;
+    std::atomic_int32_t weakRefs_;
 };
 
 /// Base class for intrusively reference-counted objects. These are noncopyable and non-assignable.

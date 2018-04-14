@@ -24,6 +24,7 @@
 
 #include "../Container/HashBase.h"
 #include "../Container/RefCounted.h"
+#include "../Math/MathDefs.h"
 
 #include <cassert>
 
@@ -159,10 +160,10 @@ public:
     T* Get() const { return ptr_; }
 
     /// Return the array's reference count, or 0 if the pointer is null.
-    int Refs() const { return refCount_ ? refCount_->refs_ : 0; }
+    int Refs() const { return refCount_ ? refCount_->refs_.load(std::memory_order_relaxed) : 0; }
 
     /// Return the array's weak reference count, or 0 if the pointer is null.
-    int WeakRefs() const { return refCount_ ? refCount_->weakRefs_ : 0; }
+    int WeakRefs() const { return refCount_ ? refCount_->weakRefs_.load(std::memory_order_relaxed) : 0; }
 
     /// Return pointer to the RefCount structure.
     RefCount* RefCountPtr() const { return refCount_; }
@@ -179,8 +180,8 @@ private:
     {
         if (refCount_)
         {
-            assert(refCount_->refs_ >= 0);
-            ++(refCount_->refs_);
+            assert(refCount_->refs_.load(std::memory_order_relaxed) >= 0);
+            refCount_->refs_.fetch_add(1, std::memory_order_relaxed);
         }
     }
 
@@ -189,15 +190,16 @@ private:
     {
         if (refCount_)
         {
-            assert(refCount_->refs_ > 0);
-            --(refCount_->refs_);
-            if (!refCount_->refs_)
+            assert(refCount_->refs_.load(std::memory_order_relaxed) > 0);
+            int refs = refCount_->refs_.fetch_sub(1, std::memory_order_release);
+            if (refs == 1)
             {
-                refCount_->refs_ = -1;
+                refCount_->refs_.store(-1, std::memory_order_acquire);
+                refs = -1;
                 delete[] ptr_;
             }
 
-            if (refCount_->refs_ < 0 && !refCount_->weakRefs_)
+            if (refs <= 0 && !refCount_->weakRefs_.load(std::memory_order_acquire))
                 delete refCount_;
         }
 
@@ -376,13 +378,13 @@ public:
     bool NotNull() const { return refCount_ != 0; }
 
     /// Return the array's reference count, or 0 if null pointer or if array has expired.
-    int Refs() const { return (refCount_ && refCount_->refs_ >= 0) ? refCount_->refs_ : 0; }
+    int Refs() const { return (refCount_) ? Max(refCount_->refs_.load(std::memory_order_relaxed), 0) : 0; }
 
     /// Return the array's weak reference count.
-    int WeakRefs() const { return refCount_ ? refCount_->weakRefs_ : 0; }
+    int WeakRefs() const { return refCount_ ? refCount_->weakRefs_.load(std::memory_order_relaxed) : 0; }
 
     /// Return whether the array has expired. If null pointer, always return true.
-    bool Expired() const { return refCount_ ? refCount_->refs_ < 0 : true; }
+    bool Expired() const { return refCount_ ? refCount_->refs_.load(std::memory_order_acquire) < 0 : true; }
 
     /// Return pointer to RefCount structure.
     RefCount* RefCountPtr() const { return refCount_; }
@@ -399,8 +401,8 @@ private:
     {
         if (refCount_)
         {
-            assert(refCount_->weakRefs_ >= 0);
-            ++(refCount_->weakRefs_);
+            assert(refCount_->weakRefs_.load(std::memory_order_relaxed) >= 0);
+            refCount_->weakRefs_.fetch_add(1, std::memory_order_relaxed);
         }
     }
 
@@ -409,12 +411,13 @@ private:
     {
         if (refCount_)
         {
-            assert(refCount_->weakRefs_ >= 0);
+            assert(refCount_->weakRefs_.load(std::memory_order_relaxed) >= 0);
 
-            if (refCount_->weakRefs_ > 0)
-                --(refCount_->weakRefs_);
+            int weakRefs = refCount_->weakRefs_.load(std::memory_order_acquire);
+            if (weakRefs > 0)
+                weakRefs = refCount_->weakRefs_.fetch_sub(1, std::memory_order_release) - 1;
 
-            if (Expired() && !refCount_->weakRefs_)
+            if (Expired() && !weakRefs)
                 delete refCount_;
         }
 

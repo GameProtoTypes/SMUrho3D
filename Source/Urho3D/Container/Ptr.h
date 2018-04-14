@@ -24,7 +24,9 @@
 
 #include "../Container/RefCounted.h"
 #include "../Container/Swap.h"
+#include "../Math/MathDefs.h"
 
+#include <atomic>
 #include <cassert>
 #include <cstddef>
 #include <utility>
@@ -438,7 +440,7 @@ public:
     bool NotNull() const { return refCount_ != nullptr; }
 
     /// Return the object's reference count, or 0 if null pointer or if object has expired.
-    int Refs() const { return (refCount_ && refCount_->refs_ >= 0) ? refCount_->refs_ : 0; }
+    int Refs() const { return refCount_ ? Max(refCount_->refs_.load(std::memory_order_relaxed), 0) : 0; }
 
     /// Return the object's weak reference count.
     int WeakRefs() const
@@ -446,11 +448,11 @@ public:
         if (!Expired())
             return ptr_->WeakRefs();
         else
-            return refCount_ ? refCount_->weakRefs_ : 0;
+            return refCount_ ? refCount_->weakRefs_.load(std::memory_order_relaxed) : 0;
     }
 
     /// Return whether the object has expired. If null pointer, always return true.
-    bool Expired() const { return refCount_ ? refCount_->refs_ < 0 : true; }
+    bool Expired() const { return refCount_ ? refCount_->refs_.load(std::memory_order_acquire) < 0 : true; }
 
     /// Return pointer to the RefCount structure.
     RefCount* RefCountPtr() const { return refCount_; }
@@ -466,8 +468,8 @@ private:
     {
         if (refCount_)
         {
-            assert(refCount_->weakRefs_ >= 0);
-            ++(refCount_->weakRefs_);
+            assert(refCount_->weakRefs_.load(std::memory_order_relaxed) >= 0);
+            refCount_->weakRefs_.fetch_add(1, std::memory_order_relaxed);
         }
     }
 
@@ -476,10 +478,10 @@ private:
     {
         if (refCount_)
         {
-            assert(refCount_->weakRefs_ > 0);
-            --(refCount_->weakRefs_);
+            assert(refCount_->weakRefs_.load(std::memory_order_relaxed) > 0);
+            auto weakRefs = refCount_->weakRefs_.fetch_sub(1, std::memory_order_release);
 
-            if (Expired() && !refCount_->weakRefs_)
+            if (Expired() && weakRefs == 1)
                 delete refCount_;
         }
 
