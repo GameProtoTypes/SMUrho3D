@@ -188,7 +188,7 @@ bool Engine::Initialize(const VariantMap& parameters)
     }
 #endif
 
-    URHO3D_PROFILE(InitEngine);
+    URHO3D_PROFILE("InitEngine");
 
     // Set headless mode
     headless_ = GetParameter(parameters, EP_HEADLESS, false).GetBool();
@@ -759,7 +759,7 @@ unsigned Engine::FreeUpdate()
 
 void Engine::Update()
 {
-    URHO3D_PROFILE(Update);
+    URHO3D_PROFILE("Update");
 
 	//compute times
 	updateTick_++;
@@ -794,7 +794,7 @@ void Engine::Render()
     if (headless_)
         return;
 
-    URHO3D_PROFILE(Render);
+    URHO3D_PROFILE("Render");
 
 
     // If device is lost, BeginFrame will fail and we skip rendering

@@ -24,8 +24,9 @@
 
 
 #include <Urho3D/Urho3DAll.h>
-#include <cr/cr.h>
 #include <Toolbox/SystemUI/AttributeInspector.h>
+#include "Plugins/PluginManagerNative.h"
+#include "Plugins/PluginManagerManaged.h"
 #include "Tabs/UI/UITab.h"
 #include "IDPool.h"
 
@@ -67,8 +68,6 @@ public:
     Tab* GetActiveTab() { return activeTab_; }
     /// Return currently open scene tabs.
     const Vector<SharedPtr<Tab>>& GetSceneViews() const { return tabs_; }
-    /// Return a list of object categories registered with engine.
-    StringVector GetObjectCategories() const;
     /// Return a map of names and type hashes from specified category.
     StringVector GetObjectsByCategory(const String& category);
     /// Get absolute path of `resourceName`. If it is empty, use `defaultResult`. If no resource is found then save file
@@ -79,18 +78,8 @@ public:
 protected:
     /// Process console commands.
     void OnConsoleCommand(VariantMap& args);
-    /// Load a native user plugin from a specified shared library.
-    bool LoadNativePlugin(const String& path);
     /// Returns true if specified path is internal engine or editor resource path.
     bool IsInternalResourcePath(const String& fullPath) const;
-
-    struct NativePlugin
-    {
-        /// User plugin context.
-        cr_plugin context_{};
-        /// Path of user plugin.
-        String path_;
-    };
 
     /// Pool tracking availability of unique IDs used by editor.
     IDPool idPool_;
@@ -105,7 +94,8 @@ protected:
     Vector<String> engineResourcePaths_;
     Vector<String> engineResourcePrefixPaths_;
     Vector<String> engineResourceAutoloadPaths_;
-    Vector<NativePlugin> nativePlugins_;
+    PluginManagerNative pluginsNative_;
+    PluginManagerManaged pluginsManaged_;
 };
 
 }

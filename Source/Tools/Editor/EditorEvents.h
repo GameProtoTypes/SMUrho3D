@@ -23,38 +23,33 @@
 #pragma once
 
 
+#include <Urho3D/Core/Object.h>
+#include "EditorEventsPrivate.h"
+
+
 namespace Urho3D
 {
 
 /// Event sent during construction of toolbar buttons. Subscribe to it to add new buttons.
 URHO3D_EVENT(E_EDITORTOOLBARBUTTONS, EditorToolbarButtons)
 {
+    URHO3D_PARAM(P_SCENE, Scene);                     // Scene pointer.
 }
 
 /// Event sent when node selection in scene view changes.
 URHO3D_EVENT(E_EDITORSELECTIONCHANGED, EditorSelectionChanged)
 {
-    URHO3D_PARAM(P_SCENETAB, SceneTab);               // SceneTab pointer.
+    URHO3D_PARAM(P_SCENE, Scene);                     // Scene pointer.
 }
 
 /// Event sent when scene has it's rendering settings modified.
 URHO3D_EVENT(E_EDITORSCENEEFFECTSCHANGED, EditorSceneEffectsChanged)
 {
-    URHO3D_PARAM(P_SCENETAB, SceneTab);               // SceneTab pointer.
+    URHO3D_PARAM(P_SCENE, Scene);                     // Scene pointer.
 }
 
-/// Event sent when editor successfully saves a resource.
-URHO3D_EVENT(E_EDITORRESOURCESAVED, EditorResourceSaved)
-{
-}
-
-/// Event sent right before reloading user components.
-URHO3D_EVENT(E_EDITORUSERCODERELOADSTART, EditorUserCodeReloadStart)
-{
-}
-
-/// Event sent right after reloading user components.
-URHO3D_EVENT(E_EDITORUSERCODERELOADEND, EditorUserCodeReloadEnd)
+/// Event sent when rendering top menu bar of editor.
+URHO3D_EVENT(E_EDITORAPPLICATIONMENU, EditorApplicationMenu)
 {
 }
 

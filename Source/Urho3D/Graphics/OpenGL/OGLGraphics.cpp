@@ -257,7 +257,7 @@ Graphics::~Graphics()
 bool Graphics::SetMode(int width, int height, bool fullscreen, bool borderless, bool resizable, float pixelRatio, bool vsync,
     bool tripleBuffer, int multiSample, int monitor, int refreshRate)
 {
-    URHO3D_PROFILE(SetScreenMode);
+    URHO3D_PROFILE("SetScreenMode");
 
     bool maximize = false;
 
@@ -569,7 +569,7 @@ void Graphics::Close()
 
 bool Graphics::TakeScreenShot(Image& destImage)
 {
-    URHO3D_PROFILE(TakeScreenShot);
+    URHO3D_PROFILE("TakeScreenShot");
 
     if (!IsInitialized())
         return false;
@@ -640,7 +640,7 @@ void Graphics::EndFrame()
     if (!IsInitialized())
         return;
 
-    URHO3D_PROFILE(Present);
+    URHO3D_PROFILE("Present");
 
     SendEvent(E_ENDRENDERING);
 
@@ -707,7 +707,7 @@ bool Graphics::ResolveToTexture(Texture2D* destination, const IntRect& viewport)
     if (!destination || !destination->GetRenderSurface())
         return false;
 
-    URHO3D_PROFILE(ResolveToTexture);
+    URHO3D_PROFILE("ResolveToTexture");
 
     IntRect vpCopy = viewport;
     if (vpCopy.right_ <= vpCopy.left_)
@@ -739,7 +739,7 @@ bool Graphics::ResolveToTexture(Texture2D* texture)
     if (!surface || !surface->GetRenderBuffer())
         return false;
 
-    URHO3D_PROFILE(ResolveToTexture);
+    URHO3D_PROFILE("ResolveToTexture");
 
     texture->SetResolveDirty(false);
     surface->SetResolveDirty(false);
@@ -790,7 +790,7 @@ bool Graphics::ResolveToTexture(TextureCube* texture)
     if (!texture)
         return false;
 
-    URHO3D_PROFILE(ResolveToTexture);
+    URHO3D_PROFILE("ResolveToTexture");
 
     texture->SetResolveDirty(false);
 
@@ -1032,7 +1032,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
     {
         if (vs->GetCompilerOutput().Empty())
         {
-            URHO3D_PROFILE(CompileVertexShader);
+            URHO3D_PROFILE("CompileVertexShader");
 
             bool success = vs->Create();
             if (success)
@@ -1051,7 +1051,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
     {
         if (ps->GetCompilerOutput().Empty())
         {
-            URHO3D_PROFILE(CompilePixelShader);
+            URHO3D_PROFILE("CompilePixelShader");
 
             bool success = ps->Create();
             if (success)
@@ -1098,7 +1098,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
         else
         {
             // Link a new combination
-            URHO3D_PROFILE(LinkShaders);
+            URHO3D_PROFILE("LinkShaders");
 
             SharedPtr<ShaderProgram> newProgram(new ShaderProgram(this, vs, ps));
             if (newProgram->Link())
@@ -2461,7 +2461,7 @@ void Graphics::Restore()
                 if ( allver < 101004 ) // Mesa drivers less than this version cause linux display artifacts
                 {                      // so remove this context and let it fall back to GL2
                     SDL_GL_DeleteContext(impl_->context_);
-                    impl_->context_ = NULL;
+                    impl_->context_ = nullptr;
                     URHO3D_LOGINFOF ( "Mesa GL Driver: %s detected, forcing GL2 context creation.  Please use gl2 command line option to avoid this warning.", driverx.CString() );
                 }
             }

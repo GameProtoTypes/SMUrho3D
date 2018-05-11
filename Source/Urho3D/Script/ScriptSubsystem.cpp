@@ -21,6 +21,7 @@
 //
 
 #include <mono/metadata/class.h>
+#include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/image.h>
 #include <mono/metadata/object.h>
 #include <mono/metadata/appdomain.h>
@@ -32,6 +33,7 @@
 #include <mono/metadata/mono-debug.h>
 #include <mono/jit/jit.h>
 
+#include "../Core/Context.h"
 #include "../Core/CoreEvents.h"
 #include "../IO/Log.h"
 #include "../Script/ScriptSubsystem.h"
@@ -47,8 +49,7 @@ ScriptSubsystem::ScriptSubsystem(Context* context)
 {
     auto* domain = mono_domain_get();
     if (domain == nullptr)
-        // This library does not run in context of managed process. Subsystem is noop.
-        // TODO: Support for subystem initiating hosting of .net runtime.
+        // This library does not run in context of managed process.
         return;
 
     // This global instance is mainly required for queueing ReleaseRef() calls. Not every RefCounted has pointer to
@@ -60,16 +61,21 @@ ScriptSubsystem::ScriptSubsystem(Context* context)
 
     SubscribeToEvent(E_ENDFRAME, URHO3D_HANDLER(ScriptSubsystem, OnEndFrame));
 
-    auto* assembly = mono_domain_assembly_open(domain, "Urho3DNet.dll");
+    Init(mono_get_root_domain());
+}
+
+void ScriptSubsystem::Init(void* domain)
+{
+    auto* assembly = mono_domain_assembly_open(static_cast<MonoDomain*>(domain), "Urho3DNet.dll");
+    if (assembly == nullptr)
+        assembly = static_cast<MonoAssembly*>(LoadAssembly("Urho3DNet.dll", nullptr));
+
     auto* image =  mono_assembly_get_image(assembly);
     auto* klass = mono_class_from_name(image, "Urho3D.CSharp", "NativeInterface");
 
-    FreeGCHandle_ = reinterpret_cast<decltype(FreeGCHandle_)>(mono_method_get_unmanaged_thunk(
-        mono_class_get_method_from_name(klass, "FreeGcHandle", 1)));
-    CloneGCHandle_ = reinterpret_cast<decltype(CloneGCHandle_)>(mono_method_get_unmanaged_thunk(
-        mono_class_get_method_from_name(klass, "CloneGcHandle", 1)));
-    CreateObject_ = reinterpret_cast<decltype(CreateObject_)>(mono_method_get_unmanaged_thunk(
-        mono_class_get_method_from_name(klass, "CreateObject", 2)));
+    auto* method = mono_class_get_method_from_name(klass, "CreateObject", 2);
+    CreateObject_ = reinterpret_cast<decltype(CreateObject_)>(mono_method_get_unmanaged_thunk(method));
+    mono_free_method(method);
 }
 
 const TypeInfo* ScriptSubsystem::GetRegisteredType(StringHash type)
@@ -93,18 +99,6 @@ void ScriptSubsystem::OnEndFrame(StringHash, VariantMap&)
     releaseQueue_.Clear();
 }
 
-void ScriptSubsystem::FreeGCHandle(void* gcHandle)
-{
-    MonoException* exception = nullptr;
-    FreeGCHandle_(gcHandle, (void*)&exception);
-}
-
-void* ScriptSubsystem::CloneGCHandle(void* gcHandle)
-{
-    MonoException* exception = nullptr;
-    return CloneGCHandle_(gcHandle, (void*)&exception);
-}
-
 Object* ScriptSubsystem::CreateObject(Context* context, unsigned managedType)
 {
     MonoException* exception = nullptr;
@@ -118,40 +112,204 @@ void ScriptSubsystem::RegisterCurrentThread()
         mono_thread_attach(domain);
 }
 
-void* ScriptSubsystem::LoadAssembly(const String& pathToAssembly)
+void* ScriptSubsystem::LoadAssembly(const String& pathToAssembly, void* domain)
 {
-    auto* domain = mono_domain_get();
     if (domain == nullptr)
-    {
-        URHO3D_LOGERROR("Managed domain is not created.");
-        return nullptr;
-    }
+        domain = mono_domain_get();
+    assert(domain != nullptr);
 
-    return mono_domain_assembly_open(domain, pathToAssembly.CString());
+    return mono_domain_assembly_open(static_cast<MonoDomain*>(domain), pathToAssembly.CString());
 }
 
 void* ScriptSubsystem::HostManagedRuntime(ScriptSubsystem::RuntimeSettings& settings)
 {
-    auto* domain = mono_domain_get();
-    if (domain == nullptr)
+    mono_config_parse(nullptr);
+    const auto** options = new const char*[settings.jitOptions_.Size()];
+    int i = 0;
+    for (const auto& opt : settings.jitOptions_)
     {
-        mono_config_parse(nullptr);
-        const char** options = new const char*[settings.jitOptions_.Size()];
-        int i = 0;
-        for (const auto& opt : settings.jitOptions_)
-        {
-            options[i++] = opt.CString();
-            if (opt.StartsWith("--debugger-agent"))
-                mono_debug_init(MONO_DEBUG_FORMAT_MONO);
-        }
-        mono_jit_parse_options(settings.jitOptions_.Size(), (char**)options);
-
-        domain = mono_jit_init_version(settings.domainName_.CString(), "v4.0.30319");
+        options[i++] = opt.CString();
+        if (opt.StartsWith("--debugger-agent"))
+            mono_debug_init(MONO_DEBUG_FORMAT_MONO);
     }
-    else
-        URHO3D_LOGWARNING("Existing managed domain was returned instead of creating a new one.");
+    mono_jit_parse_options(settings.jitOptions_.Size(), (char**)options);
+
+    auto* domain = mono_jit_init_version(settings.domainName_.CString(), "v4.0.30319");
+
+    Init(domain);
 
     return domain;
+}
+
+Variant ScriptSubsystem::CallMethod(void* assembly, const String& methodDesc, void* object, const VariantVector& args)
+{
+    void* monoArgs[20]{};
+    auto maxArgs = std::extent<decltype(monoArgs)>::value;
+    if (args.Size() > maxArgs)
+    {
+        URHO3D_LOGERRORF("ScriptSubsystem::CallMethod: unsupported argument count. Max %d arguments allowed.", maxArgs);
+        return Variant::EMPTY;
+    }
+
+    auto* image = mono_assembly_get_image(static_cast<MonoAssembly*>(assembly));
+    if (!image)
+    {
+        URHO3D_LOGERRORF("ScriptSubsystem::CallMethod failed getting assembly image.");
+        return Variant::EMPTY;
+    }
+
+    auto* desc = mono_method_desc_new(methodDesc.CString(), true);
+    if (desc == nullptr)
+    {
+        URHO3D_LOGERROR("ScriptSubsystem::CallMethod: invalid method descriptor.");
+        return Variant::EMPTY;
+    }
+
+    auto* method = mono_method_desc_search_in_image(desc, image);
+    if (method == nullptr)
+    {
+        URHO3D_LOGERROR("ScriptSubsystem::CallMethod: requested method not found.");
+        mono_method_desc_free(desc);
+        return Variant::EMPTY;
+    }
+
+    MonoObject* exception;
+    for (auto i = 0; i < args.Size(); i++)
+    {
+        auto& value = args[i];
+        switch (value.GetType())
+        {
+        case VAR_NONE:
+            monoArgs[i] = nullptr;
+            break;
+        case VAR_VECTOR2:
+            monoArgs[i] = (void*)&value.GetVector2();
+            break;
+        case VAR_VECTOR3:
+            monoArgs[i] = (void*)&value.GetVector3();
+            break;
+        case VAR_VECTOR4:
+            monoArgs[i] = (void*)&value.GetVector4();
+            break;
+        case VAR_QUATERNION:
+            monoArgs[i] = (void*)&value.GetQuaternion();
+            break;
+        case VAR_COLOR:
+            monoArgs[i] = (void*)&value.GetColor();
+            break;
+        case VAR_STRING:
+            monoArgs[i] = mono_string_new(mono_domain_get(), value.GetString().CString());
+            break;
+        case VAR_BUFFER:
+            monoArgs[i] = (void*)&value.GetBuffer().Front();
+            break;
+        case VAR_VOIDPTR:
+            monoArgs[i] = value.GetVoidPtr();
+            break;
+        case VAR_INTRECT:
+            monoArgs[i] = (void*)&value.GetIntRect();
+            break;
+        case VAR_INTVECTOR2:
+            monoArgs[i] = (void*)&value.GetIntVector2();
+            break;
+        case VAR_PTR:
+            monoArgs[i] = (void*)value.GetPtr();
+            break;
+        case VAR_MATRIX3:
+            monoArgs[i] = (void*)&value.GetMatrix3();
+            break;
+        case VAR_MATRIX3X4:
+            monoArgs[i] = (void*)&value.GetMatrix3x4();
+            break;
+        case VAR_MATRIX4:
+            monoArgs[i] = (void*)&value.GetMatrix4();
+            break;
+        case VAR_RECT:
+            monoArgs[i] = (void*)&value.GetRect();
+            break;
+        case VAR_INTVECTOR3:
+            monoArgs[i] = (void*)&value.GetIntVector3();
+            break;
+        case VAR_INT:   // TODO: In order to support litterals they must be stored somewhere in memory and their addresses must be added to monoArgs.
+        case VAR_BOOL:
+        case VAR_FLOAT:
+        case VAR_RESOURCEREF:
+        case VAR_RESOURCEREFLIST:
+        case VAR_VARIANTVECTOR:
+        case VAR_VARIANTMAP:
+        case VAR_DOUBLE:
+        case VAR_STRINGVECTOR:
+        case VAR_INT64:
+        case VAR_CUSTOM_HEAP:
+        case VAR_CUSTOM_STACK:
+        default:
+            URHO3D_LOGERRORF("ScriptSubsystem::CallMethod() called with unsupported argument type.");
+            assert(false);
+            break;
+        }
+    }
+
+    auto* result = mono_runtime_invoke(method, object, monoArgs, &exception);
+    assert(exception == nullptr);
+
+    mono_free_method(method);
+    mono_method_desc_free(desc);
+
+    return result;
+}
+
+void* ScriptSubsystem::ToManagedObject(const char* imageName, const char* className, RefCounted* instance)
+{
+    MonoObject* exception = nullptr;
+    void* intPtrInstnace = nullptr;
+    // Make IntPtr.
+    {
+        auto* image = mono_image_loaded("mscorlib");
+        auto* desc = mono_method_desc_new("System.IntPtr:.ctor(void*)", true);
+        auto* method = mono_method_desc_search_in_image(desc, image);
+        auto* cls = mono_class_from_name(image, "System", "IntPtr");
+
+        void* arg[1] = {instance};
+        intPtrInstnace = mono_object_new(mono_domain_get(), cls);
+        mono_runtime_invoke(method, intPtrInstnace, arg, &exception);
+        assert(exception == nullptr);
+
+        mono_free_method(method);
+        mono_method_desc_free(desc);
+    }
+
+    // Create a wrapper object by calling __FromPInvoke() converter method.
+    {
+        auto methodDescription = ToString("%s:__FromPInvoke", className);
+        auto* image = mono_image_loaded(imageName);
+        auto* desc = mono_method_desc_new(methodDescription.CString(), true);
+        auto* method = mono_method_desc_search_in_image(desc, image);
+
+        bool ownsInstance = false;
+        void* args[2] = {intPtrInstnace, &ownsInstance};
+        auto* result = mono_runtime_invoke(method, nullptr, args, &exception);
+        assert(exception == nullptr);
+
+        mono_free_method(method);
+        mono_method_desc_free(desc);
+
+        return result;
+    }
+}
+
+gchandle ScriptSubsystem::Lock(void* object, bool pin)
+{
+    return mono_gchandle_new(static_cast<MonoObject*>(object), pin);
+}
+
+void ScriptSubsystem::Unlock(gchandle handle)
+{
+    mono_gchandle_free(handle);
+}
+
+void* ScriptSubsystem::GetObject(gchandle handle)
+{
+    return mono_gchandle_get_target(handle);
 }
 
 }

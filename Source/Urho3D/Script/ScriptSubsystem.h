@@ -29,6 +29,8 @@
 namespace Urho3D
 {
 
+using gchandle = uintptr_t;
+
 class URHO3D_API ScriptSubsystem : public Object
 {
     URHO3D_OBJECT(ScriptSubsystem, Object);
@@ -62,16 +64,25 @@ public:
     /// Creates a new managed domain and optionally executes an assembly.
     void* HostManagedRuntime(RuntimeSettings& settings);
     /// Load managed assembly and return it.
-    void* LoadAssembly(const String& pathToAssembly);
+    void* LoadAssembly(const String& pathToAssembly, void* domain=nullptr);
+    /// Call a managed method and return result.
+    Variant CallMethod(void* assembly, const String& methodDesc, void* object = nullptr,
+        const VariantVector& args = Variant::emptyVariantVector);
 
-    /// Frees handle of managed object.
-    void FreeGCHandle(void* gcHandle);
-    /// Clones handle of managed object.
-    void* CloneGCHandle(void* gcHandle);
     /// Creates managed object and returns it's native instance.
     Object* CreateObject(Context* context, unsigned managedType);
+    /// Converts instance to managed object.
+    void* ToManagedObject(const char* imageName, const char* className, RefCounted* instance);
+    /// Acquires a reference to a managed object preventing it's garbage collection. Pass `pin=true` to prevent GC moving object from it's current memory location.
+    gchandle Lock(void* object, bool pin=false);
+    /// Releases object reference. GC will be able to collect this object when no more references exist.
+    void Unlock(gchandle handle);
+    /// Return object from it's handle.
+    void* GetObject(gchandle handle);
 
 protected:
+    /// Initializes object.
+    void Init(void* domain);
     /// Perform housekeeping tasks.
     void OnEndFrame(StringHash, VariantMap&);
 
@@ -82,9 +93,7 @@ protected:
     /// Mutex protecting resources related to queuing ReleaseRef() calls.
     Mutex mutex_;
     /// Managed API function pointers.
-    void(*FreeGCHandle_)(void* gcHandle, void* exception);
-    void*(*CloneGCHandle_)(void* gcHandle, void* exception);
-    Object*(*CreateObject_)(Context* context, unsigned managedType, void* exception);
+    Object*(*CreateObject_)(Context* context, unsigned managedType, void* exception){};
 };
 
 }

@@ -103,7 +103,7 @@ SystemUI::SystemUI(Urho3D::Context* context)
 
 void SystemUI::HandleEndRender(StringHash event, VariantMap& data)
 {
-    URHO3D_PROFILE(SystemUIRender);
+    URHO3D_PROFILE("SystemUIRender");
 	ImGui::Render();
 }
 

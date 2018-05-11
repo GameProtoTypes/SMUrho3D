@@ -19,9 +19,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#if URHO3D_PLUGINS
-#   define CR_HOST
-#endif
 #include "Editor.h"
 #include "EditorEvents.h"
 #include "EditorIconCache.h"
@@ -43,6 +40,8 @@ namespace Urho3D
 
 Editor::Editor(Context* context)
     : Application(context)
+    , pluginsNative_(context)
+    , pluginsManaged_(context)
 {
 }
 
@@ -117,33 +116,13 @@ void Editor::Start()
     // Prevent overwriting example scene.
     DynamicCast<SceneTab>(tabs_.Front())->ClearCachedPaths();
 
-    // Load any native plugins in editor directory.
-    {
-        StringVector files;
-        GetFileSystem()->ScanDir(files, GetFileSystem()->GetProgramDir(), "", SCAN_FILES, false);
-
-
-#if WIN32
-        const char* start = "EditorPlugin";
-        const char* end = ".dll";
-#elif APPLE
-        const char* start = "libEditorPlugin";
-        const char* end = ".dylib";
-#else
-        const char* start = "libEditorPlugin";
-        const char* end = ".so";
+    // Plugin loading
+#if URHO3D_PLUGINS_CSHARP
+    pluginsManaged_.AutoLoadFrom(GetFileSystem()->GetProgramDir());
 #endif
-
-        for (const auto& path : files)
-        {
-            auto lastCharacter = path.Length() - strlen(end) - 1;
-            if (path.StartsWith(start) && path.EndsWith(end) && !IsDigit(path[lastCharacter]))
-            {
-                LoadNativePlugin(GetFileSystem()->GetProgramDir() + path);
-            }
-                
-        }
-    }
+#if URHO3D_PLUGINS_NATIVE
+    pluginsNative_.AutoLoadFrom(GetFileSystem()->GetProgramDir());
+#endif
 }
 
 void Editor::Stop()
@@ -227,7 +206,7 @@ void Editor::LoadProject(String filePath)
             GetCache()->RemoveResourceDir(dir);
         }
 
-            idPool_.Clear();
+        idPool_.Clear();
         auto window = root.GetChild("window");
         if (window.NotNull())
         {
@@ -272,31 +251,6 @@ void Editor::LoadProject(String filePath)
 
 void Editor::OnUpdate(VariantMap& args)
 {
-#if URHO3D_PLUGINS
-    for (auto& plugin : nativePlugins_)
-    {
-        if (plugin.context_.userdata)
-        {
-            bool reloading = cr_plugin_changed(plugin.context_);
-            if (reloading)
-                SendEvent(E_EDITORUSERCODERELOADSTART);
-
-            if (cr_plugin_update(plugin.context_) != 0)
-            {
-                URHO3D_LOGERRORF("Processing plugin \"%s\" failed and it was unloaded.", GetFileNameAndExtension(plugin.path_).CString());
-                cr_plugin_close(plugin.context_);
-                plugin.context_.userdata = nullptr;
-            }
-
-            if (reloading)
-            {
-                SendEvent(E_EDITORUSERCODERELOADEND);
-                if (plugin.context_.userdata != nullptr)
-                    URHO3D_LOGINFOF("Loaded plugin \"%s\" version %d.", GetFileNameAndExtension(plugin.path_).CString(), plugin.context_.version);
-            }
-        }
-    }
-#endif
     ui::RootDock({0, 20}, ui::GetIO().DisplaySize - ImVec2(0, 20));
 
     RenderMenuBar();
@@ -433,10 +387,7 @@ void Editor::RenderMenuBar()
             ui::EndMenu();
         }
 
-        if (!activeTab_.Expired())
-        {
-            SendEvent(E_EDITORTOOLBARBUTTONS);
-        }
+        SendEvent(E_EDITORAPPLICATIONMENU);
 
         ui::EndMainMenuBar();
     }
@@ -474,11 +425,6 @@ T* Editor::CreateNewTab(XMLElement project)
     // pointing to scene texture. This object must also be visible to main camera.
     tabs_.Push(DynamicCast<Tab>(tab));
     return tab;
-}
-
-StringVector Editor::GetObjectCategories() const
-{
-    return context_->GetObjectCategories().Keys();
 }
 
 StringVector Editor::GetObjectsByCategory(const String& category)
@@ -529,26 +475,6 @@ void Editor::OnConsoleCommand(VariantMap& args)
         assetConverter_->VerifyCacheAsync();
     else
         URHO3D_LOGWARNINGF("Unknown command \"%s\".", command.CString());
-}
-
-bool Editor::LoadNativePlugin(const String& path)
-{
-#if URHO3D_PLUGINS
-    NativePlugin plugin;
-    if (cr_plugin_load(plugin.context_, path.CString()))
-    {
-        plugin.path_ = path;
-        plugin.context_.userdata = context_;
-        nativePlugins_.Push(plugin);
-        return true;
-    }
-    else
-    {
-        URHO3D_LOGWARNINGF("Failed loading plugin \"%s\".", GetFileNameAndExtension(path).CString());
-    }
-#endif
-
-    return false;
 }
 
 bool Editor::IsInternalResourcePath(const String& fullPath) const
