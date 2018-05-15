@@ -262,7 +262,7 @@ bool SceneTab::SaveResource(const String& resourcePath)
 void SceneTab::CreateObjects()
 {
     view_.CreateObjects();
-    view_.GetCamera()->GetNode()->CreateComponent<DebugCameraController>();
+    view_.GetCamera()->GetNode()->GetOrCreateComponent<DebugCameraController>();
 }
 
 void SceneTab::Select(Node* node)
@@ -615,6 +615,10 @@ void SceneTab::SceneStateSave()
     sceneState_.GetRoot().Remove();
     XMLElement root = sceneState_.CreateRoot("scene");
     GetScene()->SaveXML(root);
+
+    // Now that editor objects are saved make sure UI does not expose them
+    for (auto* node : nodes)
+        node->SetTemporary(true);
 }
 
 void SceneTab::SceneStateRestore(XMLFile& source)
