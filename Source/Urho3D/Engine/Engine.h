@@ -61,10 +61,10 @@ public:
 	long long GetUpdateCount() const { return updateTick_; }
 
 	/// Return the duration in milliseconds of the last render frame.
-	float GetLastRenderTimeMs() const { return lastRenderTimeUs_; }
+	float GetLastRenderTimeMs() const { return float(lastRenderTimeUs_); }
 
 	/// Return the duration in milliseconds of the last update frame.
-	float GetLastUpdateTimeMs() const { return lastUpdateTimeUs_; }
+	float GetLastUpdateTimeMs() const { return float(lastUpdateTimeUs_); }
 
 	/// Return the average duration in milliseconds of the previous render frames.
 	float GetAverageRenderTimeMs();
@@ -158,8 +158,8 @@ private:
 	HiresTimer updateTimer_;
 	HiresTimer renderGoalTimer_;
 
-	unsigned renderTimeGoalUs{ 5000 };  //200 Hz   
-	unsigned updateTimeGoalUs{ 16666 }; //60 Hz
+	int renderTimeGoalUs{ 5000 };  //200 Hz   
+	int updateTimeGoalUs{ 16666 }; //60 Hz
 
 	int avgRenderTimeUs_{ 5000 };
 	int avgUpdateTimeUs_{ 16666 };
