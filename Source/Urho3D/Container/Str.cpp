@@ -1062,14 +1062,14 @@ Vector<String> String::Split(const char* str, char separator, bool keepEmptyStri
         {
             const ptrdiff_t splitLen = splitEnd - str;
             if (splitLen > 0 || keepEmptyStrings)
-                ret.Push(String(str, splitLen));
+                ret.Push(String(str, (unsigned int)(splitLen)));
             str = splitEnd + 1;
         }
     }
 
     const ptrdiff_t splitLen = strEnd - str;
     if (splitLen > 0 || keepEmptyStrings)
-        ret.Push(String(str, splitLen));
+        ret.Push(String(str, (unsigned int)(splitLen)));
 
     return ret;
 }

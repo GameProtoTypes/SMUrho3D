@@ -658,7 +658,7 @@ void Renderer::Update(float timeStep)
         return;
 
     // Set up the frameinfo structure for this frame
-    frame_.frameNumber_ = GetSubsystem<Engine>()->GetRenderCount();
+    frame_.frameNumber_ = unsigned( GetSubsystem<Engine>()->GetRenderCount() );
     frame_.timeStep_ = timeStep;
     frame_.camera_ = nullptr;
     numShadowCameras_ = 0;
@@ -1620,7 +1620,7 @@ void Renderer::LoadShaders()
 
     // Release old material shaders, mark them for reload
     ReleaseMaterialShaders();
-    shadersChangedFrameNumber_ = GetSubsystem<Engine>()->GetRenderCount();
+    shadersChangedFrameNumber_ = unsigned( GetSubsystem<Engine>()->GetRenderCount());
 
     // Construct new names for deferred light volume pixel shaders based on rendering options
     deferredLightPSVariations_.Resize(MAX_DEFERRED_LIGHT_PS_VARIATIONS);

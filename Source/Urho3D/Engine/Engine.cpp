@@ -572,7 +572,7 @@ bool Engine::GetRenderIsLimited()
 
 void Engine::SetRenderFpsGoal(int fps)
 {
-	renderTimeGoalUs = (1.0f/float(fps))*1000000.0f;
+	renderTimeGoalUs = int((1.0f/float(fps))*1000000.0f);
 	updateFpsGoalTimer();
 }
 
@@ -584,7 +584,7 @@ void Engine::SetRenderTimeGoalUs(unsigned timeUs)
 
 void Engine::SetUpdateFpsGoal(unsigned fps)
 {
-	updateTimeGoalUs = (1.0f / float(fps))*1000000.0f;
+	updateTimeGoalUs = int((1.0f / float(fps))*1000000.0f);
 	updateUpdateTimeTimer();
 }
 
@@ -741,12 +741,12 @@ unsigned Engine::FreeUpdate()
 	
 	//lets compute approximate time we have until next update or render
 	{
-		unsigned updateTimeLeft = updateTimer_.GetTimeoutDuration() - updateTimer_.GetUSec(false);
-		unsigned renderTimeLeft = renderGoalTimer_.GetTimeoutDuration() - renderGoalTimer_.GetUSec(false);
+		long long updateTimeLeft = ( updateTimer_.GetTimeoutDuration() - updateTimer_.GetUSec(false));
+        long long renderTimeLeft = (renderGoalTimer_.GetTimeoutDuration() - renderGoalTimer_.GetUSec(false));
 
-		unsigned timeLeftUS = Urho3D::Min(updateTimeLeft, renderTimeLeft);
+        long long timeLeftUS = Urho3D::Min(updateTimeLeft, renderTimeLeft);
 		if (timeLeftUS > 0)
-			return timeLeftUS;
+			return unsigned(timeLeftUS);
 		else
 			return 0;
 	}
