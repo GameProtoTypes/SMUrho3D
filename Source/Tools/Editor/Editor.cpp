@@ -138,10 +138,32 @@ void Editor::Start()
         idPool_.Clear();
     });
 
-    // Load default project on start
-    project_ = new Project(context_);
-    if (!project_->LoadProject(GetCache()->GetResourceFileName("Etc/DefaultEditorProject.project")))
-        project_.Reset();
+    // Process arguments
+    const auto& arguments = GetArguments();
+    {
+        unsigned i = 0;
+        for (; i < arguments.Size(); ++i)
+        {
+            if (arguments[i].Length() > 1 && arguments[i][0] == '-')
+            {
+                auto argument = arguments[i].Substring(1).ToLower();
+                const auto& value = i + 1 < arguments.Size() ? arguments[i + 1] : String::EMPTY;
+
+                // TODO: Any editor arguments
+            }
+            else
+                break;
+        }
+
+        String loadProject = GetCache()->GetResourceFileName("Etc/DefaultEditorProject.project");
+        if (i < arguments.Size())
+            loadProject = arguments[i];
+
+        // Load default project on start
+        project_ = new Project(context_);
+        if (!project_->LoadProject(loadProject))
+            project_.Reset();
+    }
 
     // Plugin loading
 #if URHO3D_PLUGINS_CSHARP
@@ -243,12 +265,18 @@ void Editor::RenderMenuBar()
                         nfdchar_t* savePath = nullptr;
                         if (NFD_SaveDialog("project", "", &savePath) == NFD_OKAY)
                         {
+                            for (auto& tab : tabs_)
+                                tab->SaveResource();
                             project_->SaveProject(savePath);
                             NFD_FreePath(savePath);
                         }
                     }
                     else
+                    {
+                        for (auto& tab : tabs_)
+                            tab->SaveResource();
                         project_->SaveProject();
+                    }
                 }
 
                 if (ui::MenuItem("Save Project As"))
@@ -256,6 +284,8 @@ void Editor::RenderMenuBar()
                     nfdchar_t* savePath = nullptr;
                     if (NFD_SaveDialog("project", "", &savePath) == NFD_OKAY)
                     {
+                        for (auto& tab : tabs_)
+                            tab->SaveResource();
                         project_->SaveProject(savePath);
                         NFD_FreePath(savePath);
                     }

@@ -31,6 +31,7 @@
 #include "Widgets.h"
 #include "UITab.h"
 
+using namespace ui::litterals;
 
 namespace Urho3D
 {
@@ -53,8 +54,6 @@ UITab::UITab(Urho3D::Context* context, Urho3D::StringHash id, const Urho3D::Stri
     rootElement_->SetRenderTexture(texture_);
     rootElement_->SetEnabled(true);
 
-    UpdateViewRect();                                                 // Initializes view texture
-
     undo_.Connect(rootElement_);
     undo_.Connect(&inspector_);
 
@@ -74,7 +73,7 @@ void UITab::RenderNodeTree()
 
 void UITab::RenderNodeTree(UIElement* element)
 {
-    WeakPtr<UIElement> elementRef(element);
+    SharedPtr<UIElement> elementRef(element);
     String name = element->GetName();
     String type = element->GetTypeName();
     String tooltip = "Type: " + type;
@@ -96,7 +95,32 @@ void UITab::RenderNodeTree(UIElement* element)
     ui::Image(element->GetTypeName());
     ui::SameLine();
 
-    if (ui::TreeNodeEx(element, flags, "%s", name.CString()))
+    auto treeExpanded = ui::TreeNodeEx(element, flags, "%s", name.CString());
+
+    if (ui::BeginDragDropSource())
+    {
+        ui::SetDragDropVariant("ptr", (void*)element);
+        ui::Text("%s", name.CString());
+        ui::EndDragDropSource();
+    }
+
+    if (ui::BeginDragDropTarget())
+    {
+        // Reparent by drag&drop, insert as first item
+        const Variant& payload = ui::AcceptDragDropVariant("ptr");
+        if (!payload.IsEmpty())
+        {
+            SharedPtr<UIElement> child((UIElement*)payload.GetVoidPtr());
+            if (child.NotNull() && child != element)
+            {
+                child->Remove();    // Needed for reordering under the same parent.
+                element->InsertChild(0, child);
+            }
+        }
+        ui::EndDragDropTarget();
+    }
+
+    if (treeExpanded)
     {
         if (ui::IsItemHovered())
             ui::SetTooltip("%s", tooltip.CString());
@@ -125,6 +149,26 @@ void UITab::RenderNodeTree(UIElement* element)
         }
 
         ui::TreePop();
+    }
+
+    ImRect bb{ui::GetItemRectMin(), ui::GetItemRectMax()};
+    bb.Min.y = bb.Max.y;
+    bb.Max.y += 2_dpy;
+    if (ui::BeginDragDropTargetCustom(bb, ui::GetID("reorder")))
+    {
+        // Reparent by drag&drop between elements, insert after current item
+        const Variant& payload = ui::AcceptDragDropVariant("ptr");
+        if (!payload.IsEmpty())
+        {
+            SharedPtr<UIElement> child((UIElement*)payload.GetVoidPtr());
+            if (child.NotNull() && child != element)
+            {
+                child->Remove();    // Needed for reordering under the same parent.
+                auto index = element->GetParent()->FindChild(element) + 1;
+                element->GetParent()->InsertChild(index, child);
+            }
+        }
+        ui::EndDragDropTarget();
     }
 }
 
@@ -296,7 +340,10 @@ void UITab::LoadResource(const String& resourcePath)
     if (xml->Load(*cache->GetFile(resourcePath)))
     {
         Vector<SharedPtr<UIElement>> children = rootElement_->GetChildren();
-        auto child = rootElement_->CreateChild(xml->GetRoot().GetAttribute("type"));
+        String type = xml->GetRoot().GetAttribute("type");
+        if (type.Empty())
+            type = "UIElement";
+        auto* child = rootElement_->CreateChild(StringHash(type));
         if (child->LoadXML(xml->GetRoot()))
         {
             child->SetStyleAuto();
@@ -345,10 +392,23 @@ bool UITab::SaveResource(const String& resourcePath)
         // Remove internal UI elements
         auto result = root.SelectPrepared(XPathQuery("//element[@internal=\"true\"]"));
         for (auto el = result.FirstResult(); el.NotNull(); el = el.NextResult())
-            el.GetParent().RemoveChild(el);
+        {
+            // Remove only top level internal elements.
+            bool internalParent = false;
+            auto parent = el.GetParent();
+            do
+            {
+                internalParent = parent.HasAttribute("internal") &&
+                    parent.GetAttribute("internal") == "true";
+                parent = parent.GetParent();
+            } while (!internalParent && parent.NotNull());
+
+            if (!internalParent)
+                el.Remove();
+        }
 
         // Remove style="none"
-        root.SelectPrepared(XPathQuery("//element[@style=\"none\"]"));
+        result = root.SelectPrepared(XPathQuery("//element[@style=\"none\"]"));
         for (auto el = result.FirstResult(); el.NotNull(); el = el.NextResult())
             el.RemoveAttribute("style");
 
@@ -495,7 +555,6 @@ void UITab::SaveProject(JSONValue& tab)
     tab["type"] = "ui";
     tab["id"] = id_.ToString();
     tab["path"] = path_;
-    Tab::SaveResource();
 }
 
 void UITab::LoadProject(const JSONValue& tab)
