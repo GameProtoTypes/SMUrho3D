@@ -14,10 +14,12 @@ namespace Urho3D
 
     public partial class Context
     {
+        public static Context Instance { get; private set; }
+
         static Context()
         {
-            // Register engine API
-            Urho3DRegisterMonoInternalCalls();
+            // Exchange APIs
+            NativeInterface.Initialize();
         }
 
         private readonly Dictionary<uint, Type> _factoryTypes = new Dictionary<uint, Type>();
@@ -37,6 +39,14 @@ namespace Urho3D
                 foreach (var pair in assembly.GetTypesWithAttribute<ObjectFactoryAttribute>())
                     RegisterFactory(pair.Item1, pair.Item2.Category);
             }
+
+            Instance = this;
+        }
+
+        protected override void OnDispose()
+        {
+            Instance = null;
+            InstanceCache.Dispose();
         }
 
         public void RegisterFactory<T>(string category = "") where T : Object
@@ -59,7 +69,7 @@ namespace Urho3D
             if (baseType == null)
                 throw new InvalidOperationException("This type can not be registered as factory.");
 
-            Urho3D_Context_RegisterFactory(__ToPInvoke(this), type.Name, StringHash.Calculate("Wrappers::" + baseType.Name), category);
+            Urho3D_Context_RegisterFactory(GetNativeInstance(this), type.Name, StringHash.Calculate("Wrappers::" + baseType.Name), category);
         }
 
         internal IntPtr CreateObject(uint managedType)
@@ -72,12 +82,11 @@ namespace Urho3D
             return managed.NativeInstance;
         }
 
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        private static extern void Urho3D_Context_RegisterFactory(IntPtr context, string typeName, uint baseType,
-            string category);
-
         [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void Urho3DRegisterMonoInternalCalls();
+        private static extern void Urho3D_Context_RegisterFactory(IntPtr context,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string typeName,
+            uint baseType,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string category);
 
         [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void Urho3DRegisterCSharp(IntPtr contextPtr);

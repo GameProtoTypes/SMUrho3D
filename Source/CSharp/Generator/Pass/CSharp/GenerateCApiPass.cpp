@@ -32,17 +32,12 @@ namespace Urho3D
 
 void GenerateCApiPass::Start()
 {
-    printer_ << "#include <mono/metadata/assembly.h>";
-    printer_ << "#include <mono/metadata/loader.h>";
-    printer_ << "#include <mono/metadata/object.h>";
-    printer_ << "#include <mono/metadata/appdomain.h>";
-    printer_ << "#include <mono/metadata/class.h>";
     printer_ << "#include \"CSharp.h\"";
-    printer_ << "#include \"ClassWrappers.hpp\"";
+    printer_ << fmt::format("#include \"{}ClassWrappers.hpp\"", generator->currentModule_->moduleName_);
     printer_ << "#include \"PODTypes.hpp\"";
     printer_ << "";
 
-    for (const auto& nsRules : generator->rules_)
+    for (const auto& nsRules : generator->currentModule_->rules_)
     {
         for (const auto& include : nsRules.includes_)
             printer_ << fmt::format("#include <{}>", include);
@@ -57,15 +52,12 @@ void GenerateCApiPass::Start()
     printer_ << "{";
     printer_ << "";
 
-    printer_ << fmt::format("void {}RegisterWrapperFactories(Urho3D::Context* context);", generator->moduleName_);
+    printer_ << fmt::format("void {}RegisterWrapperFactories(Urho3D::Context* context);",
+                            generator->currentModule_->moduleName_);
 
     // Declare extra mono call initializers
-    for (const auto& initializer : generator->extraMonoCallInitializers_)
+    for (const auto& initializer : generator->currentModule_->extraMonoCallInitializers_)
         printer_ << fmt::format("void {}();", initializer);
-
-    printerInternalCalls_ << fmt::format("URHO3D_EXPORT_API void {}RegisterMonoInternalCalls()",
-        generator->moduleName_);
-    printerInternalCalls_.Indent();
 }
 
 bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
@@ -96,7 +88,7 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         auto baseName = Sanitize(entity->uniqueName_);
 
         // Method for getting type id.
-        printer_ << fmt::format("std::uintptr_t {}_typeid()", baseName);
+        printer_ << fmt::format("EXPORT_API std::uintptr_t {}_typeid()", baseName);
         printer_.Indent();
         {
             printer_ << fmt::format("return GetTypeID<{}>();", entity->symbolName_);
@@ -104,7 +96,7 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         printer_.Dedent();
         printer_ << "";
 
-        printer_ << fmt::format("std::uintptr_t {}_instance_typeid({}* instance)", baseName, entity->sourceSymbolName_);
+        printer_ << fmt::format("EXPORT_API std::uintptr_t {}_instance_typeid({}* instance)", baseName, entity->sourceSymbolName_);
         printer_.Indent();
         {
             printer_ << fmt::format("return GetTypeID(instance);");
@@ -112,14 +104,11 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         printer_.Dedent();
         printer_ << "";
 
-        RegisterMonoInternalCall(entity, baseName + "_typeid");
-        RegisterMonoInternalCall(entity, baseName + "_instance_typeid");
-
         if (!IsExported(cls))
             return true;
 
         // Destructor always exists even if it is not defined in the class
-        printer_ << fmt::format("void {}_destructor({}* instance, bool owner)", baseName, entity->sourceSymbolName_);
+        printer_ << fmt::format("EXPORT_API void {}_destructor({}* instance, bool owner)", baseName, entity->sourceSymbolName_);
         printer_.Indent();
         {
             // Using sourceName_ with wrapper classes causes weird build errors.
@@ -128,13 +117,10 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
             {
                 // RefCounted is not thread-safe therefore extra care has to be taken here.
 
-                // When managed object is releasing a reference and this is last reference we trust that deletion is
-                // free to happen on any thread (like finalizers thread) or that user explicitly invoked object disposal
-                // on appropriate thread.
                 // If managed object is releasing a reference on main thread then we trust this is safe to delete object
                 // as well. Engine still may hold reference to an object but is mostly single-threaded therefore this
                 // should be safe.
-                printer_ << "if (instance->Refs() == 1 || Thread::IsMainThread())";
+                printer_ << "if (Thread::IsMainThread())";
                 printer_.Indent("");
                 {
                     printer_ << "instance->ReleaseRef();";
@@ -167,25 +153,23 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         printer_.Dedent();
         printer_ << "";
 
-        RegisterMonoInternalCall(entity, baseName + "_destructor");
-
         // Method for pinning managed class instance to native class. Ensures that managed class is nog GC'ed before
         // native class is freed. It is important only for classes that can be inherited.
         bool isInheritable = generator->IsInheritable(entity->symbolName_);
         bool isRefCounted = IsSubclassOf(cls, "Urho3D::RefCounted");
         if (isInheritable || isRefCounted)
         {
-            printer_ << fmt::format("void {}_setup({}* instance, gchandle gcHandle, const char* typeName)", baseName, entity->sourceSymbolName_);
+            printer_ << fmt::format("EXPORT_API void {}_setup({}* instance, gchandle gcHandle, const char* typeName)", baseName, entity->sourceSymbolName_);
             printer_.Indent();
             {
                 const auto& cls = entity->Ast<cppast::cpp_class>();
                 if (isRefCounted)
                 {
-                    printer_ << "assert(instance->HasDeleter() == false);";
+                    printer_ << "assert(!instance->HasDeleter());";
                     printer_ << "instance->SetDeleter([](RefCounted* instance_, void* gcHandle_) {";
                     printer_.Indent("");
                     {
-                        printer_ << "mono_gchandle_free((uintptr_t)gcHandle_);";
+                        printer_ << "ScriptSubsystem::managed_.Unlock((gchandle)gcHandle_);";
                         printer_ << "delete instance_;";
                     }
                     printer_.Dedent("}, (void*)gcHandle);");
@@ -194,7 +178,7 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
                 {
                     if (isRefCounted)
                         // Ensure that different GC handles are stored in wrapepr class and refcounted deleter user data
-                        printer_ << "gcHandle = mono_gchandle_new(mono_gchandle_get_target(gcHandle), false);";
+                        printer_ << "gcHandle = ScriptSubsystem::managed_.CloneHandle(gcHandle);";
                     printer_ << "instance->gcHandle_ = gcHandle;";
                     if (IsSubclassOf(cls, "Urho3D::Object"))
                         printer_ << fmt::format("instance->typeInfo_ = new Urho3D::TypeInfo(typeName, {}::GetTypeInfoStatic());", entity->sourceSymbolName_);
@@ -202,8 +186,6 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
             }
             printer_.Dedent();
             printer_ << "";
-
-            RegisterMonoInternalCall(entity, baseName + "_setup");
         }
     }
     else if (entity->kind_ == cppast::cpp_entity_kind::constructor_t)
@@ -219,7 +201,7 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         entity->cFunctionName_ = GetUniqueName(Sanitize(entity->uniqueName_));
         std::string className = entity->GetParent()->sourceSymbolName_;
         printer_ << "// " + entity->uniqueName_;
-        printer_ << fmt::format("{type} {name}({params})",
+        printer_ << fmt::format("EXPORT_API {type} {name}({params})",
             fmt::arg("type", className + "*"), fmt::arg("name", entity->cFunctionName_),
             fmt::arg("params", ParameterList(func.parameters(), toCType)));
         printer_.Indent();
@@ -235,8 +217,6 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         }
         printer_.Dedent();
         printer_ << "";
-
-        RegisterMonoInternalCall(entity->parent_.lock().get(), entity->cFunctionName_);
     }
     else if (entity->kind_ == cppast::cpp_entity_kind::member_function_t)
     {
@@ -259,7 +239,7 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         auto className = entity->GetFirstParentOfKind(cppast::cpp_entity_kind::class_t)->sourceSymbolName_;
 
         printer_ << "// " + entity->uniqueName_;
-        printer_ << fmt::format("{rtype} {cFunction}({className}* instance{psep}{params})",
+        printer_ << fmt::format("EXPORT_API {rtype} {cFunction}({className}* instance{psep}{params})",
             fmt::arg("rtype", ToCType(func.return_type(), true)), FMT_CAPTURE(cFunction), FMT_CAPTURE(className),
             fmt::arg("psep", func.parameters().empty() ? "" : ", "),
             fmt::arg("params", ParameterList(func.parameters(), toCType)));
@@ -292,12 +272,10 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         printer_.Dedent();
         printer_ << "";
 
-        RegisterMonoInternalCall(entity->parent_.lock().get(), entity->cFunctionName_);
-
         if (func.is_virtual() && !isFinal)
         {
             auto virtCFunction = fmt::format("set_fn{cFunction}", FMT_CAPTURE(cFunction));
-            printer_ << fmt::format("void {virtCFunction}({className}* instance, void* fn)",
+            printer_ << fmt::format("EXPORT_API void {virtCFunction}({className}* instance, void* fn)",
                 FMT_CAPTURE(virtCFunction), FMT_CAPTURE(className));
             printer_.Indent();
             {
@@ -306,8 +284,6 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
             }
             printer_.Dedent();
             printer_ << "";
-
-            RegisterMonoInternalCall(entity->parent_.lock().get(), virtCFunction);
         }
     }
     else if (entity->kind_ == cppast::cpp_entity_kind::function_t)
@@ -317,7 +293,7 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         auto paramNames = ParameterNameList(func.parameters(), toCppType);
 
         printer_ << "// " + entity->uniqueName_;
-        printer_ << fmt::format("{} {}({})",
+        printer_ << fmt::format("EXPORT_API {} {}({})",
             ToCType(func.return_type(), true), entity->cFunctionName_, ParameterList(func.parameters(), toCType));
         printer_.Indent();
         {
@@ -345,8 +321,6 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         }
         printer_.Dedent();
         printer_ << "";
-
-        RegisterMonoInternalCall(entity->parent_.lock().get(), entity->cFunctionName_);
     }
     else if (entity->kind_ == cppast::cpp_entity_kind::variable_t)
     {
@@ -366,24 +340,22 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
         // Getter
         printer_ << "// " + entity->uniqueName_;
-        printer_.Write(fmt::format("{rtype} get_{cFunction}()", FMT_CAPTURE(rtype),
+        printer_.Write(fmt::format("EXPORT_API {rtype} get_{cFunction}()", FMT_CAPTURE(rtype),
             FMT_CAPTURE(cFunction)));
         printer_.Indent();
+        {
+            std::string expr = fmt::format("{namespaceName}::{name}", FMT_CAPTURE(namespaceName), FMT_CAPTURE(name));
 
-        std::string expr = fmt::format("{namespaceName}::{name}", FMT_CAPTURE(namespaceName), FMT_CAPTURE(name));
-
-        // Variables are non-temporary therefore they do not need copying.
-        printer_ << "return " + MapToC(var.type(), expr) + ";";
-
+            // Variables are non-temporary therefore they do not need copying.
+            printer_ << "return " + MapToC(var.type(), expr) + ";";
+        }
         printer_.Dedent();
         printer_ << "";
-
-        RegisterMonoInternalCall(entity->parent_.lock().get(), "get_" + cFunction);
 
         // Setter
         if (!IsConst(var.type()))
         {
-            printer_.Write(fmt::format("void set_{cFunction}(", FMT_CAPTURE(cFunction)));
+            printer_.Write(fmt::format("EXPORT_API void set_{cFunction}(", FMT_CAPTURE(cFunction)));
             printer_.Write(fmt::format("{rtype} value)", FMT_CAPTURE(rtype)));
             printer_.Indent();
 
@@ -392,8 +364,6 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
             printer_.Dedent();
             printer_ << "";
-
-            RegisterMonoInternalCall(entity->parent_.lock().get(), "set_" + cFunction);
         }
     }
     else if (entity->kind_ == cppast::cpp_entity_kind::member_variable_t)
@@ -417,7 +387,7 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
         // Getter
         printer_ << "// " + entity->uniqueName_;
-        printer_.Write(fmt::format("{cType} get_{cFunction}({namespaceName}* instance)",
+        printer_.Write(fmt::format("EXPORT_API {cType} get_{cFunction}({namespaceName}* instance)",
             FMT_CAPTURE(cType), FMT_CAPTURE(cFunction), FMT_CAPTURE(namespaceName)));
         printer_.Indent();
         {
@@ -434,12 +404,10 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         printer_.Dedent();
         printer_ << "";
 
-        RegisterMonoInternalCall(entity->parent_.lock().get(), "get_" + cFunction);
-
         // Setter
         if (!IsConst(var.type()))
         {
-            printer_.Write(fmt::format("void set_{cFunction}(", FMT_CAPTURE(cFunction)));
+            printer_.Write(fmt::format("EXPORT_API void set_{cFunction}(", FMT_CAPTURE(cFunction)));
             printer_.Write(fmt::format("{namespaceName}* instance, {cType} value)",
                 FMT_CAPTURE(namespaceName), FMT_CAPTURE(cType)));
             printer_.Indent();
@@ -452,8 +420,6 @@ bool GenerateCApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
             printer_.Dedent();
             printer_ << "";
-
-            RegisterMonoInternalCall(entity->parent_.lock().get(), "set_" + cFunction);
         }
     }
 
@@ -478,7 +444,7 @@ void GenerateCApiPass::Stop()
 
             auto cFunction = fmt::format("{}_{}_offset", Sanitize(inheritor->symbolName_),
                 Sanitize(inherited->symbolName_));
-            printer_ << fmt::format("int {cFunction}()", FMT_CAPTURE(cFunction));
+            printer_ << fmt::format("EXPORT_API int {cFunction}()", FMT_CAPTURE(cFunction));
             printer_.Indent();
             {
                 printer_ << fmt::format("return GetBaseClassOffset<{}, {}>();", inheritor->symbolName_,
@@ -486,20 +452,11 @@ void GenerateCApiPass::Stop()
             }
             printer_.Dedent();
             printer_ << "";
-
-            RegisterMonoInternalCall(inherited, cFunction);
         }
     }
 
-    // Call extra initialization functions
-    for (const auto& initializer : generator->extraMonoCallInitializers_)
-        printerInternalCalls_ << initializer + "();";
-
-    printerInternalCalls_.Dedent();
-    printer_ << printerInternalCalls_.Get();
-    printer_ << "";
-
-    printer_ << fmt::format("URHO3D_EXPORT_API void {}RegisterCSharp(Urho3D::Context* context)", generator->moduleName_);
+    printer_ << fmt::format("EXPORT_API void {}RegisterCSharp(Urho3D::Context* context)",
+                            generator->currentModule_->moduleName_);
     printer_.Indent();
     {
         printer_ << "if (context->GetScripts() == nullptr)";
@@ -509,7 +466,7 @@ void GenerateCApiPass::Stop()
         }
         printer_.Dedent("");
 
-        printer_ << fmt::format("{}RegisterWrapperFactories(context);", generator->moduleName_);
+        printer_ << fmt::format("{}RegisterWrapperFactories(context);", generator->currentModule_->moduleName_);
         // Put other wrapper late initialization code here.
     }
     printer_.Dedent();
@@ -517,8 +474,8 @@ void GenerateCApiPass::Stop()
     printer_ << "";
     printer_ << "}";    // Close extern "C"
 
-
-    std::ofstream fp(generator->outputDirCpp_ + "CApi.cpp");
+    std::ofstream fp(fmt::format("{}/{}CApi.cpp", generator->currentModule_->outputDirCpp_,
+                                 generator->currentModule_->moduleName_));
     if (!fp.is_open())
     {
         spdlog::get("console")->error("Failed saving CApi.cpp");
@@ -629,7 +586,7 @@ void GenerateCApiPass::PrintParameterHandlingCodePre(const std::vector<std::shar
             // Some default values need extra care
             const auto& cppType = param->Ast<cppast::cpp_function_parameter>().type();
             auto* typeMap = generator->GetTypeMap(GetBaseType(cppType));
-            if (typeMap != nullptr && typeMap->csType_ == "string")
+            /*if (typeMap != nullptr && typeMap->csType_ == "string")
             {
                 printer_ << fmt::format("if ({} == nullptr)", param->name_);
                 printer_.Indent();
@@ -638,7 +595,7 @@ void GenerateCApiPass::PrintParameterHandlingCodePre(const std::vector<std::shar
                 }
                 printer_.Dedent();
             }
-            else if (typeMap == nullptr && IsComplexType(cppType) && value != "nullptr")
+            else*/ if (typeMap == nullptr && IsComplexType(cppType) && value != "nullptr")
             {
                 printer_ << fmt::format("if ({} == nullptr)", param->name_);
                 printer_.Indent();
@@ -685,47 +642,6 @@ std::string GenerateCApiPass::GetAutoType(const cppast::cpp_type& type)
         return "auto&&";
     else
         return "auto*";
-}
-
-std::string GenerateCApiPass::GetMonoInternalCallClassName(MetaEntity* cls)
-{
-    std::vector<std::string> parts;
-    // Gather parts of symbol name
-    while (cls)
-    {
-        if (!cls->name_.empty())
-            parts.emplace_back(cls->name_);
-        cls = cls->parent_.lock().get();
-    }
-
-    // Process parts by inserting . separator after namespaces and :: after anything else.
-    std::string result;
-    std::string currentSymbol;
-
-    for (auto it = parts.rbegin(); it != parts.rend(); it++)
-    {
-        result += *it;
-        currentSymbol += *it;
-        auto* entity = generator->GetSymbol(currentSymbol);
-        if (entity == nullptr)
-            continue;
-
-        if (it + 1 != parts.rend())  // not last
-        {
-            if (entity->kind_ == cppast::cpp_entity_kind::namespace_t)
-                result += ".";
-            else
-                result += "::";
-            currentSymbol += "::";
-        }
-    }
-
-    return result;
-}
-
-void GenerateCApiPass::RegisterMonoInternalCall(MetaEntity* cls, const std::string& function)
-{
-    printerInternalCalls_ << fmt::format("MONO_INTERNAL_CALL({}, {});", GetMonoInternalCallClassName(cls), function);
 }
 
 }

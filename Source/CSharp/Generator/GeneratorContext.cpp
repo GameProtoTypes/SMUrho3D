@@ -40,173 +40,237 @@ GeneratorContext::GeneratorContext()
 {
 }
 
-void GeneratorContext::LoadCompileConfig(const std::vector<std::string>& includes, std::vector<std::string>& defines,
-    const std::vector<std::string>& options)
+bool GeneratorContext::AddModule(const std::string& sourceDir, const std::string& outputDir,
+                                 const std::vector<std::string>& includes, const std::vector<std::string>& defines,
+                                 const std::vector<std::string>& options, const std::string& rulesFile)
 {
-    for (const auto& item : includes)
-        config_.add_include_dir(item);
+    modules_.resize(modules_.size() + 1);
+    Module& m = modules_.back();
 
-    for (const auto& item : defines)
+    m.sourceDir_ = str::AddTrailingSlash(sourceDir);
+    m.outputDir_ = str::AddTrailingSlash(outputDir);
+    m.outputDirCs_ = m.outputDir_ + "CSharp/";
+    m.outputDirCpp_ = m.outputDir_ + "Native/";
+    m.rulesFile_ = rulesFile;
+
+    Urho3D::CreateDirsRecursive(m.outputDirCpp_);
+    Urho3D::CreateDirsRecursive(m.outputDirCs_);
+
+    // Load compiler config
     {
-        auto parts = str::split(item, "=");
-        if (std::find(parts.begin(), parts.end(), "=") != parts.end())
+        for (const auto& item : includes)
+            m.config_.add_include_dir(item);
+
+        for (const auto& item : defines)
         {
-            assert(parts.size() == 2);
-            config_.define_macro(parts[0], parts[1]);
-        }
-        else
-            config_.define_macro(item, "");
-    }
-}
-
-bool GeneratorContext::LoadRules(const std::string& jsonPath)
-{
-    std::ifstream fp(jsonPath);
-    std::stringstream buffer;
-    buffer << fp.rdbuf();
-    auto json = buffer.str();
-    jsonRules_.Parse<rapidjson::kParseCommentsFlag | rapidjson::kParseTrailingCommasFlag>(json.c_str(), json.length());
-
-    if (!jsonRules_.IsObject())
-        return false;
-
-    // Module options
-    {
-        moduleName_ = jsonRules_["module"].GetString();
-
-        if (jsonRules_.HasMember("initialization"))
-        {
-            const auto& initialization = jsonRules_["initialization"];
-            if (initialization.HasMember("mono-calls"))
+            auto parts = str::split(item, "=");
+            if (std::find(parts.begin(), parts.end(), "=") != parts.end())
             {
-                const auto& initMonoCalls = initialization["mono-calls"];
-                for (auto it = initMonoCalls.Begin(); it != initMonoCalls.End(); it++)
-                    extraMonoCallInitializers_.emplace_back(it->GetString());
+                assert(parts.size() == 2);
+                m.config_.define_macro(parts[0], parts[1]);
             }
+            else
+                m.config_.define_macro(item, "");
         }
 
-        if (jsonRules_.HasMember("default-values"))
+#if _WIN32
+        m.config_.set_flags(cppast::cpp_standard::cpp_14, {
+            cppast::compile_flag::ms_compatibility | cppast::compile_flag::ms_extensions
+        });
+#else
+        m.config_.set_flags(cppast::cpp_standard::cpp_11, {cppast::compile_flag::gnu_extensions});
+#endif
+    }
+
+    // Load module rules
+    {
+        std::ifstream fp(rulesFile);
+        std::stringstream buffer;
+        buffer << fp.rdbuf();
+        auto json = buffer.str();
+        rapidjson::Document jsonRules;
+        jsonRules.Parse<rapidjson::kParseCommentsFlag | rapidjson::kParseTrailingCommasFlag>(json.c_str(), json.length());
+
+        if (!jsonRules.IsObject())
+            return false;
+
+        // Module options
         {
-            const auto& defaults = jsonRules_["default-values"];
-            for (auto it = defaults.MemberBegin(); it != defaults.MemberEnd(); it++)
+            m.moduleName_ = jsonRules["module"].GetString();
+
+            if (jsonRules.HasMember("default-values"))
             {
-                std::string value;
-                if (it->value.IsObject())
+                const auto& defaults = jsonRules["default-values"];
+                for (auto it = defaults.MemberBegin(); it != defaults.MemberEnd(); it++)
                 {
-                    value = it->value["value"].GetString();
-                    if (it->value.HasMember("const") && it->value["const"].GetBool())
-                        forceCompileTimeConstants_.emplace_back(value);
+                    std::string value;
+                    if (it->value.IsObject())
+                    {
+                        value = it->value["value"].GetString();
+                        if (it->value.HasMember("const") && it->value["const"].GetBool())
+                            forceCompileTimeConstants_.emplace_back(value);
+                    }
+                    else
+                        value = it->value.GetString();
+                    defaultValueRemaps_[it->name.GetString()] = value;
                 }
-                else
-                    value = it->value.GetString();
-                defaultValueRemaps_[it->name.GetString()] = value;
             }
         }
-    }
 
-    // Namespace rules
-    auto& namespaces = jsonRules_["namespaces"];
-    for (auto it = namespaces.MemberBegin(); it != namespaces.MemberEnd(); it++)
-    {
-        NamespaceRules parserRules{};
-        auto& nsRules = it->value;
-
-        parserRules.defaultNamespace_ = it->name.GetString();
-        if (nsRules.HasMember("inheritable"))
-            parserRules.inheritable_.Load(nsRules["inheritable"]);
-
-        const auto& parse = nsRules["parse"];
-        assert(parse.IsObject());
-
-        for (auto jt = parse.MemberBegin(); jt != parse.MemberEnd(); jt++)
+        // Namespace rules
+        auto& namespaces = jsonRules["namespaces"];
+        for (auto it = namespaces.MemberBegin(); it != namespaces.MemberEnd(); it++)
         {
-            NamespaceRules::ParsePath parsePath{};
-            parsePath.path_ = str::AddTrailingSlash(sourceDir_ + jt->name.GetString());
-            parsePath.checker_.Load(jt->value);
-            parserRules.parsePaths_.emplace_back(std::move(parsePath));
+            NamespaceRules parserRules{};
+            auto& nsRules = it->value;
+
+            parserRules.defaultNamespace_ = it->name.GetString();
+            if (nsRules.HasMember("inheritable"))
+                parserRules.inheritable_.Load(nsRules["inheritable"]);
+
+            const auto& parse = nsRules["parse"];
+            assert(parse.IsObject());
+
+            for (auto jt = parse.MemberBegin(); jt != parse.MemberEnd(); jt++)
+            {
+                NamespaceRules::ParsePath parsePath{};
+                parsePath.path_ = str::AddTrailingSlash(m.sourceDir_ + jt->name.GetString());
+                parsePath.checker_.Load(jt->value);
+                parserRules.parsePaths_.emplace_back(std::move(parsePath));
+            }
+
+            if (nsRules.HasMember("symbols"))
+            {
+                parserRules.symbolChecker_.Load(nsRules["symbols"]);
+            }
+
+            if (nsRules.HasMember("include"))
+            {
+                const auto& includes = nsRules["include"];
+                for (auto jt = includes.Begin(); jt != includes.End(); jt++)
+                    parserRules.includes_.emplace_back(jt->GetString());
+            }
+
+            m.rules_.emplace_back(std::move(parserRules));
         }
 
-        if (nsRules.HasMember("symbols"))
+        // typemaps
+        if (jsonRules.HasMember("typemaps"))
         {
-            parserRules.symbolChecker_.Load(nsRules["symbols"]);
-        }
-
-        if (nsRules.HasMember("include"))
-        {
-            const auto& includes = nsRules["include"];
-            for (auto jt = includes.Begin(); jt != includes.End(); jt++)
-                parserRules.includes_.emplace_back(jt->GetString());
-        }
-
-        if (nsRules.HasMember("typemaps"))
-        {
-            auto& typeMaps = nsRules["typemaps"];
+            auto& typeMaps = jsonRules["typemaps"];
 
             // Typemap const char* strings
             {
                 rapidjson::Value stringMap(rapidjson::kObjectType);
-                stringMap.AddMember("type", "char const*", jsonRules_.GetAllocator());
-                stringMap.AddMember("ptype", "string", jsonRules_.GetAllocator());
-                stringMap.AddMember("cstype", "string", jsonRules_.GetAllocator());
-                stringMap.AddMember("cpp_to_c", "{value}", jsonRules_.GetAllocator());
-                stringMap.AddMember("is_value_type", true, jsonRules_.GetAllocator());
-                typeMaps.PushBack(stringMap, jsonRules_.GetAllocator());
+                stringMap.AddMember("type", "char const*", jsonRules.GetAllocator());
+                stringMap.AddMember("ptype", "string", jsonRules.GetAllocator());
+                stringMap.AddMember("cstype", "string", jsonRules.GetAllocator());
+                stringMap.AddMember("cpp_to_c", "{value}", jsonRules.GetAllocator());
+                stringMap.AddMember("is_value_type", true, jsonRules.GetAllocator());
+                typeMaps.PushBack(stringMap, jsonRules.GetAllocator());
             }
 
-            for (auto jt = typeMaps.Begin(); jt != typeMaps.End(); ++jt)
-            {
-                const auto& typeMap = *jt;
-                TypeMap map;
-                map.cppType_ = typeMap["type"].GetString();
-                if (typeMap.HasMember("ctype"))
-                    map.cType_ = typeMap["ctype"].GetString();
-                if (typeMap.HasMember("cstype"))
-                    map.csType_ = typeMap["cstype"].GetString();
-                map.pInvokeType_ = typeMap["ptype"].GetString();
-                map.isValueType_ = typeMap.HasMember("is_value_type") && typeMap["is_value_type"].GetBool();
-
-                if (map.cType_.empty())
-                    map.cType_ = map.cppType_;
-
-                if (map.csType_.empty())
-                    map.csType_ = map.pInvokeType_;
-
-                if (typeMap.HasMember("cpp_to_c"))
-                    map.cppToCTemplate_ = typeMap["cpp_to_c"].GetString();
-
-                if (typeMap.HasMember("c_to_cpp"))
-                    map.cToCppTemplate_ = typeMap["c_to_cpp"].GetString();
-
-                if (typeMap.HasMember("pinvoke_to_cs"))
-                    map.pInvokeToCSTemplate_ = typeMap["pinvoke_to_cs"].GetString();
-
-                if (typeMap.HasMember("cs_to_pinvoke"))
-                    map.csToPInvokeTemplate_ = typeMap["cs_to_pinvoke"].GetString();
-
-                if (typeMap.HasMember("marshal_attribute"))
-                    map.marshalAttribute_ = typeMap["marshal_attribute"].GetString();
-
-                // Doctor string typemaps with some internal details.
-                if (map.csType_ == "string")
+            std::function<void(rapidjson::Value&, const std::string&)> parseTypemaps = [&](
+                rapidjson::Value& typeMaps, const std::string& jsonPath) {
+                for (auto jt = typeMaps.Begin(); jt != typeMaps.End(); ++jt)
                 {
-                    std::string useConverter;
-                    if (map.cppType_ == "char const*")
-                        useConverter = "MonoStringHolder";
+                    const auto& typeMap = *jt;
+
+                    if (typeMap.GetType() == rapidjson::kStringType)
+                    {
+                        // String contains a path relative to config json file. This file defines array of shared typemaps
+                        std::string newJsonPath;
+                        auto slashPos = jsonPath.rfind("/");
+                        if (slashPos != std::string::npos)
+                            newJsonPath = jsonPath.substr(0, slashPos + 1) + typeMap.GetString();
+                        else
+                            newJsonPath = typeMap.GetString();
+
+                        std::ifstream newFp(newJsonPath);
+                        std::stringstream newBuffer;
+                        newBuffer << newFp.rdbuf();
+                        auto newJson = newBuffer.str();
+                        rapidjson::Document newJsonRules;
+                        newJsonRules.Parse<rapidjson::kParseCommentsFlag | rapidjson::kParseTrailingCommasFlag>(
+                            newJson.c_str(), newJson.length());
+
+                        parseTypemaps(newJsonRules, newJsonPath);
+                    }
+                    else if (typeMap.GetType() == rapidjson::kObjectType)
+                    {
+                        // Object denotes typemaps themselves
+                        TypeMap map;
+                        map.cppType_ = typeMap["type"].GetString();
+                        if (typeMap.HasMember("ctype"))
+                            map.cType_ = typeMap["ctype"].GetString();
+                        if (typeMap.HasMember("cstype"))
+                            map.csType_ = typeMap["cstype"].GetString();
+                        map.pInvokeType_ = typeMap["ptype"].GetString();
+                        map.isValueType_ = typeMap.HasMember("is_value_type") && typeMap["is_value_type"].GetBool();
+
+                        if (map.cType_.empty())
+                            map.cType_ = map.cppType_;
+
+                        if (map.csType_.empty())
+                            map.csType_ = map.pInvokeType_;
+
+                        if (typeMap.HasMember("cpp_to_c"))
+                            map.cppToCTemplate_ = typeMap["cpp_to_c"].GetString();
+
+                        if (typeMap.HasMember("c_to_cpp"))
+                            map.cToCppTemplate_ = typeMap["c_to_cpp"].GetString();
+
+                        if (typeMap.HasMember("pinvoke_to_cs"))
+                            map.pInvokeToCSTemplate_ = typeMap["pinvoke_to_cs"].GetString();
+
+                        if (typeMap.HasMember("cs_to_pinvoke"))
+                            map.csToPInvokeTemplate_ = typeMap["cs_to_pinvoke"].GetString();
+
+                        if (typeMap.HasMember("marshaller"))
+                            map.customMarshaller_ = typeMap["marshaller"].GetString();
+
+                        // Doctor string typemaps with some internal details.
+                        if (map.csType_ == "string" && map.customMarshaller_.empty())
+                        {
+                            map.customMarshaller_ = "StringUtf8";
+                        }
+
+                        typeMaps_[map.cppType_] = map;
+                    }
                     else
-                        useConverter = map.cppType_;
-
-                    map.cType_ = "MonoString*";
-                    map.cppToCTemplate_ = fmt::format("CSharpConverter<MonoString>::ToCSharp({})", map.cppToCTemplate_);
-                    map.cToCppTemplate_ = fmt::format(map.cToCppTemplate_, fmt::arg("value", fmt::format(
-                        "CSharpConverter<MonoString>::FromCSharp<{}>({{value}})", useConverter)));
+                        assert(false);
                 }
+            };
 
-                parserRules.typeMaps_[map.cppType_] = map;
-            }
+            parseTypemaps(typeMaps, rulesFile);
         }
-        rules_.emplace_back(std::move(parserRules));
     }
 
+    // Gather files that need parsing
+    {
+        for (auto& nsRules : m.rules_)
+        {
+            for (const auto& parsePath : nsRules.parsePaths_)
+            {
+                std::vector<std::pair<std::string, std::string>> sourceFiles;
+                std::vector<std::string> scannedFiles;
+                if (!ScanDirectory(parsePath.path_, scannedFiles,
+                                   ScanDirectoryFlags::IncludeFiles | ScanDirectoryFlags::Recurse, parsePath.path_))
+                {
+                    spdlog::get("console")->error("Failed to scan directory {}", parsePath.path_);
+                    return false;
+                }
+
+                // Remove excluded files
+                for (auto it = scannedFiles.begin(); it != scannedFiles.end(); it++)
+                {
+                    if (parsePath.checker_.IsIncluded(*it))
+                        sourceFiles.emplace_back(std::pair<std::string, std::string>{parsePath.path_, *it});
+                }
+                nsRules.sourceFiles_.insert(nsRules.sourceFiles_.end(), sourceFiles.begin(), sourceFiles.end());
+            }
+        }
+    }
     return true;
 }
 
@@ -222,187 +286,180 @@ void GeneratorContext::Generate()
 #endif
     };
 
-    for (const auto& pass : cppPasses_)
-        pass->Start();
-
-    for (const auto& pass : apiPasses_)
-        pass->Start();
-
-    for (auto& nsRules : rules_)
+    for (auto& m : modules_)
     {
-        nsRules.apiRoot_ = std::shared_ptr<MetaEntity>(new MetaEntity());
-        currentNamespace_ = &nsRules;
-        for (const auto& parsePath : nsRules.parsePaths_)
-        {
-            std::vector<std::string> sourceFiles;
-            if (!ScanDirectory(parsePath.path_, sourceFiles,
-                               ScanDirectoryFlags::IncludeFiles | ScanDirectoryFlags::Recurse, parsePath.path_))
-            {
-                spdlog::get("console")->error("Failed to scan directory {}", parsePath.path_);
-                continue;
-            }
+        currentModule_ = &m;
+        for (const auto& pass : cppPasses_)
+            pass->Start();
 
-            std::mutex m;
-            auto workItem = [&]
+        for (const auto& pass : apiPasses_)
+            pass->Start();
+
+        for (auto& nsRules : m.rules_)
+        {
+            // Parse module headers
             {
-                for (;;)
+                std::mutex lock;
+                auto workItem = [&]
                 {
-                    std::string filePath;
-                    // Initialize
+                    for (;;)
                     {
-                        std::unique_lock<std::mutex> lock(m);
-                        while (!sourceFiles.empty())
+                        std::pair<std::string, std::string> filePath;
+                        // Initialize
                         {
-                            filePath = sourceFiles.back();
-                            sourceFiles.pop_back();
-                            if (!parsePath.checker_.IsIncluded(filePath))
-                                filePath.clear();
+                            std::unique_lock<std::mutex> scopedLock(lock);
+                            if (!nsRules.sourceFiles_.empty())
+                            {
+                                filePath = nsRules.sourceFiles_.back();
+                                nsRules.sourceFiles_.pop_back();
+                            }
                             else
                                 break;
                         }
-                        if (sourceFiles.empty() && filePath.empty())
-                            return;
+
+                        spdlog::get("console")->debug("Parse: {}", filePath.second);
+
+                        cppast::stderr_diagnostic_logger logger;
+                        // the parser is used to parse the entity
+                        // there can be multiple parser implementations
+                        cppast::libclang_parser parser(type_safe::ref(logger));
+
+                        auto absPath = filePath.first + filePath.second;
+                        auto file = parser.parse(index_, absPath, m.config_);
+                        if (parser.error())
+                        {
+                            spdlog::get("console")->error("Failed parsing {}", filePath.second);
+                            parser.reset_error();
+                        }
+                        else
+                        {
+                            std::unique_lock<std::mutex> scopedLock(lock);
+                            nsRules.parsed_[absPath].reset(file.release());
+                        }
                     }
-                    std::string absPath = parsePath.path_ + filePath;
+                };
 
-                    spdlog::get("console")->debug("Parse: {}", filePath);
+                std::vector<std::thread> pool;
+                for (auto i = 0; i < std::thread::hardware_concurrency(); i++)
+                    pool.emplace_back(std::thread(workItem));
 
-                    cppast::stderr_diagnostic_logger logger;
-                    // the parser is used to parse the entity
-                    // there can be multiple parser implementations
-                    cppast::libclang_parser parser(type_safe::ref(logger));
+                for (auto& t : pool)
+                    t.join();
+            }
 
-                    auto file = parser.parse(index_, absPath.c_str(), config_);
-                    if (parser.error())
+            nsRules.apiRoot_ = std::shared_ptr<MetaEntity>(new MetaEntity());
+            currentNamespace_ = &nsRules;
+
+            for (const auto& pass : cppPasses_)
+                pass->NamespaceStart();
+
+            for (const auto& pass : cppPasses_)
+            {
+                auto& passRef = *pass;
+                spdlog::get("console")->info("#### Run pass: {}", getNiceName(typeid(passRef).name()));
+                for (const auto& pair : nsRules.parsed_)
+                {
+                    pass->StartFile(pair.first);
+                    cppast::visit(*pair.second, [&](const cppast::cpp_entity& e, cppast::visitor_info info)
                     {
-                        spdlog::get("console")->error("Failed parsing {}", filePath);
-                        parser.reset_error();
-                    }
-                    else
-                    {
-                        std::unique_lock<std::mutex> lock(m);
-                        nsRules.parsed_[absPath].reset(file.release());
-                    }
+                        if (e.kind() == cppast::cpp_entity_kind::file_t || cppast::is_templated(e) ||
+                            cppast::is_friended(e))
+                            // no need to do anything for a file,
+                            // templated and friended entities are just proxies, so skip those as well
+                            // return true to continue visit for children
+                            return true;
+                        return pass->Visit(e, info);
+                    });
+                    pass->StopFile(pair.first);
+                }
+            }
+
+            for (const auto& pass : cppPasses_)
+                pass->NamespaceStop();
+
+            std::function<void(CppApiPass*, MetaEntity*)> visitOverlayEntity = [&](CppApiPass* pass, MetaEntity* entity)
+            {
+                cppast::visitor_info info{ };
+                info.access = entity->access_;
+
+                switch (entity->kind_)
+                {
+                case cppast::cpp_entity_kind::file_t:
+                case cppast::cpp_entity_kind::language_linkage_t:
+                case cppast::cpp_entity_kind::namespace_t:
+                case cppast::cpp_entity_kind::enum_t:
+                case cppast::cpp_entity_kind::class_t:
+                case cppast::cpp_entity_kind::function_template_t:
+                case cppast::cpp_entity_kind::class_template_t:
+                    info.event = info.container_entity_enter;
+                    break;
+                case cppast::cpp_entity_kind::macro_definition_t:
+                case cppast::cpp_entity_kind::include_directive_t:
+                case cppast::cpp_entity_kind::namespace_alias_t:
+                case cppast::cpp_entity_kind::using_directive_t:
+                case cppast::cpp_entity_kind::using_declaration_t:
+                case cppast::cpp_entity_kind::type_alias_t:
+                case cppast::cpp_entity_kind::enum_value_t:
+                case cppast::cpp_entity_kind::access_specifier_t: // ?
+                case cppast::cpp_entity_kind::base_class_t:
+                case cppast::cpp_entity_kind::variable_t:
+                case cppast::cpp_entity_kind::member_variable_t:
+                case cppast::cpp_entity_kind::bitfield_t:
+                case cppast::cpp_entity_kind::function_parameter_t:
+                case cppast::cpp_entity_kind::function_t:
+                case cppast::cpp_entity_kind::member_function_t:
+                case cppast::cpp_entity_kind::conversion_op_t:
+                case cppast::cpp_entity_kind::constructor_t:
+                case cppast::cpp_entity_kind::destructor_t:
+                case cppast::cpp_entity_kind::friend_t:
+                case cppast::cpp_entity_kind::template_type_parameter_t:
+                case cppast::cpp_entity_kind::non_type_template_parameter_t:
+                case cppast::cpp_entity_kind::template_template_parameter_t:
+                case cppast::cpp_entity_kind::alias_template_t:
+                case cppast::cpp_entity_kind::variable_template_t:
+                case cppast::cpp_entity_kind::function_template_specialization_t:
+                case cppast::cpp_entity_kind::class_template_specialization_t:
+                case cppast::cpp_entity_kind::static_assert_t:
+                case cppast::cpp_entity_kind::unexposed_t:
+                case cppast::cpp_entity_kind::count:
+                    info.event = info.leaf_entity;
+                    break;
+                }
+
+                if (pass->Visit(entity, info) && info.event == info.container_entity_enter)
+                {
+                    auto childrenCopy = entity->children_;
+                    for (const auto& childEntity : childrenCopy)
+                        visitOverlayEntity(pass, childEntity.get());
+
+                    info.event = cppast::visitor_info::container_entity_exit;
+                    pass->Visit(entity, info);
                 }
             };
 
-            std::vector<std::thread> pool;
-            for (auto i = 0; i < std::thread::hardware_concurrency(); i++)
-                pool.emplace_back(std::thread(workItem));
+            for (const auto& pass : apiPasses_)
+                pass->NamespaceStart();
 
-            for (auto& t : pool)
-                t.join();
+            for (const auto& pass : apiPasses_)
+            {
+                auto& passRef = *pass;
+                spdlog::get("console")->info("#### Run pass: {}", getNiceName(typeid(passRef).name()));
+                visitOverlayEntity(pass.get(), nsRules.apiRoot_.get());
+            }
+
+            for (const auto& pass : apiPasses_)
+                pass->NamespaceStop();
         }
 
         for (const auto& pass : cppPasses_)
-            pass->NamespaceStart();
-
-        for (const auto& pass : cppPasses_)
-        {
-            auto& passRef = *pass;
-            spdlog::get("console")->info("#### Run pass: {}", getNiceName(typeid(passRef).name()));
-            for (const auto& pair : nsRules.parsed_)
-            {
-                pass->StartFile(pair.first);
-                cppast::visit(*pair.second, [&](const cppast::cpp_entity& e, cppast::visitor_info info)
-                {
-                    if (e.kind() == cppast::cpp_entity_kind::file_t || cppast::is_templated(e) ||
-                        cppast::is_friended(e))
-                        // no need to do anything for a file,
-                        // templated and friended entities are just proxies, so skip those as well
-                        // return true to continue visit for children
-                        return true;
-                    return pass->Visit(e, info);
-                });
-                pass->StopFile(pair.first);
-            }
-        }
-
-        for (const auto& pass : cppPasses_)
-            pass->NamespaceStop();
-
-        std::function<void(CppApiPass*, MetaEntity*)> visitOverlayEntity = [&](CppApiPass* pass, MetaEntity* entity)
-        {
-            cppast::visitor_info info{ };
-            info.access = entity->access_;
-
-            switch (entity->kind_)
-            {
-            case cppast::cpp_entity_kind::file_t:
-            case cppast::cpp_entity_kind::language_linkage_t:
-            case cppast::cpp_entity_kind::namespace_t:
-            case cppast::cpp_entity_kind::enum_t:
-            case cppast::cpp_entity_kind::class_t:
-            case cppast::cpp_entity_kind::function_template_t:
-            case cppast::cpp_entity_kind::class_template_t:
-                info.event = info.container_entity_enter;
-                break;
-            case cppast::cpp_entity_kind::macro_definition_t:
-            case cppast::cpp_entity_kind::include_directive_t:
-            case cppast::cpp_entity_kind::namespace_alias_t:
-            case cppast::cpp_entity_kind::using_directive_t:
-            case cppast::cpp_entity_kind::using_declaration_t:
-            case cppast::cpp_entity_kind::type_alias_t:
-            case cppast::cpp_entity_kind::enum_value_t:
-            case cppast::cpp_entity_kind::access_specifier_t: // ?
-            case cppast::cpp_entity_kind::base_class_t:
-            case cppast::cpp_entity_kind::variable_t:
-            case cppast::cpp_entity_kind::member_variable_t:
-            case cppast::cpp_entity_kind::bitfield_t:
-            case cppast::cpp_entity_kind::function_parameter_t:
-            case cppast::cpp_entity_kind::function_t:
-            case cppast::cpp_entity_kind::member_function_t:
-            case cppast::cpp_entity_kind::conversion_op_t:
-            case cppast::cpp_entity_kind::constructor_t:
-            case cppast::cpp_entity_kind::destructor_t:
-            case cppast::cpp_entity_kind::friend_t:
-            case cppast::cpp_entity_kind::template_type_parameter_t:
-            case cppast::cpp_entity_kind::non_type_template_parameter_t:
-            case cppast::cpp_entity_kind::template_template_parameter_t:
-            case cppast::cpp_entity_kind::alias_template_t:
-            case cppast::cpp_entity_kind::variable_template_t:
-            case cppast::cpp_entity_kind::function_template_specialization_t:
-            case cppast::cpp_entity_kind::class_template_specialization_t:
-            case cppast::cpp_entity_kind::static_assert_t:
-            case cppast::cpp_entity_kind::unexposed_t:
-            case cppast::cpp_entity_kind::count:
-                info.event = info.leaf_entity;
-                break;
-            }
-
-            if (pass->Visit(entity, info) && info.event == info.container_entity_enter)
-            {
-                auto childrenCopy = entity->children_;
-                for (const auto& childEntity : childrenCopy)
-                    visitOverlayEntity(pass, childEntity.get());
-
-                info.event = cppast::visitor_info::container_entity_exit;
-                pass->Visit(entity, info);
-            }
-        };
+            pass->Stop();
 
         for (const auto& pass : apiPasses_)
-            pass->NamespaceStart();
+            pass->Stop();
 
-        for (const auto& pass : apiPasses_)
-        {
-            auto& passRef = *pass;
-            spdlog::get("console")->info("#### Run pass: {}", getNiceName(typeid(passRef).name()));
-            visitOverlayEntity(pass.get(), nsRules.apiRoot_.get());
-        }
-
-        for (const auto& pass : apiPasses_)
-            pass->NamespaceStop();
+        SetLastModifiedTime(m.outputDir_, 0);   // Touch
+        currentNamespace_ = nullptr;
     }
-
-    currentNamespace_ = nullptr;
-
-
-    for (const auto& pass : cppPasses_)
-        pass->Stop();
-
-    for (const auto& pass : apiPasses_)
-        pass->Stop();
 }
 
 bool GeneratorContext::IsAcceptableType(const cppast::cpp_type& type)
@@ -485,9 +542,8 @@ const TypeMap* GeneratorContext::GetTypeMap(const cppast::cpp_type& type, bool s
 
 const TypeMap* GeneratorContext::GetTypeMap(const std::string& typeName)
 {
-    assert(currentNamespace_ != nullptr);
-    auto it = currentNamespace_->typeMaps_.find(typeName);
-    if (it != currentNamespace_->typeMaps_.end())
+    auto it = typeMaps_.find(typeName);
+    if (it != typeMaps_.end())
         return &it->second;
 
     return nullptr;
@@ -551,6 +607,37 @@ bool GeneratorContext::IsInheritable(const std::string& symbolName) const
 {
     assert(currentNamespace_ != nullptr);
     return currentNamespace_->inheritable_.IsIncluded(symbolName);
+}
+
+bool GeneratorContext::IsOutOfDate(const std::string& generatorExe)
+{
+    for (const auto& m : modules_)
+    {
+        if (GetFileSize(m.outputDirCpp_ + "Urho3DCApi.cpp") == 0)
+            // Missing file, needed for the first time generator runs
+            return true;
+
+        auto outputTime = GetLastModifiedTime(m.outputDir_);
+        auto exeTime = GetLastModifiedTime(generatorExe);
+        auto rulesTime = GetLastModifiedTime(m.rulesFile_);
+        if (outputTime == 0 || exeTime == 0 || rulesTime == 0)
+            return true;
+
+        if (exeTime > outputTime || rulesTime > outputTime)
+            return true;
+
+        for (const auto& nsRules : m.rules_)
+        {
+            for (const auto& path : nsRules.sourceFiles_)
+            {
+                auto fileTime = GetLastModifiedTime(path.first + path.second);
+                if (fileTime == 0 || fileTime > outputTime)
+                    return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 }

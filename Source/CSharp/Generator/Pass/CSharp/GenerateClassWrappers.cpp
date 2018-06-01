@@ -42,10 +42,10 @@ void GenerateClassWrappers::Start()
     printer_ << "";
 
     initPrinter_ << "#include <Urho3D/Urho3DAll.h>";
-    initPrinter_ << "#include \"ClassWrappers.hpp\"";
+    initPrinter_ << fmt::format("#include \"{}ClassWrappers.hpp\"", generator->currentModule_->moduleName_);
     initPrinter_ << "";
     initPrinter_ << fmt::format("extern \"C\" void {}RegisterWrapperFactories(Context* context)",
-                                generator->moduleName_);
+                                generator->currentModule_->moduleName_);
     initPrinter_.Indent();
     initPrinter_ << "auto* script = context->GetScripts();";
 }
@@ -76,7 +76,7 @@ bool GenerateClassWrappers::Visit(MetaEntity* entity, cppast::visitor_info info)
         return info.event != info.container_entity_enter;
     }
 
-    printer_ << fmt::format("class URHO3D_EXPORT_API {} : public {}", entity->name_, entity->uniqueName_);
+    printer_ << fmt::format("class EXPORT_API {} : public {}", entity->name_, entity->uniqueName_);
     printer_.Indent();
 
     // Urho3D-specific
@@ -112,7 +112,7 @@ bool GenerateClassWrappers::Visit(MetaEntity* entity, cppast::visitor_info info)
         printer_ << "if (gcHandle_ != 0)";
         printer_.Indent();
         {
-            printer_ << "mono_gchandle_free(gcHandle_);";
+            printer_ << "ScriptSubsystem::managed_.Unlock(gcHandle_);";
             printer_ << "gcHandle_ = 0;";
         }
         printer_.Dedent();
@@ -255,7 +255,8 @@ void GenerateClassWrappers::Stop()
 
     // Save ClassWrappers.hpp
     {
-        std::ofstream fp(generator->outputDirCpp_ + "ClassWrappers.hpp");
+        std::ofstream fp(fmt::format("{}/{}ClassWrappers.hpp", generator->currentModule_->outputDirCpp_,
+                                     generator->currentModule_->moduleName_));
         if (!fp.is_open())
         {
             spdlog::get("console")->error("Failed saving ClassWrappers.hpp");
@@ -266,7 +267,8 @@ void GenerateClassWrappers::Stop()
 
     // Save RegisterFactories.cpp
     {
-        std::ofstream fp(generator->outputDirCpp_ + "RegisterFactories.cpp");
+        std::ofstream fp(fmt::format("{}/{}RegisterFactories.cpp", generator->currentModule_->outputDirCpp_,
+                                     generator->currentModule_->moduleName_));
         if (!fp.is_open())
         {
             spdlog::get("console")->error("Failed saving RegisterFactories.cpp");

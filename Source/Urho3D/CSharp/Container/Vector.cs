@@ -85,33 +85,40 @@ namespace Urho3D
         }
 
         #region Interop
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        private static extern void Urho3D_StringVector_Add(IntPtr instance, string value);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        private static extern void Urho3D_StringVector_InsertAt(IntPtr instance, int index, string value);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        private static extern void Urho3D_StringVector_Set(IntPtr instance, int index, string value);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void Urho3D_StringVector_Add(IntPtr instance,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string value);
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void Urho3D_StringVector_InsertAt(IntPtr instance, int index,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string value);
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void Urho3D_StringVector_Set(IntPtr instance, int index,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string value);
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]
         private static extern string Urho3D_StringVector_Get(IntPtr instance, int index);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        private static extern bool Urho3D_StringVector_Remove(IntPtr instance, string value);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Urho3D_StringVector_Remove(IntPtr instance,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string value);
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
         private static extern bool Urho3D_StringVector_RemoveAt(IntPtr instance, int index);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
         private static extern void Urho3D_StringVector_Clear(IntPtr instance);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        private static extern bool Urho3D_StringVector_Contains(IntPtr instance, string value);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        private static extern int Urho3D_StringVector_IndexOf(IntPtr instance, string value);
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Urho3D_StringVector_Contains(IntPtr instance,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string value);
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern int Urho3D_StringVector_IndexOf(IntPtr instance,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string value);
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
         private static extern void Urho3D_StringVector_destructor(IntPtr instnace);
 
-        internal static StringVector __FromPInvoke(IntPtr source, bool ownsInstnace)
+        internal static StringVector GetManagedInstance(IntPtr source, bool ownsInstnace)
         {
             return InstanceCache.GetOrAdd(source, ptr => new StringVector(ptr, ownsInstnace));
         }
 
-        internal static IntPtr __ToPInvoke(StringVector source)
+        internal static IntPtr GetNativeInstance(StringVector source)
         {
             if (source == null)
             {

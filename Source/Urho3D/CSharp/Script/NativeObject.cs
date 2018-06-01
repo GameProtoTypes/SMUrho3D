@@ -49,6 +49,12 @@ namespace Urho3D.CSharp
             PerformInstanceSetup(instance, ownsInstance);
         }
 
+        // This method may be overriden in a partial class or a subclass in order to inject logic into object
+        // destruction.
+        protected virtual void OnDispose()
+        {
+        }
+
         public bool Equals(NativeObject other)
         {
             if (ReferenceEquals(null, other)) return false;
@@ -74,20 +80,6 @@ namespace Urho3D.CSharp
 
         public virtual void Dispose()
         {
-        }
-    }
-
-    public static class NativeInterface
-    {
-        internal static IntPtr CreateObject(IntPtr contextPtr, uint managedType)
-        {
-            var context = Context.__FromPInvoke(contextPtr, true);
-            return context.CreateObject(managedType);
-        }
-
-        internal static void Dispose()
-        {
-            InstanceCache.Dispose();
         }
     }
 }

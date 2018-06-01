@@ -29,7 +29,25 @@
 namespace Urho3D
 {
 
-using gchandle = uintptr_t;
+using gchandle = void*;
+
+// When updating runtime structures do not forget to perform same changes in NativeInterface.cs
+
+struct ManagedRuntime
+{
+    gchandle(*Lock)(void* managedObject, bool pin) = nullptr;
+    void(*Unlock)(gchandle handle) = nullptr;
+    gchandle(*CloneHandle)(gchandle handle) = nullptr;
+    Object*(*CreateObject)(Context* context, unsigned managedType) = nullptr;
+    void(*HandleEventWithType)(gchandle gcHandle, unsigned type, VariantMap* args) = nullptr;
+    void(*HandleEventWithoutType)(gchandle gcHandle, unsigned type, VariantMap* args) = nullptr;
+};
+
+struct NativeRuntime
+{
+    void*(*AllocateMemory)(unsigned size) = nullptr;
+    void(*FreeMemory)(void* memory) = nullptr;
+};
 
 class URHO3D_API ScriptSubsystem : public Object
 {
@@ -69,20 +87,12 @@ public:
     Variant CallMethod(void* assembly, const String& methodDesc, void* object = nullptr,
         const VariantVector& args = Variant::emptyVariantVector);
 
-    /// Creates managed object and returns it's native instance.
-    Object* CreateObject(Context* context, unsigned managedType);
-    /// Converts instance to managed object.
-    void* ToManagedObject(const char* imageName, const char* className, RefCounted* instance);
-    /// Acquires a reference to a managed object preventing it's garbage collection. Pass `pin=true` to prevent GC moving object from it's current memory location.
-    gchandle Lock(void* object, bool pin=false);
-    /// Releases object reference. GC will be able to collect this object when no more references exist.
-    void Unlock(gchandle handle);
-    /// Return object from it's handle.
-    void* GetObject(gchandle handle);
+    static ManagedRuntime managed_;
+    static NativeRuntime native_;
 
 protected:
     /// Initializes object.
-    void Init(void* domain);
+    void Init();
     /// Perform housekeeping tasks.
     void OnEndFrame(StringHash, VariantMap&);
 
@@ -92,8 +102,6 @@ protected:
     PODVector<RefCounted*> releaseQueue_;
     /// Mutex protecting resources related to queuing ReleaseRef() calls.
     Mutex mutex_;
-    /// Managed API function pointers.
-    Object*(*CreateObject_)(Context* context, unsigned managedType, void* exception){};
 };
 
 }
