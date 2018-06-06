@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ class UITab : public Tab
     URHO3D_OBJECT(UITab, Tab);
 public:
     /// Construct.
-    explicit UITab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot_ position);
+    explicit UITab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot position);
     /// Render scene hierarchy window.
     void RenderNodeTree() override;
     /// Render inspector window.
@@ -49,9 +49,9 @@ public:
     /// Update window when it is active.
     void OnActiveUpdate() override;
     /// Save project data to xml.
-    void SaveProject(XMLElement& tab) override;
+    void SaveProject(JSONValue& tab) override;
     /// Load project data from xml.
-    void LoadProject(XMLElement& tab) override;
+    void LoadProject(const JSONValue& tab) override;
     /// Load UI layout from resource path.
     void LoadResource(const String& resourcePath) override;
     /// Save scene to a resource file.

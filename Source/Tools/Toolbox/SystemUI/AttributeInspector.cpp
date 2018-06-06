@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,7 @@
 #include <Urho3D/Graphics/Graphics.h>
 #include <Graphics/SceneView.h>
 
+using namespace ui::litterals;
 
 namespace Urho3D
 {
@@ -254,6 +255,9 @@ void AttributeInspector::RenderAttributes(const PODVector<Serializable*>& items)
                 if (info.mode_ & AM_NOEDIT)
                     hidden = true;
                 else if (filter_.front() && !info.name_.Contains(&filter_.front(), false))
+                    hidden = true;
+
+                if (info.type_ == VAR_BUFFER || info.type_ == VAR_VARIANTVECTOR || info.type_ == VAR_VARIANTMAP)
                     hidden = true;
 
                 // Customize attribute rendering
@@ -727,7 +731,6 @@ bool AttributeInspector::RenderSingleAttribute(const AttributeInfo& info, Varian
             break;
         }
         default:
-            ui::TextUnformatted("Unhandled attribute type.");
             break;
         }
     }
@@ -761,7 +764,7 @@ bool AttributeInspector::RenderResourceRef(StringHash type, const String& name, 
     };
 
     SharedPtr<Resource> resource;
-    ui::PushItemWidth(ui::ScaleX(-30));
+    ui::PushItemWidth(-30_dpx);
     ui::InputText("", (char*)name.CString(), name.Length(), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_ReadOnly);
     if (handleDragAndDrop(type, resource))
     {
@@ -896,7 +899,7 @@ bool AttributeInspector::RenderResourceRef(StringHash type, const String& name, 
             NextColumn();
             String techName = tech.technique_->GetName();
             if (material->GetNumTechniques() > 1)
-                ui::PushItemWidth(ui::ScaleX(-30));
+                ui::PushItemWidth(-30_dpx);
             ui::InputText("###techniqueName_", (char*)techName.CString(), techName.Length(),
                 ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_ReadOnly);
             if (material->GetNumTechniques() > 1)

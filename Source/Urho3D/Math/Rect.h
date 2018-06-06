@@ -213,7 +213,7 @@ namespace Urho3D
 
 		/// Return the rounded mid point
 		IntVector2 MidPointRounded() const {
-			return VectorRoundToInt( ( Vector2( left_, top_) + Vector2( right_, bottom_) ) * 0.5f);
+			return VectorRoundToInt( ( Vector2( float(left_), float(top_)) + Vector2( float(right_), float(bottom_)) ) * 0.5f);
 		}
 
 
@@ -267,8 +267,8 @@ public:
 
 	/// Construct from a IntRect.
 	explicit Rect(const IntRect& rect) noexcept :
-	min_(rect.left_, rect.top_),
-		max_(rect.right_, rect.bottom_)
+	    min_(float(rect.left_), float(rect.top_)),
+		max_(float(rect.right_), float(rect.bottom_))
 	{
 	}
 

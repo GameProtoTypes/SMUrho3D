@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,7 +44,7 @@ class SceneTab : public Tab
     URHO3D_OBJECT(SceneTab, Tab);
 public:
     /// Construct.
-    explicit SceneTab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot_ position);
+    explicit SceneTab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot position);
     /// Destruct.
     ~SceneTab() override;
     /// Render inspector window.
@@ -56,9 +56,9 @@ public:
     /// Called on every frame when tab is active.
     void OnActiveUpdate() override;
     /// Save project data to xml.
-    void SaveProject(XMLElement& scene) override;
+    void SaveProject(JSONValue& tab) override;
     /// Load project data from xml.
-    void LoadProject(XMLElement& scene) override;
+    void LoadProject(const JSONValue& scene) override;
     /// Load scene from xml or json file.
     void LoadResource(const String& resourcePath) override;
     /// Save scene to a resource file.
@@ -75,8 +75,6 @@ public:
     bool IsSelected(Node* node) const;
     /// Return list of selected nodes.
     const Vector<WeakPtr<Node>>& GetSelection() const;
-    /// Clearing cached paths forces choosing a file name next time scene is saved.
-    void ClearCachedPaths();
     /// Removes component if it was selected in inspector, otherwise removes selected scene nodes.
     void RemoveSelection();
     /// Return scene view.
@@ -111,6 +109,9 @@ protected:
     void OnComponentAdded(VariantMap& args);
     /// Removes extra editor objects that were used for representing some components.
     void OnComponentRemoved(VariantMap& args);
+
+
+    void OnEditorUserCodeReLoadStart(StringHash event, VariantMap& data);
 
     /// Scene renderer.
     SceneView view_;

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,8 +45,12 @@ class GeneratePInvokePass : public CppApiPass
     static std::string ToPInvokeType(const cppast::cpp_type& type, bool disallowReferences=false);
 
 protected:
+    void WriteMarshalAttributeReturn(const cppast::cpp_type& type);
+    static std::string GetCustomMarshaller(const cppast::cpp_type& type);
+
     CSharpPrinter printer_;
     DiscoverInterfacesPass* discoverInterfacesPass_ = nullptr;
+    std::string dllImport_;
 };
 
 }

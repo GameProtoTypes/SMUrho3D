@@ -8,9 +8,9 @@ target_compile_definitions(easy_profiler PRIVATE
 
 )
 target_compile_definitions(easy_profiler
+    PRIVATE -D_BUILD_PROFILER=1
     PUBLIC
         -DBUILD_WITH_EASY_PROFILER=1
-        -DEASY_PROFILER_STATIC=1
         -DEASY_PROFILER_VERSION_MAJOR=${EASY_PROGRAM_VERSION_MAJOR}
         -DEASY_PROFILER_VERSION_MINOR=${EASY_PROGRAM_VERSION_MINOR}
         -DEASY_PROFILER_VERSION_PATCH=${EASY_PROGRAM_VERSION_PATCH}
@@ -31,6 +31,10 @@ target_compile_definitions(easy_profiler
 #        -DEASY_PROFILER_API_DISABLED=1
 )
 
+if (NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(easy_profiler PUBLIC -DEASY_PROFILER_STATIC=1)
+endif ()
+
 if (UNIX)
     target_compile_options(easy_profiler PRIVATE -Wall -Wno-long-long -Wno-reorder -Wno-braced-scalar-init -pedantic -O3)
     if (NOT ANDROID)
@@ -43,7 +47,7 @@ endif ()
 
 if (MINGW)
     target_compile_definitions(easy_profiler PRIVATE -DSTRSAFE_NO_DEPRECATE)
-    target_compile_options(easy_profiler PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++11>)
+    target_compile_options(easy_profiler PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++${CMAKE_CXX_STANDARD}>)
 endif ()
 
 # If we're on MSVC, we need a /MD version of the easy profiler library to link with Qt
@@ -55,3 +59,5 @@ if (MSVC AND Qt5Widgets_FOUND)
     endforeach()
     target_compile_options(easy_profiler_md PUBLIC $<$<CONFIG:Debug>:/MDd> $<$<NOT:$<CONFIG:Debug>>:/MD>)
 endif ()
+
+install (DIRECTORY include/ DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR}/ FILES_MATCHING PATTERN *.h)

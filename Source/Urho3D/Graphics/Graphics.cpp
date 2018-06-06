@@ -181,7 +181,7 @@ IntVector2 Graphics::GetWindowPosition() const
 int Graphics::GetWidth(bool devicePixels) const
 {
 	if (!devicePixels)
-		return width_ * pixelToDevicePixelRatio_;
+		return int(width_ * pixelToDevicePixelRatio_);
 	else
 		return width_;
 }
@@ -189,7 +189,7 @@ int Graphics::GetWidth(bool devicePixels) const
 int Graphics::GetHeight(bool devicePixels) const
 {
 	if (!devicePixels)
-		return height_ * pixelToDevicePixelRatio_;
+		return int(height_ * pixelToDevicePixelRatio_);
 	else
 		return height_;
 }
@@ -197,7 +197,7 @@ int Graphics::GetHeight(bool devicePixels) const
 IntVector2 Graphics::GetSize(bool devicePixels) const
 {
 	if(!devicePixels)
-		return IntVector2(width_ * pixelToDevicePixelRatio_, height_ * pixelToDevicePixelRatio_);
+		return IntVector2(int(width_ * pixelToDevicePixelRatio_), int(height_ * pixelToDevicePixelRatio_));
 	else
 		return IntVector2(width_, height_);
 }
@@ -311,7 +311,7 @@ void Graphics::EndDumpShaders()
 
 void Graphics::PrecacheShaders(Deserializer& source)
 {
-    URHO3D_PROFILE(PrecacheShaders);
+    URHO3D_PROFILE("PrecacheShaders");
 
     ShaderPrecache::LoadShaders(this, source);
 }

@@ -199,13 +199,13 @@ void CrowdAgent::UpdateParameters(unsigned scope)
             switch (navQuality_)
             {
             case NAVIGATIONQUALITY_LOW:
-                params.updateFlags = 0
+                params.updateFlags = 0u
                                      | DT_CROWD_OPTIMIZE_VIS
                                      | DT_CROWD_ANTICIPATE_TURNS;
                 break;
 
             case NAVIGATIONQUALITY_MEDIUM:
-                params.updateFlags = 0
+                params.updateFlags = 0u
                                      | DT_CROWD_OPTIMIZE_TOPO
                                      | DT_CROWD_OPTIMIZE_VIS
                                      | DT_CROWD_ANTICIPATE_TURNS
@@ -213,7 +213,7 @@ void CrowdAgent::UpdateParameters(unsigned scope)
                 break;
 
             case NAVIGATIONQUALITY_HIGH:
-                params.updateFlags = 0
+                params.updateFlags = 0u
                                      // Path finding
                                      | DT_CROWD_OPTIMIZE_TOPO
                                      | DT_CROWD_OPTIMIZE_VIS
@@ -274,7 +274,7 @@ int CrowdAgent::AddAgentToCrowd(bool force)
 
     if (force || !IsInCrowd())
     {
-        URHO3D_PROFILE(AddAgentToCrowd);
+        URHO3D_PROFILE("AddAgentToCrowd");
 
         agentCrowdId_ = crowdManager_->AddAgent(this, node_->GetWorldPosition());
         if (agentCrowdId_ == -1)

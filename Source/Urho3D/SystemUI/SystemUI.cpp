@@ -43,6 +43,9 @@ using namespace std::placeholders;
 namespace Urho3D
 {
 
+static Vector3 systemUiScale{Vector3::ONE};
+static Vector3 systemUiScalePixelPerfect{Vector3::ONE};
+
 SystemUI::SystemUI(Urho3D::Context* context)
 	: Object(context)
 	, vertexBuffer_(context)
@@ -73,7 +76,7 @@ SystemUI::SystemUI(Urho3D::Context* context)
 
 	io.UserData = this;
 
-	SetScale();
+    SetScale(Vector3::ZERO, false);
 
 	SubscribeToEvent(E_APPLICATIONSTARTED, [&](StringHash, VariantMap&) {
 		if (io.Fonts->Fonts.empty())
@@ -103,7 +106,7 @@ SystemUI::SystemUI(Urho3D::Context* context)
 
 void SystemUI::HandleEndRender(StringHash event, VariantMap& data)
 {
-    URHO3D_PROFILE(SystemUIRender);
+    URHO3D_PROFILE("SystemUIRender");
 	ImGui::Render();
 }
 
@@ -306,8 +309,14 @@ void SystemUI::OnRenderDrawLists(ImDrawData* data)
     graphics->SetScissorTest(false);
 }
 
-ImFont* SystemUI::AddFont(const String& fontPath, const unsigned short* ranges, float size, bool merge)
+ImFont* SystemUI::AddFont(const String& fontPath, const PODVector<unsigned short>& ranges, float size, bool merge)
 {
+    if (!ranges.Empty() && ranges.Back() != 0)
+    {
+        URHO3D_LOGWARNING("SystemUI: List of font ranges must be terminated with a zero.");
+        return nullptr;
+    }
+
     auto io = ImGui::GetIO();
 
     fontSizes_.Push(size);
@@ -331,19 +340,14 @@ ImFont* SystemUI::AddFont(const String& fontPath, const unsigned short* ranges, 
         cfg.MergeMode = merge;
         cfg.FontDataOwnedByAtlas = false;
         cfg.PixelSnapH = true;
-        if (auto newFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(&data.Front(), bytesLen, size, &cfg, ranges))
+        if (auto newFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(&data.Front(), bytesLen, size, &cfg,
+            ranges.Empty() ? nullptr : &ranges.Front()))
         {
             ReallocateFontTexture();
             return newFont;
         }
     }
     return nullptr;
-}
-
-ImFont* SystemUI::AddFont(const Urho3D::String& fontPath, const std::initializer_list<unsigned short>& ranges,
-    float size, bool merge)
-{
-    return AddFont(fontPath, ranges.size() ? &*ranges.begin() : nullptr, size, merge);
 }
 
 void SystemUI::ReallocateFontTexture()
@@ -381,7 +385,7 @@ void SystemUI::SetZoom(float zoom)
     UpdateProjectionMatrix();
 }
 
-void SystemUI::SetScale(Vector3 scale)
+void SystemUI::SetScale(Vector3 scale, bool pixelPerfect)
 {
     auto& io = ui::GetIO();
     auto& style = ui::GetStyle();
@@ -394,6 +398,17 @@ void SystemUI::SetScale(Vector3 scale)
         URHO3D_LOGWARNING("SystemUI failed to set font scaling, DPI unknown.");
         return;
     }
+
+    systemUiScalePixelPerfect = {
+        static_cast<float>(ClosestPowerOfTwo(static_cast<unsigned>(scale.x_))),
+        static_cast<float>(ClosestPowerOfTwo(static_cast<unsigned>(scale.y_))),
+        static_cast<float>(ClosestPowerOfTwo(static_cast<unsigned>(scale.z_)))
+    };
+
+    if (pixelPerfect)
+        scale = systemUiScalePixelPerfect;
+
+    systemUiScale = scale;
 
     io.DisplayFramebufferScale = {scale.x_, scale.y_};
     fontScale_ = scale.z_;
@@ -504,4 +519,94 @@ const Urho3D::Variant& ImGui::AcceptDragDropVariant(const char* type, ImGuiDragD
         return systemUI->GetContext()->GetGlobalVar(Urho3D::ToString("SystemUI_Drag&Drop_%s", type));
     }
     return Urho3D::Variant::EMPTY;
+}
+
+float ImGui::dpx(float x)
+{
+    return x * Urho3D::systemUiScale.x_;
+}
+
+float ImGui::dpy(float y)
+{
+    return y * Urho3D::systemUiScale.y_;
+}
+
+float ImGui::dp(float z)
+{
+    return z * Urho3D::systemUiScale.z_;
+}
+
+float ImGui::pdpx(float x)
+{
+    return x * Urho3D::systemUiScalePixelPerfect.x_;
+}
+
+float ImGui::pdpy(float y)
+{
+    return y * Urho3D::systemUiScalePixelPerfect.y_;
+}
+
+float ImGui::pdp(float z)
+{
+    return z * Urho3D::systemUiScalePixelPerfect.z_;
+}
+
+float ImGui::litterals::operator "" _dpx(long double x)
+{
+    return x * Urho3D::systemUiScale.x_;
+}
+
+float ImGui::litterals::operator "" _dpx(unsigned long long x)
+{
+    return x * Urho3D::systemUiScale.x_;
+}
+
+float ImGui::litterals::operator "" _dpy(long double y)
+{
+    return y * Urho3D::systemUiScale.y_;
+}
+
+float ImGui::litterals::operator "" _dpy(unsigned long long y)
+{
+    return y * Urho3D::systemUiScale.y_;
+}
+
+float ImGui::litterals::operator "" _dp(long double z)
+{
+    return z * Urho3D::systemUiScale.z_;
+}
+
+float ImGui::litterals::operator "" _dp(unsigned long long z)
+{
+    return z * Urho3D::systemUiScale.z_;
+}
+
+float ImGui::litterals::operator "" _pdpx(long double x)
+{
+    return x * Urho3D::systemUiScalePixelPerfect.x_;
+}
+
+float ImGui::litterals::operator "" _pdpx(unsigned long long x)
+{
+    return x * Urho3D::systemUiScalePixelPerfect.x_;
+}
+
+float ImGui::litterals::operator "" _pdpy(long double y)
+{
+    return y * Urho3D::systemUiScalePixelPerfect.y_;
+}
+
+float ImGui::litterals::operator "" _pdpy(unsigned long long y)
+{
+    return y * Urho3D::systemUiScalePixelPerfect.y_;
+}
+
+float ImGui::litterals::operator "" _pdp(long double z)
+{
+    return z * Urho3D::systemUiScalePixelPerfect.z_;
+}
+
+float ImGui::litterals::operator "" _pdp(unsigned long long z)
+{
+    return z * Urho3D::systemUiScalePixelPerfect.z_;
 }

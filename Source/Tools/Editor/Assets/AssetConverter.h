@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,12 +40,14 @@ public:
     /// rulesFile is resource name or full path to xml file defining asset conversion rules.
     explicit AssetConverter(Context* context);
 
+    /// Set cache path. Converted assets will be placed there.
+    void SetCachePath(const String& cachePath);
+    /// Returns asset cache path.
+    String GetCachePath() const;
     /// Watch directory for changed assets and automatically convert them.
     void AddAssetDirectory(const String& path);
     /// Stop watching directory for changed assets.
     void RemoveAssetDirectory(const String& path);
-    /// Returns asset cache path.
-    String GetCachePath();
     /// Request checking of all assets and convert out of date assets.
     void VerifyCacheAsync();
     /// Request conversion of single asset.
@@ -64,11 +66,15 @@ protected:
     void DispatchChangedAssets();
     /// Inserts various variables to values specified in rules file.
     void InsertVariables(const String& resourceName, String& value);
+    /// Handle console commands.
+    void OnConsoleCommand(VariantMap& args);
 
     /// List of file watchers responsible for watching game data folders for asset changes.
     Vector<SharedPtr<FileWatcher>> watchers_;
     /// Timer used for delaying out of date asset checks.
     Timer checkTimer_;
+    /// Absolute path to asset cache.
+    String cachePath_;
 };
 
 }

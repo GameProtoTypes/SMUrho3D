@@ -95,7 +95,7 @@ if (APPLE)
     list (APPEND SOURCE_FILES IO/MacFileWatcher.m)
 endif ()
 
-set (THIRD_PARTY_DEPENDENCIES FreeType JO LZ4 PugiXml rapidjson SDL StanHull STB IconFontCppHeaders Civetweb kNet ik Detour DetourCrowd DetourTileCache Recast Box2D WebP Bullet newton-dynamics easy_profiler imgui ImGuizmo LibCpuId GLEW MojoShader fcontext cr)
+set (THIRD_PARTY_DEPENDENCIES FreeType JO LZ4 PugiXml rapidjson SDL StanHull STB IconFontCppHeaders Civetweb kNet ik Detour DetourCrowd DetourTileCache Recast Box2D WebP Bullet newton-dynamics easy_profiler imgui ImGuizmo LibCpuId GLEW MojoShader fcontext cr nativefiledialog yaml-cpp)
 foreach (dep ${THIRD_PARTY_DEPENDENCIES})
     if (TARGET "${dep}")
         get_target_property(_TARGET_TYPE ${dep} TYPE)
@@ -159,12 +159,6 @@ if (URHO3D_TASKS)
     endif ()
 endif ()
 
-if (DESKTOP AND NOT APPLE)    # cr.h does not support MacOS yet.
-    target_compile_definitions(Urho3D PUBLIC -DURHO3D_PLUGINS=1)
-else ()
-    target_compile_definitions(Urho3D PUBLIC -DURHO3D_PLUGINS=0)
-endif ()
-
 if (WIN32)
     target_link_libraries(Urho3D winmm user32 gdi32 winmm imm32 ole32 oleaut32 version uuid)
     if (URHO3D_MINIDUMPS)
@@ -215,7 +209,7 @@ if (BUILD_SHARED_LIBS OR EMSCRIPTEN)
     # Also add export flags of third party libraries. They are required because those are OBJECT libraries and Urho3D
     # should not try to import from them as if they were DLLs.
     target_compile_definitions(Urho3D
-        PRIVATE -D_EXPORTS -DLZ4_DLL_EXPORT=1 -DCIVETWEB_DLL_EXPORTS
+        PRIVATE -D_EXPORTS -DLZ4_DLL_EXPORT=1 -DCIVETWEB_DLL_EXPORTS -D_BUILD_PROFILER
         PUBLIC  -D_IMPORTS -DLZ4_DLL_IMPORT=1 -DCIVETWEB_DLL_IMPORTS
     )
 else ()
@@ -224,18 +218,23 @@ endif ()
 
 # CSharp support
 if (URHO3D_CSHARP)
-    get_target_property(SOURCE_DIR Urho3D SOURCE_DIR)
-    get_filename_component(SOURCE_DIR ${SOURCE_DIR} DIRECTORY)
-    if (BUILD_SHARED_LIBS)
-        set (CSHARP_BUILD_TYPE INTERNAL)
-    else ()
-        set (CSHARP_BUILD_TYPE EXTERNAL)
+    if (URHO3D_WITH_MONO)
         find_package(Mono REQUIRED)
         target_include_directories(Urho3D PRIVATE ${MONO_INCLUDE_DIRS})
         target_link_libraries(Urho3D ${MONO_LIBRARIES})
         target_compile_options(Urho3D PRIVATE ${MONO_CFLAGS})
+        if (MSVC)
+            set (MONO_RUNTIME_SHARED ${MONO_PATH}/bin/mono-2.0-sgen.dll)
+            if (NOT $ENV{APPVEYOR})
+                # TODO: Fails on appveyor for no reason. Repeating command succeeds. WTF?
+                add_custom_command (TARGET Urho3D POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${MONO_RUNTIME_SHARED} ${CMAKE_BINARY_DIR}/bin/$<CONFIG>/
+                    )
+            endif ()
+            install (FILES ${MONO_RUNTIME_SHARED} DESTINATION ${DEST_BIN_DIR})
+        endif ()
     endif ()
-    csharp_bind_target(TARGET Urho3D SOURCE_DIR ${SOURCE_DIR} ${CSHARP_BUILD_TYPE})
+    csharp_bind_target(TARGET Urho3D)
 endif ()
 
 # SDK installation
@@ -301,13 +300,9 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Urho3DAll.h.in ${CMAKE_CURRENT_BINAR
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/Urho3DAll.h DESTINATION ${DEST_INCLUDE_DIR})
 
 # Generate import/export header with engine configuration defines
-get_property(URHO3D_ENGINE_CONFIG TARGET Urho3D PROPERTY COMPILE_DEFINITIONS)
+get_property(URHO3D_ENGINE_CONFIG TARGET Urho3D PROPERTY INTERFACE_COMPILE_DEFINITIONS)
 list (REMOVE_ITEM URHO3D_ENGINE_CONFIG URHO3D_64BIT URHO3D_SSE URHO3D_IS_BUILDING)
-foreach (def ${URHO3D_ENGINE_CONFIG})
-    if (NOT "${def}" MATCHES "^URHO3D_.*" AND NOT "${def}" MATCHES "^IK_.*" AND NOT "${def}" MATCHES "^IMGUI_.*")
-        list (REMOVE_ITEM URHO3D_ENGINE_CONFIG "${def}")
-    endif ()
-endforeach ()
+list (REMOVE_DUPLICATES URHO3D_ENGINE_CONFIG)
 list (APPEND URHO3D_ENGINE_CONFIG "")   # For last item to be processed correctly.
 # Give defines without value a value "1".
 string (REGEX REPLACE "(^|;)([a-zA-Z0-9_]+);" "\\1\\2=1;" URHO3D_ENGINE_CONFIG "${URHO3D_ENGINE_CONFIG}")

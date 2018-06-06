@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,13 @@
 #include <fmt/format.h>
 #include <tinydir.h>
 #if _WIN32
+#   include <windows.h>
+#   include <sys/utime.h>
 #   include <direct.h>
+#else
+#   include <utime.h>
 #endif
+
 #include "Utilities.h"
 #include "GeneratorContext.h"
 
@@ -168,14 +173,6 @@ bool IsVoid(const cppast::cpp_type* type)
     return type == nullptr || IsVoid(*type);
 }
 
-std::string EnsureNotKeyword(const std::string& value)
-{
-    // TODO: Refactor this
-    if (value == "object" || value == "params")
-        return value + "_";
-    return value;
-}
-
 std::string MapParameterList(std::vector<std::shared_ptr<MetaEntity>>& parameters,
     const std::function<std::string(MetaEntity*)>& callable)
 {
@@ -191,12 +188,13 @@ std::string ParameterList(const CppParameters& params,
     std::vector<std::string> parts;
     for (const auto& param : params)
     {
+        auto* metaParam = static_cast<MetaEntity*>(param.user_data());
         std::string typeString;
         if (typeToString)
             typeString = typeToString(param.type());
         else
             typeString = cppast::to_string(param.type());
-        typeString += " " + EnsureNotKeyword(param.name());
+        typeString += " " + metaParam->name_;
         parts.emplace_back(typeString);
     }
     return str::join(parts, ", ");
@@ -208,7 +206,8 @@ std::string ParameterNameList(const CppParameters& params,
     std::vector<std::string> parts;
     for (const auto& param : params)
     {
-        auto name = EnsureNotKeyword(param.name());
+        auto* metaParam = static_cast<MetaEntity*>(param.user_data());
+        auto name = metaParam->name_;
         if (nameFilter)
             name = nameFilter(param);
         parts.emplace_back(name);
@@ -305,7 +304,7 @@ void IncludedChecker::Load(const rapidjson::Value& rules)
         excludes_.emplace_back(WildcardToRegex(it->GetString()));
 }
 
-bool IncludedChecker::IsIncluded(const std::string& value)
+bool IncludedChecker::IsIncluded(const std::string& value) const
 {
     // Verify item is included
     bool match = false;
@@ -498,6 +497,15 @@ std::string PrimitiveToPInvokeType(cppast::cpp_builtin_type_kind kind)
     case cppast::cpp_char32: assert(false);
     case cppast::cpp_nullptr: return "IntPtr";
     }
+    return "";
+}
+
+bool IsBuiltinPInvokeType(const std::string& type)
+{
+    static std::vector<std::string> types{
+        "void", "bool", "byte", "ushort", "uint", "ulong", "short", "int", "long", "float", "double", "char"
+    };
+    return std::find(types.begin(), types.end(), type) != types.end();
 }
 
 std::string BuiltinToPInvokeType(const cppast::cpp_type& type)
@@ -630,6 +638,9 @@ std::string CamelCaseIdentifier(const std::string& name)
 
 bool IsOutType(const cppast::cpp_type& type)
 {
+    if (IsConst(type))
+        return false;
+
     if (type.kind() == cppast::cpp_type_kind::reference_t || type.kind() == cppast::cpp_type_kind::pointer_t)
     {
         const auto& pointee = type.kind() == cppast::cpp_type_kind::pointer_t ?
@@ -644,8 +655,15 @@ bool IsOutType(const cppast::cpp_type& type)
         // A pointer to builtin is (almost) definitely output parameter. In some cases (like when pointer to builtin
         // type means a location within array) c++ code should be tweaked to better reflect intent of parameter or c++
         // function should be ignored completely.
-        if (nonCvPointee.kind() == cppast::cpp_type_kind::builtin_t && type.kind() == cppast::cpp_type_kind::reference_t)
+        if (nonCvPointee.kind() == cppast::cpp_type_kind::builtin_t)
+        {
+            auto typeKind = dynamic_cast<const cppast::cpp_builtin_type&>(nonCvPointee).builtin_type_kind();
+            if (typeKind == cppast::cpp_builtin_type_kind::cpp_void ||  // IntPtr type
+                typeKind == cppast::cpp_builtin_type_kind::cpp_schar ||
+                typeKind == cppast::cpp_builtin_type_kind::cpp_uchar)
+                return false;
             return true;
+        }
 
         // Any type mapped to a value type (like std::string mapped to System.String) are output parameters.
         auto* map = generator->GetTypeMap(type);
@@ -698,7 +716,7 @@ bool IsPointer(const cppast::cpp_type& type)
 
 bool IsExported(const cppast::cpp_class& cls)
 {
-    if (generator->isStatic_)
+    if (generator->currentModule_->isStatic_)
         // Binding static library. All symbols are always visible.
         return true;
 
@@ -796,6 +814,70 @@ void CreateDirsRecursive(const std::string& path)
     }
 }
 
+unsigned GetLastModifiedTime(const std::string& fileName)
+{
+    if (fileName.empty())
+        return 0;
+
+#ifdef _WIN32
+    struct _stat st;
+    if (!_stat(fileName.c_str(), &st))
+        return (unsigned)st.st_mtime;
+    else
+        return 0;
+#else
+    struct stat st{};
+    if (!stat(fileName.c_str(), &st))
+        return (unsigned)st.st_mtime;
+    else
+        return 0;
+#endif
+}
+
+bool SetLastModifiedTime(const std::string& fileName, unsigned newTime)
+{
+    if (fileName.empty())
+        return false;
+
+#ifdef _WIN32
+    struct _stat oldTime;
+    struct _utimbuf newTimes;
+    if (_stat(fileName.c_str(), &oldTime) != 0)
+        return false;
+    newTimes.actime = oldTime.st_atime;
+    newTimes.modtime = newTime;
+    return _utime(fileName.c_str(), newTime == 0 ? nullptr : &newTimes) == 0;
+#else
+    struct stat oldTime{};
+    struct utimbuf newTimes{};
+    if (stat(fileName.c_str(), &oldTime) != 0)
+        return false;
+    newTimes.actime = oldTime.st_atime;
+    newTimes.modtime = newTime;
+    return utime(fileName.c_str(), newTime == 0 ? nullptr : &newTimes) == 0;
+#endif
+}
+
+unsigned GetFileSize(const std::string& fileName)
+{
+    if (fileName.empty())
+        return 0;
+
+#ifdef _WIN32
+    struct _stat st;
+    if (!_stat(fileName.c_str(), &st))
+        return (unsigned)st.st_size;
+    else
+        return 0;
+#else
+    struct stat st {};
+    if (!stat(fileName.c_str(), &st))
+        return (unsigned)st.st_size;
+    else
+        return 0;
+#endif
+}
+
 }
 
 namespace str
@@ -891,6 +973,61 @@ std::string AddTrailingSlash(const std::string& str)
     if (str.back() != '/')
         return str + "/";
     return str;
+}
+
+bool is_numeric(const std::string& str)
+{
+    for (char c : str)
+    {
+        if (!isdigit(c))
+            return false;
+    }
+    return true;
+}
+
+bool starts_with(const std::string& str, const char* fragment)
+{
+    return str.find(fragment) == 0;
+}
+
+bool ends_with(const std::string& str, const char* fragment)
+{
+    return str.rfind(fragment) == str.length() - strlen(fragment);
+}
+
+bool is_hex(const std::string& str)
+{
+    auto it = str.begin();
+    if (starts_with(str, "0x"))
+        it += 2;
+
+    if (it == str.end())
+        return false;
+
+    while (it != str.end())
+    {
+        char c = *it;
+        if (!(c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f'))
+            return false;
+        it++;
+    }
+
+    return true;
+}
+
+}
+
+namespace cppast
+{
+
+std::string to_string(const cppast::cpp_expression& expr)
+{
+    if (expr.kind() == cppast::cpp_expression_kind::literal_t)
+        return dynamic_cast<const cppast::cpp_literal_expression&>(expr).value();
+    else if (expr.kind() == cppast::cpp_expression_kind::unexposed_t)
+        return dynamic_cast<const cppast::cpp_unexposed_expression&>(expr).expression().as_string();
+    else
+        assert(false);
 }
 
 }

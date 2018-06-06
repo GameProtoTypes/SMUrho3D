@@ -34,15 +34,19 @@ DebugCameraController::DebugCameraController(Context* context)
 void DebugCameraController::Start()
 {
     // Add a head-light so we can view even unlit objects.
-    light_ = GetNode()->CreateComponent<Light>();
+    light_ = GetNode()->GetOrCreateComponent<Light>(LOCAL);
+    light_->SetTemporary(true);
     light_->SetColor(Color::WHITE);
     light_->SetLightType(LIGHT_DIRECTIONAL);
 }
 
 void DebugCameraController::Stop()
 {
-    light_->Remove();
-    light_ = nullptr;
+    if (!light_.Expired())
+    {
+        light_->Remove();
+        light_ = nullptr;
+    }
 }
 
 void DebugCameraController::Update(float timeStep)
@@ -77,7 +81,7 @@ void DebugCameraController::Update(float timeStep)
             input->SetMouseVisible(false);
 
         auto yaw = GetNode()->GetRotation().EulerAngles().x_;
-        if (yaw > -90.f && yaw < 90.f || yaw <= -90.f && delta.y_ > 0 || yaw >= 90.f && delta.y_ < 0)
+        if ((yaw > -90.f && yaw < 90.f) || (yaw <= -90.f && delta.y_ > 0) || (yaw >= 90.f && delta.y_ < 0))
             GetNode()->RotateAround(Vector3::ZERO, Quaternion(mouseSensitivity_ * delta.y_, Vector3::RIGHT), TS_LOCAL);
         GetNode()->RotateAround(GetNode()->GetPosition(), Quaternion(mouseSensitivity_ * delta.x_, Vector3::UP), TS_WORLD);
     }

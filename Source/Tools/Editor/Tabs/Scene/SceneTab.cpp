@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,12 +32,13 @@
 #include "Widgets.h"
 #include "SceneSettings.h"
 #include <ImGui/imgui_internal.h>
+#include "Urho3D/Misc/FreeFunctions.h"
 
 
 namespace Urho3D
 {
 
-SceneTab::SceneTab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot_ position)
+SceneTab::SceneTab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot position)
     : Tab(context, id, afterDockName, position)
     , view_(context, {0, 0, 1024, 768})
     , gizmo_(context)
@@ -57,16 +58,15 @@ SceneTab::SceneTab(Context* context, StringHash id, const String& afterDockName,
     // On plugin code reload all scene state is serialized, plugin library is reloaded and scene state is unserialized.
     // This way scene recreates all plugin-provided components on reload and gets to use new versions of them.
     SubscribeToEvent(E_EDITORUSERCODERELOADSTART, [&](StringHash, VariantMap&) {
+        undo_.SetTrackingEnabled(false);
         Pause();
         SceneStateSave();
-        for (auto node : GetScene()->GetChildren(true))
-        {
-            if (!node->HasTag("__EDITOR_OBJECT__"))
-                node->Remove();
-        }
+        GetScene()->RemoveAllChildren();
+        GetScene()->RemoveAllComponents();
     });
     SubscribeToEvent(E_EDITORUSERCODERELOADEND, [&](StringHash, VariantMap&) {
         SceneStateRestore(sceneState_);
+        undo_.SetTrackingEnabled(true);
     });
     SubscribeToEvent(GetScene(), E_COMPONENTADDED, std::bind(&SceneTab::OnComponentAdded, this, _2));
     SubscribeToEvent(GetScene(), E_COMPONENTREMOVED, std::bind(&SceneTab::OnComponentRemoved, this, _2));
@@ -263,8 +263,11 @@ bool SceneTab::SaveResource(const String& resourcePath)
 
 void SceneTab::CreateObjects()
 {
+    auto isTracking = undo_.IsTrackingEnabled();
+    undo_.SetTrackingEnabled(false);
     view_.CreateObjects();
-    view_.GetCamera()->GetNode()->CreateComponent<DebugCameraController>();
+    view_.GetCamera()->GetNode()->GetOrCreateComponent<DebugCameraController>();
+    undo_.SetTrackingEnabled(isTracking);
 }
 
 void SceneTab::Select(Node* node)
@@ -272,7 +275,7 @@ void SceneTab::Select(Node* node)
     if (gizmo_.Select(node))
     {
         using namespace EditorSelectionChanged;
-        SendEvent(E_EDITORSELECTIONCHANGED, P_SCENETAB, this);
+        SendEvent(E_EDITORSELECTIONCHANGED, P_SCENE, GetScene());
     }
 }
 
@@ -281,7 +284,7 @@ void SceneTab::Unselect(Node* node)
     if (gizmo_.Unselect(node))
     {
         using namespace EditorSelectionChanged;
-        SendEvent(E_EDITORSELECTIONCHANGED, P_SCENETAB, this);
+        SendEvent(E_EDITORSELECTIONCHANGED, P_SCENE, GetScene());
     }
 }
 
@@ -289,7 +292,7 @@ void SceneTab::ToggleSelection(Node* node)
 {
     gizmo_.ToggleSelection(node);
     using namespace EditorSelectionChanged;
-    SendEvent(E_EDITORSELECTIONCHANGED, P_SCENETAB, this);
+    SendEvent(E_EDITORSELECTIONCHANGED, P_SCENE, GetScene());
 }
 
 void SceneTab::UnselectAll()
@@ -297,7 +300,7 @@ void SceneTab::UnselectAll()
     if (gizmo_.UnselectAll())
     {
         using namespace EditorSelectionChanged;
-        SendEvent(E_EDITORSELECTIONCHANGED, P_SCENETAB, this);
+        SendEvent(E_EDITORSELECTIONCHANGED, P_SCENE, GetScene());
     }
 }
 
@@ -356,6 +359,8 @@ void SceneTab::RenderToolbarButtons()
         else
             Play();
     }
+
+    SendEvent(E_EDITORTOOLBARBUTTONS);
 
     ui::NewLine();
     style.FrameRounding = oldRounding;
@@ -504,49 +509,45 @@ void SceneTab::RenderNodeTree(Node* node)
         ui::PopID();
 }
 
-void SceneTab::LoadProject(XMLElement& scene)
+void SceneTab::LoadProject(const JSONValue& scene)
 {
-    id_ = StringHash(ToUInt(scene.GetAttribute("id"), 16));
-    LoadResource(scene.GetAttribute("path"));
+    undo_.Clear();
+    auto isTracking = undo_.IsTrackingEnabled();
+    undo_.SetTrackingEnabled(false);
 
-    auto camera = scene.GetChild("camera");
-    if (camera.NotNull())
+    id_ = StringHash(ToUInt(scene["id"].GetString(), 16));
+    LoadResource(scene["path"].GetString());
+
+    const auto& camera = scene["camera"];
+    if (camera.IsObject())
     {
         Node* cameraNode = view_.GetCamera()->GetNode();
-        if (auto position = camera.GetChild("position"))
-            cameraNode->SetPosition(position.GetVariant().GetVector3());
-        if (auto rotation = camera.GetChild("rotation"))
-            cameraNode->SetRotation(rotation.GetVariant().GetQuaternion());
-        if (auto light = camera.GetChild("light"))
-            cameraNode->GetComponent<Light>()->SetEnabled(light.GetVariant().GetBool());
+        cameraNode->SetPosition(camera["position"].GetVariant().GetVector3());
+        cameraNode->SetRotation(camera["rotation"].GetVariant().GetQuaternion());
+        if (auto* lightComponent = cameraNode->GetComponent<Light>())
+            lightComponent->SetEnabled(camera["light"].GetBool());
     }
 
-    settings_->LoadProject(scene);
-    effectSettings_->LoadProject(scene);
+    settings_->LoadProject(scene["settings"]);
+    effectSettings_->LoadProject(scene["effects"]);
 
-    undo_.Clear();
+    undo_.SetTrackingEnabled(isTracking);
 }
 
-void SceneTab::SaveProject(XMLElement& scene)
+void SceneTab::SaveProject(JSONValue& tab)
 {
-    scene.SetAttribute("type", "scene");
-    scene.SetAttribute("id", id_.ToString().CString());
-    scene.SetAttribute("path", path_);
+    tab["type"] = "scene";
+    tab["id"] =  id_.ToString();
+    tab["path"] = path_;
 
-    auto camera = scene.CreateChild("camera");
+    auto& camera = tab["camera"];
     Node* cameraNode = view_.GetCamera()->GetNode();
-    camera.CreateChild("position").SetVariant(cameraNode->GetPosition());
-    camera.CreateChild("rotation").SetVariant(cameraNode->GetRotation());
-    camera.CreateChild("light").SetVariant(cameraNode->GetComponent<Light>()->IsEnabled());
+    camera["position"].SetVariant(cameraNode->GetPosition());
+    camera["rotation"].SetVariant(cameraNode->GetRotation());
+    camera["light"] = cameraNode->GetComponent<Light>()->IsEnabled();
 
-    settings_->SaveProject(scene);
-    effectSettings_->SaveProject(scene);
-    Tab::SaveResource();
-}
-
-void SceneTab::ClearCachedPaths()
-{
-    path_.Clear();
+    settings_->SaveProject(tab["settings"]);
+    effectSettings_->SaveProject(tab["effects"]);
 }
 
 void SceneTab::OnActiveUpdate()
@@ -613,30 +614,43 @@ void SceneTab::SceneStateSave()
             node->AddTag("__EDITOR_SELECTED__");
     }
 
+    // Ensure that editor objects are saved.
+    PODVector<Node*> nodes;
+    GetScene()->GetNodesWithTag(nodes, "__EDITOR_OBJECT__");
+    for (auto* node : nodes)
+        node->SetTemporary(false);
+
     sceneState_.GetRoot().Remove();
     XMLElement root = sceneState_.CreateRoot("scene");
     GetScene()->SaveXML(root);
+
+    // Now that editor objects are saved make sure UI does not expose them
+    for (auto* node : nodes)
+        node->SetTemporary(true);
 }
 
 void SceneTab::SceneStateRestore(XMLFile& source)
 {
     Undo::SetTrackingScoped tracking(undo_, false);
 
-    // Migrate editor objects to a newly loaded scene without destroying them.
-    Vector<SharedPtr<Node>> temporaries;
-    for (auto& node : GetScene()->GetChildrenWithTag("__EDITOR_OBJECT__"))
-        temporaries.Push(SharedPtr<Node>(node));
-
     GetScene()->LoadXML(source.GetRoot());
 
-    for (auto& node : temporaries)
-        GetScene()->AddChild(node);
+    CreateObjects();
+
+    // Ensure that editor objects are not saved in user scene.
+    PODVector<Node*> nodes;
+    GetScene()->GetNodesWithTag(nodes, "__EDITOR_OBJECT__");
+    for (auto* node : nodes)
+        node->SetTemporary(true);
 
     source.GetRoot().Remove();
 
     gizmo_.UnselectAll();
     for (auto node : GetScene()->GetChildrenWithTag("__EDITOR_SELECTED__", true))
+    {
         gizmo_.Select(node);
+        node->RemoveTag("__EDITOR_SELECTED__");
+    }
 }
 
 void SceneTab::RenderNodeContextMenu()
@@ -662,11 +676,83 @@ void SceneTab::RenderNodeContextMenu()
                     Select(selectedNode->CreateChild(String::EMPTY, alternative ? LOCAL : REPLICATED));
             }
         }
+		if (ui::MenuItem(alternative ? "Load Child (Local)" : "Load Child"))
+		{
+			for (auto& selectedNode : GetSelection())
+			{
+                if (!selectedNode.Expired())
+                {
+                    //prompt user for path to node file.
+                    String filePath = GetNativeDialogExistingFile("", "bin;xml;json");
+                    if (GSS<FileSystem>()->FileExists(filePath))
+                    {
+                       
+                        SharedPtr<Node> loadedNode = SharedPtr<Node>(new Node(context_));
+                        SharedPtr<File> file = SharedPtr<File>(new File(context_, filePath, FILE_READ));
+                        bool loadSuccess = true;
+                        if (GetExtension(filePath) == ".xml")
+                        {
+                            SharedPtr<XMLFile> xmlFile = SharedPtr<XMLFile>(new XMLFile(context_));
+                            loadSuccess &= xmlFile->Load(*file);
+                            loadSuccess &= loadedNode->LoadXML(xmlFile->GetRoot());
+                        }
+                        else if (GetExtension(filePath) == ".json")
+                        {
+                            SharedPtr<JSONFile> xmlFile = SharedPtr<JSONFile>(new JSONFile(context_));
+                            loadSuccess &= xmlFile->Load(*file);
+                            loadSuccess &= loadedNode->LoadJSON(xmlFile->GetRoot());
+                        }
+                        else//binary
+                        {
+                            loadSuccess &= loadedNode->Load(*file);
+                        }
+                        
+                        if(loadSuccess)
+                            selectedNode->AddChild(loadedNode);
+
+                    }
+
+                }
+
+
+			}
+		}
+        if (ui::MenuItem("Save As"))
+        {
+            for (auto& selectedNode : GetSelection())
+            {
+                if (!selectedNode.Expired())
+                {
+                    //prompt user for path to node file.
+                    String filePath = GetNativeDialogSave("", "bin;xml;json");
+                    if (!filePath.Empty())
+                    {
+
+                        SharedPtr<File> file = SharedPtr<File>(new File(context_, filePath, FILE_WRITE));
+
+                        if(GetExtension(filePath) == ".bin")
+                            selectedNode->Save(*file);
+
+                        if (GetExtension(filePath) == ".xml")
+                            selectedNode->SaveXML(*file);
+
+                        if (GetExtension(filePath) == ".json")
+                            selectedNode->SaveJSON(*file);
+
+                    }
+
+                }
+
+
+            }
+        }
+
+
 
         if (ui::BeginMenu(alternative ? "Create Component (Local)" : "Create Component"))
         {
             auto* editor = GetSubsystem<Editor>();
-            auto categories = editor->GetObjectCategories();
+            auto categories = context_->GetObjectCategories().Keys();
             categories.Remove("UI");
 
             for (const String& category : categories)
@@ -730,7 +816,7 @@ void SceneTab::OnComponentAdded(VariantMap& args)
     auto* component = dynamic_cast<Component*>(args[P_COMPONENT].GetPtr());
     auto* node = dynamic_cast<Node*>(args[P_NODE].GetPtr());
 
-    if (node->IsTemporary())
+    if (node->IsTemporary() || node->HasTag("__EDITOR_OBJECT__"))
         return;
 
     auto* material = GetCache()->GetResource<Material>("Materials/Editor/DebugIcon" + component->GetTypeName() + ".xml", false);
@@ -739,26 +825,29 @@ void SceneTab::OnComponentAdded(VariantMap& args)
         if (node->GetChildrenWithTag("DebugIcon" + component->GetTypeName()).Size() > 0)
             return;
 
-        Undo::SetTrackingScoped tracking(undo_, false);
-        int count = node->GetChildrenWithTag("DebugIcon").Size();
-        node = node->CreateChild();
-        node->AddTag("DebugIcon");
-        node->AddTag("DebugIcon" + component->GetTypeName());
-        node->AddTag("__EDITOR_OBJECT__");
-        node->SetTemporary(true);
-
-        auto* billboard = node->CreateComponent<BillboardSet>();
-        billboard->SetFaceCameraMode(FaceCameraMode::FC_LOOKAT_Y);
-        billboard->SetNumBillboards(1);
-        billboard->SetMaterial(material);
-        billboard->SetViewMask(0x80000000);
-        if (auto* bb = billboard->GetBillboard(0))
+        auto iconTag = "DebugIcon" + component->GetTypeName();
+        if (node->GetChildrenWithTag(iconTag).Empty())
         {
-            bb->size_ = Vector2::ONE * 0.2f;
-            bb->enabled_ = true;
-            bb->position_ = {0, count * 0.4f, 0};
+            Undo::SetTrackingScoped tracking(undo_, false);
+            int count = node->GetChildrenWithTag("DebugIcon").Size();
+            node = node->CreateChild();
+            node->AddTag("DebugIcon");
+            node->AddTag("DebugIcon" + component->GetTypeName());
+            node->AddTag("__EDITOR_OBJECT__");
+            node->SetTemporary(true);
+
+            auto* billboard = node->CreateComponent<BillboardSet>();
+            billboard->SetFaceCameraMode(FaceCameraMode::FC_LOOKAT_Y);
+            billboard->SetNumBillboards(1);
+            billboard->SetMaterial(material);
+            if (auto* bb = billboard->GetBillboard(0))
+            {
+                bb->size_ = Vector2::ONE * 0.2f;
+                bb->enabled_ = true;
+                bb->position_ = {0, count * 0.4f, 0};
+            }
+            billboard->Commit();
         }
-        billboard->Commit();
     }
 }
 
@@ -786,6 +875,29 @@ void SceneTab::OnComponentRemoved(VariantMap& args)
             }
         }
     }
+}
+
+void SceneTab::OnEditorUserCodeReLoadStart(StringHash event, VariantMap& data)
+{
+    Pause();
+    SceneStateSave();
+    PODVector<Node*> nodes = GetScene()->GetChildren(true);
+    //copy vector to temp vector of shared pts just in case we remove a parent node in the scene in the next pass below.
+    Vector<SharedPtr<Node>> nodesSharedPtrs;
+    for (Node* node : nodes)
+    {
+        nodesSharedPtrs.Push(SharedPtr<Node>(node));
+    }
+
+    //remove what we need from the scene graph..
+    for (SharedPtr<Node> node : nodesSharedPtrs)
+    {
+        if(node.NotNull())
+            if (!node->HasTag("__EDITOR_OBJECT__"))
+                node->Remove();
+    }
+
+    //shared ptrs released so actual nodes that need released will be released at this point.
 }
 
 }

@@ -188,7 +188,7 @@ bool Engine::Initialize(const VariantMap& parameters)
     }
 #endif
 
-    URHO3D_PROFILE(InitEngine);
+    URHO3D_PROFILE("InitEngine");
 
     // Set headless mode
     headless_ = GetParameter(parameters, EP_HEADLESS, false).GetBool();
@@ -572,7 +572,7 @@ bool Engine::GetRenderIsLimited()
 
 void Engine::SetRenderFpsGoal(int fps)
 {
-	renderTimeGoalUs = (1.0f/float(fps))*1000000.0f;
+	renderTimeGoalUs = int((1.0f/float(fps))*1000000.0f);
 	updateFpsGoalTimer();
 }
 
@@ -584,7 +584,7 @@ void Engine::SetRenderTimeGoalUs(unsigned timeUs)
 
 void Engine::SetUpdateFpsGoal(unsigned fps)
 {
-	updateTimeGoalUs = (1.0f / float(fps))*1000000.0f;
+	updateTimeGoalUs = int((1.0f / float(fps))*1000000.0f);
 	updateUpdateTimeTimer();
 }
 
@@ -741,12 +741,12 @@ unsigned Engine::FreeUpdate()
 	
 	//lets compute approximate time we have until next update or render
 	{
-		unsigned updateTimeLeft = updateTimer_.GetTimeoutDuration() - updateTimer_.GetUSec(false);
-		unsigned renderTimeLeft = renderGoalTimer_.GetTimeoutDuration() - renderGoalTimer_.GetUSec(false);
+		long long updateTimeLeft = ( updateTimer_.GetTimeoutDuration() - updateTimer_.GetUSec(false));
+        long long renderTimeLeft = (renderGoalTimer_.GetTimeoutDuration() - renderGoalTimer_.GetUSec(false));
 
-		unsigned timeLeftUS = Urho3D::Min(updateTimeLeft, renderTimeLeft);
+        long long timeLeftUS = Urho3D::Min(updateTimeLeft, renderTimeLeft);
 		if (timeLeftUS > 0)
-			return timeLeftUS;
+			return unsigned(timeLeftUS);
 		else
 			return 0;
 	}
@@ -759,7 +759,7 @@ unsigned Engine::FreeUpdate()
 
 void Engine::Update()
 {
-    URHO3D_PROFILE(Update);
+    URHO3D_PROFILE("Update");
 
 	//compute times
 	updateTick_++;
@@ -794,7 +794,7 @@ void Engine::Render()
     if (headless_)
         return;
 
-    URHO3D_PROFILE(Render);
+    URHO3D_PROFILE("Render");
 
 
     // If device is lost, BeginFrame will fail and we skip rendering
@@ -851,8 +851,8 @@ VariantMap Engine::ParseParameters(const Vector<String>& arguments)
     {
         if (arguments[i].Length() > 1 && arguments[i][0] == '-')
         {
-            String argument = arguments[i].Substring(1).ToLower();
-            String value = i + 1 < arguments.Size() ? arguments[i + 1] : String::EMPTY;
+            auto argument = arguments[i].Substring(1).ToLower();
+            const auto& value = i + 1 < arguments.Size() ? arguments[i + 1] : String::EMPTY;
 
             if (argument == "headless")
                 ret[EP_HEADLESS] = true;

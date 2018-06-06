@@ -257,7 +257,7 @@ Graphics::~Graphics()
 bool Graphics::SetMode(int width, int height, bool fullscreen, bool borderless, bool resizable, float pixelRatio, bool vsync,
     bool tripleBuffer, int multiSample, int monitor, int refreshRate)
 {
-    URHO3D_PROFILE(SetScreenMode);
+    URHO3D_PROFILE("SetScreenMode");
 
     bool maximize = false;
 
@@ -569,7 +569,7 @@ void Graphics::Close()
 
 bool Graphics::TakeScreenShot(Image& destImage)
 {
-    URHO3D_PROFILE(TakeScreenShot);
+    URHO3D_PROFILE("TakeScreenShot");
 
     if (!IsInitialized())
         return false;
@@ -640,7 +640,7 @@ void Graphics::EndFrame()
     if (!IsInitialized())
         return;
 
-    URHO3D_PROFILE(Present);
+    URHO3D_PROFILE("Present");
 
     SendEvent(E_ENDRENDERING);
 
@@ -707,7 +707,7 @@ bool Graphics::ResolveToTexture(Texture2D* destination, const IntRect& viewport)
     if (!destination || !destination->GetRenderSurface())
         return false;
 
-    URHO3D_PROFILE(ResolveToTexture);
+    URHO3D_PROFILE("ResolveToTexture");
 
     IntRect vpCopy = viewport;
     if (vpCopy.right_ <= vpCopy.left_)
@@ -739,7 +739,7 @@ bool Graphics::ResolveToTexture(Texture2D* texture)
     if (!surface || !surface->GetRenderBuffer())
         return false;
 
-    URHO3D_PROFILE(ResolveToTexture);
+    URHO3D_PROFILE("ResolveToTexture");
 
     texture->SetResolveDirty(false);
     surface->SetResolveDirty(false);
@@ -790,7 +790,7 @@ bool Graphics::ResolveToTexture(TextureCube* texture)
     if (!texture)
         return false;
 
-    URHO3D_PROFILE(ResolveToTexture);
+    URHO3D_PROFILE("ResolveToTexture");
 
     texture->SetResolveDirty(false);
 
@@ -1032,7 +1032,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
     {
         if (vs->GetCompilerOutput().Empty())
         {
-            URHO3D_PROFILE(CompileVertexShader);
+            URHO3D_PROFILE("CompileVertexShader");
 
             bool success = vs->Create();
             if (success)
@@ -1051,7 +1051,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
     {
         if (ps->GetCompilerOutput().Empty())
         {
-            URHO3D_PROFILE(CompilePixelShader);
+            URHO3D_PROFILE("CompilePixelShader");
 
             bool success = ps->Create();
             if (success)
@@ -1098,7 +1098,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
         else
         {
             // Link a new combination
-            URHO3D_PROFILE(LinkShaders);
+            URHO3D_PROFILE("LinkShaders");
 
             SharedPtr<ShaderProgram> newProgram(new ShaderProgram(this, vs, ps));
             if (newProgram->Link())
@@ -1701,8 +1701,8 @@ void Graphics::SetDepthStencil(RenderSurface* depthStencil)
         // Check size similarly
         if (width <= width_ && height <= height_)
         {
-            int searchKey = (width << 16) | height;
-            HashMap<int, SharedPtr<Texture2D> >::Iterator i = impl_->depthTextures_.Find(searchKey);
+            unsigned searchKey = (width << 16u) | height;
+            HashMap<unsigned, SharedPtr<Texture2D> >::Iterator i = impl_->depthTextures_.Find(searchKey);
             if (i != impl_->depthTextures_.End())
                 depthStencil = i->second_->GetRenderSurface();
             else
@@ -2344,7 +2344,7 @@ ConstantBuffer* Graphics::GetOrCreateConstantBuffer(ShaderType /*type*/,  unsign
     // Note: shaderType parameter is not used on OpenGL, instead binding index should already use the PS range
     // for PS constant buffers
 
-    unsigned key = (index << 16) | size;
+    unsigned key = (index << 16u) | size;
     HashMap<unsigned, SharedPtr<ConstantBuffer> >::Iterator i = impl_->allConstantBuffers_.Find(key);
     if (i == impl_->allConstantBuffers_.End())
     {
@@ -2461,7 +2461,7 @@ void Graphics::Restore()
                 if ( allver < 101004 ) // Mesa drivers less than this version cause linux display artifacts
                 {                      // so remove this context and let it fall back to GL2
                     SDL_GL_DeleteContext(impl_->context_);
-                    impl_->context_ = NULL;
+                    impl_->context_ = nullptr;
                     URHO3D_LOGINFOF ( "Mesa GL Driver: %s detected, forcing GL2 context creation.  Please use gl2 command line option to avoid this warning.", driverx.CString() );
                 }
             }
@@ -2920,8 +2920,7 @@ void Graphics::PrepareDraw()
         else if (depthStencil_)
             format = depthStencil_->GetParentTexture()->GetFormat();
 
-        unsigned long long fboKey = (rtSize.x_ << 16 | rtSize.y_) | (((unsigned long long)format) << 32);
-
+        auto fboKey = (unsigned long long)format << 32u | rtSize.x_ << 16u | rtSize.y_;
         HashMap<unsigned long long, FrameBufferObject>::Iterator i = impl_->frameBuffers_.Find(fboKey);
         if (i == impl_->frameBuffers_.End())
         {
@@ -2949,7 +2948,7 @@ void Graphics::PrepareDraw()
         for (unsigned j = 0; j < MAX_RENDERTARGETS; ++j)
         {
             if (renderTargets_[j])
-                newDrawBuffers |= 1 << j;
+                newDrawBuffers |= 1u << j;
         }
 
         if (newDrawBuffers != i->second_.drawBuffers_)
@@ -3111,7 +3110,7 @@ void Graphics::PrepareDraw()
                 if (k != impl_->vertexAttributes_->End())
                 {
                     unsigned location = k->second_;
-                    unsigned locationMask = 1 << location;
+                    unsigned locationMask = 1u << location;
                     if (assignedLocations & locationMask)
                         continue; // Already assigned by higher index vertex buffer
                     assignedLocations |= locationMask;
@@ -3156,10 +3155,10 @@ void Graphics::PrepareDraw()
         unsigned location = 0;
         while (disableVertexAttributes)
         {
-            if (disableVertexAttributes & 1)
+            if (disableVertexAttributes & 1u)
             {
                 glDisableVertexAttribArray(location);
-                impl_->enabledVertexAttributes_ &= ~(1 << location);
+                impl_->enabledVertexAttributes_ &= ~(1u << location);
             }
             ++location;
             disableVertexAttributes >>= 1;
@@ -3187,11 +3186,10 @@ void Graphics::CleanupFramebuffers()
             DeleteFramebuffer(impl_->resolveDestFBO_);
     }
     else
-    {
         impl_->boundFBO_ = 0;
-        impl_->resolveSrcFBO_ = 0;
-        impl_->resolveDestFBO_ = 0;
-    }
+
+    impl_->resolveSrcFBO_ = 0;
+    impl_->resolveDestFBO_ = 0;
 
     impl_->frameBuffers_.Clear();
 }

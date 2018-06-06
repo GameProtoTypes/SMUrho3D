@@ -10,6 +10,7 @@
 #include "../Scene/Node.h"
 #include "../IO/FileSystem.h"
 #include "../Resource/ResourceCache.h"
+#include "../nativefiledialog/src/include/nfd.h"
 
 namespace Urho3D {
 	/// holds generic static functions that belong in the global namespace.  This class can be thought of as a temprorary holding space for generic functions that need a context.
@@ -37,8 +38,19 @@ namespace Urho3D {
 	void URHO3D_API PrintRayQueryResults(PODVector<RayQueryResult>& results);
 	void URHO3D_API PrintVariantMap(VariantMap& map);
 
-    //print all attributes from serializable into a string.
+	//print all attributes from serializable into a string.
 	String URHO3D_API AttributeInfoString(Serializable& serializable);
 
 
+
+}
+
+
+namespace Urho3D {
+
+	String URHO3D_API GetNativeDialogSave(String startDirectory, const String& fileFilter);
+
+	String URHO3D_API GetNativeDialogExistingDir(String startDirectory);
+
+	String URHO3D_API GetNativeDialogExistingFile(String startDirectory, const String& fileFilter);
 }

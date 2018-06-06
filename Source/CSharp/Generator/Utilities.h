@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,8 +56,6 @@ std::string Sanitize(const std::string& value);
 /// Returns true if type is void.
 bool IsVoid(const cppast::cpp_type& type);
 bool IsVoid(const cppast::cpp_type* type);
-/// Returns string padded with _ if value is a common keyword in programming languages.
-std::string EnsureNotKeyword(const std::string& value);
 /// Return a base type (discards const/pointers/references).
 const cppast::cpp_type& GetBaseType(const cppast::cpp_type& type);
 /// Return name of underlying type.
@@ -72,7 +70,7 @@ public:
     /// Initialize with XMLElement that consists of <include> and <exclude> children tags with wildcards as their values.
     void Load(const rapidjson::Value& rules);
     /// Verify string is matched by include rules and not matched by exclude rules.
-    bool IsIncluded(const std::string& value);
+    bool IsIncluded(const std::string& value) const;
 
 protected:
     std::vector<std::regex> includes_;
@@ -131,6 +129,8 @@ bool IsStatic(const cppast::cpp_entity& entity);
 std::string PrimitiveToPInvokeType(cppast::cpp_builtin_type_kind kind);
 /// Converts a builtin type to pinvoke-compatible type.
 std::string BuiltinToPInvokeType(const cppast::cpp_type& type);
+/// Returns true if string with type name is bultin C# type.
+bool IsBuiltinPInvokeType(const std::string& type);
 /// Convert string representation of c++ builtin type to type kind. void_t on error.
 cppast::cpp_builtin_type_kind PrimitiveToCppType(const std::string& type);
 /// Convert type to pinvoke-compatible type.
@@ -152,6 +152,9 @@ enum ScanDirectoryFlags
 bool ScanDirectory(const std::string& directoryPath, std::vector<std::string>& result, int flags,
                    const std::string& relativeTo="");
 void CreateDirsRecursive(const std::string& path);
+unsigned GetLastModifiedTime(const std::string& fileName);
+bool SetLastModifiedTime(const std::string& fileName, unsigned newTime);
+unsigned GetFileSize(const std::string& fileName);
 
 }
 
@@ -167,6 +170,10 @@ std::vector<std::string> split(const std::string& value, const std::string& sepa
 void rtrim(std::string &s);
 std::vector<std::string> SplitName(const std::string& name);
 std::string AddTrailingSlash(const std::string& str);
+bool is_numeric(const std::string& str);
+bool is_hex(const std::string& str);
+bool starts_with(const std::string& str, const char* fragment);
+bool ends_with(const std::string& str, const char* fragment);
 
 }
 
@@ -194,5 +201,12 @@ bool contains(const std::vector<Value>& container, const Value& value)
 {
     return std::find(container.begin(), container.end(), value) != container.end();
 };
+
+}
+
+namespace cppast
+{
+
+std::string to_string(const cppast::cpp_expression& expr);
 
 }

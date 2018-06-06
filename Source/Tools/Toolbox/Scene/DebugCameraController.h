@@ -22,6 +22,7 @@
 #pragma once
 
 
+#include "Toolbox.h"
 #include <Urho3D/Scene/Node.h>
 #include <Urho3D/Scene/LogicComponent.h>
 #include <Urho3D/Graphics/Light.h>
@@ -32,7 +33,7 @@
 namespace Urho3D
 {
 
-class DebugCameraController : public LogicComponent
+class URHO3D_TOOLBOX_API DebugCameraController : public LogicComponent
 {
     URHO3D_OBJECT(DebugCameraController, LogicComponent);
 public:
@@ -51,7 +52,7 @@ protected:
     /// Current mouse sensitivity.
     float mouseSensitivity_ = 0.1f;
     /// Light which is attached to camera in order to make lit objects visible.
-    SharedPtr<Light> light_;
+    WeakPtr<Light> light_;
 };
 
 };

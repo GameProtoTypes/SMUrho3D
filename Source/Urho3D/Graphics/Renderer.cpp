@@ -647,7 +647,7 @@ unsigned Renderer::GetNumOccluders(bool allViews) const
 
 void Renderer::Update(float timeStep)
 {
-    URHO3D_PROFILE(UpdateViews);
+    URHO3D_PROFILE("UpdateViews");
 
     views_.Clear();
     preparedViews_.Clear();
@@ -658,7 +658,7 @@ void Renderer::Update(float timeStep)
         return;
 
     // Set up the frameinfo structure for this frame
-    frame_.frameNumber_ = GetSubsystem<Engine>()->GetRenderCount();
+    frame_.frameNumber_ = unsigned( GetSubsystem<Engine>()->GetRenderCount() );
     frame_.timeStep_ = timeStep;
     frame_.camera_ = nullptr;
     numShadowCameras_ = 0;
@@ -695,7 +695,7 @@ void Renderer::Render()
     // Engine does not render when window is closed or device is lost
     assert(graphics_ && graphics_->IsInitialized() && !graphics_->IsDeviceLost());
 
-    URHO3D_PROFILE(RenderViews);
+    URHO3D_PROFILE("RenderViews");
 
     // If the indirection textures have lost content (OpenGL mode only), restore them now
     if (faceSelectCubeMap_ && faceSelectCubeMap_->IsDataLost())
@@ -749,7 +749,7 @@ void Renderer::Render()
 
 void Renderer::DrawDebugGeometry(bool depthTest)
 {
-    URHO3D_PROFILE(RendererDrawDebug);
+    URHO3D_PROFILE("RendererDrawDebug");
 
     /// \todo Because debug geometry is per-scene, if two cameras show views of the same area, occlusion is not shown correctly
     HashSet<Drawable*> processedGeometries;
@@ -890,7 +890,7 @@ Texture2D* Renderer::GetShadowMap(Light* light, Camera* camera, unsigned viewWid
         height *= 3;
     }
 
-    int searchKey = (width << 16) | height;
+    int searchKey = width << 16u | height;
     if (shadowMaps_.Contains(searchKey))
     {
         // If shadow maps are reused, always return the first
@@ -1011,19 +1011,19 @@ Texture* Renderer::GetScreenBuffer(int width, int height, unsigned format, int m
     if (multiSample == 1)
         autoResolve = false;
 
-    long long searchKey = ((long long)format << 32) | (multiSample << 24) | (width << 12) | height;
+    auto searchKey = (unsigned long long)format << 32u | multiSample << 24u | width << 12u | height;
     if (filtered)
-        searchKey |= 0x8000000000000000LL;
+        searchKey |= 0x8000000000000000ULL;
     if (srgb)
-        searchKey |= 0x4000000000000000LL;
+        searchKey |= 0x4000000000000000ULL;
     if (cubemap)
-        searchKey |= 0x2000000000000000LL;
+        searchKey |= 0x2000000000000000ULL;
     if (autoResolve)
-        searchKey |= 0x1000000000000000LL;
+        searchKey |= 0x1000000000000000ULL;
 
     // Add persistent key if defined
     if (persistentKey)
-        searchKey += ((long long)persistentKey << 32);
+        searchKey += (unsigned long long)persistentKey << 32u;
 
     // If new size or format, initialize the allocation stats
     if (screenBuffers_.Find(searchKey) == screenBuffers_.End())
@@ -1542,9 +1542,9 @@ void Renderer::RemoveUnusedBuffers()
         }
     }
 
-    for (HashMap<long long, Vector<SharedPtr<Texture> > >::Iterator i = screenBuffers_.Begin(); i != screenBuffers_.End();)
+    for (HashMap<unsigned long long, Vector<SharedPtr<Texture> > >::Iterator i = screenBuffers_.Begin(); i != screenBuffers_.End();)
     {
-        HashMap<long long, Vector<SharedPtr<Texture> > >::Iterator current = i++;
+        HashMap<unsigned long long, Vector<SharedPtr<Texture> > >::Iterator current = i++;
         Vector<SharedPtr<Texture> >& buffers = current->second_;
         for (unsigned j = buffers.Size() - 1; j < buffers.Size(); --j)
         {
@@ -1572,7 +1572,7 @@ void Renderer::ResetShadowMapAllocations()
 
 void Renderer::ResetScreenBufferAllocations()
 {
-    for (HashMap<long long, unsigned>::Iterator i = screenBufferAllocations_.Begin(); i != screenBufferAllocations_.End(); ++i)
+    for (HashMap<unsigned long long, unsigned>::Iterator i = screenBufferAllocations_.Begin(); i != screenBufferAllocations_.End(); ++i)
         i->second_ = 0;
 }
 
@@ -1584,7 +1584,7 @@ void Renderer::Initialize()
     if (!graphics || !graphics->IsInitialized() || !cache)
         return;
 
-    URHO3D_PROFILE(InitRenderer);
+    URHO3D_PROFILE("InitRenderer");
 
     graphics_ = graphics;
 
@@ -1620,7 +1620,7 @@ void Renderer::LoadShaders()
 
     // Release old material shaders, mark them for reload
     ReleaseMaterialShaders();
-    shadersChangedFrameNumber_ = GetSubsystem<Engine>()->GetRenderCount();
+    shadersChangedFrameNumber_ = unsigned( GetSubsystem<Engine>()->GetRenderCount());
 
     // Construct new names for deferred light volume pixel shaders based on rendering options
     deferredLightPSVariations_.Resize(MAX_DEFERRED_LIGHT_PS_VARIATIONS);
@@ -1639,7 +1639,7 @@ void Renderer::LoadShaders()
 
 void Renderer::LoadPassShaders(Pass* pass, Vector<SharedPtr<ShaderVariation> >& vertexShaders, Vector<SharedPtr<ShaderVariation> >& pixelShaders, const BatchQueue& queue)
 {
-    URHO3D_PROFILE(LoadPassShaders);
+    URHO3D_PROFILE("LoadPassShaders");
 
     // Forget all the old shaders
     vertexShaders.Clear();
@@ -1848,7 +1848,7 @@ void Renderer::SetIndirectionTextureData()
 
     for (unsigned i = 0; i < MAX_CUBEMAP_FACES; ++i)
     {
-        auto faceX = (unsigned char)((i & 1) * 255);
+        auto faceX = (unsigned char)((i & 1u) * 255);
         auto faceY = (unsigned char)((i / 2) * 255 / 3);
         unsigned char* dest = data;
         for (unsigned y = 0; y < 256; ++y)

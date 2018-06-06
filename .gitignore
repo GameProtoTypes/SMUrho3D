@@ -106,3 +106,5 @@ configure*
 *.bak
 Thumbs.db
 .*
+*.DotSettings
+*.DotSettings.user

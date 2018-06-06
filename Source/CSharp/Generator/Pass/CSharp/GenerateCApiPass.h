@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -48,11 +48,8 @@ protected:
     void PrintParameterHandlingCodePre(const std::vector<std::shared_ptr<MetaEntity>>& parameters);
     void PrintParameterHandlingCodePost(const std::vector<std::shared_ptr<MetaEntity>>& parameters);
     std::string GetAutoType(const cppast::cpp_type& type);
-    std::string GetMonoInternalCallClassName(MetaEntity* cls);
-    void RegisterMonoInternalCall(MetaEntity* cls, const std::string& function);
 
     CSharpPrinter printer_;
-    CSharpPrinter printerInternalCalls_;
     std::vector<std::string> usedNames_;
 };
 

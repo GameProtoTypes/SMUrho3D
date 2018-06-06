@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #pragma once
 
 
+#include "Toolbox.h"
 #include <Urho3D/Scene/Node.h>
 #include <ImGui/imgui.h>
 
@@ -41,7 +42,7 @@ enum GizmoOperation
     GIZMOOP_MAX
 };
 
-class Gizmo : public Object
+class URHO3D_TOOLBOX_API Gizmo : public Object
 {
     URHO3D_OBJECT(Gizmo, Object);
 public:

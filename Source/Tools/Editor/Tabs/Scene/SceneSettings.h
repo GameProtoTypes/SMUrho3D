@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,9 +40,9 @@ public:
     /// Construct
     explicit SceneSettings(Context* context);
     /// Save settings into project file.
-    void SaveProject(XMLElement scene);
+    void SaveProject(JSONValue& settings);
     /// Load settings from a project file.
-    void LoadProject(const XMLElement& scene);
+    void LoadProject(const JSONValue& settings);
     /// Register object with engine.
     static void RegisterObject(Context* context);
 
@@ -60,9 +60,9 @@ public:
     /// This method should be called before rendering attributes. It handles rebuilding of attribute cache.
     void Prepare(bool force=false);
     /// Save settings into project file.
-    void SaveProject(XMLElement scene);
+    void SaveProject(JSONValue& effects);
     /// Load settings from a project file.
-    void LoadProject(const XMLElement& scene);
+    void LoadProject(const JSONValue& effects);
     /// Returns custom list of attributes that are different per instance.
     const Vector<AttributeInfo>* GetAttributes() const override;
 

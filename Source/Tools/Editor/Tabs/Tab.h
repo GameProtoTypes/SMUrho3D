@@ -1,5 +1,6 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
+// Copyright (c) 2017 Eugene Kozlov
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +42,7 @@ class Tab : public Object
     URHO3D_OBJECT(Tab, Object);
 public:
     /// Construct.
-    explicit Tab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot_ position);
+    explicit Tab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot position);
     /// Render scene hierarchy window.
     virtual void RenderNodeTree() = 0;
     /// Render inspector window.
@@ -55,9 +56,9 @@ public:
     /// Render scene window.
     virtual bool RenderWindow();
     /// Save project data to xml.
-    virtual void SaveProject(XMLElement& tab) { }
+    virtual void SaveProject(JSONValue& tab) { }
     /// Load project data from xml.
-    virtual void LoadProject(XMLElement& tab) { }
+    virtual void LoadProject(const JSONValue& tab) { }
     /// Load a file from resource path.
     virtual void LoadResource(const String& resourcePath) { }
     /// Save tab contents to a resource file.
@@ -98,7 +99,7 @@ protected:
     /// Name of sibling dock for initial placement.
     String placeAfter_;
     /// Position where this scene view should be docked initially.
-    ui::DockSlot_ placePosition_;
+    ui::DockSlot placePosition_;
     /// Last known mouse position when it was visible.
     IntVector2 lastMousePosition_;
 };

@@ -307,19 +307,14 @@ void Object::SendEvent(StringHash eventType, VariantMap& eventData)
         return;
 
 #if URHO3D_PROFILING
-    ProfilerBlockStatus blockStatus = ProfilerBlockStatus::OFF;
-    String eventName;
+    auto blockStatus = ::profiler::EasyBlockStatus::OFF;
+    const auto& eventName = GetEventNameRegister().GetString(eventType);
     if (auto profiler = GetSubsystem<Profiler>())
     {
         if (profiler->GetEventProfilingEnabled())
-        {
-            blockStatus = ProfilerBlockStatus::ON;
-            eventName = EventNameRegistrar::GetEventName(eventType);
-            if (eventName.Empty())
-                eventName = eventType.ToString();
-        }
+            blockStatus = ::profiler::EasyBlockStatus::ON;
     }
-    URHO3D_PROFILE_SCOPED(eventName.CString(), PROFILER_COLOR_EVENTS, blockStatus);
+    URHO3D_PROFILE(eventName.CString(), PROFILER_COLOR_EVENTS, blockStatus);
 #endif
 
     // Make a weak pointer to self to check for destruction during event handling
@@ -547,23 +542,10 @@ void Object::RemoveEventSender(Object* sender)
     }
 }
 
-Urho3D::StringHash EventNameRegistrar::RegisterEventName(const char* eventName)
+StringHashRegister& GetEventNameRegister()
 {
-    StringHash id(eventName);
-    GetEventNameMap()[id] = eventName;
-    return id;
-}
-
-const String& EventNameRegistrar::GetEventName(StringHash eventID)
-{
-    HashMap<StringHash, String>::ConstIterator it = GetEventNameMap().Find(eventID);
-    return  it != GetEventNameMap().End() ? it->second_ : String::EMPTY ;
-}
-
-HashMap<StringHash, String>& EventNameRegistrar::GetEventNameMap()
-{
-    static HashMap<StringHash, String> eventNames_;
-    return eventNames_;
+    static StringHashRegister eventNameRegister(false /*non thread safe*/);
+    return eventNameRegister;
 }
 
 void Object::SendEvent(StringHash eventType, const VariantMap& eventData)

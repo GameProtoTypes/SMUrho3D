@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,17 +27,20 @@
 #include "Pass/BuildMetaAST.h"
 #include "Pass/UnknownTypesPass.h"
 #include "Pass/CSharp/Urho3DTypeMaps.h"
-#include "Pass/CSharp/Urho3DEventsPass.h"
+#include "Pass/CSharp/Urho3DCustomPassEarly.h"
 #include "Pass/CSharp/MoveGlobalsPass.h"
 #include "Pass/CSharp/ConvertToPropertiesPass.h"
 #include "Pass/CSharp/ImplementInterfacesPass.h"
-#include "Pass/CSharp/Urho3DCustomPass.h"
+#include "Pass/CSharp/FixDefaultValuesPass.h"
 #include "Pass/CSharp/GenerateClassWrappers.h"
+#include <Pass/CSharp/OverrideConstantsPass.h>
 #include "Pass/CSharp/GenerateCApiPass.h"
 #include "Pass/CSharp/RenameMembersPass.h"
+#include "Pass/CSharp/Urho3DCustomPass.h"
 #include "Pass/CSharp/GeneratePInvokePass.h"
 #include "Pass/CSharp/GenerateCSharpApiPass.h"
 #include <spdlog/spdlog.h>
+
 
 namespace Urho3D
 {
@@ -51,26 +54,48 @@ using namespace Urho3D;
 
 int main(int argc, char* argv[])
 {
-    std::string rulesFile;
-    std::string sourceDir;
-    std::string outputDirCpp;
-    std::string outputDirCs;
-    std::vector<std::string> includes;
-    std::vector<std::string> defines;
-    std::vector<std::string> options;
+    struct CommandLineOptions
+    {
+        bool isStatic_;
+        std::string publicKey_;
+        std::string library_;
+        std::string rulesFile;
+        std::string sourceDir;
+        std::string outputDirCpp;
+        std::vector<std::string> includes;
+        std::vector<std::string> defines;
+        std::vector<std::string> options;
+    };
 
     generator = new GeneratorContext();
 
     CLI::App app{"CSharp bindings generator"};
 
-    app.add_flag("--static", generator->isStatic_, "Generate bindings for static library.");
-    app.add_option("-I", includes, "Target include paths.");
-    app.add_option("-D", defines, "Target preprocessor definitions.");
-    app.add_option("-O", options, "Target compiler options.");
+    const size_t maxModules = 16;
+    app.require_subcommand(1, maxModules);
+    CommandLineOptions options[maxModules];
 
-    app.add_option("rules", rulesFile, "Path to rules json file")->required()->check(CLI::ExistingFile);
-    app.add_option("source", sourceDir, "Path to source directory")->required()->check(CLI::ExistingDirectory);
-    app.add_option("output", outputDirCpp, "Path to output directory")->required();
+    for (auto i = 0; i < maxModules; i++)
+    {
+        auto* bindApp = app.add_subcommand(fmt::format("bind{}", i), "Generate module bindings");
+
+        bindApp->add_flag("--static", options[i].isStatic_, "Generate bindings for static library.");
+        bindApp->add_option("--signed-with", options[i].publicKey_);
+        bindApp->add_option("-I", options[i].includes, "Target include paths.");
+        bindApp->add_option("-D", options[i].defines, "Target preprocessor definitions.");
+        bindApp->add_option("-O", options[i].options, "Target compiler options.");
+
+        bindApp->add_option("library", options[i].library_, "Native librayr name")->required();
+        bindApp->add_option("rules", options[i].rulesFile, "Path to rules json file")->required()->check(CLI::ExistingFile);
+        bindApp->add_option("source", options[i].sourceDir, "Path to source directory")->required()->check(CLI::ExistingDirectory);
+        bindApp->add_option("output", options[i].outputDirCpp, "Path to output directory")->required();
+
+        bindApp->set_callback([i, &options]() {
+            auto& opt = options[i];
+            generator->AddModule(opt.library_, opt.isStatic_, opt.publicKey_, opt.sourceDir, opt.outputDirCpp,
+                                 opt.includes, opt.defines, opt.options, opt.rulesFile);
+        });
+    }
 
     std::vector<std::string> cmdLines;
     do
@@ -108,29 +133,8 @@ int main(int argc, char* argv[])
         argc = (int)cmdLines.size();
     } while (false);
 
-    CLI11_PARSE(app, argc, argv);
-
-    sourceDir = str::AddTrailingSlash(sourceDir);
-    outputDirCs = str::AddTrailingSlash(outputDirCpp) + "CSharp/";
-    outputDirCpp = str::AddTrailingSlash(outputDirCpp) + "Native/";
-
     spdlog::set_level(spdlog::level::debug);
     spdlog::stdout_color_mt("console");
-    Urho3D::CreateDirsRecursive(outputDirCpp);
-    Urho3D::CreateDirsRecursive(outputDirCs);
-
-    // Generate bindings
-    generator->LoadCompileConfig(includes, defines, options);
-#if _WIN32
-    generator->config_.set_flags(cppast::cpp_standard::cpp_14, {
-        cppast::compile_flag::ms_compatibility | cppast::compile_flag::ms_extensions
-    });
-#else
-    generator->config_.set_flags(cppast::cpp_standard::cpp_11, {cppast::compile_flag::gnu_extensions});
-#endif
-
-    generator->LoadRules(rulesFile);
-    generator->ParseFiles(sourceDir);
 
     generator->AddCppPass<BuildMetaAST>();
     generator->AddApiPass<Urho3DTypeMaps>();
@@ -138,14 +142,19 @@ int main(int argc, char* argv[])
     generator->AddApiPass<DiscoverInterfacesPass>();
     generator->AddApiPass<ImplementInterfacesPass>();
     generator->AddApiPass<GenerateClassWrappers>();
-    generator->AddApiPass<Urho3DEventsPass>();
+    generator->AddApiPass<OverrideConstantsPass>();
+    generator->AddApiPass<Urho3DCustomPassEarly>();
     generator->AddApiPass<MoveGlobalsPass>();
     generator->AddApiPass<GenerateCApiPass>();
     generator->AddApiPass<RenameMembersPass>();
-    generator->AddApiPass<Urho3DCustomPass>();
+    generator->AddApiPass<FixDefaultValuesPass>();
+    generator->AddApiPass<Urho3DCustomPassLate>();
     generator->AddApiPass<GeneratePInvokePass>();
     generator->AddApiPass<ConvertToPropertiesPass>();
     generator->AddApiPass<GenerateCSharpApiPass>();
 
-    generator->Generate(outputDirCpp, outputDirCs);
+    CLI11_PARSE(app, argc, argv);
+
+    if (generator->IsOutOfDate(argv[0]))
+        generator->Generate();
 }

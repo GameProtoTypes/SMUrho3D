@@ -1,0 +1,22 @@
+{
+  "module": "Toolbox",
+  "managed_assembly": "Urho3DNet.Toolbox",
+  "namespace": "Urho3D.Toolbox",
+  "namespaces": {
+    "Urho3D": {
+      "parse": {
+        "SystemUI": {
+          "include": [
+            "ImGuiDock.h"
+          ]
+        }
+      },
+      "symbols": {
+        "include": [
+          "ImGui",
+          "ImGui::*"
+        ]
+      },
+    }
+  }
+}

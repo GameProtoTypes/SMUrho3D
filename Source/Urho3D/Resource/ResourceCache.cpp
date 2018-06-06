@@ -37,6 +37,7 @@
 #include "../Resource/ResourceCache.h"
 #include "../Resource/ResourceEvents.h"
 #include "../Resource/XMLFile.h"
+#include "../Resource/YAMLFile.h"
 
 #include "../DebugNew.h"
 
@@ -157,7 +158,7 @@ bool ResourceCache::AddPackageFile(PackageFile* package, unsigned priority)
 bool ResourceCache::AddPackageFile(const String& fileName, unsigned priority)
 {
     SharedPtr<PackageFile> package(new PackageFile(context_));
-    return package->Open(fileName) && AddPackageFile(package);
+    return package->Open(fileName) && AddPackageFile(package, priority);
 }
 
 bool ResourceCache::AddManualResource(Resource* resource)
@@ -1095,7 +1096,7 @@ void ResourceCache::HandleUpdate(StringHash eventType, VariantMap& eventData)
     // Check for background loaded resources that can be finished
 #ifdef URHO3D_THREADING
     {
-        URHO3D_PROFILE(FinishBackgroundResources);
+        URHO3D_PROFILE("FinishBackgroundResources");
         backgroundLoader_->FinishResources(finishBackgroundResourcesMs_);
     }
 #endif
@@ -1140,6 +1141,7 @@ void RegisterResourceLibrary(Context* context)
     JSONFile::RegisterObject(context);
     PListFile::RegisterObject(context);
     XMLFile::RegisterObject(context);
+    YAMLFile::RegisterObject(context);
 }
 
 void ResourceCache::Scan(Vector<String>& result, const String& pathName, const String& filter, unsigned flags, bool recursive) const

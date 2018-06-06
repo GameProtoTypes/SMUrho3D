@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 #include <cppast/cpp_namespace.hpp>
 #include <cppast/cpp_template.hpp>
 #include <cppast/cpp_type.hpp>
+#include <cppast/cpp_array_type.hpp>
 #include "GeneratorContext.h"
 #include "GenerateCSharpApiPass.h"
 #include "Pass/CSharp/GeneratePInvokePass.h"
@@ -37,6 +38,7 @@ void GenerateCSharpApiPass::Start()
     printer_ << "using System;";
     printer_ << "using System.Diagnostics;";
     printer_ << "using System.Runtime.InteropServices;";
+    printer_ << "using Urho3D;";
     printer_ << "using Urho3D.CSharp;";
     printer_ << "";
 }
@@ -45,21 +47,36 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 {
     auto mapToPInvoke = [&](MetaEntity* metaParam) {
         const auto& param = metaParam->Ast<cppast::cpp_function_parameter>();
-        std::string expr;
+        std::string expr = metaParam->name_;
         if (IsComplexOutputType(param.type()))
-            return "ref " + param.name() + "Out";
-        else
-            expr = EnsureNotKeyword(param.name());
+            return fmt::format("ref {expr}Out", FMT_CAPTURE(expr));
 
         if (!IsOutType(param.type()))
         {
-            if (auto* map = generator->GetTypeMap(param.type(), false))
+            auto defaultValue = metaParam->GetDefaultValue();
+            defaultValue = ConvertDefaultValueToCS(metaParam, defaultValue, param.type(), true);
+            if (!defaultValue.empty())
             {
-                if (map->isValueType_ && map->csType_ != "string")
+                bool isNullable = false;
+                bool isArray = false;
+                if (auto* map = generator->GetTypeMap(param.type(), false))
                 {
-                    auto defaultValue = metaParam->GetDefaultValue();
-                    defaultValue = ConvertDefaultValueToCS(metaParam, defaultValue, param.type(), true);
-                    if (!defaultValue.empty())
+                    isArray = map->isArray_;
+                    if (map->isValueType_ && map->csType_ != "string")
+                        isNullable = true;
+                }
+                else
+                {
+                    auto typeName = cppast::to_string(param.type());
+                    if (typeName == "void*" || typeName == "void const*")
+                        isNullable = true;
+                }
+
+                if (isNullable)
+                {
+                    if (isArray)
+                        expr += fmt::format(" ?? {}", defaultValue);
+                    else
                         expr += fmt::format(".GetValueOrDefault({})", defaultValue);
                 }
             }
@@ -168,12 +185,12 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
                     printer_ << fmt::format("Debug.Assert(instance != IntPtr.Zero);");
                     printer_ << "NativeInstance = instance;";
                     printer_ << "OwnsNativeInstance = ownsInstance;";
-                    if (generator->inheritable_.IsIncluded(entity->uniqueName_) || IsSubclassOf(entity->Ast<cppast::cpp_class>(), "Urho3D::RefCounted"))
+                    if (generator->IsInheritable(entity->uniqueName_) || IsSubclassOf(entity->Ast<cppast::cpp_class>(), "Urho3D::RefCounted"))
                         printer_ << fmt::format("{}_setup(instance, GCHandle.ToIntPtr(GCHandle.Alloc(this)), GetType().Name);",
                             Sanitize(entity->uniqueName_));
                     printer_ << "InstanceCache.Add(this);";
 
-                    if (generator->inheritable_.IsIncluded(entity->symbolName_))
+                    if (generator->IsInheritable(entity->symbolName_))
                     {
                         for (const auto& child : entity->children_)
                         {
@@ -301,7 +318,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
     }
     else if (entity->kind_ == cppast::cpp_entity_kind::member_function_t)
     {
-        auto isFinal = !generator->inheritable_.IsIncluded(entity->GetParent()->symbolName_);
+        auto isFinal = !generator->IsInheritable(entity->GetParent()->symbolName_);
         if (isFinal && entity->access_ != cppast::cpp_public)
             return true;
 
@@ -564,7 +581,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         }
         else
         {
-            auto isFinal = !generator->inheritable_.IsIncluded(entity->GetParent()->symbolName_);
+            auto isFinal = !generator->IsInheritable(entity->GetParent()->symbolName_);
             if (isFinal && entity->access_ != cppast::cpp_public)
                 return true;
 
@@ -635,7 +652,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
 void GenerateCSharpApiPass::Stop()
 {
-    auto outputFile = generator->outputDirCs_ + "CSharp.cs";
+    auto outputFile = generator->currentModule_->outputDirCs_ + "CSharp.cs";
     std::ofstream fp(outputFile);
     if (!fp.is_open())
     {
@@ -656,8 +673,10 @@ std::string GenerateCSharpApiPass::MapToCS(const cppast::cpp_type& type, const s
 
     if (const auto* map = generator->GetTypeMap(type, false))
         return fmt::format(map->pInvokeToCSTemplate_.c_str(), fmt::arg("value", expression), FMT_CAPTURE(owns));
+    else if (type.kind() == cppast::cpp_type_kind::array_t)
+        return expression;
     else if (IsComplexType(type))
-        return fmt::format("{}.__FromPInvoke({}, {})", ToCSType(type), expression, owns);
+        return fmt::format("{}.GetManagedInstance({}, {})", ToCSType(type), expression, owns);
 
     return expression;
 }
@@ -678,17 +697,20 @@ std::string GenerateCSharpApiPass::ToCSType(const cppast::cpp_type& type, bool d
         case cppast::cpp_type_kind::pointer_t:
         case cppast::cpp_type_kind::reference_t:
         {
-            const auto& pointee = cppast::remove_cv(
-                t.kind() == cppast::cpp_type_kind::pointer_t ?
-                dynamic_cast<const cppast::cpp_pointer_type&>(t).pointee() :
-                dynamic_cast<const cppast::cpp_reference_type&>(t).referee());
+            const auto& cvPointee = t.kind() == cppast::cpp_type_kind::pointer_t ?
+                                    dynamic_cast<const cppast::cpp_pointer_type&>(t).pointee() :
+                                    dynamic_cast<const cppast::cpp_reference_type&>(t).referee();
+            const auto& pointee = cppast::remove_cv(cvPointee);
 
             if (pointee.kind() == cppast::cpp_type_kind::builtin_t)
             {
                 const auto& builtin = dynamic_cast<const cppast::cpp_builtin_type&>(pointee);
                 if (builtin.builtin_type_kind() == cppast::cpp_builtin_type_kind::cpp_char)
                     return "string";
-                if (t.kind() == cppast::cpp_type_kind::pointer_t)
+                if (builtin.builtin_type_kind() == cppast::cpp_builtin_type_kind::cpp_void ||   // Raw data
+                    builtin.builtin_type_kind() == cppast::cpp_builtin_type_kind::cpp_uchar ||  // Most likely buffers
+                    builtin.builtin_type_kind() == cppast::cpp_builtin_type_kind::cpp_schar ||  //
+                    IsConst(cvPointee))
                     return "IntPtr";
                 isRef = true;
                 return toCSType(pointee);
@@ -708,6 +730,11 @@ std::string GenerateCSharpApiPass::ToCSType(const cppast::cpp_type& type, bool d
             if (tplName == "SharedPtr" || tplName == "WeakPtr")
                 return tpl.unexposed_arguments();
             assert(false);
+        }
+        case cppast::cpp_type_kind::array_t:
+        {
+            const auto& arr = dynamic_cast<const cppast::cpp_array_type&>(t);
+            return toCSType(arr.value_type()) + "[]";
         }
         default:
             assert(false);
@@ -739,8 +766,11 @@ std::string GenerateCSharpApiPass::MapToPInvoke(const cppast::cpp_type& type, co
 {
     if (const auto* map = generator->GetTypeMap(type, false))
         return fmt::format(map->csToPInvokeTemplate_.c_str(), fmt::arg("value", expression));
+    else if (type.kind() == cppast::cpp_type_kind::array_t)
+        // Arrays are handled by custom marshaller
+        return expression;
     else if (IsComplexType(type))
-        return fmt::format("{}.__ToPInvoke({})", ToCSType(type, true), expression);
+        return fmt::format("{}.GetNativeInstance({})", ToCSType(type, true), expression);
 
     return expression;
 }
@@ -755,16 +785,18 @@ std::string GenerateCSharpApiPass::FormatCSParameterList(const std::vector<std::
         auto defaultValue = param->GetDefaultValue();
         if (IsOutType(cppType))
             defaultValue.clear();
-        else
+        else if (!defaultValue.empty())
         {
             if (auto* map = generator->GetTypeMap(cppType, false))
             {
                 // Value types are made nullable in order to allow default values.
-                if (map->isValueType_ && !defaultValue.empty() && map->csType_ != "string")
+                if (map->isValueType_ && map->csType_ != "string" && !map->isArray_)
                     csType += "?";
             }
+            else if (csType == "IntPtr")
+                csType += "?";
         }
-        result += fmt::format("{} {}", csType, EnsureNotKeyword(param->name_));
+        result += fmt::format("{} {}", csType, param->name_);
 
         if (!defaultValue.empty())
             result += "=" + ConvertDefaultValueToCS(param.get(), defaultValue, cppType, false);
@@ -781,23 +813,19 @@ std::string GenerateCSharpApiPass::ConvertDefaultValueToCS(MetaEntity* user, std
     if (value.empty())
         return value;
 
-    if (value == "nullptr")
-        return "null";
-
     if (auto* map = generator->GetTypeMap(type, false))
     {
-        if (map->csType_ == "string")
-        {
-            // String literals
-            if (value == "String::EMPTY")  // TODO: move to json?
-                value = "\"\"";
-            return value;
-        }
-        else if (map->isValueType_ && !allowComplex)
+        if (map->isValueType_ && !allowComplex)
         {
             // Value type parameters are turned to nullables when they have default values.
             return "null";
         }
+    }
+
+    if (allowComplex)
+    {
+        if (value == "null" && ToCSType(type) == "IntPtr")
+            return "IntPtr.Zero";
     }
 
     if (!allowComplex && IsComplexType(type))
@@ -807,8 +835,15 @@ std::string GenerateCSharpApiPass::ConvertDefaultValueToCS(MetaEntity* user, std
         // null.
         value = "null";
     }
-    else if (auto* constant = generator->GetEntityOfConstant(user, value))
-        value = constant->symbolName_;
+    else if (generator->GetSymbolOfConstant(user, value, value))
+    {
+    }
+    else if (value.find("SDL") == 0)
+    {
+        // TODO: Hack-fix for using SDL enum values in integer constants. Key integer constants should become an enum then this can be removed.
+        if (value.find("SDL") == 0 && user->kind_ == cppast::cpp_entity_kind::variable_t)
+            value = "(int)" + value;
+    }
     else if (value.find("::") != std::string::npos)
     {
         // TODO: enums are not renamed for now

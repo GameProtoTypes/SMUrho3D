@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ namespace Urho3D
 {
 
 
-Tab::Tab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot_ position)
+Tab::Tab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot position)
     : Object(context)
     , inspector_(context)
     , placeAfter_(afterDockName)

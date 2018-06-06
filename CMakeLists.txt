@@ -36,10 +36,13 @@ include(UrhoOptions)
 include(UrhoCommon)
 
 # Enable common build options
-set (CMAKE_CXX_STANDARD 11)
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+    set (CMAKE_CXX_STANDARD 11)
+endif ()
+
 # Workarounds
 if (EMSCRIPTEN OR APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++${CMAKE_CXX_STANDARD}")
 endif ()
 if (APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
@@ -108,6 +111,7 @@ message(STATUS "  Network         ${URHO3D_NETWORK}")
 message(STATUS "  Physics         ${URHO3D_PHYSICS}")
 message(STATUS "  Samples         ${URHO3D_SAMPLES}")
 message(STATUS "  WebP            ${URHO3D_WEBP}")
+message(STATUS "  CSharp          ${URHO3D_CSHARP}")
 if (WIN32)
     message(STATUS "  MiniDumps       ${URHO3D_MINIDUMPS}")
 endif()

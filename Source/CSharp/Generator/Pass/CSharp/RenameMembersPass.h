@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,30 @@ class RenameMembersPass : public CppApiPass
 public:
     explicit RenameMembersPass() { }
     bool Visit(MetaEntity* entity, cppast::visitor_info info) override;
+
+protected:
+    std::vector<std::string> reservedKeywords_ = {
+        "abstract", "as", "base", "bool",
+        "break", "byte", "case", "catch",
+        "har", "checked", "class", "const",
+        "continue", "decimal", "default", "delegate",
+        "do", "double", "else", "enum",
+        "event", "explicit", "extern", "false",
+        "finally", "fixed", "float", "for",
+        "foreach", "goto", "if", "implicit",
+        "in", "int", "interface", "internal",
+        "is", "lock", "long", "namespace",
+        "new", "null", "object", "operator",
+        "out", "override", "params", "private",
+        "protected", "public", "readonly", "ref",
+        "return", "sbyte", "sealed", "short",
+        "sizeof", "stackalloc", "static", "string",
+        "struct", "switch", "this", "throw",
+        "true", "try", "typeof", "uint",
+        "ulong", "unchecked", "unsafe", "ushort",
+        "using", "using static", "virtual", "void",
+        "volatile", "while"
+    };
 };
 
 }

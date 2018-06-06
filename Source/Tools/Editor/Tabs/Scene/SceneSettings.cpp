@@ -1,5 +1,6 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
+// Copyright (c) 2017 Eugene Kozlov
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,16 +34,14 @@ SceneSettings::SceneSettings(Context* context)
 {
 }
 
-void SceneSettings::SaveProject(XMLElement scene)
+void SceneSettings::SaveProject(JSONValue& settings)
 {
-    auto settings = scene.CreateChild("settings");
-    settings.CreateChild("saveElapsedTime").SetVariant(saveElapsedTime_);
+    settings["saveElapsedTime"] = saveElapsedTime_;
 }
 
-void SceneSettings::LoadProject(const XMLElement& scene)
+void SceneSettings::LoadProject(const JSONValue& settings)
 {
-    if (auto saveElapsedTime = scene.GetChild("saveElapsedTime"))
-        saveElapsedTime_ = saveElapsedTime.GetVariant().GetBool();
+    saveElapsedTime_ = settings["saveElapsedTime"].GetBool();
 }
 
 void SceneSettings::RegisterObject(Context* context)
@@ -120,8 +119,7 @@ void SceneEffects::Prepare(bool force)
                 // changed new renderpath will be written to xml. Then we load the save, which sets new renderpath to a
                 // viewport and restores postprocess effects. If this class expands you may have to split SaveProject()
                 // and LoadProject() and use only relevant subset of those routines here.
-                XMLFile file(context_);
-                XMLElement root = file.CreateRoot("scene");
+                JSONValue root;
                 SaveProject(root);
                 LoadProject(root);
 
@@ -205,7 +203,7 @@ void SceneEffects::Prepare(bool force)
                 path->SetEnabled(tag, value.GetBool());
                 rebuild_ = true;
                 using namespace EditorSceneEffectsChanged;
-                SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENETAB, tab_.Get());
+                SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENE, tab_->GetScene());
             };
             effectEnabled = tab_->GetSceneView()->GetViewport()->GetRenderPath()->IsEnabled(tag);
             URHO3D_CUSTOM_ATTRIBUTE(title.CString(), getter, setter, bool, false, AM_EDIT);
@@ -244,7 +242,7 @@ void SceneEffects::Prepare(bool force)
                 }
                 rebuild_ = true;
                 using namespace EditorSceneEffectsChanged;
-                SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENETAB, tab_.Get());
+                SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENE, tab_->GetScene());
             };
 
             // When one effect has multiple tags we assume that only one of those tags is supposed to be active during
@@ -292,7 +290,7 @@ void SceneEffects::Prepare(bool force)
                     auto path = tab_->GetSceneView()->GetViewport()->GetRenderPath();
                     path->SetShaderParameter(name, value.GetFloat());
                     using namespace EditorSceneEffectsChanged;
-                    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENETAB, tab_.Get());
+                    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENE, tab_->GetScene());
                 };
                 URHO3D_CUSTOM_ATTRIBUTE(name.CString(), getter, setter, float, 0.f, AM_EDIT);
                 SetAttribute(name, tab_->GetSceneView()->GetViewport()->GetRenderPath()->GetShaderParameter(name).GetFloat());
@@ -308,7 +306,7 @@ void SceneEffects::Prepare(bool force)
                     auto path = tab_->GetSceneView()->GetViewport()->GetRenderPath();
                     path->SetShaderParameter(name, value.GetVector2());
                     using namespace EditorSceneEffectsChanged;
-                    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENETAB, tab_.Get());
+                    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENE, tab_->GetScene());
                 };
                 URHO3D_CUSTOM_ATTRIBUTE(name.CString(), getter, setter, Vector2, Vector2::ZERO, AM_EDIT);
                 SetAttribute(name, tab_->GetSceneView()->GetViewport()->GetRenderPath()->GetShaderParameter(name).GetVector2());
@@ -324,7 +322,7 @@ void SceneEffects::Prepare(bool force)
                     auto path = tab_->GetSceneView()->GetViewport()->GetRenderPath();
                     path->SetShaderParameter(name, value.GetVector3());
                     using namespace EditorSceneEffectsChanged;
-                    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENETAB, tab_.Get());
+                    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENE, tab_->GetScene());
                 };
                 URHO3D_CUSTOM_ATTRIBUTE(name.CString(), getter, setter, Vector3, Vector3::ZERO, AM_EDIT);
                 SetAttribute(name, tab_->GetSceneView()->GetViewport()->GetRenderPath()->GetShaderParameter(name).GetVector3());
@@ -340,7 +338,7 @@ void SceneEffects::Prepare(bool force)
                     auto path = tab_->GetSceneView()->GetViewport()->GetRenderPath();
                     path->SetShaderParameter(name, value.GetVector4());
                     using namespace EditorSceneEffectsChanged;
-                    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENETAB, tab_.Get());
+                    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENE, tab_->GetScene());
                 };
                 URHO3D_CUSTOM_ATTRIBUTE(name.CString(), getter, setter, Vector4, Vector4::ZERO, AM_EDIT);
                 SetAttribute(name, tab_->GetSceneView()->GetViewport()->GetRenderPath()->GetShaderParameter(name).GetVector4());
@@ -355,9 +353,10 @@ void SceneEffects::Prepare(bool force)
     rebuild_ = false;
 }
 
-void SceneEffects::SaveProject(XMLElement scene)
+void SceneEffects::SaveProject(JSONValue& effects)
 {
-    scene.CreateChild("renderpath").SetAttribute("path", "RenderPaths/" + renderPaths_[currentRenderPath_]);
+    effects["renderpath"] = "RenderPaths/" + renderPaths_[currentRenderPath_];
+    auto& postprocesses = effects["postprocess"];
 
     RenderPath* path = tab_->GetSceneView()->GetViewport()->GetRenderPath();
     for (auto it = effects_.Begin(); it != effects_.End(); it++)
@@ -368,48 +367,50 @@ void SceneEffects::SaveProject(XMLElement scene)
             if (!path->IsEnabled(tag))
                 continue;
 
-            auto postprocess = scene.CreateChild("postprocess");
-            postprocess.SetAttribute("tag", tag);
-            postprocess.SetAttribute("path", fullPath);
+            auto postprocess = JSONValue(JSON_OBJECT);
+            postprocess["tag"] = tag;
+            postprocess["path"] = fullPath;
 
-            for (const auto& variable: it->second_.variables_)
+            if (!it->second_.variables_.Empty())
             {
-                auto var = postprocess.CreateChild(variable.first_);
-                var.SetVariant(path->GetShaderParameter(variable.first_));
+                auto& variables = postprocess["vars"];
+
+                for (const auto& variable: it->second_.variables_)
+                    variables[variable.first_].SetVariant(path->GetShaderParameter(variable.first_));
             }
+
+            postprocesses.Push(postprocess);
         }
     }
 
 }
 
-void SceneEffects::LoadProject(const XMLElement& scene)
+void SceneEffects::LoadProject(const JSONValue& effects)
 {
-    if (auto renderpath = scene.GetChild("renderpath"))
+    const auto& renderPath = effects["renderpath"].GetString();
+    String fileName = GetFileNameAndExtension(renderPath);
+    currentRenderPath_ = 0;
+    for (const auto& name: renderPaths_)
     {
-        String path = renderpath.GetAttribute("path");
-        String fileName = GetFileNameAndExtension(path);
-        currentRenderPath_ = 0;
-        for (const auto& name: renderPaths_)
-        {
-            if (name == fileName)
-                break;
-            currentRenderPath_++;
-        }
-        if (currentRenderPath_ >= renderPaths_.Size())
-        {
-            currentRenderPath_ = -1;
-            URHO3D_LOGERRORF("RenderPath %s was not found.", path.CString());
-        }
-        else
-            tab_->GetSceneView()->GetViewport()->SetRenderPath(GetCache()->GetResource<XMLFile>(path));
+        if (name == fileName)
+            break;
+        currentRenderPath_++;
     }
-
-    RenderPath* path = tab_->GetSceneView()->GetViewport()->GetRenderPath();
-    for (auto postprocess = scene.GetChild("postprocess"); postprocess.NotNull();
-        postprocess = postprocess.GetNext("postprocess"))
+    if (currentRenderPath_ >= renderPaths_.Size())
     {
-        auto effectPath = postprocess.GetAttribute("path");
-        auto tagName = postprocess.GetAttribute("tag");
+        currentRenderPath_ = -1;
+        URHO3D_LOGERRORF("RenderPath %s was not found.", renderPath.CString());
+    }
+    else
+        tab_->GetSceneView()->GetViewport()->SetRenderPath(GetCache()->GetResource<XMLFile>(renderPath));
+
+    const auto& postprocesses = effects["postprocess"];
+    RenderPath* path = tab_->GetSceneView()->GetViewport()->GetRenderPath();
+    for (auto i = 0; i < postprocesses.Size(); i++)
+    {
+        const auto& postprocess = postprocesses[i];
+        const auto& effectPath = postprocess["path"].GetString();
+        const auto& tagName = postprocess["tag"].GetString();
 
         if (!path->IsAdded(tagName))
         {
@@ -425,12 +426,13 @@ void SceneEffects::LoadProject(const XMLElement& scene)
 
         path->SetEnabled(tagName, true);
 
-        for (auto child = postprocess.GetChild(); child.NotNull(); child = child.GetNext())
-            path->SetShaderParameter(child.GetName(), child.GetVariant());
+        const auto& variables = postprocess["vars"];
+        for (auto it = variables.Begin(); it != variables.End(); it++)
+            path->SetShaderParameter(it->first_, it->second_.GetVariant());
     }
 
     using namespace EditorSceneEffectsChanged;
-    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENETAB, tab_.Get());
+    SendEvent(E_EDITORSCENEEFFECTSCHANGED, P_SCENE, tab_->GetScene());
 
     rebuild_ = true;
 }

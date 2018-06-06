@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008-2018 the Urho3D project.
+# Copyright (c) 2018 Rokas Kupstys
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,6 @@ if (NOT URHO3D_SYSTEMUI)
 endif ()
 
 file (GLOB_RECURSE SOURCE_FILES *.cpp *.h *.hpp)
-add_executable (Editor WIN32 ${SOURCE_FILES})
-target_link_libraries (Editor Toolbox Urho3D nativefiledialog)
+add_executable (Editor ${SOURCE_FILES})
+target_link_libraries (Editor Toolbox Urho3D)
 install(TARGETS Editor RUNTIME DESTINATION ${DEST_TOOLS_DIR})

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,16 @@
 #pragma once
 
 
+#include "Toolbox.h"
 #include <Urho3D/Core/Object.h>
 
 
 namespace Urho3D
 {
 
-/// Create docked resource browser window.
-bool ResourceBrowserWindow(String& selected);
+/// Create docked resource browser dock window.
+URHO3D_TOOLBOX_API bool ResourceBrowserWindow(String& selected);
+/// Create resource browser ui inside another window.
+URHO3D_TOOLBOX_API bool ResourceBrowserWidget(String& selected);
 
 }

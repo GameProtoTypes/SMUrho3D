@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -64,16 +64,22 @@ void SceneView::SetSize(const IntRect& rect)
 
 void SceneView::CreateObjects()
 {
-    camera_ = scene_->CreateChild("EditorCamera", LOCAL, M_MAX_UNSIGNED, true);
-    camera_->CreateComponent<Camera>();
-    camera_->AddTag("__EDITOR_OBJECT__");
-    auto debug = scene_->GetComponent<DebugRenderer>();
+    camera_ = WeakPtr<Node>(scene_->GetChild("EditorCamera", true));
+    if (camera_.Expired())
+    {
+        camera_ = scene_->CreateChild("EditorCamera", LOCAL, M_MAX_UNSIGNED, true);
+        camera_->CreateComponent<Camera>();
+        camera_->AddTag("__EDITOR_OBJECT__");
+        camera_->SetTemporary(true);
+    }
+    auto* debug = scene_->GetComponent<DebugRenderer>();
     if (debug == nullptr)
     {
         debug = scene_->CreateComponent<DebugRenderer>(LOCAL, M_MAX_UNSIGNED - 1);
         debug->SetTemporary(true);
     }
     debug->SetView(GetCamera());
+    debug->SetTemporary(true);
     viewport_->SetCamera(GetCamera());
 }
 

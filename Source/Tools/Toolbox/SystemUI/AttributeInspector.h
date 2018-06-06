@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 
 #include <array>
 
+#include "Toolbox.h"
 #include <Urho3D/Core/Object.h>
 #include <Urho3D/Core/Context.h>
 
@@ -34,7 +35,7 @@ namespace Urho3D
 
 class Viewport;
 
-class AttributeInspector : public Object
+class URHO3D_TOOLBOX_API AttributeInspector : public Object
 {
     URHO3D_OBJECT(AttributeInspector, Object);
 public:
@@ -73,7 +74,7 @@ protected:
     WeakPtr<Viewport> effectSource_;
 };
 
-class AttributeInspectorWindow : public AttributeInspector
+class URHO3D_TOOLBOX_API AttributeInspectorWindow : public AttributeInspector
 {
     URHO3D_OBJECT(AttributeInspectorWindow, Object);
 public:
@@ -99,7 +100,7 @@ protected:
     WeakPtr<Serializable> currentSerializable_;
 };
 
-class AttributeInspectorDockWindow : public AttributeInspectorWindow
+class URHO3D_TOOLBOX_API AttributeInspectorDockWindow : public AttributeInspectorWindow
 {
     URHO3D_OBJECT(AttributeInspectorDockWindow, Object);
 public:

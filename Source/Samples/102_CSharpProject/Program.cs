@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Urho3D;
+using ImGui;
 
 namespace DemoApplication
 {
@@ -99,6 +100,12 @@ namespace DemoApplication
             {
                 var timestep = args[Update.P_TIMESTEP].Float;
                 Debug.Assert(this != null);
+
+                if (ui.Begin("Urho3D.NET"))
+                {
+                    ui.Text("Hello world from C#");
+                }
+                ui.End();
             });
         }
     }

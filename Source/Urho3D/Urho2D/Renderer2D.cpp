@@ -327,7 +327,7 @@ void Renderer2D::HandleBeginViewUpdate(StringHash eventType, VariantMap& eventDa
 
     frame_ = static_cast<View*>(eventData[P_VIEW].GetPtr())->GetFrameInfo();
 
-    URHO3D_PROFILE(UpdateRenderer2D);
+    URHO3D_PROFILE("UpdateRenderer2D");
 
     auto* camera = static_cast<Camera*>(eventData[P_CAMERA].GetPtr());
     frustum_ = camera->GetFrustum();
@@ -335,7 +335,7 @@ void Renderer2D::HandleBeginViewUpdate(StringHash eventType, VariantMap& eventDa
 
     // Check visibility
     {
-        URHO3D_PROFILE(CheckDrawableVisibility);
+        URHO3D_PROFILE("CheckDrawableVisibility");
 
         auto* queue = GetSubsystem<WorkQueue>();
         int numWorkItems = queue->GetNumThreads() + 1; // Worker threads + main thread
@@ -404,11 +404,11 @@ void Renderer2D::GetDrawables(PODVector<Drawable2D*>& drawables, Node* node)
 
 static inline bool CompareSourceBatch2Ds(const SourceBatch2D* lhs, const SourceBatch2D* rhs)
 {
-    if (lhs->distance_ != rhs->distance_)
-        return lhs->distance_ > rhs->distance_;
-
     if (lhs->drawOrder_ != rhs->drawOrder_)
         return lhs->drawOrder_ < rhs->drawOrder_;
+
+    if (lhs->distance_ != rhs->distance_)
+        return lhs->distance_ > rhs->distance_;
 
     if (lhs->material_ != rhs->material_)
         return lhs->material_->GetNameHash() < rhs->material_->GetNameHash();

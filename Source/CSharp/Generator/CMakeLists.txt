@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008-2018 the Urho3D project.
+# Copyright (c) 2018 Rokas Kupstys
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,3 +26,10 @@ target_link_objects(CSharpGenerator CLI11)
 target_link_libraries(CSharpGenerator cppast fmt tinydir spdlog)
 target_link_objects(CSharpGenerator rapidjson)
 set_target_properties(CSharpGenerator PROPERTIES FOLDER Tools)
+
+if (WIN32 AND CLANG_BINARY)
+    get_filename_component(CLANG_BINARY ${CLANG_BINARY} DIRECTORY)
+    add_custom_command(TARGET CSharpGenerator POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CLANG_BINARY}/libclang.dll ${CMAKE_BINARY_DIR}/${DEST_BIN_DIR_CONFIG}/
+    )
+endif ()

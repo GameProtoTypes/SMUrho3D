@@ -57,7 +57,7 @@ OcclusionBuffer::~OcclusionBuffer() = default;
 bool OcclusionBuffer::SetSize(int width, int height, bool threaded)
 {
     // Force the height to an even amount of pixels for better mip generation
-    if (height & 1)
+    if (height & 1u)
         ++height;
 
     if (width == width_ && height == height_)
@@ -232,7 +232,7 @@ void OcclusionBuffer::BuildDepthHierarchy()
     if (buffers_.Empty() || !depthHierarchyDirty_)
         return;
 
-    URHO3D_PROFILE(BuildDepthHierarchy);
+    URHO3D_PROFILE("BuildDepthHierarchy");
 
     // Build the first mip level from the pixel-level data
     int width = (width_ + 1) / 2;
@@ -879,110 +879,127 @@ void OcclusionBuffer::DrawTriangle2D(const Vector3* vertices, bool clockwise, un
     if (!clockwise)
         middleIsRight = !middleIsRight;
 
+    const bool topDegenerate = topY == middleY;
+    const bool bottomDegenerate = middleY == bottomY;
+
     Gradients gradients(vertices);
-    Edge topToMiddle(gradients, vertices[top], vertices[middle], topY);
     Edge topToBottom(gradients, vertices[top], vertices[bottom], topY);
-    Edge middleToBottom(gradients, vertices[middle], vertices[bottom], middleY);
 
     int* bufferData = buffers_[threadIndex].data_;
 
     if (middleIsRight)
     {
         // Top half
-        int* row = bufferData + topY * width_;
-        int* endRow = bufferData + middleY * width_;
-        while (row < endRow)
+        if (!topDegenerate)
         {
-            int invZ = topToBottom.invZ_;
-            int* dest = row + (topToBottom.x_ >> 16);
-            int* end = row + (topToMiddle.x_ >> 16);
-            while (dest < end)
+            Edge topToMiddle(gradients, vertices[top], vertices[middle], topY);
+            int* row = bufferData + topY * width_;
+            int* endRow = bufferData + middleY * width_;
+            while (row < endRow)
             {
-                if (invZ < *dest)
-                    *dest = invZ;
-                invZ += gradients.dInvZdXInt_;
-                ++dest;
-            }
+                int invZ = topToBottom.invZ_;
+                int* dest = row + (topToBottom.x_ >> 16u);
+                int* end = row + (topToMiddle.x_ >> 16u);
+                while (dest < end)
+                {
+                    if (invZ < *dest)
+                        *dest = invZ;
+                    invZ += gradients.dInvZdXInt_;
+                    ++dest;
+                }
 
-            topToBottom.x_ += topToBottom.xStep_;
-            topToBottom.invZ_ += topToBottom.invZStep_;
-            topToMiddle.x_ += topToMiddle.xStep_;
-            row += width_;
+                topToBottom.x_ += topToBottom.xStep_;
+                topToBottom.invZ_ += topToBottom.invZStep_;
+                topToMiddle.x_ += topToMiddle.xStep_;
+                row += width_;
+            }
         }
 
         // Bottom half
-        row = bufferData + middleY * width_;
-        endRow = bufferData + bottomY * width_;
-        while (row < endRow)
+        if (!bottomDegenerate)
         {
-            int invZ = topToBottom.invZ_;
-            int* dest = row + (topToBottom.x_ >> 16);
-            int* end = row + (middleToBottom.x_ >> 16);
-            while (dest < end)
+            Edge middleToBottom(gradients, vertices[middle], vertices[bottom], middleY);
+            int* row = bufferData + middleY * width_;
+            int* endRow = bufferData + bottomY * width_;
+            while (row < endRow)
             {
-                if (invZ < *dest)
-                    *dest = invZ;
-                invZ += gradients.dInvZdXInt_;
-                ++dest;
-            }
+                int invZ = topToBottom.invZ_;
+                int* dest = row + (topToBottom.x_ >> 16u);
+                int* end = row + (middleToBottom.x_ >> 16u);
+                while (dest < end)
+                {
+                    if (invZ < *dest)
+                        *dest = invZ;
+                    invZ += gradients.dInvZdXInt_;
+                    ++dest;
+                }
 
-            topToBottom.x_ += topToBottom.xStep_;
-            topToBottom.invZ_ += topToBottom.invZStep_;
-            middleToBottom.x_ += middleToBottom.xStep_;
-            row += width_;
+                topToBottom.x_ += topToBottom.xStep_;
+                topToBottom.invZ_ += topToBottom.invZStep_;
+                middleToBottom.x_ += middleToBottom.xStep_;
+                row += width_;
+            }
         }
     }
     else
     {
         // Top half
-        int* row = bufferData + topY * width_;
-        int* endRow = bufferData + middleY * width_;
-        while (row < endRow)
+        if (!topDegenerate)
         {
-            int invZ = topToMiddle.invZ_;
-            int* dest = row + (topToMiddle.x_ >> 16);
-            int* end = row + (topToBottom.x_ >> 16);
-            while (dest < end)
+            Edge topToMiddle(gradients, vertices[top], vertices[middle], topY);
+            int* row = bufferData + topY * width_;
+            int* endRow = bufferData + middleY * width_;
+            while (row < endRow)
             {
-                if (invZ < *dest)
-                    *dest = invZ;
-                invZ += gradients.dInvZdXInt_;
-                ++dest;
-            }
+                int invZ = topToMiddle.invZ_;
+                int* dest = row + (topToMiddle.x_ >> 16u);
+                int* end = row + (topToBottom.x_ >> 16u);
+                while (dest < end)
+                {
+                    if (invZ < *dest)
+                        *dest = invZ;
+                    invZ += gradients.dInvZdXInt_;
+                    ++dest;
+                }
 
-            topToMiddle.x_ += topToMiddle.xStep_;
-            topToMiddle.invZ_ += topToMiddle.invZStep_;
-            topToBottom.x_ += topToBottom.xStep_;
-            row += width_;
+                topToMiddle.x_ += topToMiddle.xStep_;
+                topToMiddle.invZ_ += topToMiddle.invZStep_;
+                topToBottom.x_ += topToBottom.xStep_;
+                row += width_;
+            }
         }
 
         // Bottom half
-        row = bufferData + middleY * width_;
-        endRow = bufferData + bottomY * width_;
-        while (row < endRow)
+        if (!bottomDegenerate)
         {
-            int invZ = middleToBottom.invZ_;
-            int* dest = row + (middleToBottom.x_ >> 16);
-            int* end = row + (topToBottom.x_ >> 16);
-            while (dest < end)
+            Edge middleToBottom(gradients, vertices[middle], vertices[bottom], middleY);
+            int* row = bufferData + middleY * width_;
+            int* endRow = bufferData + bottomY * width_;
+            while (row < endRow)
             {
-                if (invZ < *dest)
-                    *dest = invZ;
-                invZ += gradients.dInvZdXInt_;
-                ++dest;
-            }
+                int invZ = middleToBottom.invZ_;
+                int* dest = row + (middleToBottom.x_ >> 16u);
+                int* end = row + (topToBottom.x_ >> 16u);
+                while (dest < end)
+                {
+                    if (invZ < *dest)
+                        *dest = invZ;
+                    invZ += gradients.dInvZdXInt_;
+                    ++dest;
+                }
 
-            middleToBottom.x_ += middleToBottom.xStep_;
-            middleToBottom.invZ_ += middleToBottom.invZStep_;
-            topToBottom.x_ += topToBottom.xStep_;
-            row += width_;
+                middleToBottom.x_ += middleToBottom.xStep_;
+                middleToBottom.invZ_ += middleToBottom.invZStep_;
+                topToBottom.x_ += topToBottom.xStep_;
+                row += width_;
+            }
         }
     }
 }
 
 void OcclusionBuffer::MergeBuffers()
 {
-    URHO3D_PROFILE(MergeBuffers);
+    URHO3D_PROFILE("MergeBuffers");
 
     for (unsigned i = 1; i < buffers_.Size(); ++i)
     {

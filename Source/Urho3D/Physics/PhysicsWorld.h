@@ -49,12 +49,6 @@ struct CollisionGeometryData;
 /// Physics raycast hit.
 struct URHO3D_API PhysicsRaycastResult
 {
-    /// Construct with defaults.
-    PhysicsRaycastResult() :
-        body_(nullptr)
-    {
-    }
-
     /// Test for inequality, added to prevent GCC from complaining.
     bool operator !=(const PhysicsRaycastResult& rhs) const
     {
@@ -66,11 +60,11 @@ struct URHO3D_API PhysicsRaycastResult
     /// Hit worldspace normal.
     Vector3 normal_;
     /// Hit distance from ray origin.
-    float distance_;
+    float distance_{};
     /// Hit fraction.
-    float hitFraction_;
+    float hitFraction_{};
     /// Rigid body that was hit.
-    RigidBody* body_;
+    RigidBody* body_{};
 };
 
 static const float DEFAULT_MAX_NETWORK_ANGULAR_VELOCITY = 100.0f;
@@ -108,7 +102,8 @@ public:
     /// Perform a physics world raycast and return the closest hit.
     void RaycastSingle(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, unsigned collisionMask = M_MAX_UNSIGNED);
     /// Perform a physics world segmented raycast and return the closest hit. Useful for big scenes with many bodies.
-    void RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask = M_MAX_UNSIGNED);
+    /// overlapDistance is used to make sure there are no gap between segments, and must be smaller than segmentDistance.
+    void RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask = M_MAX_UNSIGNED, float overlapDistance = 0.1f);
     /// Perform a physics world swept sphere test and return the closest hit.
     void SphereCast
         (PhysicsRaycastResult& result, const Ray& ray, float radius, float maxDistance, unsigned collisionMask = M_MAX_UNSIGNED);

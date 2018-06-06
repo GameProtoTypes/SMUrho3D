@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,10 +42,10 @@ void GenerateClassWrappers::Start()
     printer_ << "";
 
     initPrinter_ << "#include <Urho3D/Urho3DAll.h>";
-    initPrinter_ << "#include \"ClassWrappers.hpp\"";
+    initPrinter_ << fmt::format("#include \"{}ClassWrappers.hpp\"", generator->currentModule_->moduleName_);
     initPrinter_ << "";
     initPrinter_ << fmt::format("extern \"C\" void {}RegisterWrapperFactories(Context* context)",
-                                generator->defaultNamespace_);
+                                generator->currentModule_->moduleName_);
     initPrinter_.Indent();
     initPrinter_ << "auto* script = context->GetScripts();";
 }
@@ -66,7 +66,7 @@ bool GenerateClassWrappers::Visit(MetaEntity* entity, cppast::visitor_info info)
         return true;
 
     // Class is not supposed to be inherited
-    if (!generator->inheritable_.IsIncluded(entity->uniqueName_))
+    if (!generator->IsInheritable(entity->uniqueName_))
         return true;
 
     const auto& cls = entity->Ast<cppast::cpp_class>();
@@ -76,7 +76,7 @@ bool GenerateClassWrappers::Visit(MetaEntity* entity, cppast::visitor_info info)
         return info.event != info.container_entity_enter;
     }
 
-    printer_ << fmt::format("class URHO3D_EXPORT_API {} : public {}", entity->name_, entity->uniqueName_);
+    printer_ << fmt::format("class EXPORT_API {} : public {}", entity->name_, entity->uniqueName_);
     printer_.Indent();
 
     // Urho3D-specific
@@ -87,7 +87,7 @@ bool GenerateClassWrappers::Visit(MetaEntity* entity, cppast::visitor_info info)
     }
 
     printer_.WriteLine("public:", false);
-    printer_ << "void* gcHandle_ = nullptr;";
+    printer_ << "gchandle gcHandle_ = 0;";
     if (IsSubclassOf(entity->Ast<cppast::cpp_class>(), "Urho3D::Object"))
     {
         printer_ << "Urho3D::TypeInfo* typeInfo_ = nullptr;";
@@ -109,11 +109,11 @@ bool GenerateClassWrappers::Visit(MetaEntity* entity, cppast::visitor_info info)
     printer_ << fmt::format("virtual ~{}()", entity->name_);
     printer_.Indent();
     {
-        printer_ << "if (gcHandle_ != nullptr)";
+        printer_ << "if (gcHandle_ != 0)";
         printer_.Indent();
         {
-            printer_ << "scriptSubsystem->FreeGCHandle(gcHandle_);";
-            printer_ << "gcHandle_ = nullptr;";
+            printer_ << "ScriptSubsystem::managed_.Unlock(gcHandle_);";
+            printer_ << "gcHandle_ = 0;";
         }
         printer_.Dedent();
         if (IsSubclassOf(entity->Ast<cppast::cpp_class>(), "Urho3D::Object"))
@@ -172,7 +172,7 @@ bool GenerateClassWrappers::Visit(MetaEntity* entity, cppast::visitor_info info)
 
                     if (func.is_virtual())
                     {
-                        printer_ << fmt::format("{typeName}(*fn{cFunctionName})(void* gcHandle{pc}{parameterList}) = nullptr;",
+                        printer_ << fmt::format("{typeName}(*fn{cFunctionName})(gchandle gcHandle{pc}{parameterList}) = nullptr;",
                             FMT_CAPTURE(typeName), FMT_CAPTURE(cFunctionName), FMT_CAPTURE(className),
                             FMT_CAPTURE(constModifier), FMT_CAPTURE(pc), FMT_CAPTURE(parameterList));
                         // Virtual method that calls said pointer
@@ -255,7 +255,8 @@ void GenerateClassWrappers::Stop()
 
     // Save ClassWrappers.hpp
     {
-        std::ofstream fp(generator->outputDirCpp_ + "ClassWrappers.hpp");
+        std::ofstream fp(fmt::format("{}/{}ClassWrappers.hpp", generator->currentModule_->outputDirCpp_,
+                                     generator->currentModule_->moduleName_));
         if (!fp.is_open())
         {
             spdlog::get("console")->error("Failed saving ClassWrappers.hpp");
@@ -266,7 +267,8 @@ void GenerateClassWrappers::Stop()
 
     // Save RegisterFactories.cpp
     {
-        std::ofstream fp(generator->outputDirCpp_ + "RegisterFactories.cpp");
+        std::ofstream fp(fmt::format("{}/{}RegisterFactories.cpp", generator->currentModule_->outputDirCpp_,
+                                     generator->currentModule_->moduleName_));
         if (!fp.is_open())
         {
             spdlog::get("console")->error("Failed saving RegisterFactories.cpp");

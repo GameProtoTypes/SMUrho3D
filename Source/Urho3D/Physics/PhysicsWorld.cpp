@@ -77,7 +77,7 @@ void PhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
 {
     if (debug)
     {
-        URHO3D_PROFILE(PhysicsDrawDebug);
+        URHO3D_PROFILE("PhysicsDrawDebug");
 
     }
 }
@@ -85,7 +85,7 @@ void PhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
 
 void PhysicsWorld::Update(float timeStep)
 {
-    URHO3D_PROFILE(UpdatePhysics);
+    URHO3D_PROFILE("UpdatePhysics");
 
     //float internalTimeStep = 1.0f / fps_;
     //int maxSubSteps = (int)(timeStep * fps_) + 1;
@@ -164,7 +164,7 @@ void PhysicsWorld::PreStep(float timeStep)
     SendEvent(E_PHYSICSPRESTEP, eventData);
 
     // Start profiling block for the actual simulation step
-    URHO3D_PROFILE_NONSCOPED(PhysicsStepSimulation);
+    URHO3D_PROFILE_START("PhysicsStepSimulation");
 }
 
 void PhysicsWorld::PostStep(float timeStep)
@@ -184,7 +184,7 @@ void PhysicsWorld::PostStep(float timeStep)
 
 void PhysicsWorld::SendCollisionEvents()
 {
-    URHO3D_PROFILE(SendCollisionEvents);
+    URHO3D_PROFILE("SendCollisionEvents");
 
     //currentCollisions_.Clear();
     //physicsCollisionData_.Clear();

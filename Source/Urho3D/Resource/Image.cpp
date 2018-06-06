@@ -419,7 +419,7 @@ bool Image::BeginLoad(Deserializer& source)
         // If uncompressed DDS, convert the data to 8bit RGBA as the texture classes can not currently use eg. RGB565 format
         if (compressedFormat_ == CF_RGBA)
         {
-            URHO3D_PROFILE(ConvertDDSToRGBA);
+            URHO3D_PROFILE("ConvertDDSToRGBA");
 
             currentImage = this;
 
@@ -815,7 +815,7 @@ bool Image::BeginLoad(Deserializer& source)
 
 bool Image::Save(Serializer& dest) const
 {
-    URHO3D_PROFILE(SaveImage);
+    URHO3D_PROFILE("SaveImage");
 
     if (IsCompressed())
     {
@@ -832,7 +832,7 @@ bool Image::Save(Serializer& dest) const
     int len;
     unsigned char* png = stbi_write_png_to_mem(data_.Get(), 0, width_, height_, components_, &len);
     bool success = dest.Write(png, (unsigned)len) == (unsigned)len;
-    free(png);
+    free(png);      // NOLINT(hicpp-no-malloc)
     return success;
 }
 
@@ -937,7 +937,11 @@ void Image::SetData(const unsigned char* pixelData)
         return;
     }
 
-    memcpy(data_.Get(), pixelData, (size_t)width_ * height_ * depth_ * components_);
+    auto size = (size_t)width_ * height_ * depth_ * components_;
+    if (pixelData)
+        memcpy(data_.Get(), pixelData, size);
+    else
+        memset(data_.Get(), 0, size);
     nextLevel_.Reset();
 }
 
@@ -1121,7 +1125,7 @@ bool Image::FlipVertical()
 
 bool Image::Resize(int width, int height)
 {
-    URHO3D_PROFILE(ResizeImage);
+    URHO3D_PROFILE("ResizeImage");
 
     if (IsCompressed())
     {
@@ -1183,7 +1187,7 @@ void Image::Clear(const Color& color)
 
 void Image::ClearInt(unsigned uintColor)
 {
-    URHO3D_PROFILE(ClearImage);
+    URHO3D_PROFILE("ClearImage");
 
     if (!data_)
         return;
@@ -1212,7 +1216,7 @@ void Image::ClearInt(unsigned uintColor)
 
 bool Image::SaveBMP(const String& fileName) const
 {
-    URHO3D_PROFILE(SaveImageBMP);
+    URHO3D_PROFILE("SaveImageBMP");
 
     auto* fileSystem = GetSubsystem<FileSystem>();
     if (fileSystem && !fileSystem->CheckAccess(GetPath(fileName)))
@@ -1235,7 +1239,7 @@ bool Image::SaveBMP(const String& fileName) const
 
 bool Image::SavePNG(const String& fileName) const
 {
-    URHO3D_PROFILE(SaveImagePNG);
+    URHO3D_PROFILE("SaveImagePNG");
 
     File outFile(context_, fileName, FILE_WRITE);
     if (outFile.IsOpen())
@@ -1246,7 +1250,7 @@ bool Image::SavePNG(const String& fileName) const
 
 bool Image::SaveTGA(const String& fileName) const
 {
-    URHO3D_PROFILE(SaveImageTGA);
+    URHO3D_PROFILE("SaveImageTGA");
 
     auto* fileSystem = GetSubsystem<FileSystem>();
     if (fileSystem && !fileSystem->CheckAccess(GetPath(fileName)))
@@ -1269,7 +1273,7 @@ bool Image::SaveTGA(const String& fileName) const
 
 bool Image::SaveJPG(const String& fileName, int quality) const
 {
-    URHO3D_PROFILE(SaveImageJPG);
+    URHO3D_PROFILE("SaveImageJPG");
 
     auto* fileSystem = GetSubsystem<FileSystem>();
     if (fileSystem && !fileSystem->CheckAccess(GetPath(fileName)))
@@ -1292,7 +1296,7 @@ bool Image::SaveJPG(const String& fileName, int quality) const
 
 bool Image::SaveDDS(const String& fileName) const
 {
-    URHO3D_PROFILE(SaveImageDDS);
+    URHO3D_PROFILE("SaveImageDDS");
 
     File outFile(context_, fileName, FILE_WRITE);
     if (!outFile.IsOpen())
@@ -1345,7 +1349,7 @@ bool Image::SaveDDS(const String& fileName) const
 bool Image::SaveWEBP(const String& fileName, float compression /* = 0.0f */) const
 {
 #ifdef URHO3D_WEBP
-    URHO3D_PROFILE(SaveImageWEBP);
+    URHO3D_PROFILE("SaveImageWEBP");
 
     auto* fileSystem(GetSubsystem<FileSystem>());
     File outFile(context_, fileName, FILE_WRITE);
@@ -1568,7 +1572,7 @@ SharedPtr<Image> Image::GetNextLevel() const
     if (nextLevel_)
         return nextLevel_;
 
-    URHO3D_PROFILE(CalculateImageMipLevel);
+    URHO3D_PROFILE("CalculateImageMipLevel");
 
     int widthOut = width_ / 2;
     int heightOut = height_ / 2;
@@ -2237,7 +2241,7 @@ void Image::PrecalculateLevels()
     if (!data_ || IsCompressed())
         return;
 
-    URHO3D_PROFILE(PrecalculateImageMipLevels);
+    URHO3D_PROFILE("PrecalculateImageMipLevels");
 
     nextLevel_.Reset();
 
