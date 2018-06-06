@@ -27,4 +27,4 @@ endif ()
 
 install (DIRECTORY src/include/nativefiledialog DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR}/nativefiledialog FILES_MATCHING PATTERN *.h)
 
-install(TARGETS nativefiledialog EXPORT Urho3D ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR})
+#install(TARGETS nativefiledialog EXPORT Urho3D ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR})
