@@ -94,7 +94,7 @@ protected:
     /// Initializes object.
     void Init();
     /// Perform housekeeping tasks.
-    void OnEndFrame(StringHash, VariantMap&);
+    void OnPostUpdate(StringHash, VariantMap&);
 
     /// Types of inheritable native classes.
     HashMap<StringHash, const TypeInfo*> typeInfos_;

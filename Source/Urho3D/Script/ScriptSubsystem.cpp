@@ -55,7 +55,7 @@ ScriptSubsystem::ScriptSubsystem(Context* context)
         // This library does not run in context of managed process.
         return;
 
-    SubscribeToEvent(E_ENDFRAME, URHO3D_HANDLER(ScriptSubsystem, OnEndFrame));
+    SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(ScriptSubsystem, OnPostUpdate));
 
     Init();
 }
@@ -85,7 +85,7 @@ void ScriptSubsystem::QueueReleaseRef(RefCounted* instance)
     releaseQueue_.Push(instance);
 }
 
-void ScriptSubsystem::OnEndFrame(StringHash, VariantMap&)
+void ScriptSubsystem::OnPostUpdate(StringHash, VariantMap&)
 {
     MutexLock lock(mutex_);
     for (auto* instance : releaseQueue_)
