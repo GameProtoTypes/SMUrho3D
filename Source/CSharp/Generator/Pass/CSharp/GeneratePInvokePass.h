@@ -46,9 +46,11 @@ class GeneratePInvokePass : public CppApiPass
 
 protected:
     void WriteMarshalAttributeReturn(const cppast::cpp_type& type);
+    static std::string GetCustomMarshaller(const cppast::cpp_type& type);
 
     CSharpPrinter printer_;
     DiscoverInterfacesPass* discoverInterfacesPass_ = nullptr;
+    std::string dllImport_;
 };
 
 }

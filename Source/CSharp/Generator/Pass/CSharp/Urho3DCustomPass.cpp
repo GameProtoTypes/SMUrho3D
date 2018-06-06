@@ -37,6 +37,12 @@ void Urho3DCustomPassLate::NamespaceStart()
     // cppast bug workaround
     if (auto* entity = generator->GetSymbol("Urho3D::Localization::Get(Urho3D::String const&,int)"))
         entity->children_[1]->defaultValue_ = "-1";
+
+    if (auto* entity = generator->GetSymbol("ImGui::BeginDock(char const*,bool*,ImGuiWindowFlags,ImVec2 const&)"))
+        entity->children_[3]->defaultValue_ = "new Vector2(-1, -1)";
+
+    if (auto* entity = generator->GetSymbol("Urho3D::SystemUI::AddFont(Urho3D::String const&,PODVector<unsigned short> const&,float,bool)"))
+        entity->children_[1]->defaultValue_ = "new ushort[0]";
 }
 
 bool Urho3DCustomPassLate::Visit(MetaEntity* entity, cppast::visitor_info info)
@@ -86,6 +92,10 @@ bool Urho3DCustomPassLate::Visit(MetaEntity* entity, cppast::visitor_info info)
 
         // No longer needed
         entity->Remove();
+    }
+    else if (entity->kind_ == cppast::cpp_entity_kind::member_function_t && entity->name_ == "GetType")
+    {
+        entity->name_ = "GetTypeHash";
     }
 
     return true;

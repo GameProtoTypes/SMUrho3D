@@ -29,6 +29,7 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
+#include <cppast/cpp_array_type.hpp>
 #include "GeneratorContext.h"
 #include "Utilities.h"
 
@@ -40,13 +41,17 @@ GeneratorContext::GeneratorContext()
 {
 }
 
-bool GeneratorContext::AddModule(const std::string& sourceDir, const std::string& outputDir,
+bool GeneratorContext::AddModule(const std::string& libraryName, bool isStatic, const std::string& publicKey,
+                                 const std::string& sourceDir, const std::string& outputDir,
                                  const std::vector<std::string>& includes, const std::vector<std::string>& defines,
                                  const std::vector<std::string>& options, const std::string& rulesFile)
 {
     modules_.resize(modules_.size() + 1);
     Module& m = modules_.back();
 
+    m.libraryName_ = libraryName;
+    m.isStatic_ = isStatic;
+    m.publicKey_ = publicKey;
     m.sourceDir_ = str::AddTrailingSlash(sourceDir);
     m.outputDir_ = str::AddTrailingSlash(outputDir);
     m.outputDirCs_ = m.outputDir_ + "CSharp/";
@@ -97,6 +102,11 @@ bool GeneratorContext::AddModule(const std::string& sourceDir, const std::string
         // Module options
         {
             m.moduleName_ = jsonRules["module"].GetString();
+            m.managedAssembly_ = jsonRules["managed_assembly"].GetString();
+            if (jsonRules.HasMember("namespace"))
+                m.defaultNamespace_ = jsonRules["namespace"].GetString();
+            else
+                m.defaultNamespace_ = m.moduleName_;
 
             if (jsonRules.HasMember("default-values"))
             {
@@ -457,6 +467,28 @@ void GeneratorContext::Generate()
         for (const auto& pass : apiPasses_)
             pass->Stop();
 
+        // Generate config file
+        {
+            std::ofstream fp(m.outputDirCs_ + "/Config.cs", std::ios::out);
+
+            fp << "using System.Runtime.CompilerServices;\n\n";
+            for (auto& m2 : modules_)
+            {
+                if (&m2 != &m && !m.publicKey_.empty())
+                    fp << fmt::format("[assembly: InternalsVisibleTo(\"{}, PublicKey={}\")]\n",
+                                      m2.managedAssembly_, m2.publicKey_);
+            }
+            fp << "\n";
+
+            fp << fmt::format("namespace {}.CSharp\n", m.defaultNamespace_);
+            fp << "{\n";
+            fp << "    internal static partial class Config\n";
+            fp << "    {\n";
+            fp << fmt::format("        internal const string NativeLibraryName = \"{}\";\n", m.libraryName_);
+            fp << "    }\n";
+            fp << "}\n\n";
+        }
+
         SetLastModifiedTime(m.outputDir_, 0);   // Touch
         currentNamespace_ = nullptr;
     }
@@ -467,6 +499,22 @@ bool GeneratorContext::IsAcceptableType(const cppast::cpp_type& type)
     // Builtins map directly to c# types
     if (type.kind() == cppast::cpp_type_kind::builtin_t)
         return true;
+
+    // Arrays, support only arrays of pod types.
+    if (type.kind() == cppast::cpp_type_kind::array_t)
+    {
+        const auto& array = dynamic_cast<const cppast::cpp_array_type&>(type);
+        if (!array.size().has_value())
+            // Array size must be known.
+            return false;
+
+        const auto& valueType = cppast::remove_cv(array.value_type());
+        if (valueType.kind() == cppast::cpp_type_kind::builtin_t || IsEnumType(valueType))
+            return true;
+
+        if (valueType.kind() == cppast::cpp_type_kind::pointer_t)
+            return IsAcceptableType(dynamic_cast<const cppast::cpp_pointer_type&>(valueType).pointee());
+    }
 
     // Manually handled types
     if (GetTypeMap(type) != nullptr)
@@ -613,7 +661,7 @@ bool GeneratorContext::IsOutOfDate(const std::string& generatorExe)
 {
     for (const auto& m : modules_)
     {
-        if (GetFileSize(m.outputDirCpp_ + "Urho3DCApi.cpp") == 0)
+        if (GetFileSize(m.outputDirCpp_ + m.moduleName_ + "CApi.cpp") == 0)
             // Missing file, needed for the first time generator runs
             return true;
 

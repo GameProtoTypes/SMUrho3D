@@ -77,6 +77,7 @@ macro (add_target_csharp TARGET PROJECT_FILE)
         endif ()
 
         add_custom_target(${TARGET} COMMAND ${TERM_WORKAROUND} ${MSBUILD} ${PROJECT_FILE} ${ARGN}
+            /p:BuildDir="${CMAKE_BINARY_DIR}"
             /p:Configuration=${CSHARP_BUILD_TYPE} /p:Platform=${CSHARP_PLATFORM} /consoleloggerparameters:ErrorsOnly)
         set_target_properties(${TARGET} PROPERTIES EXCLUDE_FROM_ALL OFF)
     endif ()
@@ -87,7 +88,7 @@ macro (csharp_bind_target)
         return ()
     endif ()
 
-    cmake_parse_arguments(BIND "INTERNAL;EXTERNAL" "TARGET" "" ${ARGN})
+    cmake_parse_arguments(BIND "INTERNAL;EXTERNAL" "TARGET;MANAGED_TARGET" "" ${ARGN})
 
     get_target_property(BIND_SOURCE_DIR ${BIND_TARGET} SOURCE_DIR)
 
@@ -97,6 +98,10 @@ macro (csharp_bind_target)
         else ()
             set (BIND_EXTERNAL ON)
         endif ()
+    endif ()
+
+    if (NOT BIND_MANAGED_TARGET)
+        set (BIND_MANAGED_TARGET ${BIND_TARGET}Net)
     endif ()
 
     set (BIND_CSHARP_DIR ${BIND_SOURCE_DIR}/CSharp)
@@ -150,14 +155,20 @@ macro (csharp_bind_target)
     if(_TARGET_TYPE STREQUAL "STATIC_LIBRARY")
         list (APPEND GENERATOR_OPTIONS --static)
     endif ()
+    if (SNK_PUB_KEY)
+        list (APPEND GENERATOR_OPTIONS --signed-with=${SNK_PUB_KEY})
+    endif ()
+
+    if (BIND_INTERNAL)
+        set (CSHARP_LIBRARY_NAME ${BIND_TARGET})
+    elseif (BIND_EXTERNAL)
+        set (CSHARP_LIBRARY_NAME ${BIND_TARGET}CSharp)
+    else ()
+        message(FATAL_ERROR "Please pass INTERNAL or EXTERNAL to csharp_bind_target()")
+    endif ()
 
     set (BINDINGS_OUTPUT_DIR ${CMAKE_BINARY_DIR}/CSharpBindings/${BIND_TARGET})
     set (COMMON_DIR ${CSHARP_SOURCE_DIR}/Common)
-    list (APPEND GENERATOR_OPTIONS ${RULES} ${BIND_SOURCE_DIR} ${BINDINGS_OUTPUT_DIR})
-
-    foreach (opt ${GENERATOR_OPTIONS})
-        file(APPEND ${CSHARP_BINDING_GENERATOR_OPTIONS} "${opt}\n")
-    endforeach ()
 
     # Generated source files
     file(MAKE_DIRECTORY ${BINDINGS_OUTPUT_DIR}/Native)
@@ -170,6 +181,7 @@ macro (csharp_bind_target)
     set (COMMON_NET_SOURCE_FILES_GENERATED
         ${BINDINGS_OUTPUT_DIR}/CSharp/PInvoke.cs
         ${BINDINGS_OUTPUT_DIR}/CSharp/CSharp.cs
+        ${BINDINGS_OUTPUT_DIR}/CSharp/Config.cs
     )
     set_source_files_properties(${CSHARP_SOURCE_FILES_GENERATED} ${COMMON_NET_SOURCE_FILES_GENERATED} PROPERTIES GENERATED TRUE)
 
@@ -186,10 +198,8 @@ macro (csharp_bind_target)
         ${COMMON_DIR}/Native/*.cpp ${BIND_CSHARP_DIR}/Native/*.cpp)
 
     if (BIND_INTERNAL)
-        set (CSHARP_LIBRARY_NAME ${BIND_TARGET})
         target_sources(${BIND_TARGET} PRIVATE ${COMMON_CSHARP_SOURCE_FILES_MANUAL} ${CSHARP_SOURCE_FILES_GENERATED})
     elseif (BIND_EXTERNAL)
-        set (CSHARP_LIBRARY_NAME ${BIND_TARGET}CSharp)
         add_library(${CSHARP_LIBRARY_NAME} SHARED ${COMMON_CSHARP_SOURCE_FILES_MANUAL} ${CSHARP_SOURCE_FILES_GENERATED})
         target_link_libraries(${CSHARP_LIBRARY_NAME} ${BIND_TARGET})
         install(TARGETS ${CSHARP_LIBRARY_NAME}
@@ -197,9 +207,14 @@ macro (csharp_bind_target)
             RUNTIME DESTINATION ${DEST_BIN_DIR}
             ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR}
         )
-    else ()
-        message(FATAL_ERROR "Please pass INTERNAL or EXTERNAL to csharp_bind_target()")
     endif ()
+
+    # Finalize option list
+    list (APPEND GENERATOR_OPTIONS ${CSHARP_LIBRARY_NAME} ${RULES} ${BIND_SOURCE_DIR} ${BINDINGS_OUTPUT_DIR})
+    foreach (opt ${GENERATOR_OPTIONS})
+        file(APPEND ${CSHARP_BINDING_GENERATOR_OPTIONS} "${opt}\n")
+    endforeach ()
+
     add_dependencies(${BIND_TARGET} CSharpBindings)
     if (CLANG)
         target_compile_options(${CSHARP_LIBRARY_NAME} PRIVATE -Wno-return-type-c-linkage)
@@ -214,15 +229,6 @@ macro (csharp_bind_target)
         target_compile_options(${CSHARP_LIBRARY_NAME} PRIVATE ${MONO_CFLAGS})
     endif ()
 
-    file (WRITE ${BINDINGS_OUTPUT_DIR}/CSharp/Config.cs
-"namespace Urho3D.CSharp
-{
-    internal static partial class Config
-    {
-        public const string NativeLibraryName = \"${CSHARP_LIBRARY_NAME}\";
-    }
-}\n")
-
     if (MSVC)
         set (NET_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
     else ()
@@ -230,27 +236,9 @@ macro (csharp_bind_target)
         # Needed for mono on unixes but not on windows.
         set (FACADES Facades/)
     endif ()
-    add_target_csharp(${BIND_TARGET}Net ${BIND_CSHARP_DIR}/${BIND_TARGET}Net.csproj)
-    add_dependencies(${BIND_TARGET}Net ${CSHARP_LIBRARY_NAME})
-    if (WIN32)
-        add_custom_command(TARGET ${BIND_TARGET}Net POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/System.Buffers/ref/netstandard1.1/System.Buffers.dll ${CMAKE_BINARY_DIR}/${DEST_LIBRARY_DIR_CONFIG}/
-        )
-        if (URHO3D_WITH_MONO)
-            add_custom_command(TARGET ${BIND_TARGET}Net POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy ${MONO_PATH}/lib/mono/4.5/Facades/System.Runtime.dll ${CMAKE_BINARY_DIR}/${DEST_LIBRARY_DIR_CONFIG}/
-            )
-            install (FILES
-                ${CMAKE_BINARY_DIR}/${DEST_LIBRARY_DIR_CONFIG}/System.Runtime.dll
-                DESTINATION ${DEST_LIBRARY_DIR}
-            )
-        endif ()
-        install (FILES
-            ${CMAKE_BINARY_DIR}/${DEST_LIBRARY_DIR_CONFIG}/System.Buffers.dll
-            DESTINATION ${DEST_LIBRARY_DIR}
-        )
-    endif ()
-    install (FILES ${NET_OUTPUT_DIRECTORY}/${BIND_TARGET}Net.dll DESTINATION ${DEST_LIBRARY_DIR})
+    add_target_csharp(${BIND_MANAGED_TARGET} ${BIND_CSHARP_DIR}/${BIND_MANAGED_TARGET}.csproj)
+    add_dependencies(${BIND_MANAGED_TARGET} ${CSHARP_LIBRARY_NAME})
+    install (FILES ${NET_OUTPUT_DIRECTORY}/${BIND_MANAGED_TARGET}.dll DESTINATION ${DEST_LIBRARY_DIR})
 endmacro ()
 
 # Target for manually refreshing binding code
@@ -265,3 +253,37 @@ execute_process(
     COMMAND ${CMAKE_COMMAND} -E tar "xf" "pkg.zip" --format=zip
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/System.Buffers
 )
+
+if (WIN32)
+    add_custom_command(TARGET CSharpBindings POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/System.Buffers/ref/netstandard1.1/System.Buffers.dll ${CMAKE_BINARY_DIR}/${DEST_LIBRARY_DIR_CONFIG}/)
+    if (URHO3D_WITH_MONO)
+        add_custom_command(TARGET CSharpBindings POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MONO_PATH}/lib/mono/4.5/Facades/System.Runtime.dll ${CMAKE_BINARY_DIR}/${DEST_LIBRARY_DIR_CONFIG}/)
+        install (FILES
+            ${CMAKE_BINARY_DIR}/${DEST_LIBRARY_DIR_CONFIG}/System.Runtime.dll
+            DESTINATION ${DEST_LIBRARY_DIR}
+        )
+    endif ()
+    install (FILES
+        ${CMAKE_BINARY_DIR}/${DEST_LIBRARY_DIR_CONFIG}/System.Buffers.dll
+        DESTINATION ${DEST_LIBRARY_DIR}
+    )
+endif ()
+
+find_program(SN sn)
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/CSharp.snk)
+    execute_process(COMMAND ${SN} -k ${CMAKE_BINARY_DIR}/CSharp.snk)
+endif ()
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/CSharp.snk.pub)
+    execute_process(COMMAND ${SN} -p ${CMAKE_BINARY_DIR}/CSharp.snk ${CMAKE_BINARY_DIR}/CSharp.snk.pub)
+endif ()
+
+execute_process(
+    COMMAND ${SN} -tp ${CMAKE_BINARY_DIR}/CSharp.snk.pub
+    OUTPUT_VARIABLE SNK_PUB_KEY
+)
+string(REGEX MATCH "Public [Kk]ey(.+)?:[0-9a-f\r\n]+\r?\n\r?\n" SNK_PUB_KEY "${SNK_PUB_KEY}")
+string(REGEX REPLACE "Public [Kk]ey(.+)?:" "" SNK_PUB_KEY "${SNK_PUB_KEY}")
+string(REGEX REPLACE "[ \r\n]+" "" SNK_PUB_KEY "${SNK_PUB_KEY}")
+set(SNK_PUB_KEY "${SNK_PUB_KEY}" CACHE STRING "Public key for .NET assemblies" FORCE)

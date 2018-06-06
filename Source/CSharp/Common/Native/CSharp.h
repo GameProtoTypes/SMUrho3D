@@ -25,6 +25,7 @@
 #include <Urho3D/Core/Mutex.h>
 #include <Urho3D/Core/Object.h>
 #include <Urho3D/IO/Log.h>
+#include <Urho3D/Script/ScriptSubsystem.h>
 #include <string>
 #include <type_traits>
 
@@ -45,8 +46,6 @@ namespace Urho3D
 extern ScriptSubsystem* scriptSubsystem;
 
 }
-
-using gchandle = void*;
 
 /// Force-cast between incompatible types.
 template<typename T0, typename T1>
@@ -97,49 +96,27 @@ template<typename T> struct CSharpConverter;
 
 //////////////////////////////////////// Array converters //////////////////////////////////////////////////////////////
 
-struct SafeArray
-{
-    void* data;
-    int size;
-};
-
-template<typename T>
-static void* GetScratchSpace(int length)
-{
-    static thread_local int scratchLength = 0;
-    static thread_local void* scratch = nullptr;
-
-    if (scratchLength < length)
-    {
-        scratchLength = length;
-        scratch = realloc(scratch, scratchLength);
-    }
-    return scratch;
-}
-
 // Convert PODVector<T>
 template<typename T>
 struct CSharpConverter<PODVector<T>>
 {
     using CppType=PODVector<T>;
-    using CType=SafeArray;
+    using CType=void*;
 
+    // TODO: This can be optimized by passing &value.Front() memory buffer
     static CType ToCSharp(const CppType& value)
     {
-        return {(void*)&value.Front(), (int)(value.Size() * sizeof(T))};
+        auto length = value.Size() * sizeof(T);
+        auto* data = MarshalAllocator::Get().Alloc(length);
+        memcpy(data, &value.Front(), length);
+        return data;
     }
 
-    static CType ToCSharp(const CppType&& value)
+    static CppType FromCSharp(CType value)
     {
-        int length = (int)value.Size() * sizeof(T);
-        auto* memory = GetScratchSpace<CSharpConverter<PODVector<T>>>(length);
-        memcpy(memory, &value.Front(), length);
-        return {memory, length};
-    }
-
-    static CppType FromCSharp(const SafeArray& value)
-    {
-        return CppType((const T*)value.data, (unsigned)value.size / (unsigned)sizeof(T));
+        auto length = *(int32_t*)((uint8_t*)value - 4);
+        auto count = length / sizeof(T);
+        return CppType((const T*)value, count);
     }
 };
 
@@ -148,24 +125,89 @@ template<typename T>
 struct CSharpConverter<Vector<SharedPtr<T>>>
 {
     using CppType=Vector<SharedPtr<T>>;
-    using CType=SafeArray;
+    using CType=void*;
 
     static CType ToCSharp(const CppType& value)
     {
         int length = (int)value.Size() * sizeof(void*);
-        auto* memory = GetScratchSpace<CSharpConverter<Vector<SharedPtr<T>>>>(length);
+        CType result = MarshalAllocator::Get().Alloc(length);
 
-        auto** array = (T**)memory;
+        auto** array = (T**)result;
         for (const auto& ptr : value)
             *array++ = ptr.Get();
 
-        return {memory, length};
+        return result;
     }
 
-    static CppType FromCSharp(const SafeArray& value)
+    static CppType FromCSharp(CType value)
     {
-        CppType result{(unsigned)value.size / (unsigned)sizeof(void*)};
-        auto** array = (T**)value.data;
+        auto length = *(int32_t*)((uint8_t*)value - 4);
+        auto count = length / sizeof(void*);
+        CppType result{(unsigned)count};
+        auto** array = (T**)value;
+        for (auto& ptr : result)
+            ptr = *array++;
+        return result;
+    }
+};
+
+// Convert Vector<WeakPtr<T>>
+template<typename T>
+struct CSharpConverter<Vector<WeakPtr<T>>>
+{
+    using CppType=Vector<WeakPtr<T>>;
+    using CType=void*;
+
+    static CType ToCSharp(const CppType& value)
+    {
+        int length = (int)value.Size() * sizeof(void*);
+        CType result = MarshalAllocator::Get().Alloc(length);
+
+        auto** array = (T**)result;
+        for (const auto& ptr : value)
+            *array++ = ptr.Get();
+
+        return result;
+    }
+
+    static CppType FromCSharp(CType value)
+    {
+        auto length = *(int32_t*)((uint8_t*)value - 4);
+        auto count = length / sizeof(void*);
+        CppType result{(unsigned)count};
+        auto** array = (T**)value;
+        for (auto& ptr : result)
+            ptr = *array++;
+        return result;
+    }
+};
+
+// Convert Vector<T*>
+template<typename T>
+struct CSharpConverter<Vector<T*>>
+{
+    using CppType=Vector<T*>;
+    using CType=void*;
+
+    // TODO: This can be optimized by passing &value.Front() memory buffer
+    static CType ToCSharp(const CppType& value)
+    {
+        int length = (int)value.Size() * sizeof(void*);
+        CType result = MarshalAllocator::Get().Alloc(length);
+
+        auto** array = (T**)result;
+        for (const auto& ptr : value)
+            *array++ = ptr;
+
+        return result;
+    }
+
+    static CppType FromCSharp(CType value)
+    {
+        auto length = *(int32_t*)((uint8_t*)value - 4);
+        auto count = length / sizeof(void*);
+        CppType result{(unsigned)count};
+        auto** array = (T**)value;
         for (auto& ptr : result)
             ptr = *array++;
         return result;
@@ -176,9 +218,21 @@ struct CSharpConverter<Vector<SharedPtr<T>>>
 
 template<> struct CSharpConverter<Urho3D::String>
 {
-    static inline const char* ToCSharp(const char* value) { return value; }
-    static inline const char* ToCSharp(const String& value) { return value.CString(); }
-    static inline const char* ToCSharp(const String&& value) { return strdup(value.CString()); }
+    // TODO: This can be optimized by passing value memory buffer
+    static inline const char* ToCSharp(const char* value)
+    {
+        void* memory = MarshalAllocator::Get().Alloc(strlen(value) + 1);
+        strcpy((char*)memory, value);
+        return (const char*)memory;
+    }
+
+    // TODO: This can be optimized by passing &value.CString() memory buffer
+    static inline const char* ToCSharp(const String& value)
+    {
+        void* memory = MarshalAllocator::Get().Alloc(value.Length() + 1);
+        strcpy((char*)memory, value.CString());
+        return (const char*)memory;
+    }
 };
 
 ///////////////////////////////////////// Utilities ////////////////////////////////////////////////////////////////////

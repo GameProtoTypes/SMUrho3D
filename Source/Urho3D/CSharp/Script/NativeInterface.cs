@@ -1,3 +1,24 @@
+//
+// Copyright (c) 2018 Rokas Kupstys
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
 using System;
 using System.Runtime.InteropServices;
 
@@ -18,14 +39,6 @@ namespace Urho3D.CSharp
         /// <param name="handle">Pointer returned by Lock().</param>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void UnlockDelegate(IntPtr handle);
-
-//            /// <summary>
-//            /// Return object from GC handle.
-//            /// </summary>
-//            /// <param name="handle">Pointer returned by Lock().</param>
-//            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-//            public delegate Object GetObjectDelegate(IntPtr handle);
-
         /// <summary>
         /// Make a duplicate of GC handle. Both handles will have to be unlocked by calling Unlock(handle).
         /// </summary>
@@ -57,7 +70,6 @@ namespace Urho3D.CSharp
             public UnlockDelegate Unlock;
             [MarshalAs(UnmanagedType.FunctionPtr)]
             public CloneHandleDelegate CloneHandle;
-//            public GetObjectDelegate GetObject;
             [MarshalAs(UnmanagedType.FunctionPtr)]
             public CreateObjectDelegate CreateObject;
             [MarshalAs(UnmanagedType.FunctionPtr)]
@@ -71,13 +83,17 @@ namespace Urho3D.CSharp
         /// </summary>
         /// <param name="size">Number of bytes to return.</param>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr AllocateMemoryDelegate(uint size);
+        public delegate IntPtr AllocateMemoryDelegate(int size);
         /// <summary>
         /// Free memory allocated by AllocateMemory().
         /// </summary>
         /// <param name="memory">Result of AllocateMemory().</param>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void FreeMemoryDelegate(IntPtr memory);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr InteropAllocDelegate(int length);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void InteropFreeDelegate(IntPtr ptr);
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct NativeRuntime
@@ -86,12 +102,16 @@ namespace Urho3D.CSharp
             public AllocateMemoryDelegate AllocateMemory;
             [MarshalAs(UnmanagedType.FunctionPtr)]
             public FreeMemoryDelegate FreeMemory;
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            public InteropAllocDelegate InteropAlloc;
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            public InteropFreeDelegate InteropFree;
         }
 
         internal static ManagedRuntime Managed;
         internal static NativeRuntime Native;
 
-        internal static unsafe void Initialize()
+        internal static void Initialize()
         {
             Managed = new ManagedRuntime();
             Native = new NativeRuntime();
@@ -99,7 +119,6 @@ namespace Urho3D.CSharp
             Managed.Lock = Lock;
             Managed.Unlock = Unlock;
             Managed.CloneHandle = CloneHandle;
-            //Managed.GetObject = GetObject;
             Managed.CreateObject = CreateObject;
             Managed.HandleEventWithType = Object.HandleEventWithType;
             Managed.HandleEventWithoutType = Object.HandleEventWithoutType;
@@ -125,8 +144,6 @@ namespace Urho3D.CSharp
         {
             return GCHandle.ToIntPtr(GCHandle.Alloc(GCHandle.FromIntPtr(handle).Target));
         }
-
-//        internal static Object GetObject()
 
         internal static IntPtr CreateObject(IntPtr contextPtr, uint managedType)
         {

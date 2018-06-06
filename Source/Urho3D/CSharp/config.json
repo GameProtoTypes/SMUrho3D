@@ -1,5 +1,6 @@
 {
   "module": "Urho3D",
+  "managed_assembly": "Urho3DNet",
   "namespaces": {
     "SDL": {
       "parse": {
@@ -45,6 +46,7 @@
             "Network/*.h",
             "Resource/*.h",
             "UI/*.h",
+            "SystemUI/*.h",
             "Graphics/*.h",
             "Physics/*.h"
           ],
@@ -67,9 +69,6 @@
           ]
         }
       },
-      "include": [
-        "Urho3D/Urho3DAll.h",
-      ],
       "symbols": {
         "include": [
           "Urho3D",
@@ -145,6 +144,7 @@
           "Urho3D::ConvexData",
           "Urho3D::HeightfieldData",
           "Urho3D::FileWatcher::ThreadFunction()",
+          "Urho3D::AttributeInfo::AttributeInfo(*",  // TODO: Support array of string pointers somehow
           // Provied by C#
           "Urho3D::M_INFINITY",
           "Urho3D::M_MIN_INT",
@@ -351,6 +351,51 @@
       "ptype": "Urho3D.BoundingBox",
       "cpp_to_c": "CSharpPODConverter<Urho3D::BoundingBox>::ToCSharp({value})",
       "c_to_cpp": "CSharpPODConverter<Urho3D::BoundingBox>::FromCSharp({value})",
+      "is_value_type": true
+    },
+    {
+      "type": "ImVec2",
+      "ctype": "Urho3D::PODVector2",
+      "cstype": "System.Numerics.Vector2",
+      "ptype": "System.Numerics.Vector2",
+      "cpp_to_c": "CSharpPODConverter<ImVec2>::ToCSharp({value})",
+      "c_to_cpp": "CSharpPODConverter<ImVec2>::FromCSharp({value})",
+      "is_value_type": true
+    },
+    {
+      "type": "ImVec4",
+      "ctype": "Urho3D::PODVector4",
+      "cstype": "Urho3D.Vector4",
+      "ptype": "Urho3D.Vector4",
+      "cpp_to_c": "CSharpPODConverter<ImVec4>::ToCSharp({value})",
+      "c_to_cpp": "CSharpPODConverter<ImVec4>::FromCSharp({value})",
+      "is_value_type": true
+    },
+    {
+      "type": "ImGuiWindowFlags",
+      "ctype": "unsigned",
+      "ptype": "uint",
+      "cstype": "ImGui.WindowFlags",
+      "pinvoke_to_cs": "(ImGui.WindowFlags){value}",
+      "cs_to_pinvoke": "(uint){value}",
+      "is_value_type": true
+    },
+    {
+      "type": "ImGuiCond_",
+      "ctype": "unsigned",
+      "ptype": "uint",
+      "cstype": "ImGui.Condition",
+      "cpp_to_c": "(unsigned){value}",
+      "c_to_cpp": "(ImGuiCond_){value}",
+      "pinvoke_to_cs": "(ImGui.ImGuiWindowFlags){value}",
+      "cs_to_pinvoke": "(uint){value}",
+      "is_value_type": true
+    },
+    {
+      "type": "ImFont*",
+      "ctype": "ImFont*",
+      "ptype": "IntPtr",
+      "cstype": "IntPtr",
       "is_value_type": true
     }
   ],

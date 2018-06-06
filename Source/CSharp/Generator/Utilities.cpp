@@ -500,6 +500,14 @@ std::string PrimitiveToPInvokeType(cppast::cpp_builtin_type_kind kind)
     return "";
 }
 
+bool IsBuiltinPInvokeType(const std::string& type)
+{
+    static std::vector<std::string> types{
+        "void", "bool", "byte", "ushort", "uint", "ulong", "short", "int", "long", "float", "double", "char"
+    };
+    return std::find(types.begin(), types.end(), type) != types.end();
+}
+
 std::string BuiltinToPInvokeType(const cppast::cpp_type& type)
 {
     switch (type.kind())
@@ -708,7 +716,7 @@ bool IsPointer(const cppast::cpp_type& type)
 
 bool IsExported(const cppast::cpp_class& cls)
 {
-    if (generator->isStatic_)
+    if (generator->currentModule_->isStatic_)
         // Binding static library. All symbols are always visible.
         return true;
 
@@ -1005,6 +1013,21 @@ bool is_hex(const std::string& str)
     }
 
     return true;
+}
+
+}
+
+namespace cppast
+{
+
+std::string to_string(const cppast::cpp_expression& expr)
+{
+    if (expr.kind() == cppast::cpp_expression_kind::literal_t)
+        return dynamic_cast<const cppast::cpp_literal_expression&>(expr).value();
+    else if (expr.kind() == cppast::cpp_expression_kind::unexposed_t)
+        return dynamic_cast<const cppast::cpp_unexposed_expression&>(expr).expression().as_string();
+    else
+        assert(false);
 }
 
 }

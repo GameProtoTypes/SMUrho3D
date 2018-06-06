@@ -30,6 +30,7 @@
 #include "GeneratorContext.h"
 #include "GeneratePInvokePass.h"
 #include "ImplementInterfacesPass.h"
+#include "GenerateCSharpApiPass.h"
 
 
 namespace Urho3D
@@ -43,15 +44,18 @@ void GeneratePInvokePass::Start()
     printer_ << "using System.Reflection;";
     printer_ << "using System.Runtime.CompilerServices;";
     printer_ << "using System.Runtime.InteropServices;";
+    printer_ << "using Urho3D;";
     printer_ << "using Urho3D.CSharp;";
     printer_ << "";
 
     discoverInterfacesPass_ = generator->GetPass<DiscoverInterfacesPass>();
+    dllImport_ = fmt::format("[DllImport({}.CSharp.Config.NativeLibraryName, "
+                             "CallingConvention = CallingConvention.Cdecl)]",
+                             generator->currentModule_->defaultNamespace_);
 }
 
 bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
 {
-    const char* dllImport = "[DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]";
 
     // Generate C API for property getters and seters. Visitor will not visit these notes on it's own.
     if (entity->flags_ & HintProperty)
@@ -146,7 +150,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             printer_ << "";
 
             // Helpers for marshalling type between public and pinvoke APIs
-            printer_ << fmt::format("public {}static {} GetManagedInstance(IntPtr source, bool owns)", newTag,
+            printer_ << fmt::format("internal {}static {} GetManagedInstance(IntPtr source, bool owns)", newTag,
                                     entity->name_);
             printer_.Indent();
             {
@@ -199,7 +203,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
                     auto baseSym = Sanitize(it->first);
                     auto derivedSym = Sanitize(inheritorName);
 
-                    printer_ << dllImport;
+                    printer_ << dllImport_;
                     printer_ << fmt::format("internal static extern int {derivedSym}_{baseSym}_offset();",
                                             FMT_CAPTURE(derivedSym), FMT_CAPTURE(baseSym));
                     printer_ << fmt::format("static int {derivedSym}_offset = {derivedSym}_{baseSym}_offset();",
@@ -209,7 +213,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             }
             //////////////////////////////////
 
-            printer_ << fmt::format("public static IntPtr GetNativeInstance({} source)",
+            printer_ << fmt::format("internal static IntPtr GetNativeInstance({} source)",
                                     ((entity->flags_ & HintInterface) ? "I" : "") + entity->name_);
             printer_.Indent();
             {
@@ -255,7 +259,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             printer_ << "";
 
             // Destructor always exists even if it is not defined in the c++ class
-            printer_ << dllImport;
+            printer_ << dllImport_;
             printer_
                 << fmt::format("internal static extern void {}_destructor(IntPtr instance, bool owner);", baseName);
             printer_ << "";
@@ -264,20 +268,20 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             if (generator->IsInheritable(entity->uniqueName_) ||
                 IsSubclassOf(entity->Ast<cppast::cpp_class>(), "Urho3D::RefCounted"))
             {
-                printer_ << dllImport;
+                printer_ << dllImport_;
                 printer_ << fmt::format("internal static extern void {}_setup(IntPtr instance, IntPtr gcHandle, "
                                         "string typeName);", baseName);
                 printer_ << "";
             }
 
             // Method for getting type id.
-            printer_ << dllImport;
+            printer_ << dllImport_;
             printer_ << fmt::format("private static extern IntPtr {}_typeid();", baseName);
             printer_ << fmt::format("internal static {}IntPtr GetNativeTypeId() {{ return {}_typeid(); }}", newTag,
                                     baseName);
             printer_ << "";
 
-            printer_ << dllImport;
+            printer_ << dllImport_;
             printer_ << fmt::format("private static extern IntPtr {}_instance_typeid(IntPtr instance);", baseName);
             printer_ << fmt::format(
                 "internal static {}IntPtr GetNativeTypeId(IntPtr instance) {{ return {}_instance_typeid(instance); }}",
@@ -303,7 +307,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             return true;
 
         // Getter
-        printer_ << dllImport;
+        printer_ << dllImport_;
         auto csParam = ToPInvokeTypeParam(var.type());
         auto csReturnType = ToPInvokeTypeReturn(var.type());
         WriteMarshalAttributeReturn(var.type());
@@ -313,7 +317,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
         // Setter
         if (!IsConst(var.type()))
         {
-            printer_ << dllImport;
+            printer_ << dllImport_;
             printer_ << fmt::format("internal static extern void set_{}({} value);", entity->cFunctionName_, csParam);
             printer_ << "";
         }
@@ -331,7 +335,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             return true;
 
         // Getter
-        printer_ << dllImport;
+        printer_ << dllImport_;
         auto csReturnType = ToPInvokeTypeReturn(var.type());
         auto csParam = ToPInvokeTypeParam(var.type());
         WriteMarshalAttributeReturn(var.type());
@@ -342,7 +346,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
         // Setter
         if (!IsConst(var.type()))
         {
-            printer_ << dllImport;
+            printer_ << dllImport_;
             printer_
                 << fmt::format("internal static extern void set_{}(IntPtr instance, {} value);", entity->cFunctionName_,
                                csParam);
@@ -352,7 +356,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
     else if (entity->kind_ == cppast::cpp_entity_kind::constructor_t)
     {
         const auto& ctor = entity->Ast<cppast::cpp_constructor>();
-        printer_ << dllImport;
+        printer_ << dllImport_;
         auto csParams = ParameterList(ctor.parameters(),
                                       std::bind(&GeneratePInvokePass::ToPInvokeTypeParam, std::placeholders::_1));
         printer_ << fmt::format("internal static extern IntPtr {}({});", entity->cFunctionName_, csParams);
@@ -366,7 +370,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
         const auto& func = entity->Ast<cppast::cpp_member_function>();
 
-        printer_ << dllImport;
+        printer_ << dllImport_;
         auto csParams = ParameterList(func.parameters(),
                                       std::bind(&GeneratePInvokePass::ToPInvokeTypeParam, std::placeholders::_1));
         auto rtype = ToPInvokeTypeReturn(func.return_type());
@@ -390,7 +394,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
                 FMT_CAPTURE(rtype), FMT_CAPTURE(className), FMT_CAPTURE(cFunction), FMT_CAPTURE(pc),
                 FMT_CAPTURE(csParams));
             printer_ << "";
-            printer_ << dllImport;
+            printer_ << dllImport_;
             printer_ << fmt::format("internal static extern void set_fn{cFunction}(IntPtr instance, IntPtr cb);",
                                     FMT_CAPTURE(cFunction), FMT_CAPTURE(className));
             printer_ << "";
@@ -400,7 +404,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
     {
         const auto& func = entity->Ast<cppast::cpp_function>();
 
-        printer_ << dllImport;
+        printer_ << dllImport_;
         auto csParams = ParameterList(func.parameters(),
                                       std::bind(&GeneratePInvokePass::ToPInvokeTypeParam, std::placeholders::_1));
         auto rtype = ToPInvokeTypeReturn(func.return_type());
@@ -437,11 +441,11 @@ std::string GeneratePInvokePass::ToPInvokeTypeParam(const cppast::cpp_type& type
 {
     std::string result = ToPInvokeType(type);
 
-    if (auto* map = generator->GetTypeMap(type))
+    auto marshaller = GetCustomMarshaller(type);
+    if (!marshaller.empty())
     {
-        if (!map->customMarshaller_.empty())
-            result = fmt::format("[param: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof({}))]",
-                map->customMarshaller_) + result;
+        result = fmt::format("[param: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof({}))]",
+                             marshaller) + result;
     }
 
     return result;
@@ -498,6 +502,11 @@ std::string GeneratePInvokePass::ToPInvokeType(const cppast::cpp_type& type, boo
                 return "IntPtr";
             assert(false);
         }
+        case cppast::cpp_type_kind::array_t:
+        {
+            const auto& arr = dynamic_cast<const cppast::cpp_array_type&>(t);
+            return GenerateCSharpApiPass::ToCSType(arr.value_type()) + "[]";
+        }
         default:
             assert(false);
         }
@@ -520,18 +529,38 @@ std::string GeneratePInvokePass::ToPInvokeType(const cppast::cpp_type& type, boo
 
 void GeneratePInvokePass::WriteMarshalAttributeReturn(const cppast::cpp_type& type)
 {
-    if (auto* map = generator->GetTypeMap(type))
+    std::string marshaller = GetCustomMarshaller(type);
+
+    if (!marshaller.empty())
     {
-        if (!map->customMarshaller_.empty())
-        {
-            const auto& bareType = cppast::remove_cv(type);
-            // User-defined types returned by value need copying. Native side ensures data is copied and returned.
-            // Managed side ensures this data is freed when it is no longer needed.
-            auto suffix = (!IsEnumType(type) && bareType.kind() == cppast::cpp_type_kind::user_defined_t) ? "Copy" : "";
-            printer_ << fmt::format("[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof({}))]",
-                                    map->customMarshaller_ + suffix);
-        }
+        // User-defined types returned by value need copying. Native side ensures data is copied and returned.
+        // Managed side ensures this data is freed when it is no longer needed.
+        printer_ << fmt::format("[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof({}))]",
+                                marshaller);
     }
+}
+
+std::string GeneratePInvokePass::GetCustomMarshaller(const cppast::cpp_type& type)
+{
+    if (type.kind() == cppast::cpp_type_kind::array_t)
+    {
+        const auto& array = dynamic_cast<const cppast::cpp_array_type&>(type);
+        const auto& value = cppast::remove_cv(array.value_type());
+
+        std::string prefix;
+        if (IsComplexType(value))
+            prefix = "Obj";
+        else
+            prefix = "Pod";
+
+        auto csType = GenerateCSharpApiPass::ToCSType(type);
+        csType = csType.substr(0, csType.length() - 2);  // Remove trailing []
+        return fmt::format("{prefix}ArrayMarshaller<{csType}>", FMT_CAPTURE(prefix), FMT_CAPTURE(csType));
+    }
+    else if (auto* map = generator->GetTypeMap(type))
+        return map->customMarshaller_;
+
+    return "";
 }
 
 }
