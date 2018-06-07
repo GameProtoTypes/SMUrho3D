@@ -24,7 +24,7 @@
 
 #include "../IO/VectorBuffer.h"
 #include "../Scene/Component.h"
-
+#include <Newton.h>
 
 namespace Urho3D
 {
@@ -60,9 +60,15 @@ public:
     /// Handle enabled/disabled state change.
     void OnSetEnabled() override;
     /// Return initial world transform to Bullet.
+    ///void getWorldTransform(btTransform& worldTrans) const override;
+    /// Update world transform from Bullet.
+    ///void setWorldTransform(const btTransform& worldTrans) override;
+
+    /// Return initial world transform in newton cordinates.
    // void getWorldTransform(btTransform& worldTrans) const override;
     /// Update world transform from Bullet.
-   // void setWorldTransform(const btTransform& worldTrans) override;
+    //void setWorldTransform(const btTransform& worldTrans) override;
+
     /// Visualize the component as debug geometry.
     void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 

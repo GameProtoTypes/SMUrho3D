@@ -35,9 +35,9 @@
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/IO/FileSystem.h>
-#include <Urho3D/Physics/CollisionShape.h>
+#include <Urho3D/Physics/NewtonCollisionShape.h>
 #include <Urho3D/Physics/PhysicsWorld.h>
-#include <Urho3D/Physics/RigidBody.h>
+#include <Urho3D/Physics/NewtonRigidBody.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/UI/Font.h>
@@ -128,11 +128,11 @@ void Physics::CreateScene()
         floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
         floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-        // Make the floor physical by adding RigidBody and CollisionShape components. The RigidBody's default
-        // parameters make the object static (zero mass.) Note that a CollisionShape by itself will not participate
+        // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
+        // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
         // in the physics simulation
-        /*RigidBody* body = */floorNode->CreateComponent<RigidBody>();
-        auto* shape = floorNode->CreateComponent<CollisionShape>();
+        /*NewtonRigidBody* body = */floorNode->CreateComponent<NewtonRigidBody>();
+        auto* shape = floorNode->CreateComponent<NewtonCollisionShape>();
         // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
         // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
         shape->SetBox(Vector3::ONE);
@@ -151,13 +151,13 @@ void Physics::CreateScene()
                 boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
                 boxObject->SetCastShadows(true);
 
-                // Create RigidBody and CollisionShape components like above. Give the RigidBody mass to make it movable
+                // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
                 // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
                 // objects are significant
-                auto* body = boxNode->CreateComponent<RigidBody>();
+                auto* body = boxNode->CreateComponent<NewtonRigidBody>();
                 body->SetMass(1.0f);
                 body->SetFriction(0.75f);
-                auto* shape = boxNode->CreateComponent<CollisionShape>();
+                auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
                 shape->SetBox(Vector3::ONE);
             }
         }
@@ -294,15 +294,15 @@ void Physics::SpawnObject()
     boxObject->SetCastShadows(true);
 
     // Create physics components, use a smaller mass also
-    auto* body = boxNode->CreateComponent<RigidBody>();
+    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
     body->SetMass(0.25f);
     body->SetFriction(0.75f);
-    auto* shape = boxNode->CreateComponent<CollisionShape>();
+    auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
     shape->SetBox(Vector3::ONE);
 
     const float OBJECT_VELOCITY = 10.0f;
 
-    // Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
+    // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
     // to overcome gravity better
     body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
 }
