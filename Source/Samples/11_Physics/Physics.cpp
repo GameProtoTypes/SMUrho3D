@@ -36,7 +36,7 @@
 #include <Urho3D/IO/File.h>
 #include <Urho3D/IO/FileSystem.h>
 #include <Urho3D/Physics/NewtonCollisionShape.h>
-#include <Urho3D/Physics/PhysicsWorld.h>
+#include "Urho3D/Physics/NewtonPhysicsWorld.h"
 #include <Urho3D/Physics/NewtonRigidBody.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
@@ -47,6 +47,7 @@
 #include "Physics.h"
 
 #include <Urho3D/DebugNew.h>
+
 
 URHO3D_DEFINE_APPLICATION_MAIN(Physics)
 
@@ -88,7 +89,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<PhysicsWorld>();
+    scene_->CreateComponent<NewtonPhysicsWorld>();
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control

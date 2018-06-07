@@ -428,13 +428,13 @@ void PhysicsWorld::SendCollisionEvents()
     //previousCollisions_ = currentCollisions_;
 }
 
-void RegisterPhysicsLibrary(Context* context)
-{
-    CollisionShape::RegisterObject(context);
-    RigidBody::RegisterObject(context);
-    Constraint::RegisterObject(context);
-    PhysicsWorld::RegisterObject(context);
-    RaycastVehicle::RegisterObject(context);
-}
+//void RegisterPhysicsLibrary(Context* context)
+//{
+//    CollisionShape::RegisterObject(context);
+//    RigidBody::RegisterObject(context);
+//    Constraint::RegisterObject(context);
+//    PhysicsWorld::RegisterObject(context);
+//    RaycastVehicle::RegisterObject(context);
+//}
 
 }

@@ -143,7 +143,7 @@ private:
 
 };
 
-/// Register Physics library objects.
-void URHO3D_API RegisterPhysicsLibrary(Context* context);
+///// Register Physics library objects.
+//void URHO3D_API RegisterPhysicsLibrary(Context* context);
 
 }

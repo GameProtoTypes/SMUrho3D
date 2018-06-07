@@ -53,7 +53,7 @@
 #include "../Network/Network.h"
 #endif
 #ifdef URHO3D_PHYSICS
-#include "../Physics/PhysicsWorld.h"
+#include "Physics/NewtonPhysicsWorld.h"
 #include "../Physics/RaycastVehicle.h"
 #endif
 #include "../Resource/ResourceCache.h"
@@ -77,6 +77,7 @@
 #endif
 
 #include "../DebugNew.h"
+
 
 
 #if defined(_MSC_VER) && defined(_DEBUG)
