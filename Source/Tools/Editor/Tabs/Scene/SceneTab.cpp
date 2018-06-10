@@ -101,7 +101,6 @@ bool SceneTab::RenderWindowContent()
         ui::SetWindowFocus();
         effectSettings_->Prepare(true);
     }
-    ImGuizmo::SetDrawlist();
 
     RenderToolbarButtons();
     IntRect tabRect = UpdateViewRect();

@@ -41,12 +41,15 @@ class GeneratePInvokePass : public CppApiPass
     void Stop() override;
 
     static std::string ToPInvokeTypeReturn(const cppast::cpp_type& type);
-    static std::string ToPInvokeTypeParam(const cppast::cpp_type& type);
+    static std::string ToPInvokeTypeParam(const cppast::cpp_type& type, bool disallowReferences=false);
     static std::string ToPInvokeType(const cppast::cpp_type& type, bool disallowReferences=false);
 
 protected:
     void WriteMarshalAttributeReturn(const cppast::cpp_type& type);
     static std::string GetCustomMarshaller(const cppast::cpp_type& type);
+    std::string ToPInvokeParameters(
+        const cppast::detail::iteratable_intrusive_list<cppast::cpp_function_parameter>& parameters);
+    void DllImport();
 
     CSharpPrinter printer_;
     DiscoverInterfacesPass* discoverInterfacesPass_ = nullptr;

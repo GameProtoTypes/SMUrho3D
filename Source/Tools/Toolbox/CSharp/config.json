@@ -5,16 +5,22 @@
   "namespaces": {
     "Urho3D": {
       "parse": {
-        "SystemUI": {
+        ".": {
           "include": [
-            "ImGuiDock.h"
+            "*.h",
+            "**/*.h",
           ]
-        }
+        },
       },
       "symbols": {
         "include": [
           "ImGui",
-          "ImGui::*"
+          "ImGui::*",
+          "Urho3D",
+          "Urho3D::*"
+        ],
+        "exclude": [
+          "Urho3D::Undo"
         ]
       },
     }

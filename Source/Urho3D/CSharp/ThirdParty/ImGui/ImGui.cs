@@ -763,7 +763,7 @@ namespace ImGui
             return ImGuiNative.igIsWindowFocused(flags);
         }
 
-        public static bool IsWindowHovered(HoveredFlags flags)
+        public static bool IsWindowHovered(HoveredFlags flags=HoveredFlags.Default)
         {
             return ImGuiNative.igIsWindowHovered(flags);
         }
@@ -830,6 +830,13 @@ namespace ImGui
         {
             Vector2 retVal;
             ImGuiNative.igGetCursorStartPos(out retVal);
+            return retVal;
+        }
+
+        public static unsafe Vector2 GetCursorPos()
+        {
+            Vector2 retVal;
+            ImGuiNative.igGetCursorPos(&retVal);
             return retVal;
         }
 
@@ -1088,6 +1095,11 @@ namespace ImGui
         public static void SameLine(float localPositionX = 0, float spacingW = -1.0f)
         {
             ImGuiNative.igSameLine(localPositionX, spacingW);
+        }
+
+        public static void NewLine()
+        {
+            ImGuiNative.igNewLine();
         }
 
         public static bool BeginDragDropSource(DragDropFlags flags, int mouseButton)

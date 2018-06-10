@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,57 +19,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+using System.IO;
+using Urho3D;
 
-#pragma once
-
-
-#include "ToolboxAPI.h"
-#include <Urho3D/Container/Str.h>
-#include <Urho3D/Precompiled.h>
-
-
-namespace Urho3D
+namespace Editor
 {
+    public class Project : Object
+    {
+        private readonly string _projectProjectPath;
+        public string CachePath => _projectProjectPath + "/Cache";
+        public string DataPath => _projectProjectPath + "/Data";
 
-enum FileType
-{
-    FTYPE_FILE,
-    FTYPE_ARCHIVE,
-    FTYPE_WORD,
-    FTYPE_CODE,
-    FTYPE_IMAGE,
-    FTYPE_PDF,
-    FTYPE_VIDEO,
-    FTYPE_POWERPOINT,
-    FTYPE_TEXT,
-    FTYPE_FILM,
-    FTYPE_AUDIO,
-    FTYPE_EXCEL,
-};
+        public Project(Context context, string projectPath) : base(context)
+        {
+            _projectProjectPath = projectPath;
+            foreach (var path in new[]{_projectProjectPath, CachePath, DataPath})
+            {
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+            }
+        }
 
-enum ContentType
-{
-    CTYPE_UNKNOWN,
-    CTYPE_SCENE,
-    CTYPE_SCENEOBJECT,
-    CTYPE_UILAYOUT,
-    CTYPE_UISTYLE,
-    CTYPE_MODEL,
-    CTYPE_ANIMATION,
-    CTYPE_MATERIAL,
-    CTYPE_PARTICLE,
-    CTYPE_RENDERPATH,
-    CTYPE_SOUND,
-    CTYPE_TEXTURE,
-    CTYPE_TEXTUREXML,
-};
+        public bool Save(string path = null)
+        {
+            if (path == null)
+                path = _projectProjectPath;
 
-/// Return file type based on extension of file name.
-URHO3D_TOOLBOX_API FileType GetFileType(const String& fileName);
-/// Return icon from icon font based on extension of file name.
-URHO3D_TOOLBOX_API String GetFileIcon(const String& fileName);
-
-/// Return content type by inspecting file contents.
-URHO3D_TOOLBOX_API ContentType GetContentType(const String& resourcePath);
-
+            return false;
+        }
+    }
 }

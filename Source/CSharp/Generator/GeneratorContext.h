@@ -127,7 +127,6 @@ public:
     std::vector<Module> modules_;
     NamespaceRules* currentNamespace_ = nullptr;
     Module* currentModule_ = nullptr;
-    cppast::cpp_entity_index index_;
     std::vector<std::unique_ptr<CppAstPass>> cppPasses_;
     std::vector<std::unique_ptr<CppApiPass>> apiPasses_;
     std::unordered_map<std::string, std::weak_ptr<MetaEntity>> enumValues_;
@@ -135,6 +134,10 @@ public:
     std::unordered_map<std::string, std::string> defaultValueRemaps_;
     std::vector<std::string> forceCompileTimeConstants_;
     std::unordered_map<std::string, TypeMap> typeMaps_;
+    std::vector<std::string> valueTemplates_{"FlagSet"};
+    std::vector<std::string> complexTemplates_{"SharedPtr", "WeakPtr"};
+    /// These templates wrap a type. Generator should unwrap them.
+    std::vector<std::string> wrapperTemplates_;
 };
 
 extern GeneratorContext* generator;
