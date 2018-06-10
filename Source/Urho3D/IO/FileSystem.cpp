@@ -287,9 +287,6 @@ FileSystem::FileSystem(Context* context) :
     Object(context)
 {
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(FileSystem, HandleUpdate));
-
-    // Subscribe to console commands
-    SetExecuteConsoleCommands(true);
 }
 
 FileSystem::~FileSystem()

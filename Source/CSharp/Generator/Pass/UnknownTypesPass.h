@@ -45,6 +45,13 @@ public:
         if (entity->ast_ == nullptr || info.event == info.container_entity_exit)
             return true;
 
+        if (IsDeprecated(*entity->ast_))
+        {
+            entity->Remove();
+            spdlog::get("console")->info("Deprecated: {}, type {}", entity->uniqueName_);
+            return true;
+        }
+
         using ParameterList = cppast::detail::iteratable_intrusive_list<cppast::cpp_function_parameter>;
 
         auto checkFunctionParams = [&](const ParameterList& params) {
@@ -115,6 +122,8 @@ public:
         case cppast::cpp_entity_kind::function_t:
         {
             const auto& e = entity->Ast<cppast::cpp_function>();
+            if (e.body_kind() == cppast::cpp_function_body_kind::cpp_function_deleted)
+                entity->Remove();
             if (!checkFunctionTypes(e.return_type(), e.parameters()))
                 entity->Remove();
             if (e.name().find("operator") == 0)
@@ -124,6 +133,8 @@ public:
         case cppast::cpp_entity_kind::member_function_t:
         {
             const auto& e = entity->Ast<cppast::cpp_member_function>();
+            if (e.body_kind() == cppast::cpp_function_body_kind::cpp_function_deleted)
+                entity->Remove();
             if (!checkFunctionTypes(e.return_type(), e.parameters()))
                 entity->Remove();
             if (e.name().find("operator") == 0)
@@ -134,6 +145,8 @@ public:
         case cppast::cpp_entity_kind::constructor_t:
         {
             const auto& e = entity->Ast<cppast::cpp_constructor>();
+            if (e.body_kind() == cppast::cpp_function_body_kind::cpp_function_deleted)
+                entity->Remove();
             if (!checkFunctionParams(e.parameters()))
                 entity->Remove();
             break;

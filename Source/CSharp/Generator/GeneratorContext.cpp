@@ -39,6 +39,8 @@ namespace Urho3D
 
 GeneratorContext::GeneratorContext()
 {
+    wrapperTemplates_.insert(wrapperTemplates_.end(), valueTemplates_.begin(), valueTemplates_.end());
+    wrapperTemplates_.insert(wrapperTemplates_.end(), complexTemplates_.begin(), complexTemplates_.end());
 }
 
 bool GeneratorContext::AddModule(const std::string& libraryName, bool isStatic, const std::string& publicKey,
@@ -169,17 +171,6 @@ bool GeneratorContext::AddModule(const std::string& libraryName, bool isStatic, 
         {
             auto& typeMaps = jsonRules["typemaps"];
 
-            // Typemap const char* strings
-            {
-                rapidjson::Value stringMap(rapidjson::kObjectType);
-                stringMap.AddMember("type", "char const*", jsonRules.GetAllocator());
-                stringMap.AddMember("ptype", "string", jsonRules.GetAllocator());
-                stringMap.AddMember("cstype", "string", jsonRules.GetAllocator());
-                stringMap.AddMember("cpp_to_c", "{value}", jsonRules.GetAllocator());
-                stringMap.AddMember("is_value_type", true, jsonRules.GetAllocator());
-                typeMaps.PushBack(stringMap, jsonRules.GetAllocator());
-            }
-
             std::function<void(rapidjson::Value&, const std::string&)> parseTypemaps = [&](
                 rapidjson::Value& typeMaps, const std::string& jsonPath) {
                 for (auto jt = typeMaps.Begin(); jt != typeMaps.End(); ++jt)
@@ -238,12 +229,6 @@ bool GeneratorContext::AddModule(const std::string& libraryName, bool isStatic, 
 
                         if (typeMap.HasMember("marshaller"))
                             map.customMarshaller_ = typeMap["marshaller"].GetString();
-
-                        // Doctor string typemaps with some internal details.
-                        if (map.csType_ == "string" && map.customMarshaller_.empty())
-                        {
-                            map.customMarshaller_ = "StringUtf8";
-                        }
 
                         typeMaps_[map.cppType_] = map;
                     }
@@ -335,6 +320,7 @@ void GeneratorContext::Generate()
                         cppast::libclang_parser parser(type_safe::ref(logger));
 
                         auto absPath = filePath.first + filePath.second;
+                        cppast::cpp_entity_index index_;
                         auto file = parser.parse(index_, absPath, m.config_);
                         if (parser.error())
                         {
@@ -600,6 +586,9 @@ const TypeMap* GeneratorContext::GetTypeMap(const std::string& typeName)
 bool GeneratorContext::GetSymbolOfConstant(MetaEntity* user, const std::string& constant, std::string& result,
                                            MetaEntity** constantEntity)
 {
+    if (constantEntity)
+        *constantEntity = nullptr;
+
     std::string symbol = constant;
     do
     {

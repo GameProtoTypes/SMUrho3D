@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,24 +19,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-
-#include "Toolbox.h"
-#include "SystemUI/Gizmo.h"
-#include "SystemUI/AttributeInspector.h"
-#include "Scene/DebugCameraController.h"
-#include "Common/UndoManager.h"
+using System;
+using System.Diagnostics;
+using System.Reflection;
+using Urho3D.CSharp;
 
 
 namespace Urho3D
 {
-
-void RegisterToolboxTypes(Context* context)
-{
-    context->RegisterFactory<Gizmo>();
-    context->RegisterFactory<AttributeInspector>();
-    context->RegisterFactory<AttributeInspectorWindow>();
-    context->RegisterFactory<DebugCameraController>();
-    context->RegisterFactory<Undo::Manager>();
+    public partial class Component
+    {
+        public T GetComponent<T>() where T : Component
+        {
+            var componentInstance = Urho3D__Component__GetComponent_Urho3D__StringHash__const(NativeInstance, StringHash.Calculate(typeof(T).Name));
+            if (componentInstance == IntPtr.Zero)
+                return null;
+            return InstanceCache.GetOrAdd(componentInstance, ptr => (T)Activator.CreateInstance(typeof(T),
+                BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { ptr, false }, null));
+        }
+    }
 }
-
-};

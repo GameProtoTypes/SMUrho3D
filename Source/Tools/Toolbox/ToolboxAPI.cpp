@@ -20,56 +20,23 @@
 // THE SOFTWARE.
 //
 
-#pragma once
-
-
 #include "ToolboxAPI.h"
-#include <Urho3D/Container/Str.h>
-#include <Urho3D/Precompiled.h>
+#include "SystemUI/Gizmo.h"
+#include "SystemUI/AttributeInspector.h"
+#include "Scene/DebugCameraController.h"
+#include "Common/UndoManager.h"
 
 
 namespace Urho3D
 {
 
-enum FileType
+void RegisterToolboxTypes(Context* context)
 {
-    FTYPE_FILE,
-    FTYPE_ARCHIVE,
-    FTYPE_WORD,
-    FTYPE_CODE,
-    FTYPE_IMAGE,
-    FTYPE_PDF,
-    FTYPE_VIDEO,
-    FTYPE_POWERPOINT,
-    FTYPE_TEXT,
-    FTYPE_FILM,
-    FTYPE_AUDIO,
-    FTYPE_EXCEL,
-};
-
-enum ContentType
-{
-    CTYPE_UNKNOWN,
-    CTYPE_SCENE,
-    CTYPE_SCENEOBJECT,
-    CTYPE_UILAYOUT,
-    CTYPE_UISTYLE,
-    CTYPE_MODEL,
-    CTYPE_ANIMATION,
-    CTYPE_MATERIAL,
-    CTYPE_PARTICLE,
-    CTYPE_RENDERPATH,
-    CTYPE_SOUND,
-    CTYPE_TEXTURE,
-    CTYPE_TEXTUREXML,
-};
-
-/// Return file type based on extension of file name.
-URHO3D_TOOLBOX_API FileType GetFileType(const String& fileName);
-/// Return icon from icon font based on extension of file name.
-URHO3D_TOOLBOX_API String GetFileIcon(const String& fileName);
-
-/// Return content type by inspecting file contents.
-URHO3D_TOOLBOX_API ContentType GetContentType(const String& resourcePath);
-
+    context->RegisterFactory<Gizmo>();
+    context->RegisterFactory<AttributeInspector>();
+    context->RegisterFactory<AttributeInspectorWindow>();
+    context->RegisterFactory<DebugCameraController>();
+    context->RegisterFactory<Undo::Manager>();
 }
+
+};

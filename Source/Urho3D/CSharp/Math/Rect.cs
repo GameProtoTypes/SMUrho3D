@@ -17,6 +17,12 @@ namespace Urho3D
 			Max = new Vector2(maxX, maxY);
 		}
 
+	    public Rect(Vector2 min, Vector2 max)
+	    {
+	        Min = min;
+	        Max = max;
+	    }
+
 	    /// Merge a point.
 	    public void Merge(Vector2 point)
 	    {
@@ -69,5 +75,27 @@ namespace Urho3D
 		}
 
 		public static readonly IntRect Zero = new IntRect(0, 0, 0, 0);
+
+	    public IntRect(IntVector2 min, IntVector2 max)
+	    {
+	        Left = min.X;
+	        Top = min.Y;
+	        Right = max.X;
+	        Bottom = max.Y;
+	    }
+
+	    public int Width => Right - Left;
+	    public int Height => Bottom - Top;
+	    public IntVector2 Size => new IntVector2(Width, Height);
+
+	    public static bool operator !=(IntRect lhs, IntRect rhs)
+	    {
+	        return lhs.Top != rhs.Top || lhs.Right != rhs.Right || lhs.Bottom != rhs.Bottom || lhs.Left != rhs.Left;
+	    }
+
+	    public static bool operator ==(IntRect lhs, IntRect rhs)
+	    {
+	        return !(lhs != rhs);
+	    }
 	}
 }
