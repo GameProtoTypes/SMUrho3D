@@ -82,18 +82,21 @@ public:
         CreateObjects();
 
         // Scene viewport renderpath must be same as material viewport renderpath
-        auto path = effectSource->GetRenderPath();
-        viewport_->SetRenderPath(path);
-        auto light = camera_->GetComponent<Light>();
-        for (auto& command: path->commands_)
+        if (effectSource != nullptr)
         {
-            if (command.pixelShaderName_ == "PBRDeferred")
+            auto path = effectSource->GetRenderPath();
+            viewport_->SetRenderPath(path);
+            auto light = camera_->GetComponent<Light>();
+            for (auto& command: path->commands_)
             {
-                // Lights in PBR scenes need modifications, otherwise obects in material preview look very dark
-                light->SetUsePhysicalValues(true);
-                light->SetBrightness(5000);
-                light->SetShadowCascade(CascadeParameters(10, 20, 30, 40, 10));
-                break;
+                if (command.pixelShaderName_ == "PBRDeferred")
+                {
+                    // Lights in PBR scenes need modifications, otherwise obects in material preview look very dark
+                    light->SetUsePhysicalValues(true);
+                    light->SetBrightness(5000);
+                    light->SetShadowCascade(CascadeParameters(10, 20, 30, 40, 10));
+                    break;
+                }
             }
         }
     }
@@ -206,17 +209,15 @@ AttributeInspector::AttributeInspector(Urho3D::Context* context)
     : Object(context)
 {
     filter_.front() = 0;
+
+    SubscribeToEvent(E_ENDFRAME, [&](StringHash, VariantMap&) {
+        lastMaxWidth_ = currentMaxWidth_;
+        currentMaxWidth_ = 0;
+    });
 }
 
 void AttributeInspector::RenderAttributes(const PODVector<Serializable*>& items)
 {
-    /// If serializable changes clear value buffers so values from previous item do not appear when inspecting new item.
-    if (lastSerializables_ != items)
-    {
-        maxWidth_ = 0;
-        lastSerializables_ = items;
-    }
-
     ui::TextUnformatted("Filter");
     NextColumn();
     ui::PushID("FilterEdit");
@@ -740,8 +741,8 @@ bool AttributeInspector::RenderSingleAttribute(const AttributeInfo& info, Varian
 void AttributeInspector::NextColumn()
 {
     ui::SameLine();
-    maxWidth_ = Max(maxWidth_, ui::GetCursorPosX());
-    ui::SameLine(maxWidth_);
+    currentMaxWidth_ = Max(currentMaxWidth_, ui::GetCursorPosX());
+    ui::SameLine(lastMaxWidth_);
 }
 
 bool AttributeInspector::RenderResourceRef(StringHash type, const String& name, String& result, bool expanded)

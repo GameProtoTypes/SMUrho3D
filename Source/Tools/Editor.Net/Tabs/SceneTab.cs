@@ -19,29 +19,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Editor.Events;
 using IconFonts;
 using Urho3D;
 using ImGui;
+using Urho3D.Events;
 
 
 namespace Editor.Tabs
 {
-    public class SceneTab : Tab
+    public class SceneTab : Tab, IInspectable, IHierarchyProvider
     {
         private readonly SceneView _view;
         private readonly Gizmo _gizmo;
-        private bool _mouseHoversViewport;
+        private readonly VariantMap _eventArgs = new VariantMap();
+        private bool _wasFocused;
+        private bool _isMouseHoveringViewport;
+        private Component _selectedComponent;
+        private readonly IconCache _iconCache;
 
         public SceneTab(Context context, string title, Vector2? initialSize = null, string placeNextToDock = null,
             DockSlot slot = DockSlot.SlotNone) : base(context, title, initialSize, placeNextToDock, slot)
         {
-            _windowFlags = WindowFlags.NoScrollbar;
+            _iconCache = GetSubsystem<IconCache>();
+            WindowFlags = WindowFlags.NoScrollbar;
             _view = new SceneView(Context);
             _gizmo = new Gizmo(Context);
             _view.Scene.LoadXml(Cache.GetResource<XMLFile>("Scenes/SceneLoadExample.xml").GetRoot());
             CreateObjects();
 
-            SubscribeToEvent(CoreEvents.E_UPDATE, OnUpdate);
+            SubscribeToEvent<Update>(OnUpdate);
+            SubscribeToEvent<PostUpdate>(args => RenderNodeContextMenu());
+            SubscribeToEvent<GizmoSelectionChanged>(args => { _selectedComponent = null; });
+
+            _eventArgs.Clear();
+            _eventArgs[InspectHierarchy.HierarchyProvider] = Variant.FromObject(this);
+            SendEvent<InspectHierarchy>(_eventArgs);
         }
 
         private void RenderToolbar()
@@ -101,11 +118,10 @@ namespace Editor.Tabs
                 _view.Size = viewSize;
                 var viewPos = ui.GetCursorScreenPos();
                 ui.Image(_view.Texture.NativeInstance, viewSize, Vector2.Zero, Vector2.One, Vector4.One, Vector4.Zero);
+                if (Input.IsMouseVisible)
+                    _isMouseHoveringViewport = ui.IsItemHovered(HoveredFlags.Default);
 
                 _gizmo.SetScreenRect(viewPos, viewSize);
-
-                if (Input.IsMouseVisible)
-                    _mouseHoversViewport = ui.IsItemHovered(HoveredFlags.Default);
 
                 var isClickedLeft = Input.GetMouseButtonClick((int) MouseButton.Left) && ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup);
                 var isClickedRight = Input.GetMouseButtonClick((int) MouseButton.Right) && ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup);
@@ -113,9 +129,9 @@ namespace Editor.Tabs
                 _gizmo.ManipulateSelection(_view.Camera);
 
                 if (ui.IsWindowHovered())
-                    _windowFlags |= WindowFlags.NoMove;
+                    WindowFlags |= WindowFlags.NoMove;
                 else
-                    _windowFlags &= ~WindowFlags.NoMove;
+                    WindowFlags &= ~WindowFlags.NoMove;
 
                 if (!_gizmo.IsActive && (isClickedLeft || isClickedRight) && Input.IsMouseVisible)
                 {
@@ -128,14 +144,14 @@ namespace Editor.Tabs
                     var query = new RayOctreeQuery(cameraRay, RayQueryLevel.Triangle, float.PositiveInfinity, DrawableFlags.Geometry);
                     _view.Scene.GetComponent<Octree>().RaycastSingle(query);
 
-                    if (query.Result == null)
+                    if (query.Result.Length == 0)
                     {
                         // When object geometry was not hit by a ray - query for object bounding box.
                         query = new RayOctreeQuery(cameraRay, RayQueryLevel.Obb, float.PositiveInfinity, DrawableFlags.Geometry);
                         _view.Scene.GetComponent<Octree>().RaycastSingle(query);
                     }
 
-                    if (query.Result != null)
+                    if (query.Result.Length > 0)
                     {
                         var clickNode = query.Result[0].Drawable.Node;
                         // Temporary nodes can not be selected.
@@ -149,14 +165,20 @@ namespace Editor.Tabs
                                 _gizmo.UnselectAll();
                             _gizmo.ToggleSelection(clickNode);
 
+                            // Notify inspector
+                            _eventArgs.Clear();
+                            _eventArgs[InspectItem.Inspectable] = Variant.FromObject(this);
+                            SendEvent<InspectItem>(_eventArgs);
+
                             if (isClickedRight)
-                                ui.OpenPopup("Node context menu"/*, true*/);
+                                ui.OpenPopup("Node context menu");
                         }
                     }
                     else
                         _gizmo.UnselectAll();
                 }
 
+                RenderNodeContextMenu();
             }
             ui.EndChild();
         }
@@ -169,8 +191,213 @@ namespace Editor.Tabs
 
         private void OnUpdate(VariantMap args)
         {
-            if (_mouseHoversViewport)
-                _view.Camera.GetComponent<DebugCameraController>().Update(args[Update.P_TIMESTEP].Float);
+            if (IsDockActive && _isMouseHoveringViewport)
+            {
+                _view.Camera.GetComponent<DebugCameraController>().Update(args[Update.TimeStep].Float);
+                if (!_wasFocused)
+                {
+                    _wasFocused = true;
+                    _eventArgs.Clear();
+                    _eventArgs[InspectHierarchy.HierarchyProvider] = Variant.FromObject(this);
+                    SendEvent<InspectHierarchy>(_eventArgs);
+                }
+            }
+            else
+                _wasFocused = false;
+        }
+
+        public Serializable[] GetInspectableObjects()
+        {
+            if (_gizmo.Selection == null)
+                return new Serializable[0];
+
+            var inspectables = _gizmo.Selection.Cast<Serializable>().ToList();
+            if (_selectedComponent != null)
+                inspectables.Add(_selectedComponent);
+
+            return inspectables.ToArray();
+        }
+
+        private void RenderNodeTree(Node node)
+        {
+            if (node.IsTemporary)
+                return;
+
+            var flags = TreeNodeFlags.OpenOnArrow;
+            if (node.Parent == null)
+                flags |= TreeNodeFlags.DefaultOpen;
+
+            var name = (node.Name.Length == 0 ? node.GetType().Name : node.Name) + $" ({node.Id})";
+            var isSelected = _gizmo.IsSelected(node) || _selectedComponent != null && _selectedComponent.Node == node;
+
+            if (isSelected)
+                flags |= TreeNodeFlags.Selected;
+
+            _iconCache.RenderIcon("Node");
+            ui.SameLine();
+
+            var opened = ui.TreeNodeEx(name, flags);
+            if (!opened)
+            {
+                // If TreeNode above is opened, it pushes it's label as an ID to the stack. However if it is not open then no
+                // ID is pushed. This creates a situation where context menu is not properly attached to said tree node due to
+                // missing ID on the stack. To correct this we ensure that ID is always pushed. This allows us to show context
+                // menus even for closed tree nodes.
+                ui.PushID(name);
+            }
+
+            if (ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup))
+            {
+                if (ImGui.SystemUi.IsMouseClicked(MouseButton.Left))
+                {
+                    if (!Input.GetKeyDown(InputEvents.KeyCtrl))
+                        _gizmo.UnselectAll();
+                    _gizmo.ToggleSelection(node);
+                }
+                else if (ImGui.SystemUi.IsMouseClicked(MouseButton.Right))
+                {
+                    _gizmo.UnselectAll();
+                    _gizmo.ToggleSelection(node);
+                    ui.OpenPopup("Node context menu");
+                }
+            }
+
+            RenderNodeContextMenu();
+
+            if (opened)
+            {
+                foreach (var component in node.Components)
+                {
+                    if (component.IsTemporary)
+                        continue;
+
+                    ui.PushID(component.NativeInstance.ToInt32());
+
+                    _iconCache.RenderIcon(component.GetType().Name);
+                    ui.SameLine();
+
+                    var selected = _selectedComponent != null && _selectedComponent == component;
+                    selected = ui.Selectable(component.GetType().Name, selected);
+
+                    if (ImGui.SystemUi.IsMouseClicked(MouseButton.Right) && ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup))
+                    {
+                        selected = true;
+                        ui.OpenPopup("Component context menu");
+                    }
+
+                    if (selected)
+                    {
+                        _gizmo.UnselectAll();
+                        _gizmo.ToggleSelection(node);
+                        _selectedComponent = component;
+                    }
+
+                    if (ui.BeginPopup("Component context menu"))
+                    {
+                        if (ui.MenuItem("Remove"))
+                            component.Remove();
+                        ui.EndPopup();
+                    }
+
+                    ui.PopID();
+                }
+
+                // Do not use element->GetChildren() because child may be deleted during this loop.
+                foreach (var child in node.Children)
+                    RenderNodeTree(child);
+
+                ui.TreePop();
+            }
+            else
+                ui.PopID();
+        }
+
+        private void RenderNodeContextMenu()
+        {
+            if (ui.BeginPopup("Node context menu") /*&& !scenePlaying_*/)
+            {
+                if (Input.GetKeyPress(InputEvents.KeyEscape) || !Input.IsMouseVisible)
+                {
+                    // Close when interacting with scene camera.
+                    ui.CloseCurrentPopup();
+                    ui.EndPopup();
+                    return;
+                }
+
+                var isAlternative = Input.GetKeyDown(InputEvents.KeyShift);
+
+                if (ui.MenuItem(isAlternative ? "Create Child (Local)" : "Create Child"))
+                {
+                    foreach (var selectedNode in _gizmo.Selection)
+                    {
+                        var newNode = selectedNode.CreateChild(null,
+                            isAlternative ? CreateMode.Local : CreateMode.Replicated);
+                        _gizmo.Select(newNode);
+                        _selectedComponent = null;
+                    }
+                }
+
+                if (ui.BeginMenu(isAlternative ? "Create Component (Local)" : "Create Component"))
+                {
+                    var categories = Context.GetObjectCategories();
+
+                    foreach (var category in categories)
+                    {
+                        if (category == "UI")
+                            // Scene nodes can not contain UI elements
+                            continue;
+
+                        if (ui.BeginMenu(category))
+                        {
+                            var components = Context.GetObjectsByCategory(category);
+                            Array.Sort(components, StringComparer.InvariantCulture);
+
+                            foreach (var component in components)
+                            {
+                                _iconCache.RenderIcon(component);
+                                ui.SameLine();
+
+                                if (ui.MenuItem(component))
+                                {
+                                    foreach (var node in _gizmo.Selection)
+                                    {
+                                        node.CreateComponent(new StringHash(component),
+                                            isAlternative ? CreateMode.Local : CreateMode.Replicated);
+                                    }
+                                }
+                            }
+                            ui.EndMenu();
+                        }
+                    }
+                    ui.EndMenu();
+                }
+
+                ui.Separator();
+
+                if (ui.MenuItem("Remove"))
+                {
+                    _selectedComponent?.Remove();
+                    _selectedComponent = null;
+                    foreach (var selected in _gizmo.Selection)
+                        selected.Remove();
+                    _gizmo.UnselectAll();
+                }
+
+                ui.EndPopup();
+            }
+        }
+
+        public void RenderHierarchy()
+        {
+            ui.PushStyleVar(StyleVar.IndentSpacing, 10);
+            try
+            {
+                RenderNodeTree(_view.Scene);
+            }
+            finally
+            {
+                ui.PopStyleVar();
+            }
         }
     }
 }

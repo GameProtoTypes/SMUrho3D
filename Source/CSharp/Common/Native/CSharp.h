@@ -106,9 +106,6 @@ struct CSharpConverter<PODVector<T>>
     // TODO: This can be optimized by passing &value.Front() memory buffer
     static CType ToCSharp(const CppType& value)
     {
-        if (value.Empty())
-            return nullptr;
-
         auto* block = MarshalAllocator::Get().AllocArray<T>(value.Size());
         memcpy(block->memory_, &value.Front(), value.Size() * sizeof(T));
         return block;
@@ -132,9 +129,6 @@ struct CSharpConverter<Vector<SharedPtr<T>>>
 
     static CType ToCSharp(const CppType& value)
     {
-        if (value.Empty())
-            return nullptr;
-
         CType block = MarshalAllocator::Get().AllocArray<T*>(value.Size());
 
         auto** array = (T**)block->memory_;
@@ -166,9 +160,6 @@ struct CSharpConverter<Vector<WeakPtr<T>>>
 
     static CType ToCSharp(const CppType& value)
     {
-        if (value.Empty())
-            return nullptr;
-
         CType block = MarshalAllocator::Get().AllocArray<T*>(value.Size());
 
         auto** array = (T**)block->memory_;
@@ -201,9 +192,6 @@ struct CSharpConverter<Vector<T*>>
     // TODO: This can be optimized by passing &value.Front() memory buffer
     static CType ToCSharp(const CppType& value)
     {
-        if (value.Empty())
-            return nullptr;
-
         CType result = MarshalAllocator::Get().AllocArray<T*>(value.Size());
 
         auto** array = (T**)result->memory_;
@@ -226,6 +214,36 @@ struct CSharpConverter<Vector<T*>>
     }
 };
 
+template<>
+struct CSharpConverter<Vector<StringHash>>
+{
+    using CppType=Vector<StringHash>;
+    using CType=MarshalAllocator::Block*;
+
+    // TODO: This can be optimized by passing &value.Front() memory buffer
+    static CType ToCSharp(const CppType& value)
+    {
+        CType result = MarshalAllocator::Get().AllocArray<unsigned>(value.Size());
+
+        auto* array = (unsigned*)result->memory_;
+        for (const auto& hash : value)
+            *array++ = hash.ToHash();
+
+        return result;
+    }
+
+    static CppType FromCSharp(CType value)
+    {
+        if (value == nullptr)
+            return CppType{};
+
+        CppType result{(unsigned)value->itemCount_};
+        auto* array = (unsigned*)value;
+        for (auto& hash : result)
+            hash = StringHash(*array++);
+        return result;
+    }
+};
 ////////////////////////////////////// String converters ///////////////////////////////////////////////////////////////
 
 template<> struct CSharpConverter<Urho3D::String>
@@ -261,6 +279,52 @@ template<> struct CSharpConverter<char const*>
         if (value == nullptr)
             return nullptr;
         return (const char*)value->memory_;
+    }
+};
+
+template<> struct CSharpConverter<Urho3D::Vector<Urho3D::String>>
+{
+    // TODO: This can be optimized by passing &value.CString() memory buffer
+    static inline MarshalAllocator::Block* ToCSharp(const Urho3D::Vector<Urho3D::String>& value)
+    {
+        unsigned memoryLength = 0;
+        for (const auto& str : value)
+            memoryLength += str.Length() + 4;
+
+        auto* block = MarshalAllocator::Get().Alloc(memoryLength);
+        block->sizeOfItem_ = 0;
+        block->itemCount_ = value.Size();
+
+        uint8_t* memory = (uint8_t*)block->memory_;
+        for (const auto& str : value)
+        {
+            *(int32_t*)memory = str.Length();
+            memory += 4;
+            memcpy((void*)memory, str.CString(), str.Length());
+            memory += str.Length();
+        }
+
+        return block;
+    }
+
+    static inline Urho3D::Vector<Urho3D::String> FromCSharp(MarshalAllocator::Block* value)
+    {
+        Urho3D::Vector<Urho3D::String> result;
+        if (value == nullptr)
+            return result;
+
+        assert(value->sizeOfItem_ == 0);
+
+        result.Resize(value->itemCount_);
+        uint8_t* memory = (uint8_t*)value->memory_;
+        for (int i = 0; i < value->itemCount_; ++i)
+        {
+            auto length = *(int32_t*)memory;
+            memory += 4;
+            result[i].Append((const char*)memory, length);
+        }
+
+        return result;
     }
 };
 

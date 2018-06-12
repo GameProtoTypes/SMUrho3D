@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,34 +20,35 @@
 // THE SOFTWARE.
 //
 
-using Editor.Events;
-using Urho3D;
-using ImGui;
+#include "CSharp.h"
 
-
-namespace Editor.Tabs
+extern "C"
 {
-    public class InspectorTab : Tab
+
+EXPORT_API MarshalAllocator::Block* Urho3D__Context__GetObjectCategories(Context* context)
+{
+    if (context == nullptr)
+        return nullptr;
+    return CSharpConverter<Urho3D::Vector<Urho3D::String>>::ToCSharp(context->GetObjectCategories().Keys());
+}
+
+EXPORT_API MarshalAllocator::Block* Urho3D__Context__GetObjectsByCategory(Context* context, MarshalAllocator::Block* category)
+{
+    StringVector result;
+    const auto& factories = context->GetObjectFactories();
+    auto it = context->GetObjectCategories().Find(CSharpConverter<Urho3D::String>::FromCSharp(category));
+    if (it != context->GetObjectCategories().End())
     {
-        private readonly AttributeInspector _inspector;
-        private IInspectable _inspectable;
-        public InspectorTab(Context context, string title, Vector2? initialSize = null, string placeNextToDock = null,
-            DockSlot slot = DockSlot.SlotNone) : base(context, title, initialSize, placeNextToDock, slot)
+        for (const StringHash& type : it->second_)
         {
-            _inspector = new AttributeInspector(Context);
-
-            SubscribeToEvent<InspectItem>(OnInspect);
+            auto jt = factories.Find(type);
+            if (jt != factories.End())
+                result.Push(jt->second_->GetTypeName());
         }
-
-        protected void OnInspect(VariantMap args)
-        {
-            _inspectable = (IInspectable) args[InspectItem.Inspectable].Object;
-        }
-
-        protected override void Render()
-        {
-            if (_inspectable != null)
-                _inspector.RenderAttributes(_inspectable.GetInspectableObjects());
-        }
+        return CSharpConverter<StringVector>::ToCSharp(result);
     }
+    else
+        return nullptr;
+}
+
 }

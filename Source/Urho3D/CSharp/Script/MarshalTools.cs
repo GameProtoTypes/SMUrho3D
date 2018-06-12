@@ -20,6 +20,7 @@
 // THE SOFTWARE.
 //
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Runtime.InteropServices;
@@ -89,6 +90,83 @@ namespace Urho3D.CSharp
         }
     }
 
+    public class StringUtf8ArrayMarshaller : ICustomMarshaler
+    {
+        private static StringUtf8ArrayMarshaller _instance = new StringUtf8ArrayMarshaller();
+
+        public static ICustomMarshaler GetInstance(string cookie)
+        {
+            return _instance;
+        }
+
+        public void CleanUpManagedData(object managedObj)
+        {
+        }
+
+        public void CleanUpNativeData(IntPtr pNativeData)
+        {
+            if (pNativeData == IntPtr.Zero)
+                return;
+
+            NativeInterface.Native.InteropFree(pNativeData);
+        }
+
+        public int GetNativeDataSize()
+        {
+            return -1;
+        }
+
+        public unsafe IntPtr MarshalManagedToNative(object managedObj)
+        {
+            var strings = (string[]) managedObj;
+            var utf8Strings = new byte[strings.Length][];
+            var bufferLength = 0;
+            var index = 0;
+            foreach (var str in strings)
+            {
+                var utf8 = Encoding.UTF8.GetBytes(str);
+                bufferLength += utf8.Length + 4;    // + lengthInt
+                utf8Strings[index++] = utf8;
+            }
+
+            var block = (Block*) NativeInterface.Native.InteropAlloc(bufferLength);
+            block->ItemCount = strings.Length;
+            block->SizeOfItem = 0;
+            index = 0;
+            foreach (var utf8 in utf8Strings)
+            {
+                Marshal.WriteInt32(block->Memory + index, utf8.Length);
+                index += 4;
+                Marshal.Copy(utf8, 0, block->Memory + index, utf8.Length);
+                index += utf8.Length;
+            }
+
+            return (IntPtr) block;
+        }
+
+        public unsafe object MarshalNativeToManaged(IntPtr pNativeData)
+        {
+            if (pNativeData == IntPtr.Zero)
+                return null;
+
+            var block = (Block*) pNativeData;
+            var strings = new string[block->ItemCount];
+
+            Debug.Assert(block->SizeOfItem == 0);
+
+            var index = 0;
+            for (var i = 0; i < block->ItemCount; i++)
+            {
+                var length = Marshal.ReadInt32(block->Memory + index);
+                index += 4;
+                strings[i] = Encoding.UTF8.GetString((byte*) (block->Memory + index), length);
+                index += length;
+            }
+
+            return strings;
+        }
+    }
+
     public class PodArrayMarshaller<T> : ICustomMarshaler where T: struct
     {
         private static PodArrayMarshaller<T> _instance = new PodArrayMarshaller<T>();
@@ -124,8 +202,11 @@ namespace Urho3D.CSharp
             if (array.Length == 0)
                 return IntPtr.Zero;
 
-            var length = Marshal.SizeOf<T>() * array.Length;
+            var itemSize = Marshal.SizeOf<T>();
+            var length = itemSize * array.Length;
             var block = (Block*) NativeInterface.Native.InteropAlloc(length);
+            block->ItemCount = array.Length;
+            block->SizeOfItem = itemSize;
 
             var sourceHandle = GCHandle.Alloc(array, GCHandleType.Pinned);
             try
@@ -197,6 +278,8 @@ namespace Urho3D.CSharp
 
             var length = IntPtr.Size * array.Length;
             var block = (Block*)NativeInterface.Native.InteropAlloc(length);
+            block->ItemCount = array.Length;
+            block->SizeOfItem = IntPtr.Size;
 
             var offset = 0;
             foreach (var instance in array)
