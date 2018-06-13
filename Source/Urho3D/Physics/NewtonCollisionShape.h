@@ -3,11 +3,12 @@
 
 #include "../Scene/Component.h"
 
+class NewtonCollision;
 namespace Urho3D
 {
 
     class Component;
-
+    
     class URHO3D_API NewtonCollisionShape : public Component
     {
         URHO3D_OBJECT(NewtonCollisionShape, Component);
@@ -24,8 +25,9 @@ namespace Urho3D
         /// Set as a box.
         void SetBox(const Vector3& size, const Vector3& position = Vector3::ZERO, const Quaternion& rotation = Quaternion::IDENTITY);
 
+    protected:
 
-
+        NewtonCollision* newtonCollision_ = nullptr;
     };
 
 

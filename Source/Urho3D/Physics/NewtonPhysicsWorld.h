@@ -3,6 +3,8 @@
 
 
 #include "../Scene/Component.h"
+class NewtonWorld;
+class dMatrix;
 namespace Urho3D
 {
     class Component;
@@ -20,7 +22,20 @@ namespace Urho3D
 
         /// Step the simulation forward.
         void Update(float timeStep);
+
+        /// Return the internal Newton world.
+        NewtonWorld* GetNewtonWorld() { return newtonWorld_; }
+
+    protected:
+
+        NewtonWorld* newtonWorld_ = nullptr;
+
+        virtual void OnSceneSet(Scene* scene) override;
+
     };
+
+    dMatrix UrhoToNewton(Matrix4 mat);
+
 
     /// Register Physics library objects.
     void URHO3D_API RegisterPhysicsLibrary(Context* context);

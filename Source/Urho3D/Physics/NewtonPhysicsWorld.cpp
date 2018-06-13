@@ -2,7 +2,8 @@
 #include "IO/Log.h"
 #include "NewtonCollisionShape.h"
 #include "NewtonRigidBody.h"
-
+#include "Newton.h"
+#include "dMatrix.h"
 
 namespace Urho3D {
     NewtonPhysicsWorld::NewtonPhysicsWorld(Context* context) : Component(context)
@@ -22,11 +23,23 @@ namespace Urho3D {
 
     void NewtonPhysicsWorld::Update(float timeStep)
     {
-        URHO3D_LOGINFO("Updating Physics World..");
+        NewtonUpdateAsync(newtonWorld_, timeStep);
+        NewtonWaitForUpdateToFinish(newtonWorld_);//hard syncronous wait for now.
     }
 
 
 
+
+    void NewtonPhysicsWorld::OnSceneSet(Scene* scene)
+    {
+        //create the newton world
+        newtonWorld_ = NewtonCreate();
+    }
+
+    dMatrix UrhoToNewton(Matrix4 mat)
+    {
+        return dMatrix(mat.Data());
+    }
 
     void RegisterPhysicsLibrary(Context* context)
     {
