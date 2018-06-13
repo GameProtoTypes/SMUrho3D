@@ -250,7 +250,7 @@ namespace Urho3D
 		/// Opaque yellow color.
 		static const Color YELLOW;
 		/// Transparent color (black with no alpha).
-		static const Color TRANSPARENT;
+		static const Color TRANSPARENT_BLACK;
 
 	protected:
 		/// Return hue value given greatest and least RGB component, value-wise.
