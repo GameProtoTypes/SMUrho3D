@@ -47,13 +47,12 @@ namespace Urho3D
         private readonly Dictionary<uint, Type> _factoryTypes = new Dictionary<uint, Type>();
 
         // This method may be overriden in partial class in order to attach extra logic to object constructor
-        internal override void SetupInstance(IntPtr instance, bool ownsInstance)
+        internal override void OnSetupInstance()
         {
-            // Set up this instance
-            PerformInstanceSetup(instance, ownsInstance);
+            base.OnSetupInstance();
 
             // Set up engine bindings
-            Urho3DRegisterCSharp(instance);
+            Urho3DRegisterCSharp(NativeInstance);
 
             // Register factories marked with attributes
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -65,8 +64,12 @@ namespace Urho3D
             Instance = this;
         }
 
-        protected override void OnDispose()
+        internal override void OnDispose(bool disposing)
         {
+            // In order to allow clean exit we first must release all cached instances because they hold references to
+            // native objects and that prevents them being deallocated. If we failed to do that then Context destructor
+            // would run before destroctors of other objects (subsystems, etc). Everything that inherits from
+            // Urho3D.Object accesses Context on destruction and that would cause a crash.
             Instance = null;
             InstanceCache.Dispose();
         }
@@ -104,6 +107,26 @@ namespace Urho3D
             return managed.NativeInstance;
         }
 
+        public string[] GetObjectCategories()
+        {
+            if (NativeInstance == IntPtr.Zero)
+                throw new ObjectDisposedException("Context");
+            return Urho3D__Context__GetObjectCategories(NativeInstance);
+        }
+
+        public string[] GetObjectsByCategory(string category)
+        {
+            if (NativeInstance == IntPtr.Zero)
+                throw new ObjectDisposedException("Context");
+            return Urho3D__Context__GetObjectsByCategory(NativeInstance, category);
+        }
+
+        public T GetSubsystem<T>() where T: Object
+        {
+            return (T) GetSubsystem(new StringHash(typeof(T).Name));
+        }
+
+        #region Interop
         [SuppressUnmanagedCodeSecurity]
         [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
         private static extern void Urho3D_Context_RegisterFactory(IntPtr context,
@@ -113,6 +136,19 @@ namespace Urho3D
 
         [SuppressUnmanagedCodeSecurity]
         [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Urho3DRegisterCSharp(IntPtr contextPtr);
+        private static extern void Urho3DRegisterCSharp(IntPtr contextPtr);
+
+        [SuppressUnmanagedCodeSecurity]
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8ArrayMarshaller))]
+        private static extern string[] Urho3D__Context__GetObjectCategories(IntPtr context);
+
+        [SuppressUnmanagedCodeSecurity]
+        [DllImport(Config.NativeLibraryName, CallingConvention = CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8ArrayMarshaller))]
+        private static extern string[] Urho3D__Context__GetObjectsByCategory(IntPtr context,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StringUtf8))]string category);
+
+        #endregion
     }
 }

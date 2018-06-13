@@ -19,8 +19,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+
 using System;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
+using System.Reflection;
+using System.Threading;
 
 namespace Urho3D.CSharp
 {
@@ -34,16 +37,17 @@ namespace Urho3D.CSharp
     {
         public IntPtr NativeInstance { get; protected set; } = IntPtr.Zero;
         protected bool OwnsNativeInstance { get; set; }
-        public bool IsDisposed => DisposedCounter == 0;
-        protected volatile int DisposedCounter = 0;
+        public bool IsDisposed => _disposedCounter == 0;
+        private int _disposedCounter;
         internal int NativeObjectSize = 0;
 
         internal NativeObject(IntPtr instance, bool ownsInstance=false)
         {
             if (instance != IntPtr.Zero)
             {
-                NativeInstance = instance;
-                OwnsNativeInstance = ownsInstance;
+                // Instance is not added to InstanceCache here because this code will run only when invoked from
+                // T.GetManagedInstance() method. This method takes care of adding instance to InstanceCache.
+                SetupInstance(instance, ownsInstance, false);
             }
         }
 
@@ -53,28 +57,32 @@ namespace Urho3D.CSharp
 
         ~NativeObject()
         {
-            Dispose();
+            if (Interlocked.Increment(ref _disposedCounter) == 1)
+                Dispose(false);
         }
 
-        // Derived types will put object initialization code here. At the time of writing such code sets up virtual
-        // method callbacks and nothing more.
-        internal virtual void PerformInstanceSetup(IntPtr instance, bool ownsInstance)
+        /// <summary>
+        /// Partial wrapepr classes should override this method to inject extra logic to wrapper class setup. This
+        /// method is called from a constructor therefore only (object) setup tasks not depending on object state should
+        /// be performed here. It is guaranteed tat NativeInstance will be set before this method is called.
+        /// </summary>
+        internal virtual void OnSetupInstance()
+        {
+        }
+
+        /// <summary>
+        /// Wrapper classes will most likely implement new version of this method.
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="ownsInstance"></param>
+        /// <param name="addToCache"></param>
+        internal virtual void SetupInstance(IntPtr instance, bool ownsInstance, bool addToCache=true)
         {
             OwnsNativeInstance = ownsInstance;
             NativeInstance = instance;
-            InstanceCache.Add(this);
-        }
-
-        // This method may be overriden in partial class in order to attach extra logic to object constructor
-        internal virtual void SetupInstance(IntPtr instance, bool ownsInstance)
-        {
-            PerformInstanceSetup(instance, ownsInstance);
-        }
-
-        // This method may be overriden in a partial class or a subclass in order to inject logic into object
-        // destruction.
-        protected virtual void OnDispose()
-        {
+            if (addToCache)
+                InstanceCache.Add(this);
+            OnSetupInstance();
         }
 
         public bool Equals(NativeObject other)
@@ -88,19 +96,57 @@ namespace Urho3D.CSharp
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
+            if (obj.GetType() != GetType()) return false;
             return Equals((NativeObject) obj);
         }
 
         public override int GetHashCode()
         {
-            unchecked
-            {
-                return (NativeInstance.GetHashCode() * 397) ^ DisposedCounter;
-            }
+            return NativeInstance.GetHashCode() * 397;
         }
 
-        public virtual void Dispose()
+        public void Dispose()
+        {
+            if (Interlocked.Increment(ref _disposedCounter) != 1)
+                return;
+
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        internal static T GetManagedInstance<T>(IntPtr source, bool owns) where T: NativeObject
+        {
+            if (source == IntPtr.Zero)
+                return null;
+
+            return InstanceCache.GetOrAdd(source, ptr =>
+            {
+                var getManaged = typeof(T).GetMethod("GetManagedInstance", BindingFlags.NonPublic | BindingFlags.Static);
+                Debug.Assert(getManaged != null);
+                return (T) getManaged.Invoke(null, new object[] {source, owns});
+            });
+        }
+
+        /// <summary>
+        /// This method is used for disposing native resources. Wrapper classes mimic class inheritance of the native
+        /// code therefore these wrapper classes must not call base.Dispose(disposing). Doing so would result in
+        /// calling wrong destructor or releasing reference mutlple times.
+        ///
+        /// However user code inheriting from wrapper classes must always call base.Dispose(disposing). Failure to do
+        /// so will cause a resource leak because native instance will never be deallocated. Subclasses of RefCounted
+        /// or inheritable classes will also prevent deallocation of managed wrapepr object.
+        /// </summary>
+        /// <param name="disposing">Set to true when method is called from Dispose().</param>
+        protected virtual void Dispose(bool disposing)
+        {
+        }
+
+        /// <summary>
+        /// This method may be overriden in a partial class or a subclass in order to inject logic into object
+        /// destruction. It is required because wrapper class already overrides Dispose(bool).
+        /// </summary>
+        /// <param name="disposing">Set to true when method is called from Dispose().</param>
+        internal virtual void OnDispose(bool disposing)
         {
         }
     }

@@ -91,7 +91,8 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             {
                 // A class will not have any methods. This is likely a dummy class for constant storage or something
                 // similar.
-                printer_ << fmt::format("public static partial class {}", entity->name_);
+                auto staticKeyword = entity->flags_ & HintNoStatic ? "" : "static ";
+                printer_ << fmt::format("public {}partial class {}", staticKeyword, entity->name_);
                 printer_.Indent();
                 return true;
             }
@@ -119,33 +120,17 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
                                     entity->name_);
             printer_.Indent();
             {
-                if (entity->symbolName_ == "Urho3D::RefCounted")
-                {
-                    // If instance is null then managed side is initiating object construction and will call AddRef
-                    // after SetupInstance().
-                    printer_ << "if (instance != IntPtr.Zero)";
-                    printer_.Indent("");
-                    {
-                        printer_ << "AddRef();";
-                    }
-                    printer_.Dedent("");
-                }
+                // Empty forwarding constructor
             }
             printer_.Dedent();
             printer_ << "";
 
-            printer_ << fmt::format("public override void Dispose()");
+            printer_ << fmt::format("protected override void Dispose(bool disposing)");
             printer_.Indent();
             {
-                printer_ << "if (Interlocked.Increment(ref DisposedCounter) == 1)";
-                printer_.Indent();
-                {
-                    printer_ << "OnDispose();";
-                    printer_ << "InstanceCache.Remove(NativeInstance);";
-                    printer_ << baseName + "_destructor(NativeInstance, OwnsNativeInstance);";
-                    printer_ << "NativeInstance = IntPtr.Zero;";
-                }
-                printer_.Dedent();
+                printer_ << "OnDispose(disposing);";
+                printer_ << "InstanceCache.Remove(NativeInstance);";
+                printer_ << baseName + "_destructor(NativeInstance, OwnsNativeInstance);";
             }
             printer_.Dedent();
             printer_ << "";

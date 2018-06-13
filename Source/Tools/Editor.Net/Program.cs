@@ -26,6 +26,7 @@ using Editor.Tabs;
 using IconFonts;
 using Urho3D;
 using ImGui;
+using Urho3D.Events;
 
 namespace Editor
 {
@@ -55,6 +56,7 @@ namespace Editor
         public override void Start()
         {
             ToolboxApi.RegisterToolboxTypes(Context);
+            Context.RegisterSubsystem(new IconCache(Context));
 
             Input.SetMouseMode(MouseMode.Absolute);
             Input.SetMouseVisible(true);
@@ -83,7 +85,7 @@ namespace Editor
             _tabs.Add(new ConsoleTab(Context, "Console", new Vector2(screenSize.X * 0.6f, screenSize.Y * 0.15f),
                 "Scene", DockSlot.SlotBottom));
 
-            SubscribeToEvent(CoreEvents.E_UPDATE, OnRender);
+            SubscribeToEvent<Update>(OnRender);
         }
 
         private void OnRenderMenubar()

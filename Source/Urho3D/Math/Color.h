@@ -24,9 +24,6 @@
 
 #include "../Math/Vector4.h"
 
-// Defined by Windows headers
-#undef TRANSPARENT
-
 namespace Urho3D
 {
 
