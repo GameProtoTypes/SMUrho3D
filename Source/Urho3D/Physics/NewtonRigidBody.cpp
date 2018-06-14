@@ -52,6 +52,7 @@ namespace Urho3D {
     {
         if (newtonBody_) {
             NewtonBodyDebugDrawAABB(newtonBody_, debug, depthTest);
+            NewtonBodyDebugShowCollision(newtonBody_, debug, depthTest);
         }
     }
 

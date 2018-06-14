@@ -34,6 +34,8 @@ namespace Urho3D {
             //draw debug geometry on rigid bodies.
             for (NewtonRigidBody* body : rigidBodyComponentList) {
                 body->DrawDebugGeometry(debug, depthTest);
+
+
             }
             
         }
