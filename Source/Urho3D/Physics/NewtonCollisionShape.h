@@ -17,6 +17,7 @@ namespace Urho3D
     public:
 
         friend class NewtonPhysicsWorld;
+        friend class NewtonRigidBody;
 
         NewtonCollisionShape(Context* context);
 
@@ -50,9 +51,10 @@ namespace Urho3D
         /// Frees the internal collision shape;
         void freeInternalCollision();
 
-        void addToPhysicsWorld();
 
-        void removeFromPhysicsWorld();
+        /// Called when there is a change to the rigid body component;
+        void onRigidBodyUpdated();
+
 
         virtual void OnNodeSet(Node* node) override;
 

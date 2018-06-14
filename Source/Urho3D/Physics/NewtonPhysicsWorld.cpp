@@ -5,11 +5,13 @@
 #include "Newton.h"
 #include "dMatrix.h"
 #include "Core/Context.h"
+#include "Core/CoreEvents.h"
+#include "Core/Object.h"
 
 namespace Urho3D {
     NewtonPhysicsWorld::NewtonPhysicsWorld(Context* context) : Component(context)
     {
-
+        SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(NewtonPhysicsWorld, HandleUpdate));
     }
 
     NewtonPhysicsWorld::~NewtonPhysicsWorld()
@@ -22,14 +24,20 @@ namespace Urho3D {
         context->RegisterFactory<NewtonPhysicsWorld>();
     }
 
-    void NewtonPhysicsWorld::Update(float timeStep)
+
+
+
+    void NewtonPhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
-        NewtonUpdateAsync(newtonWorld_, timeStep);
-        NewtonWaitForUpdateToFinish(newtonWorld_);//hard syncronous wait for now.
+        if (debug)
+        {
+            //draw debug geometry on rigid bodies.
+            for (NewtonRigidBody* body : rigidBodyComponentList) {
+                body->DrawDebugGeometry(debug, depthTest);
+            }
+            
+        }
     }
-
-
-
 
     void NewtonPhysicsWorld::OnSceneSet(Scene* scene)
     {
@@ -79,15 +87,14 @@ namespace Urho3D {
         }
     }
 
-    dMatrix UrhoToNewton(Matrix4 mat4)
-    {
-        return dMatrix(mat4.Data());
-    }
-    dMatrix UrhoToNewton(Matrix3x4 mat3x4)
-    {
-        return dMatrix(mat3x4.Data());
-    }
 
+
+    void NewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
+    {
+
+        float timeStep = eventData[PreUpdate::P_TIMESTEP].GetFloat();
+        NewtonUpdate(newtonWorld_, .0166666f);
+    }
 
     void RegisterPhysicsLibrary(Context* context)
     {

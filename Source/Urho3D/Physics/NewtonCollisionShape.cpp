@@ -3,11 +3,13 @@
 #include "../Core/Context.h"
 #include "Newton.h"
 #include "NewtonPhysicsWorld.h"
+#include "NewtonRigidBody.h"
 #include "Scene/Component.h"
 #include "Scene/Node.h"
 #include "Scene/Scene.h"
 #include "dMatrix.h"
 #include "IO/Log.h"
+#include "UrhoNewtonConversions.h"
 namespace Urho3D {
 
 
@@ -39,6 +41,14 @@ namespace Urho3D {
 
         newtonCollision_ = NewtonCreateBox(world, 1.0f, 1.0f, 1.0f, 0, &nMat[0][0]);
         NewtonCollisionSetUserData(newtonCollision_, (void*)this);
+
+
+
+        rigidBody_ = node_->GetComponent<NewtonRigidBody>();
+        if (rigidBody_) {
+            rigidBody_->onCollisionUpdated();
+        }
+
     }
 
 
@@ -55,16 +65,11 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::addToPhysicsWorld()
-    {
-        if (physicsWorld_)
-            physicsWorld_->addCollisionShape(this);
-    }
 
-    void NewtonCollisionShape::removeFromPhysicsWorld()
+    void NewtonCollisionShape::onRigidBodyUpdated()
     {
-        if(physicsWorld_)
-            physicsWorld_->removeCollisionShape(this);
+        NewtonRigidBody* rigidBody = node_->GetComponent<NewtonRigidBody>();
+        rigidBody_ = rigidBody;
     }
 
     void NewtonCollisionShape::OnNodeSet(Node* node)
@@ -80,25 +85,34 @@ namespace Urho3D {
                 URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
 
             physicsWorld_ = WeakPtr<NewtonPhysicsWorld>(scene->GetOrCreateComponent<NewtonPhysicsWorld>());
-            addToPhysicsWorld();
+            physicsWorld_->addCollisionShape(this);
 
-            // Create shape now if necessary (attributes modified before adding to scene)
-            //if (retryCreation_)
-            //{
-            //    UpdateShape();
-            //    NotifyRigidBody();
-            //}
+
+
+
+            rigidBody_ = node_->GetComponent<NewtonRigidBody>();
+            if (rigidBody_) {
+                rigidBody_->onCollisionUpdated();
+            }
+
+
         }
         else
         {
 
             if (physicsWorld_)
-                removeFromPhysicsWorld();
+                physicsWorld_->removeCollisionShape(this);
 
             freeInternalCollision();
 
-            // Recreate when moved to a scene again
-            //retryCreation_ = true;
+            rigidBody_ = node_->GetComponent<NewtonRigidBody>();
+
+            if (rigidBody_) {
+                rigidBody_->onCollisionUpdated();
+
+            }
+
+
         }
     }
 

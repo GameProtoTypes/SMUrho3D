@@ -1,7 +1,9 @@
 #pragma once
 #include "../Scene/Component.h"
+#include "Newton.h"
 
 class NewtonBody;
+
 namespace Urho3D
 {
     class Component;
@@ -11,6 +13,9 @@ namespace Urho3D
     {
         URHO3D_OBJECT(NewtonRigidBody, Component);
     public:
+
+        friend class NewtonCollisionShape;
+
         /// Construct.
         NewtonRigidBody(Context* context);
         /// Destruct. Free the rigid body and geometries.
@@ -28,25 +33,37 @@ namespace Urho3D
 
         /// Set linear velocity.
         void SetLinearVelocity(const Vector3& velocity);
+
+
+        virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
+
+
     protected:
 
         /// Internal newton body
         NewtonBody * newtonBody_ = nullptr;
-
         /// Physics world.
         WeakPtr<NewtonPhysicsWorld> physicsWorld_;
         /// Rigid body.
         WeakPtr<NewtonCollisionShape> colShape_;
+        /// Mass.
+        float mass_ = 0.0f;
 
 
 
-        void addToPhysicsWorld();
-
-        void removeFromPhysicsWorld();
 
 
-        void createBody();
-        void freeBody();
+
+
+
+        ///Called when the collision component changes
+        void onCollisionUpdated();
+
+        void rebuildBody();
+
+  
+
+       
 
 
 
@@ -54,6 +71,14 @@ namespace Urho3D
 
         virtual void OnSceneSet(Scene* scene) override;
 
+
+
+
     };
+
+    void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex);
+    void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex);
+    void Newton_DestroyBodyCallback(const NewtonBody* body);
+
 
 }

@@ -26,11 +26,11 @@ namespace Urho3D
         /// Register object factory.
         static void RegisterObject(Context* context);
 
-        /// Step the simulation forward.
-        void Update(float timeStep);
-
         /// Return the internal Newton world.
         NewtonWorld* GetNewtonWorld() { return newtonWorld_; }
+
+
+        virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
     protected:
 
@@ -52,11 +52,14 @@ namespace Urho3D
         Vector<WeakPtr<NewtonRigidBody>> rigidBodyComponentList;
 
 
+
+        /// Step the simulation forward.
+        void HandleUpdate(StringHash eventType, VariantMap& eventData);
+
     };
 
-    ///Conversion Functions
-    dMatrix UrhoToNewton(Matrix4 mat);
-    dMatrix UrhoToNewton(Matrix3x4 mat);
+
+
 
 
     /// Register Physics library objects.
