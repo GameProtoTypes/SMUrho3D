@@ -4,6 +4,7 @@
 #include "NewtonRigidBody.h"
 #include "Newton.h"
 #include "dMatrix.h"
+#include "Core/Context.h"
 
 namespace Urho3D {
     NewtonPhysicsWorld::NewtonPhysicsWorld(Context* context) : Component(context)
@@ -18,7 +19,7 @@ namespace Urho3D {
 
     void NewtonPhysicsWorld::RegisterObject(Context* context)
     {
-
+        context->RegisterFactory<NewtonPhysicsWorld>();
     }
 
     void NewtonPhysicsWorld::Update(float timeStep)
@@ -43,10 +44,11 @@ namespace Urho3D {
 
     void RegisterPhysicsLibrary(Context* context)
     {
+        NewtonPhysicsWorld::RegisterObject(context);
         NewtonCollisionShape::RegisterObject(context);
         NewtonRigidBody::RegisterObject(context);
         //Constraint::RegisterObject(context);
-        NewtonPhysicsWorld::RegisterObject(context);
+        
         //RaycastVehicle::RegisterObject(context);
     }
 }
