@@ -14,7 +14,7 @@ namespace Urho3D {
 
     NewtonPhysicsWorld::~NewtonPhysicsWorld()
     {
-
+        freeWorld();
     }
 
     void NewtonPhysicsWorld::RegisterObject(Context* context)
@@ -33,14 +33,61 @@ namespace Urho3D {
 
     void NewtonPhysicsWorld::OnSceneSet(Scene* scene)
     {
-        //create the newton world
-        newtonWorld_ = NewtonCreate();
+        if (scene) {
+            //create the newton world
+            if(newtonWorld_ == nullptr)
+                newtonWorld_ = NewtonCreate();
+        }
+        else
+        {
+            freeWorld();
+        }
+
     }
 
-    dMatrix UrhoToNewton(Matrix4 mat)
+    void NewtonPhysicsWorld::addCollisionShape(NewtonCollisionShape* collision)
     {
-        return dMatrix(mat.Data());
+        collisionComponentList.Insert(0, WeakPtr<NewtonCollisionShape>(collision));
     }
+
+    void NewtonPhysicsWorld::removeCollisionShape(NewtonCollisionShape* collision)
+    {
+        collisionComponentList.Remove(WeakPtr<NewtonCollisionShape>(collision));
+    }
+
+    void NewtonPhysicsWorld::addRigidBody(NewtonRigidBody* body)
+    {
+        rigidBodyComponentList.Insert(0, WeakPtr<NewtonRigidBody>(body));
+    }
+
+    void NewtonPhysicsWorld::removeRigidBody(NewtonRigidBody* body)
+    {
+        rigidBodyComponentList.Remove(WeakPtr<NewtonRigidBody>(body));
+    }
+
+    void NewtonPhysicsWorld::freeWorld()
+    {
+        //free any collision shapes currently in the list
+        for (NewtonCollisionShape* col : collisionComponentList)
+        {
+            col->freeInternalCollision();
+        }
+
+        if (newtonWorld_ != nullptr) {
+            NewtonDestroy(newtonWorld_);
+            newtonWorld_ = nullptr;
+        }
+    }
+
+    dMatrix UrhoToNewton(Matrix4 mat4)
+    {
+        return dMatrix(mat4.Data());
+    }
+    dMatrix UrhoToNewton(Matrix3x4 mat3x4)
+    {
+        return dMatrix(mat3x4.Data());
+    }
+
 
     void RegisterPhysicsLibrary(Context* context)
     {

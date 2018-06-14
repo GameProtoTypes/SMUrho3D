@@ -891,14 +891,14 @@ void CollisionShape::ReleaseShape()
 
 void CollisionShape::OnNodeSet(Node* node)
 {
-    //if (node)
-    //{
-    //    node->AddListener(this);
-    //    cachedWorldScale_ = node->GetWorldScale();
+    if (node)
+    {
+        node->AddListener(this);
+        cachedWorldScale_ = node->GetWorldScale();
 
-    //    // Terrain collision shape depends on the terrain component's geometry updates. Subscribe to them
-    //    SubscribeToEvent(node, E_TERRAINCREATED, URHO3D_HANDLER(CollisionShape, HandleTerrainCreated));
-    //}
+        // Terrain collision shape depends on the terrain component's geometry updates. Subscribe to them
+        SubscribeToEvent(node, E_TERRAINCREATED, URHO3D_HANDLER(CollisionShape, HandleTerrainCreated));
+    }
 }
 
 void CollisionShape::OnSceneSet(Scene* scene)

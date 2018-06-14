@@ -1,10 +1,12 @@
 #pragma once
 #include "../Scene/Component.h"
+
+class NewtonBody;
 namespace Urho3D
 {
-
     class Component;
-
+    class NewtonPhysicsWorld;
+    class NewtonCollisionShape;
     class URHO3D_API NewtonRigidBody : public Component
     {
         URHO3D_OBJECT(NewtonRigidBody, Component);
@@ -26,6 +28,32 @@ namespace Urho3D
 
         /// Set linear velocity.
         void SetLinearVelocity(const Vector3& velocity);
+    protected:
+
+        /// Internal newton body
+        NewtonBody * newtonBody_ = nullptr;
+
+        /// Physics world.
+        WeakPtr<NewtonPhysicsWorld> physicsWorld_;
+        /// Rigid body.
+        WeakPtr<NewtonCollisionShape> colShape_;
+
+
+
+        void addToPhysicsWorld();
+
+        void removeFromPhysicsWorld();
+
+
+        void createBody();
+        void freeBody();
+
+
+
+        virtual void OnNodeSet(Node* node) override;
+
+        virtual void OnSceneSet(Scene* scene) override;
+
     };
 
 }
