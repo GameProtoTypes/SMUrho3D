@@ -37,8 +37,6 @@ namespace Urho3D {
             //draw debug geometry on rigid bodies.
             for (NewtonRigidBody* body : rigidBodyComponentList) {
                 body->DrawDebugGeometry(debug, depthTest);
-
-
             }
             
         }
@@ -50,8 +48,8 @@ namespace Urho3D {
             //create the newton world
             if (newtonWorld_ == nullptr) {
                 newtonWorld_ = NewtonCreate();
-                NewtonSetSolverModel(newtonWorld_, 8);
-
+                NewtonSetSolverModel(newtonWorld_, 4);
+                NewtonSetNumberOfSubsteps(newtonWorld_, 1);
             }
         }
         else
@@ -104,14 +102,15 @@ namespace Urho3D {
 
 
 
+    //gets called every 16 ms.
     void NewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
-        NewtonWaitForUpdateToFinish(newtonWorld_);
-        float timeStep = eventData[PreUpdate::P_TIMESTEP].GetFloat();
+        //use target time step to give newton constant time steps. timeStep = 0.01666666 in seconds.
+        float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
+
         NewtonUpdate(newtonWorld_, timeStep);
+        NewtonWaitForUpdateToFinish(newtonWorld_);
     }
-
-
 
 
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
