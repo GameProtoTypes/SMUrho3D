@@ -776,18 +776,25 @@ void Engine::Update()
 		updateTimeAvgIdx_ = 0;
 
 
-    // Logic update event
-    VariantMap& eventData = GetEventDataMap();
-    eventData[Update::P_TIMESTEP] = float(lastUpdateTimeUs_) / 1000000.0f;
-	eventData[Update::P_UPDATETICK] = updateTick_;
 
 
-	SendEvent(E_PREUPDATE, eventData);
 
-	SendEvent(E_UPDATE, eventData);
+    SendUpdateEvents();
 
-    // Logic post-update event
-    SendEvent(E_POSTUPDATE, eventData);
+}
+
+void Engine::SendUpdateEvents()
+{
+
+        VariantMap& eventData = GetEventDataMap();
+        eventData[Update::P_TIMESTEP] = float(lastUpdateTimeUs_) / 1000000.0f;
+        eventData[Update::P_UPDATETICK] = updateTick_;
+
+        SendEvent(E_PREUPDATE, eventData);
+        SendEvent(E_UPDATE, eventData);
+        // Logic post-update event
+        SendEvent(E_POSTUPDATE, eventData);
+
 }
 
 void Engine::Render()

@@ -76,9 +76,6 @@ namespace Urho3D
 
     };
 
-    void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex);
-    void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex);
-    void Newton_DestroyBodyCallback(const NewtonBody* body);
 
 
 }

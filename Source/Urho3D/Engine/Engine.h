@@ -140,6 +140,8 @@ private:
     /// Updates
     void Update();
 
+    void SendUpdateEvents();
+
     /// Renders
     void Render();
 

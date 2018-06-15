@@ -7,6 +7,9 @@
 #include "Core/Context.h"
 #include "Core/CoreEvents.h"
 #include "Core/Object.h"
+#include "UrhoNewtonConversions.h"
+#include "Scene/Component.h"
+#include "Scene/Node.h"
 
 namespace Urho3D {
     NewtonPhysicsWorld::NewtonPhysicsWorld(Context* context) : Component(context)
@@ -45,14 +48,16 @@ namespace Urho3D {
     {
         if (scene) {
             //create the newton world
-            if(newtonWorld_ == nullptr)
+            if (newtonWorld_ == nullptr) {
                 newtonWorld_ = NewtonCreate();
+                NewtonSetSolverModel(newtonWorld_, 8);
+
+            }
         }
         else
         {
             freeWorld();
         }
-
     }
 
     void NewtonPhysicsWorld::addCollisionShape(NewtonCollisionShape* collision)
@@ -78,10 +83,10 @@ namespace Urho3D {
     void NewtonPhysicsWorld::freeWorld()
     {
         //free any collision shapes currently in the list
-        for (NewtonCollisionShape* col : collisionComponentList)
-        {
-            col->freeInternalCollision();
-        }
+            for (NewtonCollisionShape* col : collisionComponentList)
+            {
+                col->freeInternalCollision();
+            }
 
         if (newtonWorld_ != nullptr) {
             NewtonDestroy(newtonWorld_);
@@ -93,10 +98,72 @@ namespace Urho3D {
 
     void NewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
-
+        NewtonWaitForUpdateToFinish(newtonWorld_);
         float timeStep = eventData[PreUpdate::P_TIMESTEP].GetFloat();
-        NewtonUpdate(newtonWorld_, .0166666f);
+        NewtonUpdate(newtonWorld_, timeStep);
     }
+
+
+
+
+    void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
+    {
+        dFloat Ixx;
+        dFloat Iyy;
+        dFloat Izz;
+        dFloat mass;
+
+        // for this tutorial the only external force in the Gravity
+        NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
+
+        dVector gravityForce(0.0f, mass * -9.8, 0.0f, 1.0f);
+
+        NewtonBodySetForce(body, &gravityForce[0]);
+    }
+
+
+    void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
+    {
+        NewtonRigidBody* rigidBody = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
+
+        //Quaternion orientation;
+        dMatrix newtMat(matrix);
+
+        Vector3 translation;
+        Quaternion orientation;
+        Vector3 scale;
+        NewtonToUrhoMat4(newtMat).Decompose(translation, orientation, scale);
+
+        rigidBody->GetNode()->SetWorldTransform(translation, orientation);
+    }
+
+
+    void Newton_DestroyBodyCallback(const NewtonBody* body)
+    {
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     void RegisterPhysicsLibrary(Context* context)
     {
@@ -107,4 +174,11 @@ namespace Urho3D {
         
         //RaycastVehicle::RegisterObject(context);
     }
+
+
+
+
+
+
+
 }

@@ -34,15 +34,13 @@ namespace Urho3D {
         NewtonWorld* world = GetScene()->GetComponent<NewtonPhysicsWorld>()->GetNewtonWorld();
 
         Matrix4 mat;
-        mat.SetScale(size);
+        mat.SetScale(size*node_->GetWorldScale());
         mat.SetTranslation(position);
         mat.SetRotation(rotation.RotationMatrix());
         dMatrix nMat = UrhoToNewton(mat);
 
         newtonCollision_ = NewtonCreateBox(world, 1.0f, 1.0f, 1.0f, 0, &nMat[0][0]);
         NewtonCollisionSetUserData(newtonCollision_, (void*)this);
-
-
 
         rigidBody_ = node_->GetComponent<NewtonRigidBody>();
         if (rigidBody_) {

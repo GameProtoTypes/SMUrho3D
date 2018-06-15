@@ -71,7 +71,7 @@ namespace Urho3D {
     void NewtonRigidBody::rebuildBody()
     {
         if (newtonBody_) {
-            //NewtonDestroyBody(newtonBody_);
+            NewtonDestroyBody(newtonBody_);
             newtonBody_ = nullptr;
         }
 
@@ -139,41 +139,6 @@ namespace Urho3D {
         }
     }
 
-    void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
-    {
-        dFloat Ixx;
-        dFloat Iyy;
-        dFloat Izz;
-        dFloat mass;
 
-        // for this tutorial the only external force in the Gravity
-        NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
-
-        dVector gravityForce(0.0f, mass * 0, 0.0f, 1.0f);
-
-        NewtonBodySetForce(body, &gravityForce[0]);
-    }
-
-
-    void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
-    {
-        NewtonRigidBody* rigidBody = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
-
-        //Quaternion orientation;
-        dMatrix newtMat(matrix);
-
-        Vector3 translation;
-        Quaternion orientation;
-        Vector3 scale;
-        NewtonToUrhoMat4(newtMat).Decompose(translation, orientation, scale);
-
-        rigidBody->GetNode()->SetWorldTransform(translation, orientation);
-    }
-
-
-    void Newton_DestroyBodyCallback(const NewtonBody* body)
-    {
-
-    }
 
 }
