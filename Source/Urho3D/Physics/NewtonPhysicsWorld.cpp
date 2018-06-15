@@ -83,10 +83,18 @@ namespace Urho3D {
     void NewtonPhysicsWorld::freeWorld()
     {
         //free any collision shapes currently in the list
-            for (NewtonCollisionShape* col : collisionComponentList)
-            {
-                col->freeInternalCollision();
-            }
+        for (NewtonCollisionShape* col : collisionComponentList)
+        {
+            col->freeInternalCollision();
+        }
+
+        //free internal bodies for all rigid bodies.
+        for (NewtonRigidBody* rgBody : rigidBodyComponentList)
+        {
+            rgBody->freeBody();
+        }
+
+
 
         if (newtonWorld_ != nullptr) {
             NewtonDestroy(newtonWorld_);

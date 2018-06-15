@@ -141,27 +141,27 @@ void Physics::CreateScene()
 
     {
         // Create a pyramid of movable physics objects
-        for (int y = 0; y < 8; ++y)
-        {
-            for (int x = -y; x <= y; ++x)
-            {
-                Node* boxNode = scene_->CreateChild("Box");
-                boxNode->SetPosition(Vector3((float)x, -(float)y + 8.0f, 0.0f));
-                auto* boxObject = boxNode->CreateComponent<StaticModel>();
-                boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-                boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-                boxObject->SetCastShadows(true);
+        //for (int y = 0; y < 8; ++y)
+        //{
+        //    for (int x = -y; x <= y; ++x)
+        //    {
+        //        Node* boxNode = scene_->CreateChild("Box");
+        //        boxNode->SetPosition(Vector3((float)x, -(float)y + 8.0f, 0.0f));
+        //        auto* boxObject = boxNode->CreateComponent<StaticModel>();
+        //        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+        //        boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        //        boxObject->SetCastShadows(true);
 
-                // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
-                // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
-                // objects are significant
-                auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-                body->SetMass(1.0f);
-                body->SetFriction(0.75f);
-                auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-                shape->SetBox(Vector3::ONE);
-            }
-        }
+        //        // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
+        //        // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
+        //        // objects are significant
+        //        auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+        //        body->SetMass(1.0f);
+        //        body->SetFriction(0.75f);
+        //        auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+        //        shape->SetBox(Vector3::ONE);
+        //    }
+        //}
     }
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because

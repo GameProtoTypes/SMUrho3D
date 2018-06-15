@@ -15,7 +15,7 @@ namespace Urho3D
     public:
 
         friend class NewtonCollisionShape;
-
+        friend class NewtonPhysicsWorld;
         /// Construct.
         NewtonRigidBody(Context* context);
         /// Destruct. Free the rigid body and geometries.
@@ -50,19 +50,9 @@ namespace Urho3D
         float mass_ = 0.0f;
 
 
-
-
-
-
-
-
-        ///Called when the collision component changes
-        void onCollisionUpdated();
-
+        void freeBody();
+        /// rebuilds the internal body
         void rebuildBody();
-
-  
-
        
 
 

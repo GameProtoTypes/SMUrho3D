@@ -59,25 +59,20 @@ namespace Urho3D {
 
 
 
-
-    void NewtonRigidBody::onCollisionUpdated()
-{
-        NewtonCollisionShape* colShape = node_->GetComponent<NewtonCollisionShape>();
-        colShape_ = colShape;
-        rebuildBody();
-
+    void NewtonRigidBody::freeBody()
+    {
+        if (newtonBody_ != nullptr) {
+            NewtonDestroyBody(newtonBody_);
+            newtonBody_ = nullptr;
+        }
     }
 
     void NewtonRigidBody::rebuildBody()
     {
-        if (newtonBody_) {
-            NewtonDestroyBody(newtonBody_);
-            newtonBody_ = nullptr;
-        }
+        freeBody();
 
-
-
-        if (colShape_ && colShape_->GetNewtonCollision()) {
+        colShape_ = node_->GetComponent<NewtonCollisionShape>();
+        if (colShape_ && (colShape_->GetNewtonCollision() != nullptr)) {
 
             Matrix4 transform;
             transform.SetTranslation(node_->GetWorldPosition());
@@ -100,6 +95,8 @@ namespace Urho3D {
 
 
 
+
+
     void NewtonRigidBody::OnNodeSet(Node* node)
     {
        
@@ -114,27 +111,22 @@ namespace Urho3D {
 
             //Auto-create a physics world on the scene if it does not yet exist.
             physicsWorld_ = WeakPtr<NewtonPhysicsWorld>(scene->GetOrCreateComponent<NewtonPhysicsWorld>());
+
+            rebuildBody();
+
             physicsWorld_->addRigidBody(this);
            
-            NewtonCollisionShape* colShape = node_->GetComponent<NewtonCollisionShape>();
-
-            if (colShape) {
-                onCollisionUpdated();
-
-                colShape_->onRigidBodyUpdated();
-
-            }
         }
         else
         {
+
+            freeBody();
 
             if (physicsWorld_)
                 physicsWorld_->removeRigidBody(this);
 
 
-
-
-            colShape_->onRigidBodyUpdated();
+            colShape_->updateReferenceToRigidBody();
 
         }
     }

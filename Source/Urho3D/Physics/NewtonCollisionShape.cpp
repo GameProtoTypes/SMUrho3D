@@ -16,7 +16,6 @@ namespace Urho3D {
 
     NewtonCollisionShape::NewtonCollisionShape(Context* context) : Component(context)
     {
-
     }
 
     NewtonCollisionShape::~NewtonCollisionShape()
@@ -31,43 +30,59 @@ namespace Urho3D {
 
     void NewtonCollisionShape::SetBox(const Vector3& size, const Vector3& position, const Quaternion& rotation)
     {
+        size_ = size;
+        position_ = position;
+        rotation_ = rotation;
+
+        resolveCollision();
+        notifyRigidBody();
+    }
+
+
+    void NewtonCollisionShape::resolveCollision()
+    {
+        // first free any reference to an existing collision.
+        freeInternalCollision();
+
         NewtonWorld* world = GetScene()->GetComponent<NewtonPhysicsWorld>()->GetNewtonWorld();
 
         Matrix4 mat;
-        mat.SetScale(size*node_->GetWorldScale());
-        mat.SetTranslation(position);
-        mat.SetRotation(rotation.RotationMatrix());
+        mat.SetScale(size_);
+        mat.SetTranslation(position_);
+        mat.SetRotation(rotation_.RotationMatrix());
         dMatrix nMat = UrhoToNewton(mat);
-
+        
+        // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
         newtonCollision_ = NewtonCreateBox(world, 1.0f, 1.0f, 1.0f, 0, &nMat[0][0]);
-        NewtonCollisionSetUserData(newtonCollision_, (void*)this);
-
-        rigidBody_ = node_->GetComponent<NewtonRigidBody>();
-        if (rigidBody_) {
-            rigidBody_->onCollisionUpdated();
-        }
-
     }
 
+    void NewtonCollisionShape::freeInternalCollision()
+    {
+        if (newtonCollision_) {
+            NewtonDestroyCollision(newtonCollision_);//decrement the reference count of the collision.
+            newtonCollision_ = nullptr;
+        }
+    }
+
+    void NewtonCollisionShape::notifyRigidBody()
+    {
+        rigidBody_ = node_->GetComponent<NewtonRigidBody>();
+        if (rigidBody_) {
+            rigidBody_->rebuildBody();
+        }
+    }
 
     NewtonCollision* NewtonCollisionShape::GetNewtonCollision()
     {
         return newtonCollision_;
     }
 
-    void NewtonCollisionShape::freeInternalCollision()
-    {
-        if (newtonCollision_) {
-            NewtonDestroyCollision(newtonCollision_);
-            newtonCollision_ = nullptr;
-        }
-    }
 
 
-    void NewtonCollisionShape::onRigidBodyUpdated()
-    {
-        NewtonRigidBody* rigidBody = node_->GetComponent<NewtonRigidBody>();
-        rigidBody_ = rigidBody;
+
+    void NewtonCollisionShape::updateReferenceToRigidBody()
+{
+        rigidBody_ = node_->GetComponent<NewtonRigidBody>();
     }
 
     void NewtonCollisionShape::OnNodeSet(Node* node)
@@ -83,34 +98,24 @@ namespace Urho3D {
                 URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
 
             physicsWorld_ = WeakPtr<NewtonPhysicsWorld>(scene->GetOrCreateComponent<NewtonPhysicsWorld>());
+
+            resolveCollision();
+
+
             physicsWorld_->addCollisionShape(this);
 
 
-
-
-            rigidBody_ = node_->GetComponent<NewtonRigidBody>();
-            if (rigidBody_) {
-                rigidBody_->onCollisionUpdated();
-            }
-
-
+            notifyRigidBody();
         }
         else
         {
+            freeInternalCollision();
 
             if (physicsWorld_)
                 physicsWorld_->removeCollisionShape(this);
 
-            freeInternalCollision();
 
-            rigidBody_ = node_->GetComponent<NewtonRigidBody>();
-
-            if (rigidBody_) {
-                rigidBody_->onCollisionUpdated();
-
-            }
-
-
+            notifyRigidBody();
         }
     }
 

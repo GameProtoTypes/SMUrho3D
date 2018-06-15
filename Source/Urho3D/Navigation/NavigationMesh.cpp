@@ -54,6 +54,7 @@
 #include <Recast/Recast.h>
 
 #include "../DebugNew.h"
+#include "Physics/NewtonCollisionShape.h"
 
 namespace Urho3D
 {

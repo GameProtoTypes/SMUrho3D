@@ -1,16 +1,18 @@
 #pragma once
 
-
+#include "../Physics/CollisionShape.h"
 #include "../Scene/Component.h"
 
 class NewtonCollision;
 
 namespace Urho3D
 {
+
+
+
     class NewtonPhysicsWorld;
     class NewtonRigidBody;
     class Component;
-    
     class URHO3D_API NewtonCollisionShape : public Component
     {
         URHO3D_OBJECT(NewtonCollisionShape, Component);
@@ -31,12 +33,9 @@ namespace Urho3D
         void SetBox(const Vector3& size, const Vector3& position = Vector3::ZERO, const Quaternion& rotation = Quaternion::IDENTITY);
 
 
+
         /// Returns the internal newton collision
         NewtonCollision* GetNewtonCollision();
-
-
-
-
 
 
     protected:
@@ -48,12 +47,26 @@ namespace Urho3D
         /// Internal Newton Collision
         NewtonCollision* newtonCollision_ = nullptr;
 
+        /// Collision shape type.
+        ShapeType shapeType_ = SHAPE_BOX;
+        /// Offset position.
+        Vector3 position_;
+        /// Offset rotation.
+        Quaternion rotation_;
+        /// Shape size.
+        Vector3 size_ = Vector3(1.0f, 1.0f, 1.0f);
+
+        /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
+        void resolveCollision();
+
         /// Frees the internal collision shape;
         void freeInternalCollision();
 
+        /// notifies the sibling rigid body of updates if it exists
+        void notifyRigidBody();
 
         /// Called when there is a change to the rigid body component;
-        void onRigidBodyUpdated();
+        void updateReferenceToRigidBody();
 
 
         virtual void OnNodeSet(Node* node) override;
