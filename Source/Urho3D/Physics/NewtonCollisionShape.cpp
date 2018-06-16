@@ -47,13 +47,15 @@ namespace Urho3D {
         NewtonWorld* world = GetScene()->GetComponent<NewtonPhysicsWorld>()->GetNewtonWorld();
 
         Matrix4 mat;
-        mat.SetScale(size_);
+        //mat.SetScale(size_);
         mat.SetTranslation(position_);
         mat.SetRotation(rotation_.RotationMatrix());
         dMatrix nMat = UrhoToNewton(mat);
         
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
-        newtonCollision_ = NewtonCreateBox(world, 1.0f, 1.0f, 1.0f, 0, &nMat[0][0]);
+        newtonCollision_ = NewtonCreateBox(world, size_.x_*node_->GetScale().x_,
+                                                  size_.y_*node_->GetScale().y_,
+                                                  size_.z_*node_->GetScale().z_, 0, &nMat[0][0]);
     }
 
     void NewtonCollisionShape::freeInternalCollision()

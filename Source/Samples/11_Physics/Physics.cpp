@@ -140,28 +140,28 @@ void Physics::CreateScene()
     }
 
     {
-        // Create a pyramid of movable physics objects
-        //for (int y = 0; y < 8; ++y)
-        //{
-        //    for (int x = -y; x <= y; ++x)
-        //    {
-        //        Node* boxNode = scene_->CreateChild("Box");
-        //        boxNode->SetPosition(Vector3((float)x, -(float)y + 8.0f, 0.0f));
-        //        auto* boxObject = boxNode->CreateComponent<StaticModel>();
-        //        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        //        boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-        //        boxObject->SetCastShadows(true);
+         //Create a pyramid of movable physics objects
+        for (int y = 0; y < 16; ++y)
+        {
+            for (int x = -y; x <= y; ++x)
+            {
+                Node* boxNode = scene_->CreateChild("Box");
+                boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f));
+                auto* boxObject = boxNode->CreateComponent<StaticModel>();
+                boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+                boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+                boxObject->SetCastShadows(true);
 
-        //        // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
-        //        // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
-        //        // objects are significant
-        //        auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-        //        body->SetMass(1.0f);
-        //        body->SetFriction(0.75f);
-        //        auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-        //        shape->SetBox(Vector3::ONE);
-        //    }
-        //}
+                // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
+                // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
+                // objects are significant
+                auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+                body->SetMass(1.0f);
+                body->SetFriction(0.75f);
+                auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+                shape->SetBox(Vector3::ONE);
+            }
+        }
     }
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
@@ -284,28 +284,32 @@ void Physics::SpawnObject()
 {
     auto* cache = GetSubsystem<ResourceCache>();
 
-    // Create a smaller box at camera position
-    Node* boxNode = scene_->CreateChild("SmallBox");
-    boxNode->SetPosition(cameraNode_->GetPosition());
-    boxNode->SetRotation(cameraNode_->GetRotation());
-    boxNode->SetScale(0.25f);
-    auto* boxObject = boxNode->CreateComponent<StaticModel>();
-    boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-    boxObject->SetCastShadows(true);
 
-    // Create physics components, use a smaller mass also
-    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    body->SetMass(0.25f);
-    body->SetFriction(0.75f);
-    auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-    shape->SetBox(Vector3::ONE);
+    for (int i = 0; i < 20; i++) {
+        // Create a smaller box at camera position
+        Node* boxNode = scene_->CreateChild("SmallBox");
+        boxNode->SetPosition(cameraNode_->GetPosition() + Vector3(Random() * 2.0f,Random()* 2.0f, Random()* 2.0f));
+        boxNode->SetRotation(cameraNode_->GetRotation());
+        boxNode->SetScale(0.25f);
+        auto* boxObject = boxNode->CreateComponent<StaticModel>();
+        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+        boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        boxObject->SetCastShadows(true);
 
-    const float OBJECT_VELOCITY = 10.0f;
+        // Create physics components, use a smaller mass also
+        auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+        body->SetMass(0.25f);
+        body->SetFriction(0.75f);
+        auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+        shape->SetBox(Vector3::ONE);
 
-    // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
-    // to overcome gravity better
-    body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+        const float OBJECT_VELOCITY = 10.0f;
+
+        // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
+        // to overcome gravity better
+        body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+
+    }
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)

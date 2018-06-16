@@ -35,6 +35,10 @@ namespace Urho3D
         void SetLinearVelocity(const Vector3& velocity);
 
 
+        ///Apply the current newton body transform to the node.
+        void ApplyTransform();
+
+
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
 
@@ -64,6 +68,8 @@ namespace Urho3D
 
 
 
+    public:
+        
     };
 
 

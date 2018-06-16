@@ -38,7 +38,6 @@ namespace Urho3D {
             for (NewtonRigidBody* body : rigidBodyComponentList) {
                 body->DrawDebugGeometry(debug, depthTest);
             }
-            
         }
     }
 
@@ -48,7 +47,8 @@ namespace Urho3D {
             //create the newton world
             if (newtonWorld_ == nullptr) {
                 newtonWorld_ = NewtonCreate();
-                NewtonSetSolverModel(newtonWorld_, 8);
+                NewtonSetSolverModel(newtonWorld_, 16);
+                //NewtonSetThreadsCount(newtonWorld_,4);
                 //NewtonSetNumberOfSubsteps(newtonWorld_, 8);
             }
         }
@@ -97,6 +97,8 @@ namespace Urho3D {
             NewtonDestroy(newtonWorld_);
             newtonWorld_ = nullptr;
         }
+
+
     }
 
 
@@ -107,8 +109,15 @@ namespace Urho3D {
         //use target time step to give newton constant time steps. timeStep = 0.01666666 in seconds.
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 
-        NewtonUpdate(newtonWorld_, timeStep);
+        NewtonUpdateAsync(newtonWorld_, timeStep);
         NewtonWaitForUpdateToFinish(newtonWorld_);
+        
+
+        //apply the transform of all rigid body components to their respective nodes.
+        for (NewtonRigidBody* rigBody : rigidBodyComponentList)
+        {
+            rigBody->ApplyTransform();
+        }
     }
 
 
@@ -130,17 +139,6 @@ namespace Urho3D {
 
     void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
     {
-        NewtonRigidBody* rigidBody = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
-
-        //Quaternion orientation;
-        dMatrix newtMat(matrix);
-
-        Vector3 translation;
-        Quaternion orientation;
-        Vector3 scale;
-        NewtonToUrhoMat4(newtMat).Decompose(translation, orientation, scale);
-
-        rigidBody->GetNode()->SetWorldTransform(translation, orientation);
     }
 
 

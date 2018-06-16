@@ -9,6 +9,7 @@
 #include "Newton.h"
 #include "NewtonDebugDrawing.h"
 #include "UrhoNewtonConversions.h"
+#include "dgQuaternion.h"
 
 
 namespace Urho3D {
@@ -46,6 +47,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::SetLinearVelocity(const Vector3& velocity)
     {
+        NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(velocity)[0]);
     }
 
     void NewtonRigidBody::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
@@ -131,6 +133,17 @@ namespace Urho3D {
         }
     }
 
+    void NewtonRigidBody::ApplyTransform()
+    {
+        dVector pos;
+        dgQuaternion quat;
+        NewtonBodyGetPosition(newtonBody_, &pos[0]);
+        NewtonBodyGetRotation(newtonBody_, &quat[0]);
+
+
+        //node_->SetWorldTransform(NewtonToUrhoVec3(pos), Quaternion());
+        node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat));
+    }
 
 
 }

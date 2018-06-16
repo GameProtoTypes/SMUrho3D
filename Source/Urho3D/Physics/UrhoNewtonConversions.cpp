@@ -4,6 +4,7 @@
 #include "Math/Matrix4.h"
 #include "Math/Matrix3x4.h"
 #include "IO/Log.h"
+#include "dgQuaternion.h"
 
 
 namespace Urho3D {
@@ -19,6 +20,20 @@ namespace Urho3D {
         return dMatrix(asMat4.Transpose().Data());
     }
 
+    dVector UrhoToNewton(Vector4 vec4)
+    {
+        return dVector(vec4.x_, vec4.y_, vec4.z_, vec4.w_);
+    }
+
+    dVector UrhoToNewton(Vector3 vec3)
+    {
+        return dVector(vec3.x_, vec3.y_, vec3.z_);
+    }
+
+    dVector UrhoToNewton(Vector2 vec2)
+    {
+        return dVector(vec2.x_, vec2.y_, 0.0f);
+    }
 
     Vector3 NewtonToUrhoVec3(dVector vec)
     {
@@ -33,6 +48,11 @@ namespace Urho3D {
     Matrix4 NewtonToUrhoMat4(dMatrix mat)
     {
         return Matrix4(&mat[0][0]).Transpose();
+    }
+
+    Quaternion NewtonToUrhoQuat(dgQuaternion quat)
+    {
+        return Quaternion(quat.m_q0, quat.m_q1, quat.m_q2, quat.m_q3);
     }
 
     void PrintNewton(dMatrix mat)
