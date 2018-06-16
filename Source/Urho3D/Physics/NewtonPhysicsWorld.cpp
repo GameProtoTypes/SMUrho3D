@@ -48,8 +48,8 @@ namespace Urho3D {
             //create the newton world
             if (newtonWorld_ == nullptr) {
                 newtonWorld_ = NewtonCreate();
-                NewtonSetSolverModel(newtonWorld_, 4);
-                NewtonSetNumberOfSubsteps(newtonWorld_, 1);
+                NewtonSetSolverModel(newtonWorld_, 8);
+                //NewtonSetNumberOfSubsteps(newtonWorld_, 8);
             }
         }
         else
@@ -91,7 +91,6 @@ namespace Urho3D {
         {
             rgBody->freeBody();
         }
-
 
 
         if (newtonWorld_ != nullptr) {
