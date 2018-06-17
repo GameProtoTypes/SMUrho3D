@@ -48,7 +48,7 @@ namespace Urho3D {
             if (newtonWorld_ == nullptr) {
                 newtonWorld_ = NewtonCreate();
                 NewtonSetSolverModel(newtonWorld_, 16);
-                //NewtonSetThreadsCount(newtonWorld_,4);
+                NewtonSetThreadsCount(newtonWorld_,4);
                 //NewtonSetNumberOfSubsteps(newtonWorld_, 8);
             }
         }
@@ -109,7 +109,7 @@ namespace Urho3D {
         //use target time step to give newton constant time steps. timeStep = 0.01666666 in seconds.
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 
-        NewtonUpdateAsync(newtonWorld_, timeStep);
+        NewtonUpdate(newtonWorld_, timeStep);
         NewtonWaitForUpdateToFinish(newtonWorld_);
         
 

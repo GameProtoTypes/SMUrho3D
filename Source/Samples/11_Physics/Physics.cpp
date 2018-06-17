@@ -139,14 +139,20 @@ void Physics::CreateScene()
         shape->SetBox(Vector3::ONE);
     }
 
+
+
+    const int numIslands = 2;
+    for(int x2 = -numIslands; x2 <= numIslands; x2++)
+        for (int y2 = -numIslands; y2 <= numIslands; y2++)
     {
          //Create a pyramid of movable physics objects
         for (int y = 0; y < 16; ++y)
         {
             for (int x = -y; x <= y; ++x)
             {
+
                 Node* boxNode = scene_->CreateChild("Box");
-                boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f));
+                boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f) + Vector3(x2, 0, y2)*50.0f);
                 auto* boxObject = boxNode->CreateComponent<StaticModel>();
                 boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
                 boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
@@ -298,12 +304,12 @@ void Physics::SpawnObject()
 
         // Create physics components, use a smaller mass also
         auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-        body->SetMass(0.25f);
+        body->SetMass(0.25f*0.25f*0.25f);
         body->SetFriction(0.75f);
         auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
         shape->SetBox(Vector3::ONE);
 
-        const float OBJECT_VELOCITY = 10.0f;
+        const float OBJECT_VELOCITY = 20.0f;
 
         // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
         // to overcome gravity better

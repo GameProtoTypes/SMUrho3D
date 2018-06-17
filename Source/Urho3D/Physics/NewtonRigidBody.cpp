@@ -39,6 +39,8 @@ namespace Urho3D {
     void NewtonRigidBody::SetMass(float mass)
     {
         mass_ = mass;
+
+        rebuildBody();
     }
 
     void NewtonRigidBody::SetFriction(float friction)
@@ -59,8 +61,6 @@ namespace Urho3D {
     }
 
 
-
-
     void NewtonRigidBody::freeBody()
     {
         if (newtonBody_ != nullptr) {
@@ -68,6 +68,8 @@ namespace Urho3D {
             newtonBody_ = nullptr;
         }
     }
+
+
 
     void NewtonRigidBody::rebuildBody()
     {
