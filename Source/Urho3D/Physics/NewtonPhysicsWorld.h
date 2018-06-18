@@ -12,6 +12,8 @@ namespace Urho3D
     class NewtonCollisionShape;
     class NewtonRigidBody;
 
+    static const Vector3 DEF_GRAVITY = Vector3(0, -9.81, 0);
+
     class URHO3D_API NewtonPhysicsWorld : public Component
     {
         URHO3D_OBJECT(NewtonPhysicsWorld, Component);
@@ -30,12 +32,22 @@ namespace Urho3D
         /// Return the internal Newton world.
         NewtonWorld* GetNewtonWorld() { return newtonWorld_; }
 
+        ///set the global force acting on all rigid bodies in the world
+        void SetGravity(const Vector3& force);
+        ///return global force acting on all rigid bodies
+        Vector3 GetGravity();
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
     protected:
 
+        /// Internal newton world
         NewtonWorld* newtonWorld_ = nullptr;
+
+        ///Global force
+        Vector3 gravity_ = DEF_GRAVITY;
+
+
 
         virtual void OnSceneSet(Scene* scene) override;
 

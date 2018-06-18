@@ -1,6 +1,7 @@
 #pragma once
 #include "../Scene/Component.h"
 #include "Newton.h"
+#include "dVector.h"
 
 class NewtonBody;
 
@@ -35,14 +36,35 @@ namespace Urho3D
         void SetLinearVelocity(const Vector3& velocity);
 
 
+        /// Apply force to center of mass.
+        void ApplyForce(const Vector3& force);
+        /// Apply force at local position.
+        void ApplyForce(const Vector3& force, const Vector3& position);
+
+        /// Reset accumulated forces.
+        void ResetForces();
+
+        /// Return the net force acting on the body.
+        Vector3 GetNetForce();
+
+        /// Return the net force acting on the body.
+        Vector3 GetNetTorque();
+
+
         ///Apply the current newton body transform to the node.
         void ApplyTransform();
 
+        void GetBakedForceAndTorque(dVector& force, dVector& torque);
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
 
     protected:
+
+        struct LocalForce {
+            Vector3 force_;
+            Vector3 localOffset;
+        };
 
         /// Internal newton body
         NewtonBody * newtonBody_ = nullptr;
@@ -53,11 +75,24 @@ namespace Urho3D
         /// Mass.
         float mass_ = 0.0f;
 
+        ///Net Force in local cordinates
+        Vector3 netForce_;
+        ///Net Torque in local cordinates
+        Vector3 netTorque_;
+
+        dVector netForceNewton_;
+        dVector netTorqueNewton_;
+
+
+
+
 
         void freeBody();
         /// rebuilds the internal body
         void rebuildBody();
        
+        ///precomputes force and torque for quick pass to newton callback
+        void bakeForceAndTorque();
 
 
 
@@ -67,8 +102,6 @@ namespace Urho3D
 
 
 
-
-    public:
         
     };
 

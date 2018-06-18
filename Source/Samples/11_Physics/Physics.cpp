@@ -89,7 +89,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<NewtonPhysicsWorld>();
+    scene_->CreateComponent<NewtonPhysicsWorld>()->SetGravity(Vector3(0,0,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -306,6 +306,8 @@ void Physics::SpawnObject()
         auto* body = boxNode->CreateComponent<NewtonRigidBody>();
         body->SetMass(0.25f*0.25f*0.25f);
         body->SetFriction(0.75f);
+        body->ApplyForce(Vector3(0, 0, .001), Vector3(0.25f,0,0));
+        body->ApplyForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
         auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
         shape->SetBox(Vector3::ONE);
 
@@ -313,7 +315,7 @@ void Physics::SpawnObject()
 
         // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
         // to overcome gravity better
-        body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+        //body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
 
     }
 }

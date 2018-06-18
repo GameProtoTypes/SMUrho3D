@@ -91,15 +91,29 @@ namespace Urho3D {
 
             //assign callbacks
             NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
-            NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback);
+            //NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback); //not really needed since we pole for the transform at a specific time.
             NewtonBodySetDestructorCallback(newtonBody_, Newton_DestroyBodyCallback);
 
+
+            bakeForceAndTorque();
         }
     }
 
 
 
 
+
+    void NewtonRigidBody::bakeForceAndTorque()
+    {
+        Vector3 gravityForce = GetScene()->GetComponent<NewtonPhysicsWorld>()->GetGravity() * mass_;
+
+        Quaternion worldOrientation = GetNode()->GetWorldRotation();
+        Vector3 netForceWrldSpc = worldOrientation * netForce_;
+        Vector3 netTorqueWrldSpc = worldOrientation * netTorque_;
+
+        netForceNewton_ = UrhoToNewton((gravityForce + netForceWrldSpc));
+        netTorqueNewton_ = UrhoToNewton(netTorqueWrldSpc);
+    }
 
     void NewtonRigidBody::OnNodeSet(Node* node)
     {
@@ -135,6 +149,36 @@ namespace Urho3D {
         }
     }
 
+    void NewtonRigidBody::ApplyForce(const Vector3& force)
+    {
+        ApplyForce(force, Vector3(0, 0, 0));
+    }
+
+    void NewtonRigidBody::ApplyForce(const Vector3& force, const Vector3& position)
+    {
+        netForce_ += force;
+        netTorque_ += position.CrossProduct(force);
+        bakeForceAndTorque();
+    }
+
+    void NewtonRigidBody::ResetForces()
+    {
+        netForce_ = Vector3(0, 0, 0);
+        netTorque_ = Vector3(0, 0, 0);
+        bakeForceAndTorque();
+    }
+
+    Vector3 NewtonRigidBody::GetNetForce()
+    {
+        return netForce_;
+    }
+
+
+    Urho3D::Vector3 NewtonRigidBody::GetNetTorque()
+    {
+        return netTorque_;
+    }
+
     void NewtonRigidBody::ApplyTransform()
     {
         dVector pos;
@@ -147,5 +191,11 @@ namespace Urho3D {
         node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat));
     }
 
+
+    void NewtonRigidBody::GetBakedForceAndTorque(dVector& force, dVector& torque)
+    {
+        force = netForceNewton_;
+        torque = netTorqueNewton_;
+    }
 
 }

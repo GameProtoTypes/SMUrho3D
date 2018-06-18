@@ -9,9 +9,14 @@
 #include "Core/Object.h"
 #include "UrhoNewtonConversions.h"
 #include "Scene/Component.h"
+#include "Scene/Scene.h"
 #include "Scene/Node.h"
 
 namespace Urho3D {
+
+
+    static const Vector3 DEFAULT_GRAVITY = Vector3(0.0f, -9.81f, 0.0f);
+
     NewtonPhysicsWorld::NewtonPhysicsWorld(Context* context) : Component(context)
     {
         SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(NewtonPhysicsWorld, HandleUpdate));
@@ -30,10 +35,23 @@ namespace Urho3D {
 
 
 
+    void NewtonPhysicsWorld::SetGravity(const Vector3& force)
+    {
+        gravity_ = force;
+    }
+
+
+    Urho3D::Vector3 NewtonPhysicsWorld::GetGravity()
+{
+        return gravity_;
+    }
+
     void NewtonPhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         if (debug)
         {
+            //#todo draw physics world specific things.
+
             //draw debug geometry on rigid bodies.
             for (NewtonRigidBody* body : rigidBodyComponentList) {
                 body->DrawDebugGeometry(debug, depthTest);
@@ -128,12 +146,18 @@ namespace Urho3D {
         dFloat Izz;
         dFloat mass;
 
+
         // for this tutorial the only external force in the Gravity
-        NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
+        //NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
 
-        dVector gravityForce(0.0f, mass * -9.8, 0.0f, 1.0f);
+        NewtonRigidBody* rigidBodyComp = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
+        dVector netForce;
+        dVector netTorque;
+        rigidBodyComp->GetBakedForceAndTorque(netForce, netTorque);
 
-        NewtonBodySetForce(body, &gravityForce[0]);
+        NewtonBodySetForce(body, &netForce[0]);
+        NewtonBodySetTorque(body, &netTorque[0]);
+        
     }
 
 
