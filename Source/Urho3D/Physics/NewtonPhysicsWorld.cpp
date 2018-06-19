@@ -141,18 +141,18 @@ namespace Urho3D {
 
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
     {
-        dFloat Ixx;
-        dFloat Iyy;
-        dFloat Izz;
-        dFloat mass;
+        static dFloat Ixx;
+        static dFloat Iyy;
+        static dFloat Izz;
+        static dFloat mass;
+        static dVector netForce;
+        static dVector netTorque;
 
 
-        // for this tutorial the only external force in the Gravity
         //NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
 
         NewtonRigidBody* rigidBodyComp = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
-        dVector netForce;
-        dVector netTorque;
+
         rigidBodyComp->GetBakedForceAndTorque(netForce, netTorque);
 
         NewtonBodySetForce(body, &netForce[0]);

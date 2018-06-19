@@ -37,9 +37,9 @@ namespace Urho3D
 
 
         /// Apply force to center of mass.
-        void ApplyForce(const Vector3& force);
+        void AddForce(const Vector3& force);
         /// Apply force at local position.
-        void ApplyForce(const Vector3& force, const Vector3& position);
+        void AddForce(const Vector3& force, const Vector3& position);
 
         /// Reset accumulated forces.
         void ResetForces();
@@ -54,6 +54,7 @@ namespace Urho3D
         ///Apply the current newton body transform to the node.
         void ApplyTransform();
 
+        ///Return the net force and torque for newton.
         void GetBakedForceAndTorque(dVector& force, dVector& torque);
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
