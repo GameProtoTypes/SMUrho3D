@@ -62,10 +62,6 @@ namespace Urho3D
 
     protected:
 
-        struct LocalForce {
-            Vector3 force_;
-            Vector3 localOffset;
-        };
 
         /// Internal newton body
         NewtonBody * newtonBody_ = nullptr;
