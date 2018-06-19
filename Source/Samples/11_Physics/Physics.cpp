@@ -306,8 +306,8 @@ void Physics::SpawnObject()
         auto* body = boxNode->CreateComponent<NewtonRigidBody>();
         body->SetMass(0.25f*0.25f*0.25f);
         body->SetFriction(0.75f);
-        body->ApplyForce(Vector3(0, 0, .001), Vector3(0.25f,0,0));
-        body->ApplyForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
+        body->AddForce(Vector3(0, 0, .001), Vector3(0.25f,0,0));
+        body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
         auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
         shape->SetBox(Vector3::ONE);
 
