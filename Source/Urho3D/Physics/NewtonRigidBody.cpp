@@ -149,12 +149,12 @@ namespace Urho3D {
         }
     }
 
-    void NewtonRigidBody::ApplyForce(const Vector3& force)
+    void NewtonRigidBody::AddForce(const Vector3& force)
     {
-        ApplyForce(force, Vector3(0, 0, 0));
+        AddForce(force, Vector3(0, 0, 0));
     }
 
-    void NewtonRigidBody::ApplyForce(const Vector3& force, const Vector3& position)
+    void NewtonRigidBody::AddForce(const Vector3& force, const Vector3& position)
     {
         netForce_ += force;
         netTorque_ += position.CrossProduct(force);
