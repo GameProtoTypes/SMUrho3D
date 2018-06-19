@@ -291,10 +291,11 @@ void Physics::SpawnObject()
     auto* cache = GetSubsystem<ResourceCache>();
 
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1; i++) {
         // Create a smaller box at camera position
         Node* boxNode = scene_->CreateChild("SmallBox");
-        boxNode->SetPosition(cameraNode_->GetPosition() + Vector3(Random() * 2.0f,Random()* 2.0f, Random()* 2.0f));
+        const float range = 0;
+        boxNode->SetPosition(cameraNode_->GetPosition() + Vector3(Random(-1,1) * range,Random(-1, 1)* range, Random(-1, 1)* range));
         boxNode->SetRotation(cameraNode_->GetRotation());
         boxNode->SetScale(0.25f);
         auto* boxObject = boxNode->CreateComponent<StaticModel>();
@@ -308,10 +309,11 @@ void Physics::SpawnObject()
         body->SetFriction(0.75f);
         body->AddForce(Vector3(0, 0, .001), Vector3(0.25f,0,0));
         body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
+        body->SetContinuousCollision(true);
         auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
         shape->SetBox(Vector3::ONE);
 
-        const float OBJECT_VELOCITY = 20.0f;
+        const float OBJECT_VELOCITY = 2000.0f;
 
         // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
         // to overcome gravity better

@@ -52,6 +52,12 @@ namespace Urho3D {
         NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(velocity)[0]);
     }
 
+    void NewtonRigidBody::SetContinuousCollision(bool sweptCollision)
+    {
+        continuousCollision_ = sweptCollision;
+
+    }
+
     void NewtonRigidBody::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         if (newtonBody_) {
@@ -89,10 +95,17 @@ namespace Urho3D {
             NewtonBodySetMassProperties(newtonBody_, mass_, colShape_->GetNewtonCollision());
             NewtonBodySetUserData(newtonBody_, (void*)this);
 
+            NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
+
+
             //assign callbacks
             NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
             //NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback); //not really needed since we pole for the transform at a specific time.
             NewtonBodySetDestructorCallback(newtonBody_, Newton_DestroyBodyCallback);
+
+
+
+
 
 
             bakeForceAndTorque();

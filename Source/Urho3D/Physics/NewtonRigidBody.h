@@ -35,6 +35,8 @@ namespace Urho3D
         /// Set linear velocity.
         void SetLinearVelocity(const Vector3& velocity);
 
+        void SetContinuousCollision(bool sweptCollision);
+
 
         /// Apply force to center of mass.
         void AddForce(const Vector3& force);
@@ -71,6 +73,8 @@ namespace Urho3D
         WeakPtr<NewtonCollisionShape> colShape_;
         /// Mass.
         float mass_ = 0.0f;
+        ///Continuous Collision
+        bool continuousCollision_ = false;
 
         ///Net Force in local cordinates
         Vector3 netForce_;

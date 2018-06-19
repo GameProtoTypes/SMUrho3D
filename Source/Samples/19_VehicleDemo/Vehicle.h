@@ -30,7 +30,7 @@ namespace Urho3D
 
 class Constraint;
 class Node;
-class RigidBody;
+class NewtonRigidBody;
 
 }
 
@@ -90,15 +90,15 @@ private:
     WeakPtr<Constraint> frontRightAxis_;
 
     /// Hull and wheel hull rigid bodies.
-    WeakPtr<RigidBody> hullBody_;
+    WeakPtr<NewtonRigidBody> hullBody_;
     /// Hull and wheel front-left rigid bodies.
-    WeakPtr<RigidBody> frontLeftBody_;
+    WeakPtr<NewtonRigidBody> frontLeftBody_;
     /// Hull and wheel front-right rigid bodies.
-    WeakPtr<RigidBody> frontRightBody_;
+    WeakPtr<NewtonRigidBody> frontRightBody_;
     /// Hull and wheel rear-left rigid bodies.
-    WeakPtr<RigidBody> rearLeftBody_;
+    WeakPtr<NewtonRigidBody> rearLeftBody_;
     /// Hull and wheel rear-right rigid bodies.
-    WeakPtr<RigidBody> rearRightBody_;
+    WeakPtr<NewtonRigidBody> rearRightBody_;
 
     /// ID of the front-left wheel scene node for serialization.
     unsigned frontLeftID_{};
