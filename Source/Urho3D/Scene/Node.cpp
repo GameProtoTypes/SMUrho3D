@@ -1179,6 +1179,8 @@ void Node::RemoveListener(Component* component)
     }
 }
 
+
+
 Vector3 Node::GetSignedWorldScale() const
 {
     if (dirty_)
@@ -1197,6 +1199,11 @@ Vector3 Node::LocalToWorld(const Vector4& vector) const
     return GetWorldTransform() * vector;
 }
 
+Urho3D::Matrix3x4 Node::LocalToWorld(const Matrix3x4& transform) const
+{
+    return GetWorldTransform() * transform;
+}
+
 Vector2 Node::LocalToWorld2D(const Vector2& vector) const
 {
     Vector3 result = LocalToWorld(Vector3(vector));
@@ -1211,6 +1218,11 @@ Vector3 Node::WorldToLocal(const Vector3& position) const
 Vector3 Node::WorldToLocal(const Vector4& vector) const
 {
     return GetWorldTransform().Inverse() * vector;
+}
+
+Matrix3x4 Node::WorldToLocal(const Matrix3x4& transform) const
+{
+    return GetWorldTransform().Inverse() * transform;
 }
 
 Vector2 Node::WorldToLocal2D(const Vector2& vector) const

@@ -30,6 +30,35 @@ namespace Urho3D {
 
     }
 
+    void NewtonBodyDebugDrawCenterOfMass(NewtonBody* body, DebugRenderer* debug, bool depthTest /*= false*/)
+    {
+
+
+            dMatrix matrix;
+            dVector com(0.0f);
+
+            NewtonBodyGetCentreOfMass(body, &com[0]);
+            NewtonBodyGetMatrix(body, &matrix[0][0]);
+
+            dVector o(matrix.TransformVector(com));
+
+            dVector x(o + matrix.RotateVector(dVector(1.0f, 0.0f, 0.0f, 0.0f)));
+
+            debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((x.m_x), (x.m_y), (x.m_z)), Color::RED, depthTest);
+
+
+
+            dVector y(o + matrix.RotateVector(dVector(0.0f, 1.0f, 0.0f, 0.0f)));
+            debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((y.m_x), (y.m_y), (y.m_z)), Color::GREEN, depthTest);
+
+
+
+            dVector z(o + matrix.RotateVector(dVector(0.0f, 0.0f, 1.0f, 0.0f)));
+            debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((z.m_x), (z.m_y), (z.m_z)), Color::BLUE, depthTest);
+
+
+    }
+
     void DebugShowGeometryCollision(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
     {
         debugRenderOptions* options = static_cast<debugRenderOptions*>(userData);

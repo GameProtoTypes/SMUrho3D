@@ -57,7 +57,7 @@ namespace Urho3D
         Vector3 size_ = Vector3(1.0f, 1.0f, 1.0f);
 
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
-        void resolveCollision();
+        void reEvaluateCollision();
 
         /// Frees the internal collision shape;
         void freeInternalCollision();

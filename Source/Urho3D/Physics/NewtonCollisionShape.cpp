@@ -34,13 +34,13 @@ namespace Urho3D {
         position_ = position;
         rotation_ = rotation;
 
-        resolveCollision();
+        reEvaluateCollision();
         notifyRigidBody();
     }
 
 
-    void NewtonCollisionShape::resolveCollision()
-    {
+    void NewtonCollisionShape::reEvaluateCollision()
+{
         // first free any reference to an existing collision.
         freeInternalCollision();
 
@@ -70,7 +70,7 @@ namespace Urho3D {
     {
         rigidBody_ = node_->GetComponent<NewtonRigidBody>();
         if (rigidBody_) {
-            rigidBody_->rebuildBody();
+            rigidBody_->reEvaluateBody();
         }
     }
 
@@ -89,7 +89,7 @@ namespace Urho3D {
 
     void NewtonCollisionShape::OnNodeSet(Node* node)
     {
-       // throw std::logic_error("The method or operation is not implemented.");
+       
     }
 
     void NewtonCollisionShape::OnSceneSet(Scene* scene)
@@ -101,7 +101,7 @@ namespace Urho3D {
 
             physicsWorld_ = WeakPtr<NewtonPhysicsWorld>(scene->GetOrCreateComponent<NewtonPhysicsWorld>());
 
-            resolveCollision();
+            reEvaluateCollision();
 
 
             physicsWorld_->addCollisionShape(this);

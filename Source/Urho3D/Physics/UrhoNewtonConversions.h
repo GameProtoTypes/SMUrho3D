@@ -14,18 +14,18 @@ namespace Urho3D {
     class Quaternion;
 
     ///Conversion Functions From Urho To Newton
-    dMatrix UrhoToNewton(Matrix4 mat);
-    dMatrix UrhoToNewton(Matrix3x4 mat);
-    dVector UrhoToNewton(Vector3 vec4);
-    dVector UrhoToNewton(Vector3 vec3);
-    dVector UrhoToNewton(Vector2 vec2);
+    dMatrix UrhoToNewton(const Matrix4& mat);
+    dMatrix UrhoToNewton(const Matrix3x4& mat);
+    dVector UrhoToNewton(const Vector3& vec4);
+    dVector UrhoToNewton(const Vector3& vec3);
+    dVector UrhoToNewton(const Vector2& vec2);
 
 
     ///Conversion Function From Newton To Urho
-    Vector3 NewtonToUrhoVec3(dVector vec);
-    Vector4 NewtonToUrhoVec4(dVector vec);
-    Matrix4 NewtonToUrhoMat4(dMatrix mat);
-    Quaternion NewtonToUrhoQuat(dgQuaternion quat);
+    Vector3 NewtonToUrhoVec3(const dVector& vec);
+    Vector4 NewtonToUrhoVec4(const dVector& vec);
+    Matrix4 NewtonToUrhoMat4(const dMatrix& mat);
+    Quaternion NewtonToUrhoQuat(const dgQuaternion& quat);
 
 
     ///Printing Helpers

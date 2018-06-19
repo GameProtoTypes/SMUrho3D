@@ -89,7 +89,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<NewtonPhysicsWorld>()->SetGravity(Vector3(0,0,0));
+    scene_->CreateComponent<NewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -141,7 +141,7 @@ void Physics::CreateScene()
 
 
 
-    const int numIslands = 2;
+    const int numIslands = 0;
     for(int x2 = -numIslands; x2 <= numIslands; x2++)
         for (int y2 = -numIslands; y2 <= numIslands; y2++)
     {
@@ -289,37 +289,59 @@ void Physics::MoveCamera(float timeStep)
 void Physics::SpawnObject()
 {
     auto* cache = GetSubsystem<ResourceCache>();
+    Node* firstNode = nullptr;
+    Node* prevNode = nullptr;
+    bool isFirstNode = true;
+    for (int i = 0; i < 20; i++) {
 
 
-    for (int i = 0; i < 1; i++) {
         // Create a smaller box at camera position
-        Node* boxNode = scene_->CreateChild("SmallBox");
-        const float range = 0;
-        boxNode->SetPosition(cameraNode_->GetPosition() + Vector3(Random(-1,1) * range,Random(-1, 1)* range, Random(-1, 1)* range));
+        Node* boxNode;
+        if (prevNode)
+            boxNode = prevNode->CreateChild();
+        else {
+            boxNode = scene_->CreateChild();
+            firstNode = boxNode;
+        }
+        prevNode = boxNode;
+        const float range =3.0f;
+
+
+        boxNode->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(Random(-1.0f,1.0f) * range,Random(-1.0f, 1.0f)* range, Random(-1.0f, 1.0f)* range));
         boxNode->SetRotation(cameraNode_->GetRotation());
-        boxNode->SetScale(0.25f);
+        boxNode->SetScale(1.0f);
+        
+
         auto* boxObject = boxNode->CreateComponent<StaticModel>();
         boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
         boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
         boxObject->SetCastShadows(true);
 
-        // Create physics components, use a smaller mass also
-        auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-        body->SetMass(0.25f*0.25f*0.25f);
-        body->SetFriction(0.75f);
-        body->AddForce(Vector3(0, 0, .001), Vector3(0.25f,0,0));
-        body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
-        body->SetContinuousCollision(true);
+        if (isFirstNode) {
+            // Create physics components, use a smaller mass also
+            auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+            body->SetMass(0.25f*0.25f*0.25f);
+            body->SetFriction(0.75f);
+            body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
+            body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
+        }
+
+        isFirstNode = false;
+        //body->SetContinuousCollision(true);
         auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
         shape->SetBox(Vector3::ONE);
 
-        const float OBJECT_VELOCITY = 2000.0f;
+        const float OBJECT_VELOCITY = 20.0f;
+
+
 
         // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
         // to overcome gravity better
-        body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+       // body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
 
     }
+
+    firstNode->GetComponent<NewtonRigidBody>()->reEvaluateBody();
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)

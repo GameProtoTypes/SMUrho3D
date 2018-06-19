@@ -52,6 +52,8 @@ namespace Urho3D
         /// Return the net force acting on the body.
         Vector3 GetNetTorque();
 
+        /// Return the currently used newton collision
+        NewtonCollision* GetEffectiveNewtonCollision();
 
         ///Apply the current newton body transform to the node.
         void ApplyTransform();
@@ -61,16 +63,22 @@ namespace Urho3D
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
-
+        /// rebuilds the internal body
+        void reEvaluateBody();
     protected:
 
 
         /// Internal newton body
         NewtonBody * newtonBody_ = nullptr;
+        /// compound collision if needed.
+        NewtonCollision* compoundCollision_ = nullptr;
+
         /// Physics world.
         WeakPtr<NewtonPhysicsWorld> physicsWorld_;
         /// Rigid body.
         WeakPtr<NewtonCollisionShape> colShape_;
+
+
         /// Mass.
         float mass_ = 0.0f;
         ///Continuous Collision
@@ -89,8 +97,7 @@ namespace Urho3D
 
 
         void freeBody();
-        /// rebuilds the internal body
-        void rebuildBody();
+
        
         ///precomputes force and torque for quick pass to newton callback
         void bakeForceAndTorque();
