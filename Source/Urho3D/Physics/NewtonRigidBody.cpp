@@ -65,6 +65,7 @@ namespace Urho3D {
             NewtonBodyDebugDrawAABB(newtonBody_, debug, depthTest);
             NewtonBodyDebugShowCollision(newtonBody_, debug, depthTest);
             NewtonBodyDebugDrawCenterOfMass(newtonBody_, debug, depthTest);
+            NewtonBodyDebugContactForces(newtonBody_, 0.1f, debug, depthTest);
         }
     }
 

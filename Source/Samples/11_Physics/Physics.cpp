@@ -338,8 +338,6 @@ void Physics::SpawnObject()
 
         const float OBJECT_VELOCITY = 20.0f;
 
-
-
         // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
         // to overcome gravity better
        // body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);

@@ -32,8 +32,6 @@ namespace Urho3D {
 
     void NewtonBodyDebugDrawCenterOfMass(NewtonBody* body, DebugRenderer* debug, bool depthTest /*= false*/)
     {
-
-
             dMatrix matrix;
             dVector com(0.0f);
 
@@ -47,16 +45,12 @@ namespace Urho3D {
             debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((x.m_x), (x.m_y), (x.m_z)), Color::RED, depthTest);
 
 
-
             dVector y(o + matrix.RotateVector(dVector(0.0f, 1.0f, 0.0f, 0.0f)));
             debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((y.m_x), (y.m_y), (y.m_z)), Color::GREEN, depthTest);
 
 
-
             dVector z(o + matrix.RotateVector(dVector(0.0f, 0.0f, 1.0f, 0.0f)));
             debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((z.m_x), (z.m_y), (z.m_z)), Color::BLUE, depthTest);
-
-
     }
 
     void DebugShowGeometryCollision(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
@@ -128,6 +122,69 @@ namespace Urho3D {
         NewtonBodyGetMatrix(body, &matrix[0][0]);
 
         NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], DebugShowGeometryCollision, (void*)&options);
+    }
+
+    void NewtonBodyDebugContactForces(const NewtonBody* const body, float scaleFactor, DebugRenderer* debug, bool depthTest /*= false*/)
+    {
+        dFloat mass;
+        dFloat Ixx;
+        dFloat Iyy;
+        dFloat Izz;
+        NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
+
+        //draw normal forces in term of acceleration.
+        //this mean that two bodies with same shape but different mass will display the same force
+        if (mass > 0.0f) {
+            scaleFactor = scaleFactor / mass;
+            for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint(body); joint; joint = NewtonBodyGetNextContactJoint(body, joint)) {
+                if (NewtonJointIsActive(joint)) {
+                    for (void* contact = NewtonContactJointGetFirstContact(joint); contact; contact = NewtonContactJointGetNextContact(joint, contact)) {
+                        dVector point(0.0f);
+                        dVector normal(0.0f);
+                        dVector tangnetDir0(0.0f);
+                        dVector tangnetDir1(0.0f);
+                        dVector contactForce(0.0f);
+                        NewtonMaterial* const material = NewtonContactGetMaterial(contact);
+
+                        NewtonMaterialGetContactForce(material, body, &contactForce.m_x);
+                        NewtonMaterialGetContactPositionAndNormal(material, body, &point.m_x, &normal.m_x);
+                        dVector normalforce(normal.Scale(contactForce.DotProduct3(normal)));
+                        dVector p0(point);
+                        dVector p1(point + normalforce.Scale(scaleFactor));
+
+                        debug->AddLine(Vector3((p0.m_x), (p0.m_y), (p0.m_z)), Vector3((p1.m_x), (p1.m_y), (p1.m_z)), Color::BLUE, depthTest);
+
+
+
+                        // these are the components of the tangents forces at the contact point, the can be display at the contact position point.
+                        NewtonMaterialGetContactTangentDirections(material, body, &tangnetDir0[0], &tangnetDir1[0]);
+                        dVector tangentForce1(tangnetDir0.Scale((contactForce.DotProduct3(tangnetDir0)) * scaleFactor));
+                        dVector tangentForce2(tangnetDir1.Scale((contactForce.DotProduct3(tangnetDir1)) * scaleFactor));
+
+                        p1 = point + tangentForce1.Scale(scaleFactor);
+                        debug->AddLine(Vector3((p0.m_x), (p0.m_y), (p0.m_z)), Vector3((p1.m_x), (p1.m_y), (p1.m_z)), Color::BLUE, depthTest);
+
+
+                        p1 = point + tangentForce2.Scale(scaleFactor);
+                        debug->AddLine(Vector3((p0.m_x), (p0.m_y), (p0.m_z)), Vector3((p1.m_x), (p1.m_y), (p1.m_z)), Color::BLUE, depthTest);
+                    }
+                }
+            }
+        }
+    }
+
+    void NewtonDebugShowJoints(NewtonWorld* newtonWorld, DebugRenderer* debug, bool depthTest /*= false*/)
+    {
+        //// this will go over the joint list twice, 
+        //for (NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
+        //    for (NewtonJoint* joint = NewtonBodyGetFirstJoint(body); joint; joint = NewtonBodyGetNextJoint(body, joint)) {
+        //        dCustomJoint* const customJoint = (dCustomJoint*)NewtonJointGetUserData(joint);
+        //        if (customJoint) {
+        //            customJoint->Debug(jointDebug);
+        //        }
+        //    }
+        //}
+        //NewtonWorldListenerDebug(world, jointDebug);
     }
 
 }
