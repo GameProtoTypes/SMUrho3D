@@ -119,7 +119,6 @@ namespace Urho3D {
             node_->GetChildrenWithComponent<NewtonCollisionShape>(children, true);
 
             NewtonCollision* resolvedCollision = nullptr;
-
             if (compoundCollision_) {
                 NewtonDestroyCollision(compoundCollision_);
                 compoundCollision_ = nullptr;
@@ -134,6 +133,10 @@ namespace Urho3D {
 
                 for (Node* childNode : children)
                 {
+                    if (childNode->GetComponent<NewtonRigidBody>()) {
+                        mass_ += childNode->GetComponent<NewtonRigidBody>()->mass_;
+                    }
+
 
                     NewtonCollision* childCollision = childNode->GetComponent<NewtonCollisionShape>()->GetNewtonCollision();
                     NewtonCollision* tempTransformedChildCollision = NewtonCollisionCreateInstance(childCollision);
@@ -175,8 +178,8 @@ namespace Urho3D {
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
-            
             NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
+
             NewtonBodySetUserData(newtonBody_, (void*)this);
 
             NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);

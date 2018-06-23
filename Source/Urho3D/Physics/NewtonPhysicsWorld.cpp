@@ -35,6 +35,11 @@ namespace Urho3D {
 
 
 
+    void NewtonPhysicsWorld::SerializeNewtonWorld(String fileName)
+    {
+        NewtonSerializeToFile(newtonWorld_, fileName.CString(), nullptr, nullptr);
+    }
+
     void NewtonPhysicsWorld::SetGravity(const Vector3& force)
     {
         gravity_ = force;

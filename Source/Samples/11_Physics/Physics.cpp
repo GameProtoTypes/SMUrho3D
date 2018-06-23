@@ -43,10 +43,10 @@
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
-
 #include "Physics.h"
 
 #include <Urho3D/DebugNew.h>
+
 
 
 URHO3D_DEFINE_APPLICATION_MAIN(Physics)
@@ -269,6 +269,11 @@ void Physics::MoveCamera(float timeStep)
         filePath += "Data/Scenes/Physics.xml";
         File saveFile(context_, filePath, FILE_WRITE);
         scene_->SaveXML(saveFile);
+
+
+        scene_->GetComponent<NewtonPhysicsWorld>()->SerializeNewtonWorld("newtonWorldFile.ngd");
+
+
     }
     if (input->GetKeyPress(KEY_F7))
     {
@@ -292,7 +297,7 @@ void Physics::SpawnObject()
     Node* firstNode = nullptr;
     Node* prevNode = nullptr;
     bool isFirstNode = true;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 200; i++) {
 
 
         // Create a smaller box at camera position
@@ -304,7 +309,7 @@ void Physics::SpawnObject()
             firstNode = boxNode;
         }
         prevNode = boxNode;
-        const float range =3.0f;
+        const float range = 3.0f;
 
 
         boxNode->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(Random(-1.0f,1.0f) * range,Random(-1.0f, 1.0f)* range, Random(-1.0f, 1.0f)* range));
@@ -317,14 +322,14 @@ void Physics::SpawnObject()
         boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
         boxObject->SetCastShadows(true);
 
-        if (isFirstNode) {
-            // Create physics components, use a smaller mass also
-            auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-            body->SetMass(0.25f*0.25f*0.25f);
-            body->SetFriction(0.75f);
-            body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
-            body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
-        }
+
+         // Create physics components, use a smaller mass also
+         auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+         body->SetMass(0.1f);
+         body->SetFriction(0.75f);
+         body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
+         body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
+        
 
         isFirstNode = false;
         //body->SetContinuousCollision(true);

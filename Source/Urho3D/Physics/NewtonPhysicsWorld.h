@@ -32,6 +32,9 @@ namespace Urho3D
         /// Return the internal Newton world.
         NewtonWorld* GetNewtonWorld() { return newtonWorld_; }
 
+        /// Saves the NewtonWorld to a serializable newton file.
+        void SerializeNewtonWorld(String fileName);
+
         ///set the global force acting on all rigid bodies in the world
         void SetGravity(const Vector3& force);
         ///return global force acting on all rigid bodies
