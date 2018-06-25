@@ -73,11 +73,12 @@ namespace Urho3D
         /// compound collision if needed.
         NewtonCollision* compoundCollision_ = nullptr;
 
+
         /// Physics world.
         WeakPtr<NewtonPhysicsWorld> physicsWorld_;
         /// Rigid body.
         WeakPtr<NewtonCollisionShape> colShape_;
-
+    
 
         /// Mass.
         float mass_ = 0.0f;

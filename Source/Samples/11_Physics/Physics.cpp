@@ -258,6 +258,9 @@ void Physics::MoveCamera(float timeStep)
     if (input->GetMouseButtonPress(MOUSEB_LEFT))
         SpawnObject();
 
+    if (input->GetMouseButtonPress(MOUSEB_RIGHT))
+        DecomposePhysicsTree();
+
     // Check for loading/saving the scene. Save the scene to the file Data/Scenes/Physics.xml relative to the executable
     // directory
     if (input->GetKeyPress(KEY_F5))
@@ -315,7 +318,6 @@ void Physics::SpawnObject()
         boxNode->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(Random(-1.0f,1.0f) * range,Random(-1.0f, 1.0f)* range, Random(-1.0f, 1.0f)* range));
         boxNode->SetRotation(cameraNode_->GetRotation());
         boxNode->SetScale(1.0f);
-        
 
         auto* boxObject = boxNode->CreateComponent<StaticModel>();
         boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
@@ -363,4 +365,21 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
     // If draw debug mode is enabled, draw physics debug geometry. Use depth test to make the result easier to interpret
     if (drawDebug_)
         scene_->GetComponent<NewtonPhysicsWorld>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>(), false);
+}
+
+void Physics::DecomposePhysicsTree()
+{
+    PODVector<RayQueryResult> res;
+    Ray ray(cameraNode_->GetWorldPosition(), cameraNode_->GetWorldDirection());
+    RayOctreeQuery querry(res, ray);
+    
+    scene_->GetComponent<Octree>()->Raycast(querry);
+
+    if (res.Size() > 1) {
+
+        //while(res[1].node_->SetParent())
+        //res[1].node_->GetChildren(true).Front()->SetParent(scene_);
+        res[1].node_->SetParent(scene_);
+    }
+
 }

@@ -65,7 +65,7 @@ namespace Urho3D {
             NewtonBodyDebugDrawAABB(newtonBody_, debug, depthTest);
             NewtonBodyDebugShowCollision(newtonBody_, debug, depthTest);
             NewtonBodyDebugDrawCenterOfMass(newtonBody_, debug, depthTest);
-            NewtonBodyDebugContactForces(newtonBody_, 0.1f, debug, depthTest);
+            NewtonBodyDebugContactForces(newtonBody_, 0., debug, depthTest);
         }
     }
 
@@ -95,14 +95,16 @@ namespace Urho3D {
                 break;
             }
         }
-
-
         if (parentNodeWithRigidBody != nullptr)
         {
             parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reEvaluateBody();
             freeBody();
+            return;
         }
-        else if (colShape_ &&
+
+
+
+        if (colShape_ &&
             (colShape_->GetNewtonCollision() != nullptr) ) {
 
             Matrix4 transform;
@@ -248,13 +250,9 @@ namespace Urho3D {
         else
         {
 
-            
-
             if (physicsWorld_)
                 physicsWorld_->removeRigidBody(this);
 
-
-            
 
         }
     }
