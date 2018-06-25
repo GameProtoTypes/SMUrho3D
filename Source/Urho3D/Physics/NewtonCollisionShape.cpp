@@ -66,6 +66,25 @@ namespace Urho3D {
 
     }
 
+    void NewtonCollisionShape::SetConvexHull(Model* model, unsigned lodLevel /*= 0*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        if (!model)
+            return;
+
+        shapeType_ = SHAPE_CONVEXHULL;
+        size_ = scale;
+        position_ = position;
+        rotation_ = rotation;
+        model_ = model;
+        modelLodLevel_ = lodLevel;
+
+
+
+        reEvaluateCollision();
+        notifyRigidBody();
+
+    }
+
     void NewtonCollisionShape::reEvaluateCollision()
 {
         // first free any reference to an existing collision.

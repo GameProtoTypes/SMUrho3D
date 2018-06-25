@@ -57,8 +57,7 @@ namespace Urho3D {
 
         GetBodiesInConvexCast(result, numContacts);
 
-        if (result.Size())
-            URHO3D_LOGINFO("break!");
+
     }
 
     void NewtonPhysicsWorld::GetRigidBodies(PODVector<NewtonRigidBody*>& result, const BoundingBox& box, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
@@ -71,8 +70,7 @@ namespace Urho3D {
 
         GetBodiesInConvexCast(result, numContacts);
 
-        if (result.Size())
-            URHO3D_LOGINFO("break!");
+
     }
 
     void NewtonPhysicsWorld::GetRigidBodies(PODVector<NewtonRigidBody*>& result, const NewtonRigidBody* body)
