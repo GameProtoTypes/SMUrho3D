@@ -95,7 +95,7 @@ namespace Urho3D {
             dVector maxBox = UrhoToNewton(model_->GetBoundingBox().max_);
 
 
-            newtonCollision_ = NewtonCreateUserMeshCollision(world, model_->GetBoundingBox().min )
+            //newtonCollision_ = NewtonCreateUserMeshCollision(world, &minBox[0], &maxBox[0], nullptr, )
         }
     }
 
