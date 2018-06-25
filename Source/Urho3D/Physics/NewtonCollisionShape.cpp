@@ -1,15 +1,21 @@
 
 #include "NewtonCollisionShape.h"
-#include "../Core/Context.h"
-#include "Newton.h"
 #include "NewtonPhysicsWorld.h"
 #include "NewtonRigidBody.h"
-#include "Scene/Component.h"
-#include "Scene/Node.h"
-#include "Scene/Scene.h"
+
+#include "../Core/Context.h"
+#include "../Scene/Component.h"
+#include "../Scene/Node.h"
+#include "../Scene/Scene.h"
+#include "../Graphics/Model.h"
+#include "../IO/Log.h"
+
+#include "Newton.h"
 #include "dMatrix.h"
-#include "IO/Log.h"
+
 #include "UrhoNewtonConversions.h"
+
+
 namespace Urho3D {
 
 
@@ -30,6 +36,7 @@ namespace Urho3D {
 
     void NewtonCollisionShape::SetBox(const Vector3& size, const Vector3& position, const Quaternion& rotation)
     {
+        shapeType_ = SHAPE_BOX;
         size_ = size;
         position_ = position;
         rotation_ = rotation;
@@ -38,6 +45,26 @@ namespace Urho3D {
         notifyRigidBody();
     }
 
+
+    void NewtonCollisionShape::SetTriangleMesh(Model* model, unsigned lodLevel /*= 0*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        if (!model)
+            return;
+
+        shapeType_ = SHAPE_TRIANGLEMESH;
+        size_ = scale;
+        position_ = position;
+        rotation_ = rotation;
+        model_ = model;
+        modelLodLevel_ = lodLevel;
+
+
+
+        reEvaluateCollision();
+        notifyRigidBody();
+
+
+    }
 
     void NewtonCollisionShape::reEvaluateCollision()
 {
@@ -51,11 +78,25 @@ namespace Urho3D {
         mat.SetTranslation(position_);
         mat.SetRotation(rotation_.RotationMatrix());
         dMatrix nMat = UrhoToNewton(mat);
-        
-        // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
-        newtonCollision_ = NewtonCreateBox(world, size_.x_*node_->GetScale().x_,
-                                                  size_.y_*node_->GetScale().y_,
-                                                  size_.z_*node_->GetScale().z_, 0, &nMat[0][0]);
+
+
+        if (shapeType_ == SHAPE_BOX) {
+
+            // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
+            newtonCollision_ = NewtonCreateBox(world, size_.x_*node_->GetScale().x_,
+                size_.y_*node_->GetScale().y_,
+                size_.z_*node_->GetScale().z_, 0, &nMat[0][0]);
+
+        }
+        ///.....
+        else if (shapeType_ == SHAPE_TRIANGLEMESH)
+        {
+            dVector minBox = UrhoToNewton(model_->GetBoundingBox().min_);
+            dVector maxBox = UrhoToNewton(model_->GetBoundingBox().max_);
+
+
+            newtonCollision_ = NewtonCreateUserMeshCollision(world, model_->GetBoundingBox().min )
+        }
     }
 
     void NewtonCollisionShape::freeInternalCollision()

@@ -4,6 +4,7 @@
 
 #include "../Scene/Component.h"
 #include "Newton.h"
+#include "../Container/Vector.h"
 class NewtonWorld;
 class dMatrix;
 namespace Urho3D
@@ -11,6 +12,8 @@ namespace Urho3D
     class Component;
     class NewtonCollisionShape;
     class NewtonRigidBody;
+    class Sphere;
+    class BoundingBox;
 
     static const Vector3 DEF_GRAVITY = Vector3(0, -9.81, 0);
 
@@ -31,9 +34,21 @@ namespace Urho3D
 
         /// Return the internal Newton world.
         NewtonWorld* GetNewtonWorld() { return newtonWorld_; }
-
         /// Saves the NewtonWorld to a serializable newton file.
         void SerializeNewtonWorld(String fileName);
+
+
+        /// Return rigid bodies by a sphere query.
+        void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const Sphere& sphere, unsigned collisionMask = M_MAX_UNSIGNED);
+        /// Return rigid bodies by a box query.
+        void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const BoundingBox& box, unsigned collisionMask = M_MAX_UNSIGNED);
+        /// Return rigid bodies by contact test with the specified body.
+        void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const NewtonRigidBody* body);
+
+        
+
+
+
 
         ///set the global force acting on all rigid bodies in the world
         void SetGravity(const Vector3& force);
@@ -44,8 +59,6 @@ namespace Urho3D
 
     protected:
 
-        /// Internal newton world
-        NewtonWorld* newtonWorld_ = nullptr;
 
         ///Global force
         Vector3 gravity_ = DEF_GRAVITY;
@@ -72,13 +85,26 @@ namespace Urho3D
         /// Step the simulation forward.
         void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
+
+
+        /// Internal newton world
+        NewtonWorld* newtonWorld_ = nullptr;
+
+        ///convex casts
+        static const int convexCastRetInfoSize_ = 1000;
+        NewtonWorldConvexCastReturnInfo convexCastRetInfoArray[convexCastRetInfoSize_];
+        int DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape);
+        void GetBodiesInConvexCast(PODVector<NewtonRigidBody*>& result, int numContacts);
+
+
+
     };
 
     /// netwon callbacks
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex);
     void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex);
     void Newton_DestroyBodyCallback(const NewtonBody* body);
-
+    unsigned Newton_WorldRayPrefilterCallback(const NewtonBody* const body, const NewtonCollision* const collision, void* const userData);
 
 
 

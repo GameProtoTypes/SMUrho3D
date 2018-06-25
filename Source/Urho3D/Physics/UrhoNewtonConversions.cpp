@@ -5,6 +5,9 @@
 #include "Math/Matrix3x4.h"
 #include "IO/Log.h"
 #include "dgQuaternion.h"
+#include "Newton.h"
+#include "Math/Sphere.h"
+#include "Math/BoundingBox.h"
 
 
 namespace Urho3D {
@@ -36,6 +39,10 @@ namespace Urho3D {
         return dVector(vec2.x_, vec2.y_, 0.0f);
     }
 
+
+
+
+
     Vector3 NewtonToUrhoVec3(const dVector& vec)
     {
         return Vector3(vec.m_x, vec.m_y, vec.m_z);
@@ -54,6 +61,52 @@ namespace Urho3D {
     Quaternion NewtonToUrhoQuat(const dgQuaternion& quat)
     {
         return Quaternion(quat.m_q0, quat.m_q1, quat.m_q2, quat.m_q3);
+    }
+
+
+
+
+
+
+    NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const Sphere& sphere, bool includeTranslation /*= true*/)
+    {
+        Matrix3x4 mat;
+        mat.SetTranslation(sphere.center_);
+        dMatrix dMat = UrhoToNewton(mat);
+
+        NewtonCollision* newtonShape;
+
+        if (includeTranslation) {
+            newtonShape = NewtonCreateSphere(newtonWorld, sphere.radius_, 0, &dMat[0][0]);
+        }
+        else
+        {
+            newtonShape = NewtonCreateSphere(newtonWorld, sphere.radius_, 0, nullptr);
+        }
+
+        return newtonShape;
+    }
+
+
+
+
+    NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const BoundingBox& box, bool includeTranslation /*= true*/)
+    {
+        Matrix3x4 mat;
+        mat.SetTranslation(box.Center());
+        dMatrix dMat = UrhoToNewton(mat);
+
+        NewtonCollision* newtonShape;
+
+        if (includeTranslation) {
+            newtonShape = NewtonCreateBox(newtonWorld, box.Size().x_, box.Size().y_, box.Size().z_, 0, &dMat[0][0]);
+        }
+        else
+        {
+            newtonShape = NewtonCreateBox(newtonWorld, box.Size().x_, box.Size().y_, box.Size().z_, 0, nullptr);
+        }
+
+        return newtonShape;
     }
 
     void PrintNewton(dMatrix mat)

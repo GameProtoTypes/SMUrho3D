@@ -2,7 +2,6 @@
 #include "IO/Log.h"
 #include "NewtonCollisionShape.h"
 #include "NewtonRigidBody.h"
-#include "Newton.h"
 #include "dMatrix.h"
 #include "Core/Context.h"
 #include "Core/CoreEvents.h"
@@ -11,6 +10,10 @@
 #include "Scene/Component.h"
 #include "Scene/Scene.h"
 #include "Scene/Node.h"
+#include "Math/Sphere.h"
+#include "Container/Vector.h"
+
+#include "Newton.h"
 
 namespace Urho3D {
 
@@ -39,6 +42,51 @@ namespace Urho3D {
     {
         NewtonSerializeToFile(newtonWorld_, fileName.CString(), nullptr, nullptr);
     }
+
+
+
+    
+    void NewtonPhysicsWorld::GetRigidBodies(PODVector<NewtonRigidBody*>& result, const Sphere& sphere, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
+    {
+
+        Matrix3x4 mat;
+        mat.SetTranslation(sphere.center_);
+
+        NewtonCollision* newtonShape = UrhoShapeToNewtonCollision(newtonWorld_, sphere, false);
+        int numContacts = DoNewtonCollideTest(&UrhoToNewton(mat)[0][0], newtonShape);
+
+        GetBodiesInConvexCast(result, numContacts);
+
+        if (result.Size())
+            URHO3D_LOGINFO("break!");
+    }
+
+    void NewtonPhysicsWorld::GetRigidBodies(PODVector<NewtonRigidBody*>& result, const BoundingBox& box, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
+    {
+        Matrix3x4 mat;
+        mat.SetTranslation(box.Center());
+
+        NewtonCollision* newtonShape = UrhoShapeToNewtonCollision(newtonWorld_, box, false);
+        int numContacts = DoNewtonCollideTest(&UrhoToNewton(mat)[0][0], newtonShape);
+
+        GetBodiesInConvexCast(result, numContacts);
+
+        if (result.Size())
+            URHO3D_LOGINFO("break!");
+    }
+
+    void NewtonPhysicsWorld::GetRigidBodies(PODVector<NewtonRigidBody*>& result, const NewtonRigidBody* body)
+    {
+
+    }
+
+
+
+
+
+
+
+
 
     void NewtonPhysicsWorld::SetGravity(const Vector3& force)
     {
@@ -144,6 +192,33 @@ namespace Urho3D {
     }
 
 
+    int NewtonPhysicsWorld::DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape)
+    {
+
+        return  NewtonWorldCollide(newtonWorld_,
+            matrix, shape, nullptr,
+            Newton_WorldRayPrefilterCallback, convexCastRetInfoArray,
+            convexCastRetInfoSize_, 0);
+
+    }
+
+    void NewtonPhysicsWorld::GetBodiesInConvexCast(PODVector<NewtonRigidBody*>& result, int numContacts)
+    {
+        //iterate though contacts.
+        for (int i = 0; i < numContacts; i++) {
+
+            if (convexCastRetInfoArray[i].m_hitBody != nullptr) {
+
+                void* userData = NewtonBodyGetUserData(convexCastRetInfoArray[i].m_hitBody);
+                if (userData != nullptr)
+                {
+                    NewtonRigidBody* rigBody = static_cast<NewtonRigidBody*>(userData);
+                    result.Push(rigBody);
+                }
+            }
+        }
+    }
+
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
     {
         static dFloat Ixx;
@@ -166,6 +241,11 @@ namespace Urho3D {
     }
 
 
+
+
+
+
+
     void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
     {
     }
@@ -176,23 +256,11 @@ namespace Urho3D {
 
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    unsigned Newton_WorldRayPrefilterCallback(const NewtonBody* const body, const NewtonCollision* const collision, void* const userData)
+    {
+        ///no filtering right now.
+        return 1;///?
+    }
 
 
 

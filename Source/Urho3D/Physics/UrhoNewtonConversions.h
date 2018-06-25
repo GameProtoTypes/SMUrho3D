@@ -4,6 +4,8 @@
 class dMatrix;
 class dVector;
 class dgQuaternion;
+class NewtonCollision;
+class NewtonWorld;
 
 namespace Urho3D {
     class Matrix4;
@@ -12,6 +14,8 @@ namespace Urho3D {
     class Vector3;
     class Vector4;
     class Quaternion;
+    class Sphere;
+    class BoundingBox;
 
     ///Conversion Functions From Urho To Newton
     dMatrix UrhoToNewton(const Matrix4& mat);
@@ -28,7 +32,32 @@ namespace Urho3D {
     Quaternion NewtonToUrhoQuat(const dgQuaternion& quat);
 
 
+
+
+    ///shape conversion
+
+    ///return a newton collision from an urho shape - optionally include the translation of the shape in the collision.
+    NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const Sphere& sphere, bool includeTranslation = true);
+    NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const BoundingBox& box, bool includeTranslation = true);
+
+
+
+
+
+
+
+
     ///Printing Helpers
     void PrintNewton(dMatrix mat);
+
+
+
+
+
+
+
+
+
+
 
 }

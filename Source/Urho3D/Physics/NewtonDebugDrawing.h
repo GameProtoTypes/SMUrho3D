@@ -1,6 +1,6 @@
 #pragma once
 #include "Newton.h"
-#include "Math/Color.h"
+#include "../Math/Color.h"
 
 
 class NewtonBody;

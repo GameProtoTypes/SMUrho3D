@@ -31,7 +31,9 @@ namespace Urho3D
 
         /// Set as a box.
         void SetBox(const Vector3& size, const Vector3& position = Vector3::ZERO, const Quaternion& rotation = Quaternion::IDENTITY);
-
+        /// Set as a triangle mesh from Model. 
+        void SetTriangleMesh(Model* model, unsigned lodLevel = 0, const Vector3& scale = Vector3::ONE, const Vector3& position = Vector3::ZERO,
+            const Quaternion& rotation = Quaternion::IDENTITY);
 
 
         /// Returns the internal newton collision
@@ -49,6 +51,10 @@ namespace Urho3D
 
         /// Collision shape type.
         ShapeType shapeType_ = SHAPE_BOX;
+        /// Model reference
+        WeakPtr<Model> model_;
+        /// lod level
+        unsigned modelLodLevel_;
         /// Offset position.
         Vector3 position_;
         /// Offset rotation.
