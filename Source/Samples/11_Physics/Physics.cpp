@@ -300,7 +300,7 @@ void Physics::SpawnObject()
     Node* firstNode = nullptr;
     Node* prevNode = nullptr;
     bool isFirstNode = true;
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 2; i++) {
 
 
         // Create a smaller box at camera position

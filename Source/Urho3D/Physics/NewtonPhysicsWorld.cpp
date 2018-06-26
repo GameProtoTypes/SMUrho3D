@@ -80,12 +80,6 @@ namespace Urho3D {
 
 
 
-
-
-
-
-
-
     void NewtonPhysicsWorld::SetGravity(const Vector3& force)
     {
         gravity_ = force;
@@ -101,7 +95,7 @@ namespace Urho3D {
     {
         if (debug)
         {
-            //#todo draw physics world specific things.
+            //#todo draw physics world specific things. joints?
 
             //draw debug geometry on rigid bodies.
             for (NewtonRigidBody* body : rigidBodyComponentList) {
