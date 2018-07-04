@@ -57,7 +57,7 @@ namespace Urho3D {
 
         GetBodiesInConvexCast(result, numContacts);
 
-
+        NewtonDestroyCollision(newtonShape);
     }
 
     void NewtonPhysicsWorld::GetRigidBodies(PODVector<NewtonRigidBody*>& result, const BoundingBox& box, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
@@ -69,7 +69,7 @@ namespace Urho3D {
         int numContacts = DoNewtonCollideTest(&UrhoToNewton(mat)[0][0], newtonShape);
 
         GetBodiesInConvexCast(result, numContacts);
-
+        NewtonDestroyCollision(newtonShape);
 
     }
 

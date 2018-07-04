@@ -14,6 +14,10 @@
 #include "dMatrix.h"
 
 #include "UrhoNewtonConversions.h"
+#include "Graphics/Geometry.h"
+#include "Graphics/VertexBuffer.h"
+#include "Graphics/GraphicsDefs.h"
+#include "Graphics/IndexBuffer.h"
 
 
 namespace Urho3D {
@@ -57,6 +61,14 @@ namespace Urho3D {
         rotation_ = rotation;
         model_ = model;
         modelLodLevel_ = lodLevel;
+
+
+
+
+
+
+
+
 
 
 
@@ -112,6 +124,70 @@ namespace Urho3D {
         {
             dVector minBox = UrhoToNewton(model_->GetBoundingBox().min_);
             dVector maxBox = UrhoToNewton(model_->GetBoundingBox().max_);
+
+            newtonCollision_ = NewtonCreateTreeCollision(world, 0);
+
+  
+
+
+
+                const unsigned char* vertexData;
+                const unsigned char* indexData;
+                unsigned elementSize, indexSize;
+                const PODVector<VertexElement>* elements;
+                Geometry* geo = model_->GetGeometry(modelGeomIndx_, modelLodLevel_);
+                geo->GetRawData(vertexData, elementSize, indexData, indexSize, elements);
+
+                bool hasPosition = VertexBuffer::HasElement(*elements, TYPE_VECTOR3, SEM_POSITION);
+
+                if (vertexData && indexData && hasPosition) {
+
+                    unsigned vertexStart = geo->GetVertexStart();
+                    unsigned vertexCount = geo->GetVertexCount();
+                    unsigned indexStart = geo->GetIndexStart();
+                    unsigned indexCount = geo->GetIndexCount();
+
+                    unsigned positionOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_POSITION);
+
+
+
+
+                    NewtonTreeCollisionBeginBuild(newtonCollision_);
+
+                    int faceAddCount = 0;
+                    for (unsigned curIdx = 0; curIdx < indexCount; curIdx += 3)
+                    {
+                        //get indexes
+                        unsigned i1 = *(indexData + curIdx * indexSize);
+                        unsigned i2 = *(indexData + (curIdx+1) * indexSize);
+                        unsigned i3 = *(indexData + (curIdx+2) * indexSize);
+
+                        //lookup triangle using indexes.
+                        const Vector3& v1 = *reinterpret_cast<const Vector3*>(vertexData + i1 * elementSize + positionOffset);
+                        const Vector3& v2 = *reinterpret_cast<const Vector3*>(vertexData + i2 * elementSize + positionOffset);
+                        const Vector3& v3 = *reinterpret_cast<const Vector3*>(vertexData + i3 * elementSize + positionOffset);
+
+                        //copy data.
+                        float faceData[9];
+                        faceData[0] = v1.x_;
+                        faceData[1] = v1.y_;
+                        faceData[2] = v1.z_;
+                        faceData[3] = v2.x_;
+                        faceData[4] = v2.y_;
+                        faceData[5] = v2.z_;
+                        faceData[6] = v3.x_;
+                        faceData[7] = v3.y_;
+                        faceData[8] = v3.z_;
+
+
+                        NewtonTreeCollisionAddFace(newtonCollision_, 3, faceData, sizeof(float)*3, 0);
+                        faceAddCount++;
+                    }
+
+
+                    NewtonTreeCollisionEndBuild(newtonCollision_, 0);
+                    URHO3D_LOGINFO(String(faceAddCount) + " Faces added to collision");
+                }
 
 
             //newtonCollision_ = NewtonCreateUserMeshCollision(world, &minBox[0], &maxBox[0], nullptr, )

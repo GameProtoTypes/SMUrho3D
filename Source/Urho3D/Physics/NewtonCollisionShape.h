@@ -57,6 +57,8 @@ namespace Urho3D
         WeakPtr<Model> model_;
         /// lod level
         unsigned modelLodLevel_ = 0;
+        /// model geometry index to sue
+        unsigned modelGeomIndx_ = 0;
         /// Offset position.
         Vector3 position_;
         /// Offset rotation.

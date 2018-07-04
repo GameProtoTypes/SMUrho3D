@@ -38,6 +38,8 @@ namespace Urho3D
         void SerializeNewtonWorld(String fileName);
 
 
+
+
         /// Return rigid bodies by a sphere query.
         void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const Sphere& sphere, unsigned collisionMask = M_MAX_UNSIGNED);
         /// Return rigid bodies by a box query.
