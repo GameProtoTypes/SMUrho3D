@@ -46,6 +46,7 @@
 #include "Physics.h"
 
 #include <Urho3D/DebugNew.h>
+#include "Urho3D/Graphics/VisualDebugger.h"
 
 
 
@@ -59,6 +60,10 @@ Physics::Physics(Context* context) :
 
 void Physics::Start()
 {
+
+    context_->RegisterSubsystem<VisualDebugger>();
+
+
     // Execute base class startup
     Sample::Start();
 
@@ -141,34 +146,34 @@ void Physics::CreateScene()
 
 
 
-    const int numIslands = 0;
-    for(int x2 = -numIslands; x2 <= numIslands; x2++)
-        for (int y2 = -numIslands; y2 <= numIslands; y2++)
-    {
-         //Create a pyramid of movable physics objects
-        for (int y = 0; y < 16; ++y)
-        {
-            for (int x = -y; x <= y; ++x)
-            {
+    //const int numIslands = 0;
+    //for(int x2 = -numIslands; x2 <= numIslands; x2++)
+    //    for (int y2 = -numIslands; y2 <= numIslands; y2++)
+    //{
+    //     //Create a pyramid of movable physics objects
+    //    for (int y = 0; y < 16; ++y)
+    //    {
+    //        for (int x = -y; x <= y; ++x)
+    //        {
 
-                Node* boxNode = scene_->CreateChild("Box");
-                boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f) + Vector3(x2, 0, y2)*50.0f);
-                auto* boxObject = boxNode->CreateComponent<StaticModel>();
-                boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-                boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-                boxObject->SetCastShadows(true);
+    //            Node* boxNode = scene_->CreateChild("Box");
+    //            boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f) + Vector3(x2, 0, y2)*50.0f);
+    //            auto* boxObject = boxNode->CreateComponent<StaticModel>();
+    //            boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    //            boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+    //            boxObject->SetCastShadows(true);
 
-                // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
-                // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
-                // objects are significant
-                auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-                body->SetMass(1.0f);
-                body->SetFriction(0.75f);
-                auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-                shape->SetBox(Vector3::ONE);
-            }
-        }
-    }
+    //            // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
+    //            // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
+    //            // objects are significant
+    //            auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    //            body->SetMass(1.0f);
+    //            body->SetFriction(0.75f);
+    //            auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+    //            shape->SetBox(Vector3::ONE);
+    //        }
+    //    }
+    //}
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
@@ -382,7 +387,7 @@ void Physics::SpawnTrimeshObject()
 
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    body->SetMass(0.1f);
+    body->SetMass(1.0f);
     body->SetFriction(0.75f);
     body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
     body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
@@ -417,8 +422,10 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
 {
     // If draw debug mode is enabled, draw physics debug geometry. Use depth test to make the result easier to interpret
-    if (drawDebug_)
+    if (drawDebug_) {
         scene_->GetComponent<NewtonPhysicsWorld>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>(), false);
+        GSS<VisualDebugger>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>());
+    }
 }
 
 void Physics::DecomposePhysicsTree()
