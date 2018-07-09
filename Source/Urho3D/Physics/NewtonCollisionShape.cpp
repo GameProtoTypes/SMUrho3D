@@ -148,42 +148,29 @@ namespace Urho3D {
                
                 unsigned positionOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_POSITION);
 
-
-
-
                 NewtonTreeCollisionBeginBuild(newtonCollision_);
 
                 int faceAddCount = 0;
-
-
-                //loop through all vertexes
-                for (int t = vertexStart; t < vertexStart + vertexCount; t++) {
-                    const Vector3& v1 = *reinterpret_cast<const Vector3*>(vertexData + t * elementSize + positionOffset);
-                    //GSS<VisualDebugger>()->AddCross(v1, 0.01f, Color::BLUE, false);
-                }
-
-
-
-
                 for (unsigned curIdx = indexStart; curIdx < indexStart + indexCount; curIdx += 3)
                 {
                     //get indexes
-                    unsigned char i1 = *(indexData + curIdx * indexSize);
-                    unsigned char i2 = *(indexData + (curIdx + 1) * indexSize);
-                    unsigned char i3 = *(indexData + (curIdx + 2) * indexSize);
-
+                    unsigned i1, i2, i3;
+                    if (indexSize == 2) {
+                        i1 = *reinterpret_cast<const unsigned short*>(indexData + curIdx * indexSize);
+                        i2 = *reinterpret_cast<const unsigned short*>(indexData + (curIdx + 1) * indexSize);
+                        i3 = *reinterpret_cast<const unsigned short*>(indexData + (curIdx + 2) * indexSize);
+                    }
+                    else if(indexSize == 4)
+                    {
+                        i1 = *reinterpret_cast<const unsigned *>(indexData + curIdx * indexSize);
+                        i2 = *reinterpret_cast<const unsigned *>(indexData + (curIdx + 1) * indexSize);
+                        i3 = *reinterpret_cast<const unsigned *>(indexData + (curIdx + 2) * indexSize);
+                    }
 
                     //lookup triangle using indexes.
                     const Vector3& v1 = *reinterpret_cast<const Vector3*>(vertexData + i1 * elementSize + positionOffset);
                     const Vector3& v2 = *reinterpret_cast<const Vector3*>(vertexData + i2 * elementSize + positionOffset);
                     const Vector3& v3 = *reinterpret_cast<const Vector3*>(vertexData + i3 * elementSize + positionOffset);
-
-                    //GSS<VisualDebugger>()->AddTriangle(v1*10.0f, v2*10.0f, v3*10.0f, Color::YELLOW, false);
-
-                    GSS<VisualDebugger>()->AddCross(v1, 0.01f, Color::RED, false);
-                    GSS<VisualDebugger>()->AddCross(v2, 0.01f, Color::GREEN, false);
-                    GSS<VisualDebugger>()->AddCross(v3, 0.01f, Color::BLUE, false);
-                    
 
                     //copy data.
                     float faceData[9];
@@ -204,7 +191,6 @@ namespace Urho3D {
 
 
                 NewtonTreeCollisionEndBuild(newtonCollision_, 0);
-                URHO3D_LOGINFO(String(faceAddCount) + " Faces added to collision");
             }
         }
     }
