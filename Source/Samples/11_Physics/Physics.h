@@ -85,6 +85,7 @@ private:
     void MoveCamera(float timeStep);
     /// Spawn a physics object from the camera position.
     void SpawnObject();
+    void SpawnTrimeshObject();
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle the post-render update event.
