@@ -86,6 +86,8 @@ private:
     /// Spawn a physics object from the camera position.
     void SpawnObject();
     void SpawnTrimeshObject();
+    void SpawnConvexHull();
+    void SpawnCompound();
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle the post-render update event.
