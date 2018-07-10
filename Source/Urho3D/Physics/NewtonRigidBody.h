@@ -61,7 +61,8 @@ namespace Urho3D
         ///Return the net force and torque for newton.
         void GetBakedForceAndTorque(dVector& force, dVector& torque);
 
-        virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
+        /// Draw Debug geometry
+        void DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB = true, bool showCollisionMesh = true, bool showCenterOfMass = true, bool showContactForces = true);
 
         /// rebuilds the internal body
         void reEvaluateBody();

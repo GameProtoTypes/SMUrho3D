@@ -155,7 +155,13 @@ namespace Urho3D {
             rgBody->freeBody();
         }
 
+        //free meshes in mesh cache
+        for (auto meshPair : newtonMeshCache_) {
+            NewtonMeshDestroy(meshPair.second_);
+        }
+        newtonMeshCache_.Clear();
 
+        //destroy newton world.
         if (newtonWorld_ != nullptr) {
             NewtonDestroy(newtonWorld_);
             newtonWorld_ = nullptr;
@@ -211,6 +217,38 @@ namespace Urho3D {
         }
     }
 
+    Urho3D::StringHash NewtonPhysicsWorld::NewtonMeshKey(String modelResourceName, int modelLodLevel, float hullTolerance)
+    {
+        return modelResourceName + String(modelLodLevel) + String(hullTolerance);
+    }
+
+    NewtonMesh* NewtonPhysicsWorld::GetCreateNewtonMesh(StringHash urhoNewtonMeshKey)
+    {
+        if (newtonMeshCache_.Contains(urhoNewtonMeshKey)) {
+            return newtonMeshCache_[urhoNewtonMeshKey];
+        }
+        else
+        {
+            NewtonMesh* mesh = NewtonMeshCreate(newtonWorld_);
+            newtonMeshCache_[urhoNewtonMeshKey] = mesh;
+            return mesh;
+        }
+    }
+
+    NewtonMesh* NewtonPhysicsWorld::GetNewtonMesh(StringHash urhoNewtonMeshKey)
+    {
+        if (newtonMeshCache_.Contains(urhoNewtonMeshKey)) {
+            return newtonMeshCache_[urhoNewtonMeshKey];
+        }
+        return nullptr;
+    }
+
+    void NewtonPhysicsWorld::InsertNewtonMesh(StringHash urhoNewtonMeshKey, NewtonMesh* mesh)
+    {
+        newtonMeshCache_[urhoNewtonMeshKey] = mesh;
+        URHO3D_LOGINFO("Mesh Cache Size: " + String(newtonMeshCache_.Size()));
+    }
+
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
     {
         static dFloat Ixx;
@@ -231,11 +269,6 @@ namespace Urho3D {
         NewtonBodySetTorque(body, &netTorque[0]);
         
     }
-
-
-
-
-
 
 
     void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)

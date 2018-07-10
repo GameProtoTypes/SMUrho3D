@@ -17,6 +17,11 @@ namespace Urho3D
 
     static const Vector3 DEF_GRAVITY = Vector3(0, -9.81, 0);
 
+
+
+
+
+
     class URHO3D_API NewtonPhysicsWorld : public Component
     {
         URHO3D_OBJECT(NewtonPhysicsWorld, Component);
@@ -83,7 +88,6 @@ namespace Urho3D
         Vector<WeakPtr<NewtonRigidBody>> rigidBodyComponentList;
 
 
-
         /// Step the simulation forward.
         void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
@@ -98,7 +102,13 @@ namespace Urho3D
         int DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape);
         void GetBodiesInConvexCast(PODVector<NewtonRigidBody*>& result, int numContacts);
 
-
+        ///newton mesh caching
+        HashMap<StringHash, NewtonMesh*> newtonMeshCache_;
+        ///returns a unique key for looking up an exising NewtonMesh from the cache.
+        static StringHash NewtonMeshKey(String modelResourceName, int modelLodLevel, float hullTolerance);
+        NewtonMesh* GetCreateNewtonMesh(StringHash urhoNewtonMeshKey);
+        NewtonMesh* GetNewtonMesh(StringHash urhoNewtonMeshKey);
+        void InsertNewtonMesh(StringHash urhoNewtonMeshKey, NewtonMesh* mesh);
 
     };
 

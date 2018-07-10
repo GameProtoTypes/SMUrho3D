@@ -65,21 +65,13 @@ namespace Urho3D {
 
 
 
-
-
-
-
-
-
-
-
         reEvaluateCollision();
         notifyRigidBody();
 
 
     }
 
-    void NewtonCollisionShape::SetConvexHull(Model* model, unsigned lodLevel /*= 0*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    void NewtonCollisionShape::SetConvexHull(Model* model, unsigned lodLevel /*= 0*/, float tolerance /*= 0.0f*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
     {
         if (!model)
             return;
@@ -90,7 +82,7 @@ namespace Urho3D {
         rotation_ = rotation;
         model_ = model;
         modelLodLevel_ = lodLevel;
-
+        hullTolerance_ = tolerance;
 
 
         reEvaluateCollision();
@@ -98,7 +90,7 @@ namespace Urho3D {
 
     }
 
-    void NewtonCollisionShape::SetCompound(Model* model, unsigned lodLevel /*= 0*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    void NewtonCollisionShape::SetCompound(Model* model, unsigned lodLevel /*= 0*/, float tolerance /*= 0.0f*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
     {
         if (!model)
             return;
@@ -109,6 +101,8 @@ namespace Urho3D {
         rotation_ = rotation;
         model_ = model;
         modelLodLevel_ = lodLevel;
+        hullTolerance_ = tolerance;
+
 
         reEvaluateCollision();
         notifyRigidBody();
@@ -146,11 +140,8 @@ namespace Urho3D {
         ///.....
         else if (shapeType_ == SHAPE_TRIANGLEMESH)
         {
-
             formTriangleMeshCollision();
-
         }
-      
     }
 
     void NewtonCollisionShape::freeInternalCollision()
@@ -192,70 +183,8 @@ namespace Urho3D {
     {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
-
-        const unsigned char* vertexData;
-        const unsigned char* indexData;
-        unsigned elementSize, indexSize;
-        const PODVector<VertexElement>* elements;
-        Geometry* geo = model_->GetGeometry(modelGeomIndx_, modelLodLevel_);
-        geo->GetRawData(vertexData, elementSize, indexData, indexSize, elements);
-
-        bool hasPosition = VertexBuffer::HasElement(*elements, TYPE_VECTOR3, SEM_POSITION);
-
-        if (vertexData && indexData && hasPosition) {
-
-            unsigned vertexStart = geo->GetVertexStart();
-            unsigned vertexCount = geo->GetVertexCount();
-            unsigned indexStart = geo->GetIndexStart();
-            unsigned indexCount = geo->GetIndexCount();
-
-            unsigned positionOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_POSITION);
-
-            newtonCollision_ = NewtonCreateTreeCollision(world, 0);
-
-            NewtonTreeCollisionBeginBuild(newtonCollision_);
-
-            int faceAddCount = 0;
-            for (unsigned curIdx = indexStart; curIdx < indexStart + indexCount; curIdx += 3)
-            {
-                //get indexes
-                unsigned i1, i2, i3;
-                if (indexSize == 2) {
-                    i1 = *reinterpret_cast<const unsigned short*>(indexData + curIdx * indexSize);
-                    i2 = *reinterpret_cast<const unsigned short*>(indexData + (curIdx + 1) * indexSize);
-                    i3 = *reinterpret_cast<const unsigned short*>(indexData + (curIdx + 2) * indexSize);
-                }
-                else if (indexSize == 4)
-                {
-                    i1 = *reinterpret_cast<const unsigned *>(indexData + curIdx * indexSize);
-                    i2 = *reinterpret_cast<const unsigned *>(indexData + (curIdx + 1) * indexSize);
-                    i3 = *reinterpret_cast<const unsigned *>(indexData + (curIdx + 2) * indexSize);
-                }
-
-                //lookup triangle using indexes.
-                const Vector3& v1 = *reinterpret_cast<const Vector3*>(vertexData + i1 * elementSize + positionOffset);
-                const Vector3& v2 = *reinterpret_cast<const Vector3*>(vertexData + i2 * elementSize + positionOffset);
-                const Vector3& v3 = *reinterpret_cast<const Vector3*>(vertexData + i3 * elementSize + positionOffset);
-
-                //copy data.
-                float faceData[9];
-                faceData[0] = v1.x_;
-                faceData[1] = v1.y_;
-                faceData[2] = v1.z_;
-                faceData[3] = v2.x_;
-                faceData[4] = v2.y_;
-                faceData[5] = v2.z_;
-                faceData[6] = v3.x_;
-                faceData[7] = v3.y_;
-                faceData[8] = v3.z_;
-
-
-                NewtonTreeCollisionAddFace(newtonCollision_, 3, faceData, sizeof(float) * 3, 0);
-                faceAddCount++;
-            }
-
-
-            NewtonTreeCollisionEndBuild(newtonCollision_, 0);
+        if (formTriangleMesh()) {
+            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_, 0.0f, 0, 0);//not working yet..
         }
         else
         {
@@ -263,8 +192,8 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::formConvexHullCollision()
-    {
+    bool NewtonCollisionShape::formConvexHullCollision()
+{
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
         const unsigned char* vertexData;
@@ -285,28 +214,42 @@ namespace Urho3D {
 
             unsigned positionOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_POSITION);
 
-            newtonCollision_ = NewtonCreateConvexHull(world, vertexCount, (float*)vertexData, elementSize, 0.0f, 0, nullptr);
-
+            newtonCollision_ = NewtonCreateConvexHull(world, vertexCount, (float*)vertexData, elementSize, hullTolerance_, 0, nullptr);
+            return true;
         }
         else
         {
-            URHO3D_LOGWARNING("Unable To Create Convex Hull For Model.");
+            URHO3D_LOGWARNING("Unable To Create Convex Hull For Model: " + model_->GetName());
+            return false;
         }
     }
 
-    void NewtonCollisionShape::formCompoundCollision()
-    {
+    bool NewtonCollisionShape::formCompoundCollision()
+{
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
-        formTriangleMesh();
-
-        newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_, 0.0f, 0, 0);
-
+        if (formTriangleMesh())
+        {
+            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_, hullTolerance_, 0, 0);
+            return true;
+        }
+        return false;
     }
+
+
+
 
     bool NewtonCollisionShape::formTriangleMesh()
 {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
+
+        StringHash meshKey = NewtonPhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, hullTolerance_);
+        NewtonMesh* cachedMesh = physicsWorld_->GetNewtonMesh(meshKey);
+        if (cachedMesh)
+        {
+            newtonMesh_ = cachedMesh;
+            return true;
+        }
 
 
         const unsigned char* vertexData;
@@ -318,8 +261,8 @@ namespace Urho3D {
 
         bool hasPosition = VertexBuffer::HasElement(*elements, TYPE_VECTOR3, SEM_POSITION);
 
-        if (vertexData && indexData && hasPosition) {
-
+        if (vertexData && indexData && hasPosition)
+        {
             unsigned vertexStart = geo->GetVertexStart();
             unsigned vertexCount = geo->GetVertexCount();
             unsigned indexStart = geo->GetIndexStart();
@@ -354,20 +297,7 @@ namespace Urho3D {
                 const Vector3& v2 = *reinterpret_cast<const Vector3*>(vertexData + i2 * elementSize + positionOffset);
                 const Vector3& v3 = *reinterpret_cast<const Vector3*>(vertexData + i3 * elementSize + positionOffset);
 
-                //copy data.
-                //float faceData[9];
-                //faceData[0] = v1.x_;
-                //faceData[1] = v1.y_;
-                //faceData[2] = v1.z_;
-                //faceData[3] = v2.x_;
-                //faceData[4] = v2.y_;
-                //faceData[5] = v2.z_;
-                //faceData[6] = v3.x_;
-                //faceData[7] = v3.y_;
-                //faceData[8] = v3.z_;
 
-
-               
                 NewtonMeshBeginFace(newtonMesh_);
                     NewtonMeshAddPoint(newtonMesh_, v1.x_, v1.y_, v1.z_);
                     NewtonMeshAddPoint(newtonMesh_, v2.x_, v2.y_, v2.z_);
@@ -377,11 +307,13 @@ namespace Urho3D {
             }
 
             NewtonMeshEndBuild(newtonMesh_);
+
+            physicsWorld_->InsertNewtonMesh(meshKey, newtonMesh_);
             return true;
         }
         else
         {
-            URHO3D_LOGWARNING("Unable To Create Triangle Mesh For Model.");
+            URHO3D_LOGWARNING("Unable To Create NewtonMesh For Model: " +  model_->GetName());
             return false;
         }
     }

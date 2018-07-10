@@ -59,13 +59,14 @@ namespace Urho3D {
 
     }
 
-    void NewtonRigidBody::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    void NewtonRigidBody::DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB /*= true*/, bool showCollisionMesh /*= true*/, bool showCenterOfMass /*= true*/, bool showContactForces /*= true*/)
     {
+        Component::DrawDebugGeometry(debug, depthTest);
         if (newtonBody_) {
-            NewtonBodyDebugDrawAABB(newtonBody_, debug, depthTest);
-            NewtonBodyDebugShowCollision(newtonBody_, debug, depthTest);
-            NewtonBodyDebugDrawCenterOfMass(newtonBody_, debug, depthTest);
-            NewtonBodyDebugContactForces(newtonBody_, 0., debug, depthTest);
+            if (showAABB) NewtonBodyDebugDrawAABB(newtonBody_, debug, depthTest);
+            if (showCollisionMesh) NewtonBodyDebugShowCollision(newtonBody_, debug, depthTest);
+            if (showCenterOfMass) NewtonBodyDebugDrawCenterOfMass(newtonBody_, debug, depthTest);
+            if (showContactForces)  NewtonBodyDebugContactForces(newtonBody_, 0., debug, depthTest);
         }
     }
 
@@ -81,7 +82,7 @@ namespace Urho3D {
 
 
     void NewtonRigidBody::reEvaluateBody()
-{
+    {
 
         colShape_ = node_->GetComponent<NewtonCollisionShape>();
 
@@ -97,11 +98,10 @@ namespace Urho3D {
         }
         if (parentNodeWithRigidBody != nullptr)
         {
-            parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reEvaluateBody();
             freeBody();
+            parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reEvaluateBody();
             return;
         }
-
 
 
         if (colShape_ &&
