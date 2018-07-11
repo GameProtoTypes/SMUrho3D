@@ -36,7 +36,7 @@
 #include <Urho3D/IO/File.h>
 #include <Urho3D/IO/FileSystem.h>
 #include <Urho3D/Physics/NewtonCollisionShape.h>
-#include "Urho3D/Physics/NewtonPhysicsWorld.h"
+#include "Urho3D/Physics/UrhoNewtonPhysicsWorld.h"
 #include <Urho3D/Physics/NewtonRigidBody.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
@@ -94,7 +94,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<NewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
+    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -146,34 +146,34 @@ void Physics::CreateScene()
 
 
 
-    //const int numIslands = 0;
-    //for(int x2 = -numIslands; x2 <= numIslands; x2++)
-    //    for (int y2 = -numIslands; y2 <= numIslands; y2++)
-    //{
-    //     //Create a pyramid of movable physics objects
-    //    for (int y = 0; y < 16; ++y)
-    //    {
-    //        for (int x = -y; x <= y; ++x)
-    //        {
+    const int numIslands = 0;
+    for(int x2 = -numIslands; x2 <= numIslands; x2++)
+        for (int y2 = -numIslands; y2 <= numIslands; y2++)
+    {
+         //Create a pyramid of movable physics objects
+        for (int y = 0; y < 16; ++y)
+        {
+            for (int x = -y; x <= y; ++x)
+            {
 
-    //            Node* boxNode = scene_->CreateChild("Box");
-    //            boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f) + Vector3(x2, 0, y2)*50.0f);
-    //            auto* boxObject = boxNode->CreateComponent<StaticModel>();
-    //            boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    //            boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-    //            boxObject->SetCastShadows(true);
+                Node* boxNode = scene_->CreateChild("Box");
+                boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                auto* boxObject = boxNode->CreateComponent<StaticModel>();
+                boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+                boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+                boxObject->SetCastShadows(true);
 
-    //            // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
-    //            // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
-    //            // objects are significant
-    //            auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    //            body->SetMass(1.0f);
-    //            body->SetFriction(0.75f);
-    //            auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-    //            shape->SetBox(Vector3::ONE);
-    //        }
-    //    }
-    //}
+                // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
+                // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
+                // objects are significant
+                auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+                body->SetMass(1.0f);
+                body->SetFriction(0.75f);
+                auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+                shape->SetBox(Vector3::ONE);
+            }
+        }
+    }
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
@@ -305,7 +305,7 @@ void Physics::MoveCamera(float timeStep)
         scene_->SaveXML(saveFile);
 
 
-        scene_->GetComponent<NewtonPhysicsWorld>()->SerializeNewtonWorld("newtonWorldFile.ngd");
+        scene_->GetComponent<UrhoNewtonPhysicsWorld>()->SerializeNewtonWorld("newtonWorldFile.ngd");
 
 
     }
@@ -526,7 +526,7 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
 {
     // If draw debug mode is enabled, draw physics debug geometry. Use depth test to make the result easier to interpret
     if (drawDebug_) {
-        scene_->GetComponent<NewtonPhysicsWorld>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>(), false);
+        scene_->GetComponent<UrhoNewtonPhysicsWorld>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>(), false);
         GSS<VisualDebugger>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>());
     }
 }

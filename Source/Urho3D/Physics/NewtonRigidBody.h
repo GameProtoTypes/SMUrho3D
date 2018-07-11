@@ -8,7 +8,7 @@ class NewtonBody;
 namespace Urho3D
 {
     class Component;
-    class NewtonPhysicsWorld;
+    class UrhoNewtonPhysicsWorld;
     class NewtonCollisionShape;
     class URHO3D_API NewtonRigidBody : public Component
     {
@@ -16,7 +16,7 @@ namespace Urho3D
     public:
 
         friend class NewtonCollisionShape;
-        friend class NewtonPhysicsWorld;
+        friend class UrhoNewtonPhysicsWorld;
         /// Construct.
         NewtonRigidBody(Context* context);
         /// Destruct. Free the rigid body and geometries.
@@ -76,7 +76,7 @@ namespace Urho3D
 
 
         /// Physics world.
-        WeakPtr<NewtonPhysicsWorld> physicsWorld_;
+        WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
         /// Rigid body.
         WeakPtr<NewtonCollisionShape> colShape_;
     

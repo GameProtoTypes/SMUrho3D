@@ -3,7 +3,7 @@
 #include "Graphics/DebugRenderer.h"
 #include "dMatrix.h"
 #include "Math/Vector3.h"
-#include "NewtonPhysicsWorld.h"
+#include "UrhoNewtonPhysicsWorld.h"
 #include "UrhoNewtonConversions.h"
 
 

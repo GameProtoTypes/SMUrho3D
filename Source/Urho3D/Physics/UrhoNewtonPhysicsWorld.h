@@ -22,18 +22,18 @@ namespace Urho3D
 
 
 
-    class URHO3D_API NewtonPhysicsWorld : public Component
+    class URHO3D_API UrhoNewtonPhysicsWorld : public Component
     {
-        URHO3D_OBJECT(NewtonPhysicsWorld, Component);
+        URHO3D_OBJECT(UrhoNewtonPhysicsWorld, Component);
     public:
 
         friend class NewtonCollisionShape;
         friend class NewtonRigidBody;
 
         /// Construct.
-        NewtonPhysicsWorld(Context* context);
+        UrhoNewtonPhysicsWorld(Context* context);
         /// Destruct. Free the rigid body and geometries.
-        ~NewtonPhysicsWorld() override;
+        ~UrhoNewtonPhysicsWorld() override;
         /// Register object factory.
         static void RegisterObject(Context* context);
 

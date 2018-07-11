@@ -1,4 +1,4 @@
-#include "../Physics/NewtonPhysicsWorld.h"
+#include "../Physics/UrhoNewtonPhysicsWorld.h"
 #include "../Physics/NewtonCollisionShape.h"
 #include "../Physics/NewtonRigidBody.h"
 #include "../Core/Context.h"
@@ -113,7 +113,7 @@ namespace Urho3D {
            
             dMatrix mat = UrhoToNewton(transform);
 
-            NewtonWorld* newtWorld = GetScene()->GetComponent<NewtonPhysicsWorld>()->GetNewtonWorld();
+            NewtonWorld* newtWorld = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetNewtonWorld();
 
 
 
@@ -207,7 +207,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::bakeForceAndTorque()
     {
-        Vector3 gravityForce = GetScene()->GetComponent<NewtonPhysicsWorld>()->GetGravity() * mass_;
+        Vector3 gravityForce = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity() * mass_;
 
         Quaternion worldOrientation = GetNode()->GetWorldRotation();
         Vector3 netForceWrldSpc = worldOrientation * netForce_;
@@ -241,7 +241,7 @@ namespace Urho3D {
                 URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
 
             //Auto-create a physics world on the scene if it does not yet exist.
-            physicsWorld_ = WeakPtr<NewtonPhysicsWorld>(scene->GetOrCreateComponent<NewtonPhysicsWorld>());
+            physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(scene->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
 
 
             physicsWorld_->addRigidBody(this);

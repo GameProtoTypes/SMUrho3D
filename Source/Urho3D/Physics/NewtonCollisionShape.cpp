@@ -1,6 +1,6 @@
 
 #include "NewtonCollisionShape.h"
-#include "NewtonPhysicsWorld.h"
+#include "UrhoNewtonPhysicsWorld.h"
 #include "NewtonRigidBody.h"
 
 #include "../Core/Context.h"
@@ -243,7 +243,7 @@ namespace Urho3D {
 {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
-        StringHash meshKey = NewtonPhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, hullTolerance_);
+        StringHash meshKey = UrhoNewtonPhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, hullTolerance_);
         NewtonMesh* cachedMesh = physicsWorld_->GetNewtonMesh(meshKey);
         if (cachedMesh)
         {
@@ -270,9 +270,8 @@ namespace Urho3D {
 
             unsigned positionOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_POSITION);
 
-            if (newtonMesh_)
-                NewtonMeshDestroy(newtonMesh_);
-            newtonMesh_ = NewtonMeshCreate(world);
+
+            newtonMesh_ = physicsWorld_->GetCreateNewtonMesh(meshKey);
             NewtonMeshBeginBuild(newtonMesh_);
 
             int faceAddCount = 0;
@@ -308,7 +307,6 @@ namespace Urho3D {
 
             NewtonMeshEndBuild(newtonMesh_);
 
-            physicsWorld_->InsertNewtonMesh(meshKey, newtonMesh_);
             return true;
         }
         else
@@ -330,7 +328,7 @@ namespace Urho3D {
             if (scene == node_)
                 URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
 
-            physicsWorld_ = WeakPtr<NewtonPhysicsWorld>(scene->GetOrCreateComponent<NewtonPhysicsWorld>());
+            physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(scene->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
 
             reEvaluateCollision();
 
