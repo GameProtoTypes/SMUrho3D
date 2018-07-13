@@ -545,5 +545,5 @@ void Physics::DecomposePhysicsTree()
         //res[1].node_->GetChildren(true).Front()->SetParent(scene_);
         res[1].node_->SetParent(scene_);
     }
-
 }
+

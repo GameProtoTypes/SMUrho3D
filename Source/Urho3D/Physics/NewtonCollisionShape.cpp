@@ -2,6 +2,7 @@
 #include "NewtonCollisionShape.h"
 #include "UrhoNewtonPhysicsWorld.h"
 #include "NewtonRigidBody.h"
+#include "NewtonMeshObject.h"
 
 #include "../Core/Context.h"
 #include "../Scene/Component.h"
@@ -150,12 +151,6 @@ namespace Urho3D {
             NewtonDestroyCollision(newtonCollision_);//decrement the reference count of the collision.
             newtonCollision_ = nullptr;
         }
-
-        if (newtonMesh_) {
-            NewtonMeshDestroy(newtonMesh_);
-            newtonMesh_ = nullptr;
-        }
-
     }
 
     void NewtonCollisionShape::notifyRigidBody()
@@ -184,7 +179,7 @@ namespace Urho3D {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
         if (formTriangleMesh()) {
-            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_, 0.0f, 0, 0);//not working yet..
+            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, 0.0f, 0, 0);//not working yet..
         }
         else
         {
@@ -230,7 +225,7 @@ namespace Urho3D {
 
         if (formTriangleMesh())
         {
-            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_, hullTolerance_, 0, 0);
+            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0, 0);
             return true;
         }
         return false;
@@ -244,7 +239,7 @@ namespace Urho3D {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
         StringHash meshKey = UrhoNewtonPhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, hullTolerance_);
-        NewtonMesh* cachedMesh = physicsWorld_->GetNewtonMesh(meshKey);
+        NewtonMeshObject* cachedMesh = physicsWorld_->GetNewtonMesh(meshKey);
         if (cachedMesh)
         {
             newtonMesh_ = cachedMesh;
@@ -272,9 +267,8 @@ namespace Urho3D {
 
 
             newtonMesh_ = physicsWorld_->GetCreateNewtonMesh(meshKey);
-            NewtonMeshBeginBuild(newtonMesh_);
+            NewtonMeshBeginBuild(newtonMesh_->mesh);
 
-            int faceAddCount = 0;
             for (unsigned curIdx = indexStart; curIdx < indexStart + indexCount; curIdx += 3)
             {
                 //get indexes
@@ -297,15 +291,14 @@ namespace Urho3D {
                 const Vector3& v3 = *reinterpret_cast<const Vector3*>(vertexData + i3 * elementSize + positionOffset);
 
 
-                NewtonMeshBeginFace(newtonMesh_);
-                    NewtonMeshAddPoint(newtonMesh_, v1.x_, v1.y_, v1.z_);
-                    NewtonMeshAddPoint(newtonMesh_, v2.x_, v2.y_, v2.z_);
-                    NewtonMeshAddPoint(newtonMesh_, v3.x_, v3.y_, v3.z_);
-                NewtonMeshEndFace(newtonMesh_);
-                faceAddCount++;
+                NewtonMeshBeginFace(newtonMesh_->mesh);
+                    NewtonMeshAddPoint(newtonMesh_->mesh, v1.x_, v1.y_, v1.z_);
+                    NewtonMeshAddPoint(newtonMesh_->mesh, v2.x_, v2.y_, v2.z_);
+                    NewtonMeshAddPoint(newtonMesh_->mesh, v3.x_, v3.y_, v3.z_);
+                NewtonMeshEndFace(newtonMesh_->mesh);
             }
 
-            NewtonMeshEndBuild(newtonMesh_);
+            NewtonMeshEndBuild(newtonMesh_->mesh);
 
             return true;
         }

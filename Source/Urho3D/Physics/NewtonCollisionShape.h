@@ -12,6 +12,7 @@ namespace Urho3D
 
     class UrhoNewtonPhysicsWorld;
     class NewtonRigidBody;
+    class NewtonMeshObject;
     class Component;
     class URHO3D_API NewtonCollisionShape : public Component
     {
@@ -55,7 +56,7 @@ namespace Urho3D
         /// Internal Newton Collision
         NewtonCollision* newtonCollision_ = nullptr;
         /// newton Mesh reference
-        NewtonMesh* newtonMesh_ = nullptr;
+        WeakPtr<NewtonMeshObject> newtonMesh_ = nullptr;
 
         /// Collision shape type.
         ShapeType shapeType_ = SHAPE_BOX;

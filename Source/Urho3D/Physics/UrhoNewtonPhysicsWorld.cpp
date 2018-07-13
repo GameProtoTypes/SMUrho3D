@@ -14,6 +14,7 @@
 #include "Container/Vector.h"
 
 #include "Newton.h"
+#include "NewtonMeshObject.h"
 
 namespace Urho3D {
 
@@ -148,18 +149,18 @@ namespace Urho3D {
         {
             col->freeInternalCollision();
         }
+        collisionComponentList.Clear();
 
         //free internal bodies for all rigid bodies.
         for (NewtonRigidBody* rgBody : rigidBodyComponentList)
         {
             rgBody->freeBody();
         }
+        rigidBodyComponentList.Clear();
 
         //free meshes in mesh cache
-        for (auto meshPair : newtonMeshCache_) {
-            NewtonMeshDestroy(meshPair.second_);
-        }
         newtonMeshCache_.Clear();
+
 
         //destroy newton world.
         if (newtonWorld_ != nullptr) {
@@ -220,7 +221,7 @@ namespace Urho3D {
         return modelResourceName + String(modelLodLevel) + String(hullTolerance);
     }
 
-    NewtonMesh* UrhoNewtonPhysicsWorld::GetCreateNewtonMesh(StringHash urhoNewtonMeshKey)
+    NewtonMeshObject* UrhoNewtonPhysicsWorld::GetCreateNewtonMesh(StringHash urhoNewtonMeshKey)
     {
         if (newtonMeshCache_.Contains(urhoNewtonMeshKey)) {
             return newtonMeshCache_[urhoNewtonMeshKey];
@@ -228,12 +229,14 @@ namespace Urho3D {
         else
         {
             NewtonMesh* mesh = NewtonMeshCreate(newtonWorld_);
-            newtonMeshCache_[urhoNewtonMeshKey] = mesh;
-            return mesh;
+            SharedPtr<NewtonMeshObject> meshObj = context_->CreateObject<NewtonMeshObject>();
+            meshObj->mesh = mesh;
+            newtonMeshCache_[urhoNewtonMeshKey] = meshObj;
+            return meshObj;
         }
     }
 
-    NewtonMesh* UrhoNewtonPhysicsWorld::GetNewtonMesh(StringHash urhoNewtonMeshKey)
+    NewtonMeshObject* UrhoNewtonPhysicsWorld::GetNewtonMesh(StringHash urhoNewtonMeshKey)
     {
         if (newtonMeshCache_.Contains(urhoNewtonMeshKey)) {
             return newtonMeshCache_[urhoNewtonMeshKey];
@@ -241,10 +244,7 @@ namespace Urho3D {
         return nullptr;
     }
 
-    void UrhoNewtonPhysicsWorld::InsertNewtonMesh(StringHash urhoNewtonMeshKey, NewtonMesh* mesh)
-    {
-        newtonMeshCache_[urhoNewtonMeshKey] = mesh;
-    }
+ 
 
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
     {
@@ -293,10 +293,12 @@ namespace Urho3D {
         UrhoNewtonPhysicsWorld::RegisterObject(context);
         NewtonCollisionShape::RegisterObject(context);
         NewtonRigidBody::RegisterObject(context);
+        NewtonMeshObject::RegisterObject(context);
         //Constraint::RegisterObject(context);
         
         //RaycastVehicle::RegisterObject(context);
     }
+
 
 
 

@@ -14,10 +14,9 @@ namespace Urho3D
     class NewtonRigidBody;
     class Sphere;
     class BoundingBox;
+    class NewtonMeshObject;
 
     static const Vector3 DEF_GRAVITY = Vector3(0, -9.81, 0);
-
-
 
 
 
@@ -103,12 +102,13 @@ namespace Urho3D
         void GetBodiesInConvexCast(PODVector<NewtonRigidBody*>& result, int numContacts);
 
         ///newton mesh caching
-        HashMap<StringHash, NewtonMesh*> newtonMeshCache_;
+        HashMap<StringHash, SharedPtr<NewtonMeshObject>> newtonMeshCache_;
+
         ///returns a unique key for looking up an exising NewtonMesh from the cache.
         static StringHash NewtonMeshKey(String modelResourceName, int modelLodLevel, float hullTolerance);
-        NewtonMesh* GetCreateNewtonMesh(StringHash urhoNewtonMeshKey);
-        NewtonMesh* GetNewtonMesh(StringHash urhoNewtonMeshKey);
-        void InsertNewtonMesh(StringHash urhoNewtonMeshKey, NewtonMesh* mesh);
+        NewtonMeshObject* GetCreateNewtonMesh(StringHash urhoNewtonMeshKey);
+        NewtonMeshObject* GetNewtonMesh(StringHash urhoNewtonMeshKey);
+        
 
     };
 
