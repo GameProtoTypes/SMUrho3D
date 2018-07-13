@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Object.h"
+#include "../Core/Object.h"
 class NewtonMesh;
 namespace Urho3D {
 
