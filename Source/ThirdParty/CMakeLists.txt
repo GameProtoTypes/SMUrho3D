@@ -20,6 +20,12 @@
 # THE SOFTWARE.
 #
 
+if (URHO3D_THIRDPARTY_SHARED_LIBS)
+    set (THIRDPARTY_LIB_TYPE SHARED)
+else ()
+    set (THIRDPARTY_LIB_TYPE STATIC)
+endif ()
+
 add_subdirectory(FreeType)
 add_subdirectory(LZ4)
 add_subdirectory(PugiXml)
@@ -36,7 +42,6 @@ endif ()
 
 if (URHO3D_SYSTEMUI)
     add_subdirectory(imgui)
-    add_subdirectory(ImGuizmo)
 endif ()
 
 if (URHO3D_NETWORK)
