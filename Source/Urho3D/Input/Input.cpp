@@ -2031,8 +2031,8 @@ void Input::HandleSDLEvent(void* sdlEvent)
                 // The "on-the-fly" motion data needs to be scaled now, though this may reduce accuracy
                 eventData[P_DX] = (int)(evt.motion.xrel * pixelRatio);
                 eventData[P_DY] = (int)(evt.motion.yrel * pixelRatio);
-                eventData[P_BUTTONS] = mouseButtonDown_;
-                eventData[P_QUALIFIERS] = GetQualifiers();
+                eventData[P_BUTTONS] = (int)mouseButtonDown_;
+                eventData[P_QUALIFIERS] = (int)GetQualifiers();
                 SendEvent(E_MOUSEMOVE, eventData);
             }
         }

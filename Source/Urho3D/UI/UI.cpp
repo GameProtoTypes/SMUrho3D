@@ -387,7 +387,7 @@ void UI::Update(float timeStep)
             IntVector2 touchPos = touch->position_;
             touchPos.x_ = (int)(touchPos.x_);
             touchPos.y_ = (int)(touchPos.y_);
-            ProcessHover(touchPos, TOUCHID_MASK(touch->touchID_), 0, nullptr);
+            ProcessHover(touchPos, MouseButtonFlags(touch->touchID_), QualifierFlags(0), nullptr);
         }
 #ifdef URHO3D_SYSTEMUI
     }
