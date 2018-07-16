@@ -62,11 +62,6 @@
             "IO/FileSystem.h"
           ]
         },
-        "../Tools/Editor": {
-          "include": [
-            "EditorEvents.h"
-          ]
-        }
       },
       "symbols": {
         "include": [
@@ -84,7 +79,6 @@
           "Urho3D::WString",
           "Urho3D::StringHash",
           "Urho3D::Variant*::customValue*_",
-          "Urho3D::Variant::Variant(void*)",
           // C# reflection can be used instead of these
           "Urho3D::*::GetType*Static()",
           "Urho3D::*::GetType*() const",
@@ -98,7 +92,11 @@
           "Urho3D::Variant::Variant(Urho3D::VariantType,Urho3D::String const&)",
           "Urho3D::Variant::FromString(Urho3D::String const&,Urho3D::String const&)",
           "Urho3D::Variant::FromString(Urho3D::VariantType,Urho3D::String const&)",
-          "Urho3D::Variant::Get*Ptr(*",
+          "Urho3D::Variant::GetCustomVariantValuePtr()",
+          "Urho3D::Variant::GetCustomVariantValuePtr() const",
+          "Urho3D::Variant::GetBufferPtr()",
+          "Urho3D::Variant::GetStringVectorPtr()",
+          "Urho3D::Variant::GetVariantMapPtr()",
           "Urho3D::Variant::emptyBuffer",
           "Urho3D::Variant::GetTypeFromName(Urho3D::String const&)",
           "Urho3D::JSONValue::GetValueTypeFromName(Urho3D::String const&)",
@@ -163,6 +161,22 @@
           "Urho3D::OctreeQuery",
           "Urho3D::RayOctreeQuery::RayOctreeQuery(PODVector<Urho3D::RayQueryResult>&,Urho3D::Ray const&,Urho3D::RayQueryLevel,float,unsigned char,unsigned int)",
           "Urho3D::AllContentOctreeQuery::AllContentOctreeQuery(PODVector<Urho3D::Drawable *>&,unsigned char,unsigned int)",
+          "Urho3D::AttributeInfo",
+          "Urho3D::AttributeHandle",
+          "Urho3D::IsFlagSet",
+          "Urho3D::Image::GetLevels(PODVector<const Urho3D::Image *>&) const",
+          "Urho3D::JSONValue::Begin() const",
+          "Urho3D::JSONValue::End() const",
+          // Aliases coming from `using`
+          "Urho3D::CollisionGeometryDataCache",
+          "Urho3D::ConstJSONObjectIterator",
+          "Urho3D::JSONArray",
+          "Urho3D::JSONObject",
+          "Urho3D::JSONObjectIterator",
+          "Urho3D::PListValueMap",
+          "Urho3D::PListValueVector",
+          "Urho3D::Renderer::ShadowMapFilter",
+          "Urho3D::VariantVector",
         ]
       },
       "inheritable": {
@@ -196,7 +210,7 @@
     },
     {
       "type": "char const*",
-      "ctype": "MarshalAllocator::Block*",
+      "ctype": "const char*",
       "ptype": "string",
       "cstype": "string",
       "cpp_to_c": "CSharpConverter<char const*>::ToCSharp({value})",
@@ -206,7 +220,7 @@
     },
     {
       "type": "Urho3D::String",
-      "ctype": "MarshalAllocator::Block*",
+      "ctype": "const char*",
       "ptype": "string",
       "cstype": "string",
       "cpp_to_c": "CSharpConverter<Urho3D::String>::ToCSharp({value})",
@@ -221,7 +235,7 @@
       "cstype": "Urho3D.VariantMap",
       "cpp_to_c": "CSharpObjConverter::ToCSharp<Urho3D::VariantMap>({value})",
       "c_to_cpp": "*{value}",
-      "pinvoke_to_cs": "VariantMap.GetManagedInstance({value}, {owns})",
+      "pinvoke_to_cs": "VariantMap.GetManagedInstance({value})",
       "cs_to_pinvoke": "VariantMap.GetNativeInstance({value})"
     },
     {
@@ -231,7 +245,7 @@
       "cstype": "Urho3D.StringVector",
       "cpp_to_c": "CSharpObjConverter::ToCSharp<Urho3D::StringVector>({value})",
       "c_to_cpp": "*{value}",
-      "pinvoke_to_cs": "StringVector.GetManagedInstance({value}, {owns})",
+      "pinvoke_to_cs": "StringVector.GetManagedInstance({value})",
       "cs_to_pinvoke": "StringVector.GetNativeInstance({value})"
     },
     {
@@ -241,7 +255,7 @@
       "cstype": "Urho3D.StringVector",
       "cpp_to_c": "CSharpObjConverter::ToCSharp<Urho3D::StringVector>({value})",
       "c_to_cpp": "*{value}",
-      "pinvoke_to_cs": "StringVector.GetManagedInstance({value}, {owns})",
+      "pinvoke_to_cs": "StringVector.GetManagedInstance({value})",
       "cs_to_pinvoke": "StringVector.GetNativeInstance({value})"
     },
     {

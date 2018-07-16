@@ -53,7 +53,7 @@
 #include "../Network/Network.h"
 #endif
 #ifdef URHO3D_PHYSICS
-#include "../Physics/PhysicsWorld.h"
+#include "Physics/UrhoNewtonPhysicsWorld.h"
 #include "../Physics/RaycastVehicle.h"
 #endif
 #include "../Resource/ResourceCache.h"
@@ -77,6 +77,7 @@
 #endif
 
 #include "../DebugNew.h"
+
 
 
 #if defined(_MSC_VER) && defined(_DEBUG)
@@ -295,8 +296,8 @@ bool Engine::Initialize(const VariantMap& parameters)
         renderer->SetDrawShadows(GetParameter(parameters, EP_SHADOWS, true).GetBool());
         if (renderer->GetDrawShadows() && GetParameter(parameters, EP_LOW_QUALITY_SHADOWS, false).GetBool())
             renderer->SetShadowQuality(SHADOWQUALITY_SIMPLE_16BIT);
-        renderer->SetMaterialQuality(GetParameter(parameters, EP_MATERIAL_QUALITY, QUALITY_HIGH).GetInt());
-        renderer->SetTextureQuality(GetParameter(parameters, EP_TEXTURE_QUALITY, QUALITY_HIGH).GetInt());
+        renderer->SetMaterialQuality((MaterialQuality)GetParameter(parameters, EP_MATERIAL_QUALITY, QUALITY_HIGH).GetInt());
+        renderer->SetTextureQuality((MaterialQuality)GetParameter(parameters, EP_TEXTURE_QUALITY, QUALITY_HIGH).GetInt());
         renderer->SetTextureFilterMode((TextureFilterMode)GetParameter(parameters, EP_TEXTURE_FILTER_MODE, FILTER_TRILINEAR).GetInt());
         renderer->SetTextureAnisotropy(GetParameter(parameters, EP_TEXTURE_ANISOTROPY, 4).GetInt());
 
@@ -556,7 +557,7 @@ float Engine::GetAverageUpdateTimeMs()
 
 bool Engine::GetUpdateIsLimited()
 {
-	if (avgUpdateTimeUs_ > updateTimeGoalUs + updateTimeGoalUs/5) //5% buffer
+	if (avgUpdateTimeUs_ > updateTimeGoalUs_ + updateTimeGoalUs_/5) //5% buffer
 		return true;
 	
 	return false;
@@ -564,7 +565,7 @@ bool Engine::GetUpdateIsLimited()
 
 bool Engine::GetRenderIsLimited()
 {
-	if (avgRenderTimeUs_ > renderTimeGoalUs + renderTimeGoalUs / 5)//5% buffer
+	if (avgRenderTimeUs_ > renderTimeGoalUs_ + renderTimeGoalUs_ / 5)//5% buffer
 		return true;
 
 	return false;
@@ -572,26 +573,26 @@ bool Engine::GetRenderIsLimited()
 
 void Engine::SetRenderFpsGoal(int fps)
 {
-	renderTimeGoalUs = int((1.0f/float(fps))*1000000.0f);
+	renderTimeGoalUs_ = int((1.0f/float(fps))*1000000.0f);
 	updateFpsGoalTimer();
 }
 
 void Engine::SetRenderTimeGoalUs(unsigned timeUs)
 {
-	renderTimeGoalUs = timeUs;
+	renderTimeGoalUs_ = timeUs;
 	updateFpsGoalTimer();
 }
 
 void Engine::SetUpdateFpsGoal(unsigned fps)
 {
-	updateTimeGoalUs = int((1.0f / float(fps))*1000000.0f);
+	updateTimeGoalUs_ = int((1.0f / float(fps))*1000000.0f);
 	updateUpdateTimeTimer();
 }
 
 
 void Engine::SetUpdateTimeGoalUs(unsigned timeUs)
 {
-	updateTimeGoalUs = timeUs;
+	updateTimeGoalUs_ = timeUs;
 	updateUpdateTimeTimer();
 }
 
@@ -775,18 +776,26 @@ void Engine::Update()
 		updateTimeAvgIdx_ = 0;
 
 
-    // Logic update event
-    VariantMap& eventData = GetEventDataMap();
-    eventData[Update::P_TIMESTEP] = float(lastUpdateTimeUs_) / 1000000.0f;
-	eventData[Update::P_UPDATETICK] = updateTick_;
 
 
-	SendEvent(E_PREUPDATE, eventData);
 
-	SendEvent(E_UPDATE, eventData);
+    SendUpdateEvents();
 
-    // Logic post-update event
-    SendEvent(E_POSTUPDATE, eventData);
+}
+
+void Engine::SendUpdateEvents()
+{
+
+        VariantMap& eventData = GetEventDataMap();
+        eventData[Update::P_TIMESTEP] = float(lastUpdateTimeUs_) / 1000000.0f;
+        eventData[Update::P_TARGET_TIMESTEP] = float(updateTimeGoalUs_) / 1000000.0f;
+        eventData[Update::P_UPDATETICK] = updateTick_;
+
+        SendEvent(E_PREUPDATE, eventData);
+        SendEvent(E_UPDATE, eventData);
+        // Logic post-update event
+        SendEvent(E_POSTUPDATE, eventData);
+
 }
 
 void Engine::Render()
@@ -1079,37 +1088,37 @@ void Engine::updateAudioPausing()
 
 void Engine::updateFpsGoalTimer()
 {
-	renderGoalTimer_.SetTimeoutDuration(renderTimeGoalUs, false);
+	renderGoalTimer_.SetTimeoutDuration(renderTimeGoalUs_, false);
 }
 
 void Engine::updateUpdateTimeTimer()
 {
-	updateTimer_.SetTimeoutDuration(updateTimeGoalUs, false);
+	updateTimer_.SetTimeoutDuration(updateTimeGoalUs_, false);
 }
 
 void Engine::updateAveragingTimeWindows()
 {
 
-	renderTimeUsBuffer_.Resize(renderAveragingTimeWindowUs_ / renderTimeGoalUs);
+	renderTimeUsBuffer_.Resize(renderAveragingTimeWindowUs_ / renderTimeGoalUs_);
 	//reset the buffer contents to the goal
 	for (int i = 0; i < renderTimeUsBuffer_.Size(); i++) {
-		renderTimeUsBuffer_[i] = renderTimeGoalUs;
+		renderTimeUsBuffer_[i] = renderTimeGoalUs_;
 	}
 	//reset the current average
-	avgRenderTimeUs_ = renderTimeGoalUs;
+	avgRenderTimeUs_ = renderTimeGoalUs_;
 	renderTimeAvgIdx_ = 0;
 
 
 
-	updateTimeUsBuffer_.Resize(updateAveragingTimeWindowUs_ / updateTimeGoalUs);
+	updateTimeUsBuffer_.Resize(updateAveragingTimeWindowUs_ / updateTimeGoalUs_);
 
 	//reset the buffer contents to the goal
 	for (int i = 0; i < updateTimeUsBuffer_.Size(); i++) {
-		updateTimeUsBuffer_[i] = updateTimeGoalUs;
+		updateTimeUsBuffer_[i] = updateTimeGoalUs_;
 	}
 
 	//reset the current average
-	avgUpdateTimeUs_ = updateTimeGoalUs;
+	avgUpdateTimeUs_ = updateTimeGoalUs_;
 	updateTimeAvgIdx_ = 0;
 
 

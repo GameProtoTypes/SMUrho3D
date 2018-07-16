@@ -10,7 +10,7 @@
 #include "../Scene/Node.h"
 #include "../IO/FileSystem.h"
 #include "../Resource/ResourceCache.h"
-#include <nativefiledialog/nfd.h>
+#include "nativefiledialog/nfd.h"
 
 namespace Urho3D {
 	/// holds generic static functions that belong in the global namespace.  This class can be thought of as a temprorary holding space for generic functions that need a context.

@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,29 +36,156 @@ namespace Editor.Tabs
     {
         private readonly SceneView _view;
         private readonly Gizmo _gizmo;
-        private readonly VariantMap _eventArgs = new VariantMap();
+        private readonly Dictionary<StringHash, dynamic> _eventArgs = new Dictionary<StringHash, dynamic>();
         private bool _wasFocused;
         private bool _isMouseHoveringViewport;
         private Component _selectedComponent;
         private readonly IconCache _iconCache;
+        private readonly Undo.Manager _undo;
+        private readonly AttributeInspector _inspector;
 
-        public SceneTab(Context context, string title, Vector2? initialSize = null, string placeNextToDock = null,
-            DockSlot slot = DockSlot.SlotNone) : base(context, title, initialSize, placeNextToDock, slot)
+        public SceneTab(Context context, string title, TabLifetime lifetime, Vector2? initialSize = null, string placeNextToDock = null,
+            DockSlot slot = DockSlot.SlotNone) : base(context, title, lifetime, initialSize, placeNextToDock, slot)
         {
+            ResourceType = "scene";
             _iconCache = GetSubsystem<IconCache>();
             WindowFlags = WindowFlags.NoScrollbar;
             _view = new SceneView(Context);
             _gizmo = new Gizmo(Context);
-            _view.Scene.LoadXml(Cache.GetResource<XMLFile>("Scenes/SceneLoadExample.xml").GetRoot());
+            _undo = new Undo.Manager(Context);
+            _inspector = new AttributeInspector(Context);
+            _view.Scene.IsUpdateEnabled = false;
+
             CreateObjects();
 
             SubscribeToEvent<Update>(OnUpdate);
             SubscribeToEvent<PostUpdate>(args => RenderNodeContextMenu());
             SubscribeToEvent<GizmoSelectionChanged>(args => { _selectedComponent = null; });
+            SubscribeToEvent<EditorKeyCombo>(OnKeyCombo);
+            _undo.Connect(_view.Scene);
+            _undo.Connect(_inspector);
+            _undo.Connect(_gizmo);
 
-            _eventArgs.Clear();
-            _eventArgs[InspectHierarchy.HierarchyProvider] = Variant.FromObject(this);
+            _eventArgs[InspectHierarchy.HierarchyProvider] = this;
             SendEvent<InspectHierarchy>(_eventArgs);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                UnsubscribeFromAllEvents();
+                _view.Dispose();
+                _gizmo.Dispose();
+                _undo.Dispose();
+                _inspector.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        protected override void OnSaveProject(Event e)
+        {
+            base.OnSaveProject(e);
+
+            var projectSave = (JSONValue) e.GetObject(EditorProjectSave.SaveData);
+            var resources = projectSave.Get("resources");
+
+            var save = resources.Get((int) resources.Size() - 1);
+
+            var camera = save.Get("camera");
+            var transform = new JSONValue();
+            transform.SetVariant(_view.Camera.Node.Transform);
+            camera.Set("transform", transform);
+            camera.Set("light", _view.Camera.GetComponent<Light>().IsEnabled);
+            save.Set("camera", camera);
+
+            resources.Resize(resources.Size() - 1);    // Remove old save
+            resources.Push(save);                      // Append updated version
+            projectSave.Set("resources", resources);
+
+            SaveResource();
+        }
+
+        public override void LoadSave(JSONValue save)
+        {
+            Uuid = save.Get("uuid").String;
+            LoadResource(save.Get("path").String);
+
+            var camera = save.Get("camera");
+            var tx = camera.Get("transform").Variant.Matrix3x4;
+            _view.Camera.Node.SetTransform(tx);
+            _view.Camera.GetComponent<Light>().IsEnabled = camera.Get("light").GetVariantValue(VariantType.Bool).Bool;
+        }
+
+        public override void LoadResource(string resourcePath)
+        {
+            _undo.Clear();
+
+            base.LoadResource(resourcePath);
+
+            using (new UndoTracklingSuspender(_undo))
+            {
+                if (resourcePath.EndsWith(".yml") || resourcePath.EndsWith(".scene"))
+                {
+                    var resource = Cache.GetResource<YAMLFile>(resourcePath);
+                    if (resource != null)
+                        _view.Scene.LoadJson(resource.Root);
+                }
+                else if (resourcePath.EndsWith(".json"))
+                {
+                    var resource = Cache.GetResource<JSONFile>(resourcePath);
+                    if (resource != null)
+                        _view.Scene.LoadJson(resource.Root);
+                }
+                else if (resourcePath.EndsWith(".xml"))
+                {
+                    var resource = Cache.GetResource<XMLFile>(resourcePath);
+                    if (resource != null)
+                        _view.Scene.LoadXml(resource.GetRoot());
+                }
+
+                CreateObjects();
+            }
+        }
+
+        private void OnKeyCombo(Event e)
+        {
+            if (IsDockActive && IsDockFocused)
+            {
+                var combo = (EditorKeyCombo.Kind)e.GetInt32(EditorKeyCombo.KeyCombo);
+                switch (combo)
+                {
+                    case EditorKeyCombo.Kind.Undo:
+                        _undo.Undo();
+                        break;
+                    case EditorKeyCombo.Kind.Redo:
+                        _undo.Redo();
+                        break;
+                }
+            }
+        }
+
+        public void SaveResource(string resourcePath=null)
+        {
+            if (resourcePath == null)
+                resourcePath = Cache.GetResourceFileName(ResourcePath);
+            else
+            {
+                var project = GetSubsystem<Project>();
+                ResourcePath = resourcePath;
+                resourcePath = $"{project.DataPath}/{resourcePath}";
+            }
+
+            using (var file = new File(Context, resourcePath, FileMode.Write))
+            {
+                if (resourcePath.EndsWith(".yml") || resourcePath.EndsWith(".scene"))
+                    _view.Scene.SaveYaml(file);
+                if (resourcePath.EndsWith(".xml"))
+                    _view.Scene.SaveXml(file);
+                else if (resourcePath.EndsWith(".json"))
+                    _view.Scene.SaveJson(file);
+            }
         }
 
         private void RenderToolbar()
@@ -66,12 +193,10 @@ namespace Editor.Tabs
             ui.PushStyleVar(StyleVar.FrameRounding, 0);
 
             if (Widgets.EditorToolbarButton(FontAwesome.Undo, "Undo"))
-            {
-            }
+                _undo.Undo();
 
             if (Widgets.EditorToolbarButton(FontAwesome.Repeat, "Redo"))
-            {
-            }
+                _undo.Redo();
 
             ui.SameLine(0, 3);
 
@@ -123,8 +248,8 @@ namespace Editor.Tabs
 
                 _gizmo.SetScreenRect(viewPos, viewSize);
 
-                var isClickedLeft = Input.GetMouseButtonClick((int) MouseButton.Left) && ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup);
-                var isClickedRight = Input.GetMouseButtonClick((int) MouseButton.Right) && ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup);
+                var isClickedLeft = Input.GetMouseButtonClick(MouseButton.Left) && ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup);
+                var isClickedRight = Input.GetMouseButtonClick(MouseButton.Right) && ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup);
 
                 _gizmo.ManipulateSelection(_view.Camera);
 
@@ -160,14 +285,13 @@ namespace Editor.Tabs
 
                         if (clickNode != null)
                         {
-                            var appendSelection = Input.GetKeyDown(InputEvents.KeyCtrl);
+                            var appendSelection = Input.GetKeyDown(Key.Ctrl);
                             if (!appendSelection)
                                 _gizmo.UnselectAll();
                             _gizmo.ToggleSelection(clickNode);
 
                             // Notify inspector
-                            _eventArgs.Clear();
-                            _eventArgs[InspectItem.Inspectable] = Variant.FromObject(this);
+                            _eventArgs[InspectItem.Inspectable] = this;
                             SendEvent<InspectItem>(_eventArgs);
 
                             if (isClickedRight)
@@ -189,16 +313,15 @@ namespace Editor.Tabs
             _view.Camera.Node.GetOrCreateComponent<DebugCameraController>();
         }
 
-        private void OnUpdate(VariantMap args)
+        private void OnUpdate(Event args)
         {
             if (IsDockActive && _isMouseHoveringViewport)
             {
-                _view.Camera.GetComponent<DebugCameraController>().Update(args[Update.TimeStep].Float);
+                _view.Camera.GetComponent<DebugCameraController>().Update(args.GetFloat(Update.TimeStep));
                 if (!_wasFocused)
                 {
                     _wasFocused = true;
-                    _eventArgs.Clear();
-                    _eventArgs[InspectHierarchy.HierarchyProvider] = Variant.FromObject(this);
+                    _eventArgs[InspectHierarchy.HierarchyProvider] = this;
                     SendEvent<InspectHierarchy>(_eventArgs);
                 }
             }
@@ -206,17 +329,14 @@ namespace Editor.Tabs
                 _wasFocused = false;
         }
 
-        public Serializable[] GetInspectableObjects()
+        public void RenderInspector()
         {
-            if (_gizmo.Selection == null)
-                return new Serializable[0];
-
-            var inspectables = _gizmo.Selection.Cast<Serializable>().ToList();
+            _inspector.RenderAttributes(_gizmo.Selection);
             if (_selectedComponent != null)
-                inspectables.Add(_selectedComponent);
-
-            return inspectables.ToArray();
+                _inspector.RenderAttributes(_selectedComponent);
         }
+
+        private Node _openNodeInHierarchy = null;
 
         private void RenderNodeTree(Node node)
         {
@@ -236,6 +356,12 @@ namespace Editor.Tabs
             _iconCache.RenderIcon("Node");
             ui.SameLine();
 
+            if (Equals(_openNodeInHierarchy, node))
+            {
+                ui.SetNextTreeNodeOpen(true);
+                _openNodeInHierarchy = null;
+            }
+
             var opened = ui.TreeNodeEx(name, flags);
             if (!opened)
             {
@@ -250,9 +376,11 @@ namespace Editor.Tabs
             {
                 if (ImGui.SystemUi.IsMouseClicked(MouseButton.Left))
                 {
-                    if (!Input.GetKeyDown(InputEvents.KeyCtrl))
+                    if (!Input.GetKeyDown(Key.Ctrl))
                         _gizmo.UnselectAll();
                     _gizmo.ToggleSelection(node);
+                    _eventArgs[InspectItem.Inspectable] = this;
+                    SendEvent<InspectItem>(_eventArgs);
                 }
                 else if (ImGui.SystemUi.IsMouseClicked(MouseButton.Right))
                 {
@@ -271,12 +399,12 @@ namespace Editor.Tabs
                     if (component.IsTemporary)
                         continue;
 
-                    ui.PushID(component.NativeInstance.ToInt32());
+                    ui.PushID(component.NativeInstance.GetHashCode());
 
                     _iconCache.RenderIcon(component.GetType().Name);
                     ui.SameLine();
 
-                    var selected = _selectedComponent != null && _selectedComponent == component;
+                    var selected = _selectedComponent != null && _selectedComponent.Equals(component);
                     selected = ui.Selectable(component.GetType().Name, selected);
 
                     if (ImGui.SystemUi.IsMouseClicked(MouseButton.Right) && ui.IsItemHovered(HoveredFlags.AllowWhenBlockedByPopup))
@@ -290,6 +418,8 @@ namespace Editor.Tabs
                         _gizmo.UnselectAll();
                         _gizmo.ToggleSelection(node);
                         _selectedComponent = component;
+                        _eventArgs[InspectItem.Inspectable] = this;
+                        SendEvent<InspectItem>(_eventArgs);
                     }
 
                     if (ui.BeginPopup("Component context menu"))
@@ -316,7 +446,7 @@ namespace Editor.Tabs
         {
             if (ui.BeginPopup("Node context menu") /*&& !scenePlaying_*/)
             {
-                if (Input.GetKeyPress(InputEvents.KeyEscape) || !Input.IsMouseVisible)
+                if (Input.GetKeyPress(Key.Escape) || !Input.IsMouseVisible)
                 {
                     // Close when interacting with scene camera.
                     ui.CloseCurrentPopup();
@@ -324,7 +454,7 @@ namespace Editor.Tabs
                     return;
                 }
 
-                var isAlternative = Input.GetKeyDown(InputEvents.KeyShift);
+                var isAlternative = Input.GetKeyDown(Key.Shift);
 
                 if (ui.MenuItem(isAlternative ? "Create Child (Local)" : "Create Child"))
                 {
@@ -363,6 +493,7 @@ namespace Editor.Tabs
                                     {
                                         node.CreateComponent(new StringHash(component),
                                             isAlternative ? CreateMode.Local : CreateMode.Replicated);
+                                        _openNodeInHierarchy = node;
                                     }
                                 }
                             }

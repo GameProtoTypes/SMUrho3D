@@ -35,18 +35,20 @@
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/IO/FileSystem.h>
-#include <Urho3D/Physics/CollisionShape.h>
-#include <Urho3D/Physics/PhysicsWorld.h>
-#include <Urho3D/Physics/RigidBody.h>
+#include <Urho3D/Physics/NewtonCollisionShape.h>
+#include "Urho3D/Physics/UrhoNewtonPhysicsWorld.h"
+#include <Urho3D/Physics/NewtonRigidBody.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
-
 #include "Physics.h"
 
 #include <Urho3D/DebugNew.h>
+#include "Urho3D/Graphics/VisualDebugger.h"
+
+
 
 URHO3D_DEFINE_APPLICATION_MAIN(Physics)
 
@@ -58,6 +60,10 @@ Physics::Physics(Context* context) :
 
 void Physics::Start()
 {
+
+    context_->RegisterSubsystem<VisualDebugger>();
+
+
     // Execute base class startup
     Sample::Start();
 
@@ -88,7 +94,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<PhysicsWorld>();
+    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -128,36 +134,42 @@ void Physics::CreateScene()
         floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
         floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-        // Make the floor physical by adding RigidBody and CollisionShape components. The RigidBody's default
-        // parameters make the object static (zero mass.) Note that a CollisionShape by itself will not participate
+        // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
+        // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
         // in the physics simulation
-        /*RigidBody* body = */floorNode->CreateComponent<RigidBody>();
-        auto* shape = floorNode->CreateComponent<CollisionShape>();
+        /*NewtonRigidBody* body = */floorNode->CreateComponent<NewtonRigidBody>();
+        auto* shape = floorNode->CreateComponent<NewtonCollisionShape>();
         // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
         // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
         shape->SetBox(Vector3::ONE);
     }
 
+
+
+    const int numIslands = 0;
+    for(int x2 = -numIslands; x2 <= numIslands; x2++)
+        for (int y2 = -numIslands; y2 <= numIslands; y2++)
     {
-        // Create a pyramid of movable physics objects
-        for (int y = 0; y < 8; ++y)
+         //Create a pyramid of movable physics objects
+        for (int y = 0; y < 16; ++y)
         {
             for (int x = -y; x <= y; ++x)
             {
+
                 Node* boxNode = scene_->CreateChild("Box");
-                boxNode->SetPosition(Vector3((float)x, -(float)y + 8.0f, 0.0f));
+                boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f) + Vector3(x2, 0, y2)*50.0f);
                 auto* boxObject = boxNode->CreateComponent<StaticModel>();
                 boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
                 boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
                 boxObject->SetCastShadows(true);
 
-                // Create RigidBody and CollisionShape components like above. Give the RigidBody mass to make it movable
+                // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
                 // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
                 // objects are significant
-                auto* body = boxNode->CreateComponent<RigidBody>();
+                auto* body = boxNode->CreateComponent<NewtonRigidBody>();
                 body->SetMass(1.0f);
                 body->SetFriction(0.75f);
-                auto* shape = boxNode->CreateComponent<CollisionShape>();
+                auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
                 shape->SetBox(Vector3::ONE);
             }
         }
@@ -248,8 +260,37 @@ void Physics::MoveCamera(float timeStep)
         cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * timeStep);
 
     // "Shoot" a physics object with left mousebutton
-    if (input->GetMouseButtonPress(MOUSEB_LEFT))
-        SpawnObject();
+    if (input->GetMouseButtonPress(MOUSEB_LEFT)) {
+
+        int rando = Random(4);
+
+        if (rando == 0)
+        {
+            URHO3D_LOGINFO("Spawning Static Triangle Mesh");
+            SpawnTrimeshObject();
+        }
+        else if (rando == 1)
+        {
+            URHO3D_LOGINFO("Spawning Cube Hierarchy..");
+            SpawnObject();
+
+        }
+        else if (rando == 2)
+        {
+            URHO3D_LOGINFO("Spawning Convex Hull");
+            SpawnConvexHull();
+        }
+        else if (rando == 3)
+        {
+            URHO3D_LOGINFO("Spawning Compound");
+            SpawnCompound();
+        }
+      
+    }
+
+
+    if (input->GetMouseButtonPress(MOUSEB_RIGHT))
+        DecomposePhysicsTree();
 
     // Check for loading/saving the scene. Save the scene to the file Data/Scenes/Physics.xml relative to the executable
     // directory
@@ -262,6 +303,11 @@ void Physics::MoveCamera(float timeStep)
         filePath += "Data/Scenes/Physics.xml";
         File saveFile(context_, filePath, FILE_WRITE);
         scene_->SaveXML(saveFile);
+
+
+        scene_->GetComponent<UrhoNewtonPhysicsWorld>()->SerializeNewtonWorld("newtonWorldFile.ngd");
+
+
     }
     if (input->GetKeyPress(KEY_F7))
     {
@@ -282,30 +328,188 @@ void Physics::MoveCamera(float timeStep)
 void Physics::SpawnObject()
 {
     auto* cache = GetSubsystem<ResourceCache>();
+    Node* firstNode = nullptr;
+    Node* prevNode = nullptr;
+    bool isFirstNode = true;
+    for (int i = 0; i < 2; i++) {
+
+
+        // Create a smaller box at camera position
+        Node* boxNode;
+        if (prevNode)
+            boxNode = prevNode->CreateChild();
+        else {
+            boxNode = scene_->CreateChild();
+            firstNode = boxNode;
+        }
+        prevNode = boxNode;
+        const float range = 3.0f;
+
+
+        boxNode->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(Random(-1.0f,1.0f) * range,Random(-1.0f, 1.0f)* range, Random(-1.0f, 1.0f)* range));
+        boxNode->SetRotation(cameraNode_->GetRotation());
+        boxNode->SetScale(1.0f);
+
+        auto* boxObject = boxNode->CreateComponent<StaticModel>();
+        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+        boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        boxObject->SetCastShadows(true);
+
+
+         // Create physics components, use a smaller mass also
+         auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+         body->SetMass(0.1f);
+         body->SetFriction(0.75f);
+         body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
+         body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
+        
+
+        isFirstNode = false;
+        //body->SetContinuousCollision(true);
+        auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+        shape->SetBox(Vector3::ONE);
+
+        const float OBJECT_VELOCITY = 20.0f;
+
+        // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
+        // to overcome gravity better
+       // body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+
+    }
+
+    firstNode->GetComponent<NewtonRigidBody>()->reEvaluateBody();
+}
+
+void Physics::SpawnTrimeshObject()
+{
+    auto* cache = GetSubsystem<ResourceCache>();
 
     // Create a smaller box at camera position
-    Node* boxNode = scene_->CreateChild("SmallBox");
-    boxNode->SetPosition(cameraNode_->GetPosition());
+    Node* boxNode = scene_->CreateChild();
+
+    const float range = 3.0f;
+
+
+    boxNode->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(Random(-1.0f, 1.0f) * range, Random(-1.0f, 1.0f) * range, Random(-1.0f, 1.0f) * range));
     boxNode->SetRotation(cameraNode_->GetRotation());
-    boxNode->SetScale(0.25f);
+    boxNode->SetScale(1.0f);
+
     auto* boxObject = boxNode->CreateComponent<StaticModel>();
-    boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+    boxObject->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
+    boxObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
     boxObject->SetCastShadows(true);
 
+
     // Create physics components, use a smaller mass also
-    auto* body = boxNode->CreateComponent<RigidBody>();
-    body->SetMass(0.25f);
+    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    body->SetMass(1.0f);
     body->SetFriction(0.75f);
-    auto* shape = boxNode->CreateComponent<CollisionShape>();
-    shape->SetBox(Vector3::ONE);
+    body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
+    body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
 
-    const float OBJECT_VELOCITY = 10.0f;
 
-    // Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
+    //body->SetContinuousCollision(true);
+    auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+    shape->SetTriangleMesh(boxObject->GetModel(), 0);
+
+    const float OBJECT_VELOCITY = 20.0f;
+
+    // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
     // to overcome gravity better
-    body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+    // body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+
+    
+
 }
+
+
+
+void Physics::SpawnConvexHull()
+{
+    auto* cache = GetSubsystem<ResourceCache>();
+
+    // Create a smaller box at camera position
+    Node* boxNode = scene_->CreateChild();
+
+    const float range = 3.0f;
+
+
+    boxNode->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(Random(-1.0f, 1.0f) * range, Random(-1.0f, 1.0f) * range, Random(-1.0f, 1.0f) * range));
+    boxNode->SetRotation(cameraNode_->GetRotation());
+    boxNode->SetScale(1.0f);
+
+    auto* boxObject = boxNode->CreateComponent<StaticModel>();
+    boxObject->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
+    boxObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+    boxObject->SetCastShadows(true);
+
+
+    // Create physics components, use a smaller mass also
+    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    body->SetMass(1.0f);
+    body->SetFriction(0.75f);
+    body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
+    body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
+
+
+    //body->SetContinuousCollision(true);
+    auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+    shape->SetConvexHull(boxObject->GetModel(), 0);
+
+    const float OBJECT_VELOCITY = 20.0f;
+
+    // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
+    // to overcome gravity better
+    // body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+
+
+}
+
+
+
+void Physics::SpawnCompound()
+{
+    auto* cache = GetSubsystem<ResourceCache>();
+
+    // Create a smaller box at camera position
+    Node* boxNode = scene_->CreateChild();
+
+    const float range = 3.0f;
+
+
+    boxNode->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(Random(-1.0f, 1.0f) * range, Random(-1.0f, 1.0f) * range, Random(-1.0f, 1.0f) * range));
+    boxNode->SetRotation(cameraNode_->GetRotation());
+    boxNode->SetScale(1.0f);
+
+    auto* boxObject = boxNode->CreateComponent<StaticModel>();
+    boxObject->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
+    boxObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+    boxObject->SetCastShadows(true);
+
+
+    // Create physics components, use a smaller mass also
+    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    body->SetMass(1.0f);
+    body->SetFriction(0.75f);
+    body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
+    body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
+
+
+    //body->SetContinuousCollision(true);
+    auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+    shape->SetCompound(boxObject->GetModel(), 0);
+
+    const float OBJECT_VELOCITY = 20.0f;
+
+    // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
+    // to overcome gravity better
+    // body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+
+
+}
+
+
+
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
@@ -321,6 +525,25 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
 {
     // If draw debug mode is enabled, draw physics debug geometry. Use depth test to make the result easier to interpret
-    if (drawDebug_)
-        scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(true);
+    if (drawDebug_) {
+        scene_->GetComponent<UrhoNewtonPhysicsWorld>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>(), false);
+        GSS<VisualDebugger>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>());
+    }
 }
+
+void Physics::DecomposePhysicsTree()
+{
+    PODVector<RayQueryResult> res;
+    Ray ray(cameraNode_->GetWorldPosition(), cameraNode_->GetWorldDirection());
+    RayOctreeQuery querry(res, ray);
+    
+    scene_->GetComponent<Octree>()->Raycast(querry);
+
+    if (res.Size() > 1) {
+
+        //while(res[1].node_->SetParent())
+        //res[1].node_->GetChildren(true).Front()->SetParent(scene_);
+        res[1].node_->SetParent(scene_);
+    }
+}
+

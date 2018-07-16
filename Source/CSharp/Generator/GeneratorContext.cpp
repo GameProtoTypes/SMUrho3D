@@ -60,9 +60,6 @@ bool GeneratorContext::AddModule(const std::string& libraryName, bool isStatic, 
     m.outputDirCpp_ = m.outputDir_ + "Native/";
     m.rulesFile_ = rulesFile;
 
-    Urho3D::CreateDirsRecursive(m.outputDirCpp_);
-    Urho3D::CreateDirsRecursive(m.outputDirCs_);
-
     // Load compiler config
     {
         for (const auto& item : includes)
@@ -283,6 +280,9 @@ void GeneratorContext::Generate()
 
     for (auto& m : modules_)
     {
+        Urho3D::CreateDirsRecursive(m.outputDirCpp_);
+        Urho3D::CreateDirsRecursive(m.outputDirCs_);
+
         currentModule_ = &m;
         for (const auto& pass : cppPasses_)
             pass->Start();
@@ -358,8 +358,7 @@ void GeneratorContext::Generate()
                     pass->StartFile(pair.first);
                     cppast::visit(*pair.second, [&](const cppast::cpp_entity& e, cppast::visitor_info info)
                     {
-                        if (e.kind() == cppast::cpp_entity_kind::file_t || cppast::is_templated(e) ||
-                            cppast::is_friended(e))
+                        if (cppast::is_templated(e) || cppast::is_friended(e))
                             // no need to do anything for a file,
                             // templated and friended entities are just proxies, so skip those as well
                             // return true to continue visit for children
@@ -460,7 +459,7 @@ void GeneratorContext::Generate()
             fp << "using System.Runtime.CompilerServices;\n\n";
             for (auto& m2 : modules_)
             {
-                if (&m2 != &m && !m.publicKey_.empty())
+                if (m2.managedAssembly_ != m.managedAssembly_ && !m.publicKey_.empty())
                     fp << fmt::format("[assembly: InternalsVisibleTo(\"{}, PublicKey={}\")]\n",
                                       m2.managedAssembly_, m2.publicKey_);
             }
@@ -475,7 +474,6 @@ void GeneratorContext::Generate()
             fp << "}\n\n";
         }
 
-        SetLastModifiedTime(m.outputDir_, 0);   // Touch
         currentNamespace_ = nullptr;
     }
 }
@@ -507,7 +505,7 @@ bool GeneratorContext::IsAcceptableType(const cppast::cpp_type& type)
         return true;
 
     if (type.kind() == cppast::cpp_type_kind::template_instantiation_t)
-        return container::contains(symbols_, GetTemplateSubtype(type));
+        return GetSymbol(GetTemplateSubtype(type)) != nullptr;
 
     std::function<bool(const cppast::cpp_type&)> isPInvokable = [&](const cppast::cpp_type& type)
     {
@@ -557,7 +555,7 @@ bool GeneratorContext::IsAcceptableType(const cppast::cpp_type& type)
         return true;
 
     // Known symbols will be classes that are being wrapped
-    return container::contains(symbols_, Urho3D::GetTypeName(type));
+    return GetSymbol(Urho3D::GetTypeName(type)) != nullptr;
 }
 
 const TypeMap* GeneratorContext::GetTypeMap(const cppast::cpp_type& type, bool strict)
@@ -583,17 +581,33 @@ const TypeMap* GeneratorContext::GetTypeMap(const std::string& typeName)
     return nullptr;
 }
 
-bool GeneratorContext::GetSymbolOfConstant(MetaEntity* user, const std::string& constant, std::string& result,
+bool GeneratorContext::GetSymbolOfConstant(MetaEntity* user, const std::string& symbol, std::string& result,
                                            MetaEntity** constantEntity)
 {
-    if (constantEntity)
-        *constantEntity = nullptr;
+    const cppast::cpp_entity* symbolEntity = nullptr;
+    auto success = GetSymbolOfConstant(*user->ast_, symbol, result, &symbolEntity);
+    if (constantEntity != nullptr)
+    {
+        if (symbolEntity != nullptr)
+            *constantEntity = static_cast<MetaEntity*>(symbolEntity->user_data());
+        else
+            *constantEntity = nullptr;
+    }
+    return success;
+}
 
-    std::string symbol = constant;
+bool GeneratorContext::GetSymbolOfConstant(const cppast::cpp_entity& user, const std::string& symbol,
+                                           std::string& result, const cppast::cpp_entity** symbolEntity)
+{
+    if (symbolEntity)
+        *symbolEntity = nullptr;
+
+    MetaEntity* metaEntity = static_cast<MetaEntity*>(user.user_data());
+    auto currentSymbol = symbol;
     do
     {
         // Remaps are a priority
-        auto it = defaultValueRemaps_.find(symbol);
+        auto it = defaultValueRemaps_.find(currentSymbol);
         if (it != defaultValueRemaps_.end())
         {
             result = it->second;
@@ -601,43 +615,47 @@ bool GeneratorContext::GetSymbolOfConstant(MetaEntity* user, const std::string& 
         }
 
         // Existing entities
-        if (MetaEntity* entity = generator->GetSymbol(symbol))
+        if (MetaEntity* entity = generator->GetSymbol(currentSymbol))
         {
             result = entity->symbolName_;
-            if (constantEntity != nullptr)
-                *constantEntity = entity;
+            if (symbolEntity != nullptr)
+                *symbolEntity = entity->ast_;
             return true;
         }
-        symbol.clear();
+        currentSymbol.clear();
 
         // Get next possible symbol
-        while (user != nullptr)
+        while (metaEntity != nullptr)
         {
-            if (user->kind_ != cppast::cpp_entity_kind::class_t || user->kind_ != cppast::cpp_entity_kind::namespace_t)
+            if (metaEntity->kind_ != cppast::cpp_entity_kind::class_t || metaEntity->kind_ != cppast::cpp_entity_kind::namespace_t)
             {
-                symbol = user->symbolName_ + "::" + constant;
-                user = user->GetParent();
-                // Check next symbol
+                currentSymbol = metaEntity->symbolName_ + "::" + symbol;
+                metaEntity = metaEntity->GetParent();
+                // Check next currentSymbol
                 break;
             }
             else
-                // Unable to make symbol, try again with parent node
-                user = user->GetParent();
+                // Unable to make currentSymbol, try again with parent node
+                metaEntity = metaEntity->GetParent();
         }
-        // If making symbol fails loop terminates
-    } while (!symbol.empty());
+        // If making currentSymbol fails loop terminates
+    } while (!currentSymbol.empty());
 
     return false;
 }
 
-MetaEntity* GeneratorContext::GetSymbol(const std::string& symbolName)
+MetaEntity* GeneratorContext::GetSymbol(const std::string& symbolName, bool restrictToCurrentModule)
 {
-    auto it = symbols_.find(symbolName);
-    if (it == symbols_.end())
-        return nullptr;
-    if (it->second.expired())
-        return nullptr;
-    return it->second.lock().get();
+    for (auto& m : modules_)
+    {
+        if (restrictToCurrentModule && currentModule_ != &m)
+            continue;
+
+        auto it = m.symbols_.find(symbolName);
+        if (it != m.symbols_.end() && !it->second.expired())
+            return it->second.lock().get();
+    }
+    return nullptr;
 }
 
 bool GeneratorContext::IsInheritable(const std::string& symbolName) const
@@ -648,16 +666,28 @@ bool GeneratorContext::IsInheritable(const std::string& symbolName) const
 
 bool GeneratorContext::IsOutOfDate(const std::string& generatorExe)
 {
+    auto exeTime = GetLastModifiedTime(generatorExe);
+    if (exeTime == 0)
+        return true;
+
     for (const auto& m : modules_)
     {
-        if (GetFileSize(m.outputDirCpp_ + m.moduleName_ + "CApi.cpp") == 0)
-            // Missing file, needed for the first time generator runs
+        unsigned outputTime = 0;
+        std::vector<std::string> scannedFiles;
+        if (!ScanDirectory(m.outputDir_, scannedFiles,
+            ScanDirectoryFlags::IncludeFiles | ScanDirectoryFlags::Recurse))
             return true;
 
-        auto outputTime = GetLastModifiedTime(m.outputDir_);
-        auto exeTime = GetLastModifiedTime(generatorExe);
+        for (const auto& path : scannedFiles)
+        {
+            if (GetFileSize(path) == 0)
+                return true;
+
+            outputTime = std::max(outputTime, GetLastModifiedTime(path));
+        }
+
         auto rulesTime = GetLastModifiedTime(m.rulesFile_);
-        if (outputTime == 0 || exeTime == 0 || rulesTime == 0)
+        if (outputTime == 0 || rulesTime == 0)
             return true;
 
         if (exeTime > outputTime || rulesTime > outputTime)
@@ -675,6 +705,15 @@ bool GeneratorContext::IsOutOfDate(const std::string& generatorExe)
     }
 
     return false;
+}
+
+const cppast::cpp_type& GeneratorContext::DealiasType(const cppast::cpp_type& type)
+{
+    auto typeName = GetTypeName(type);
+    auto it = typeAliases_.find(typeName);
+    if (it != typeAliases_.end())
+        return *it->second;
+    return type;
 }
 
 }

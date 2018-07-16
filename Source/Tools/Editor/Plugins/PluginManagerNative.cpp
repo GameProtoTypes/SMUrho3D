@@ -38,7 +38,7 @@ PluginManagerNative::PluginManagerNative(Context* context)
     : PluginManager(context)
 {
 #if URHO3D_PLUGINS_NATIVE
-    SubscribeToEvent(E_ENDFRAME, std::bind(&PluginManagerNative::OnEndFrame, this));
+    SubscribeToEvent(E_POSTUPDATE, std::bind(&PluginManagerNative::OnPostUpdate, this));
 #endif
 }
 
@@ -81,7 +81,7 @@ bool PluginManagerNative::UnloadPlugin(const String& path)
 #endif
 }
 
-void PluginManagerNative::OnEndFrame()
+void PluginManagerNative::OnPostUpdate()
 {
 #if URHO3D_PLUGINS_NATIVE
     for (auto it = plugins_.Begin(); it != plugins_.End(); it++)

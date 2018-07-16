@@ -26,7 +26,7 @@ if(MSVC)
 	set(yaml_cxx_flags "/W3 /wd4127 /wd4355 ${yaml_cxx_flags}")
 endif()
 
-add_library(yaml-cpp OBJECT
+add_library(yaml-cpp STATIC
     ${sources}
     ${public_headers}
     ${private_headers}
@@ -37,4 +37,9 @@ add_library(yaml-cpp OBJECT
 target_include_directories(yaml-cpp
 	PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 	PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+install (TARGETS yaml-cpp EXPORT Urho3D
+    LIBRARY DESTINATION ${DEST_LIBRARY_DIR}
+    RUNTIME DESTINATION ${DEST_BIN_DIR}
+    ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR}
 )

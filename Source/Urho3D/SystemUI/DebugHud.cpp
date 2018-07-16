@@ -92,14 +92,14 @@ void DebugHud::RecalculateWindowPositions()
     posStats_ = WithinExtents({ui::GetStyle().WindowPadding.x, ui::GetStyle().WindowPadding.y});
 }
 
-void DebugHud::SetMode(unsigned mode)
+void DebugHud::SetMode(DebugHudModeFlags mode)
 {
     mode_ = mode;
 }
 
 void DebugHud::CycleMode()
 {
-    switch (mode_)
+    switch (mode_.AsInteger())
     {
     case DEBUGHUD_SHOW_NONE:
         SetMode(DEBUGHUD_SHOW_STATS);
@@ -122,7 +122,7 @@ void DebugHud::SetUseRendererStats(bool enable)
     useRendererStats_ = enable;
 }
 
-void DebugHud::Toggle(unsigned mode)
+void DebugHud::Toggle(DebugHudModeFlags mode)
 {
     SetMode(GetMode() ^ mode);
 }
@@ -220,15 +220,15 @@ void DebugHud::RenderUi(VariantMap& eventData)
 
 			String updateFpsString;
 			if (!GSS<Engine>()->GetUpdateIsLimited())
-				updateFpsString = "Update FPS %f";
+				updateFpsString = "Update Hz %f";
 			else
-				updateFpsString = "Update FPS (Limited) %f";
+				updateFpsString = "Update Hz (Limited) %f";
 
 			String renderFpsString;
 			if (!GSS<Engine>()->GetRenderIsLimited())
-				renderFpsString = "Render FPS %f";
+				renderFpsString = "Render Hz %f";
 			else
-				renderFpsString = "Render FPS (Limited) %f";
+				renderFpsString = "Render Hz (Limited) %f";
 
 
             ui::Text(updateFpsString.CString(), (1000.0f / GSS<Engine>()->GetAverageUpdateTimeMs()));

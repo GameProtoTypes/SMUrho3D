@@ -43,6 +43,14 @@ void Urho3DCustomPassLate::NamespaceStart()
 
     if (auto* entity = generator->GetSymbol("Urho3D::SystemUI::AddFont(Urho3D::String const&,PODVector<unsigned short> const&,float,bool)"))
         entity->children_[1]->defaultValue_ = "new ushort[0]";
+
+    if (auto* entity = generator->GetSymbol("Urho3D::Application::engineParameters_"))
+        // Wrapped in a class wrapper but not present in managed api.
+        entity->flags_ |= HintCSharpApi;
+
+    if (auto* entity = generator->GetSymbol("Urho3D::MOUSEB_ANY"))
+        // Enum values in C# are signed ints, this enum in cpp is unsigned.
+        entity->defaultValue_ = "-1";
 }
 
 bool Urho3DCustomPassLate::Visit(MetaEntity* entity, cppast::visitor_info info)
@@ -83,7 +91,7 @@ bool Urho3DCustomPassLate::Visit(MetaEntity* entity, cppast::visitor_info info)
             toEnum->name_ = toEnum->uniqueName_ = toEnum->symbolName_ = targetEnum;
             toEnum->kind_ = cppast::cpp_entity_kind::enum_t;
             entity->GetParent()->Add(toEnum);
-            generator->symbols_[targetEnum] = toEnum->shared_from_this();
+            generator->currentModule_->symbols_[targetEnum] = toEnum->shared_from_this();
         }
 
         auto children = entity->children_;

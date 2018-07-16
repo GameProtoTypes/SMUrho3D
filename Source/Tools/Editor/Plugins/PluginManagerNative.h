@@ -48,7 +48,7 @@ public:
 
 protected:
     /// Handles reloading of plugins.
-    void OnEndFrame();
+    void OnPostUpdate();
     /// Returns true if specified path matches predefined plugin naming rules.
     PluginPathType IsPluginPath(const String& path) override;
 

@@ -20,23 +20,24 @@
 // THE SOFTWARE.
 //
 
+#include "Urho3DClassWrappers.hpp"
 #include "CSharp.h"
 
 extern "C"
 {
 
-EXPORT_API MarshalAllocator::Block* Urho3D__Context__GetObjectCategories(Context* context)
+EXPORT_API const char** Urho3D__Context__GetObjectCategories(Context* context)
 {
     if (context == nullptr)
         return nullptr;
-    return CSharpConverter<Urho3D::Vector<Urho3D::String>>::ToCSharp(context->GetObjectCategories().Keys());
+    return CSharpConverter<Urho3D::StringVector>::ToCSharp(context->GetObjectCategories().Keys());
 }
 
-EXPORT_API MarshalAllocator::Block* Urho3D__Context__GetObjectsByCategory(Context* context, MarshalAllocator::Block* category)
+EXPORT_API const char** Urho3D__Context__GetObjectsByCategory(Context* context, const char* category)
 {
     StringVector result;
     const auto& factories = context->GetObjectFactories();
-    auto it = context->GetObjectCategories().Find(CSharpConverter<Urho3D::String>::FromCSharp(category));
+    auto it = context->GetObjectCategories().Find(category);
     if (it != context->GetObjectCategories().End())
     {
         for (const StringHash& type : it->second_)
@@ -49,6 +50,12 @@ EXPORT_API MarshalAllocator::Block* Urho3D__Context__GetObjectsByCategory(Contex
     }
     else
         return nullptr;
+}
+
+// Urho3D::Application::engineParameters_
+EXPORT_API Urho3D::VariantMap* get_Urho3D__Application_engineParameters_ref(Wrappers::Application* instance)
+{
+    return &instance->__get_engineParameters_();
 }
 
 }

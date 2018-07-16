@@ -34,13 +34,15 @@ namespace Urho3D
 URHO3D_EVENT(E_PREUPDATE, Update)
 {
 	URHO3D_PARAM(P_TIMESTEP, TimeStep);         // float
+    URHO3D_PARAM(P_TARGET_TIMESTEP, TimeStep);         // float
 	URHO3D_PARAM(P_UPDATETICK, UpdateTickNumber);  // long long
 }
 
-/// Application-wide logic update event. (use this one)
+/// Application-wide logic update event. (generally use this one)
 URHO3D_EVENT(E_UPDATE, PreUpdate)
 {
     URHO3D_PARAM(P_TIMESTEP, TimeStep);         // float
+    URHO3D_PARAM(P_TARGET_TIMESTEP, TimeStep);         // float
 	URHO3D_PARAM(P_UPDATETICK, UpdateTickNumber);  // long long
 }
 
@@ -48,8 +50,10 @@ URHO3D_EVENT(E_UPDATE, PreUpdate)
 URHO3D_EVENT(E_POSTUPDATE, PostUpdate)
 {
     URHO3D_PARAM(P_TIMESTEP, TimeStep);            // float
+    URHO3D_PARAM(P_TARGET_TIMESTEP, TimeStep);         // float
 	URHO3D_PARAM(P_UPDATETICK, UpdateTickNumber);  // long long 
 }
+
 
 
 

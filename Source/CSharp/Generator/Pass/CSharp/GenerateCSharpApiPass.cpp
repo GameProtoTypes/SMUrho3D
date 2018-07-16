@@ -45,8 +45,18 @@ void GenerateCSharpApiPass::Start()
 
 bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 {
+    if (entity->flags_ & HintCSharpApi)
+        return false;
+
+    const char* entityAccess = "public";
+    if (entity->flags_ & HintCSharpApi)
+        entityAccess = "internal";
+
     if (entity->kind_ == cppast::cpp_entity_kind::namespace_t)
     {
+        if (entity->flags_ & HintNoPublicApi)
+            return false;
+
         if (entity->children_.empty())
             return false;
 
@@ -86,11 +96,11 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
                         std::string name;
                         if (baseEntity->flags_ & HintInterface)
                         {
-                            baseInterfaces.emplace_back("I" + base.name());
+                            baseInterfaces.emplace_back("I" + baseEntity->name_);
                             if (!bases.empty())
                                 name = "I";
                         }
-                        name += base.name();
+                        name += baseEntity->name_;
                         bases.emplace_back(name);
                     }
                     else
@@ -117,11 +127,11 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
             if (isStatic)
             {
                 auto staticKeyword = entity->flags_ & HintNoStatic ? "" : "static ";
-                printer_ << fmt::format("public {}partial class {}", staticKeyword, entity->name_);
+                printer_ << fmt::format("{} {}partial class {}", entityAccess, staticKeyword, entity->name_);
             }
             else
             {
-                printer_ << fmt::format("public unsafe partial class {} : {}", entity->name_, str::join(bases, ", "));
+                printer_ << fmt::format("{} unsafe partial class {} : {}", entityAccess, entity->name_, str::join(bases, ", "));
 
                 if (entity->flags_ & HintInterface)
                 {
@@ -129,7 +139,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
                     if (!interfaces.empty())
                         interfaces = " : " + interfaces;
                     interface_.indent_ = 0;
-                    interface_ << fmt::format("public unsafe interface I{}{}", entity->name_, interfaces);
+                    interface_ << fmt::format("{} unsafe interface I{}{}", entityAccess, entity->name_, interfaces);
                     interface_.indent_ = printer_.indent_;
                     interface_.Indent();
                 }
@@ -139,17 +149,17 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
             if (!isStatic)
             {
-                printer_ << "internal override void SetupInstance(IntPtr instance, bool ownsInstance, bool addToCache=true)";
+                printer_ << "internal override void SetupInstance(IntPtr __self__, NativeObjectFlags flags=NativeObjectFlags.None)";
                 printer_.Indent();
                 {
                     auto className = entity->name_;
-                    printer_ << fmt::format("System.Diagnostics.Debug.Assert(instance != IntPtr.Zero);");
-                    printer_ << "NativeInstance = instance;";
-                    printer_ << "OwnsNativeInstance = ownsInstance;";
+                    printer_ << fmt::format("System.Diagnostics.Debug.Assert(__self__ != IntPtr.Zero);");
+                    printer_ << "Flags = flags;";
+                    printer_ << "NativeInstance = __self__;";
                     if (generator->IsInheritable(entity->uniqueName_) || IsSubclassOf(entity->Ast<cppast::cpp_class>(), "Urho3D::RefCounted"))
-                        printer_ << fmt::format("{}_setup(instance, GCHandle.ToIntPtr(GCHandle.Alloc(this)), GetType().Name, ref NativeObjectSize);",
+                        printer_ << fmt::format("{}_setup(__self__, GCHandle.ToIntPtr(GCHandle.Alloc(this)), GetType().Name);",
                             Sanitize(entity->uniqueName_));
-                    printer_ << "if (addToCache)";
+                    printer_ << "if (!flags.HasFlag(NativeObjectFlags.SkipInstanceCache))";
                     printer_.Indent();
                     {
                         printer_ << "InstanceCache.Add(this);";
@@ -158,35 +168,40 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
                     if (generator->IsInheritable(entity->symbolName_))
                     {
-                        for (const auto& child : entity->children_)
+                        printer_ << fmt::format("if (GetType().IsSubclassOf(typeof({className})))", FMT_CAPTURE(className));
+                        printer_.Indent();
                         {
-                            if (child->kind_ == cppast::cpp_entity_kind::member_function_t)
+                            for (const auto& child : entity->children_)
                             {
-                                const auto& func = child->Ast<cppast::cpp_member_function>();
-                                if (func.is_virtual())
+                                if (child->kind_ == cppast::cpp_entity_kind::member_function_t)
                                 {
-                                    auto name = child->name_;
-                                    auto pc = func.parameters().empty() ? "" : ", ";
-                                    auto paramTypeList = str::join(container::map<std::string>(child->children_, [&](std::shared_ptr<MetaEntity> metaParam)
+                                    const auto& func = child->Ast<cppast::cpp_member_function>();
+                                    if (func.is_virtual())
                                     {
-                                        const auto& param = metaParam->Ast<cppast::cpp_function_parameter>();
-                                        return fmt::format("typeof({})", ToCSType(param.type(), true));
-                                    }), ", ");
+                                        auto name = child->name_;
+                                        auto pc = func.parameters().empty() ? "" : ", ";
+                                        auto paramTypeList = str::join(container::map<std::string>(child->children_, [&](std::shared_ptr<MetaEntity> metaParam)
+                                        {
+                                            const auto& param = metaParam->Ast<cppast::cpp_function_parameter>();
+                                            return fmt::format("typeof({})", ToCSType(param.type(), true));
+                                        }), ", ");
 
-                                    // Optimization: do not route c++ virtual method calls through .NET if user does not override
-                                    // such method in a managed class.
-                                    printer_ << fmt::format("if (GetType().HasOverride(nameof({name}){pc}{paramTypeList}))",
-                                        FMT_CAPTURE(name), FMT_CAPTURE(pc), FMT_CAPTURE(paramTypeList));
-                                    printer_.Indent();
-                                    {
-                                        printer_ << fmt::format("set_fn{cFunction}(instance, "
-                                                "Marshal.GetFunctionPointerForDelegate(({className}{cFunction}Delegate){cFunction}_virtual));",
-                                            FMT_CAPTURE(className), fmt::arg("cFunction", child->cFunctionName_));
+                                        // Optimization: do not route c++ virtual method calls through .NET if user does not override
+                                        // such method in a managed class.
+                                        printer_ << fmt::format("if (GetType().HasOverride(nameof({name}){pc}{paramTypeList}))",
+                                            FMT_CAPTURE(name), FMT_CAPTURE(pc), FMT_CAPTURE(paramTypeList));
+                                        printer_.Indent();
+                                        {
+                                            printer_ << fmt::format("set_fn{cFunction}(__self__, "
+                                                    "Marshal.GetFunctionPointerForDelegate(({className}{cFunction}Delegate){cFunction}_virtual));",
+                                                FMT_CAPTURE(className), fmt::arg("cFunction", child->cFunctionName_));
+                                        }
+                                        printer_.Dedent();
                                     }
-                                    printer_.Dedent();
                                 }
                             }
                         }
+                        printer_.Dedent();
                     }
                     printer_ << "OnSetupInstance();";
                 }
@@ -211,7 +226,9 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
     {
         if (info.event == info.container_entity_enter)
         {
-            printer_ << "public enum " + entity->name_;
+            for (const auto& attr : entity->attributes_)
+                printer_ << fmt::format("[{}]", attr);
+            printer_ << fmt::format("{} enum {}", entityAccess, entity->name_);
             printer_.Indent();
         }
         else if (info.event == info.container_entity_exit)
@@ -240,21 +257,21 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         }
 
         auto className = cls->name_;
-        auto baseCtor = hasBase ? " : base(IntPtr.Zero, true)" : "";
+        auto baseCtor = hasBase ? " : base(IntPtr.Zero)" : "";
         auto paramNameList = MapParameterList(entity->children_);
         auto cFunctionName = entity->cFunctionName_;
 
         // If class has a base class we call base constructor that does nothing. Class will be fully constructed here.
         printer_ << fmt::format("{access} {className}({csParams}){baseCtor}", fmt::arg("access",
-            entity->access_ == cppast::cpp_public ? "public" : "protected"), FMT_CAPTURE(className),
+            entity->access_ == cppast::cpp_public ? entityAccess : "protected"), FMT_CAPTURE(className),
             FMT_CAPTURE(baseCtor), fmt::arg("csParams", FormatCSParameterList(entity->children_)));
 
         printer_.Indent();
         {
             PrintParameterHandlingCodePre(entity->children_);
-            printer_ << fmt::format("var instance = {cFunctionName}({paramNameList});",
+            printer_ << fmt::format("var __self__ = {cFunctionName}({paramNameList});",
                 FMT_CAPTURE(cFunctionName), FMT_CAPTURE(paramNameList));
-            printer_ << "SetupInstance(instance, true);";
+            printer_ << "SetupInstance(__self__);";
             PrintParameterHandlingCodePost(entity->children_);
         }
         printer_.Dedent();
@@ -294,7 +311,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
         auto csParams = FormatCSParameterList(entity->children_);
         printer_ << fmt::format("{access} {virtual}{rtype} {name}({csParams})",
-            fmt::arg("access", entity->access_ == cppast::cpp_public ? "public" : "protected"),
+            fmt::arg("access", entity->access_ == cppast::cpp_public ? entityAccess : "protected"),
             fmt::arg("virtual", /*!isFinal &&*/ func.is_virtual() ? "virtual " : ""), FMT_CAPTURE(rtype),
             fmt::arg("name", entity->name_), FMT_CAPTURE(csParams));
 
@@ -407,7 +424,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         auto csParams = FormatCSParameterList(entity->children_);
 
         printer_ << fmt::format("{access} static {rtype} {name}({csParams})",
-            fmt::arg("access", entity->access_ == cppast::cpp_public ? "public" : "protected"), FMT_CAPTURE(rtype),
+            fmt::arg("access", entity->access_ == cppast::cpp_public ? entityAccess : "protected"), FMT_CAPTURE(rtype),
             fmt::arg("name", entity->name_), FMT_CAPTURE(csParams));
 
         auto paramNameList = MapParameterList(entity->children_);
@@ -440,7 +457,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
         auto* ns = entity->GetParent();
 
         auto defaultValue = ConvertDefaultValueToCS(entity, entity->GetDefaultValue(), var.type(), true);
-        auto access = entity->access_ == cppast::cpp_public ? "public" : "protected";
+        auto access = entity->access_ == cppast::cpp_public ? entityAccess : "protected";
         auto csType = ToCSType(var.type(), true);
         auto name = entity->name_;
         auto sourceName = entity->sourceName_;
@@ -512,7 +529,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
             const auto& getterFunc = getter->Ast<cppast::cpp_member_function>();
             auto csType = ToCSType(getterFunc.return_type(), true);
 
-            auto access = entity->access_ == cppast::cpp_public ? "public" : "protected";
+            auto access = entity->access_ == cppast::cpp_public ? entityAccess : "protected";
             printer_ << fmt::format("{access} {csType} {name}", FMT_CAPTURE(access), FMT_CAPTURE(csType),
                 fmt::arg("name", entity->name_));
             printer_.Indent();
@@ -563,7 +580,7 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
             auto constant = entity->flags_ & HintReadOnly ? "readonly" : isConstant ? "const" : "";
 
             auto line = fmt::format("{access} {constant} {csType} {name}",
-                fmt::arg("access", entity->access_ == cppast::cpp_public ? "public" : "protected"),
+                fmt::arg("access", entity->access_ == cppast::cpp_public ? entityAccess : "protected"),
                 FMT_CAPTURE(constant), FMT_CAPTURE(csType), FMT_CAPTURE(name));
 
             if (isConstant)
@@ -617,7 +634,8 @@ bool GenerateCSharpApiPass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
 void GenerateCSharpApiPass::Stop()
 {
-    auto outputFile = generator->currentModule_->outputDirCs_ + "CSharp.cs";
+    auto outputFile = fmt::format("{}/{}CSharp.cs", generator->currentModule_->outputDirCs_,
+        generator->currentModule_->moduleName_);
     std::ofstream fp(outputFile);
     if (!fp.is_open())
     {
@@ -634,20 +652,20 @@ std::string GenerateCSharpApiPass::MapToCS(const cppast::cpp_type& type, const s
 
     bool isComplex = IsComplexType(type);
     bool isValue = IsValueType(type);
-    auto owns = isComplex && isValue ? "true" : "false";
 
     if (const auto* map = generator->GetTypeMap(type, false))
-        return fmt::format(map->pInvokeToCSTemplate_.c_str(), fmt::arg("value", expression), FMT_CAPTURE(owns));
+        return fmt::format(map->pInvokeToCSTemplate_.c_str(), fmt::arg("value", expression));
     else if (type.kind() == cppast::cpp_type_kind::array_t)
         return expression;
-    else if (IsComplexType(type))
-        return fmt::format("{}.GetManagedInstance({}, {})", ToCSType(type), expression, owns);
+    else if (isComplex)
+        return fmt::format("{}.GetManagedInstance({})", ToCSType(type, true, true), expression);
 
     return expression;
 }
 
-std::string GenerateCSharpApiPass::ToCSType(const cppast::cpp_type& type, bool disallowReferences)
+std::string GenerateCSharpApiPass::ToCSType(const cppast::cpp_type& usedType, bool disallowReferences, bool disallowInterfaces)
 {
+    const cppast::cpp_type& type = generator->DealiasType(usedType);
     bool isRef = false;
 
     std::function<std::string(const cppast::cpp_type&)> toCSType = [&](const cppast::cpp_type& t) -> std::string {
@@ -720,6 +738,15 @@ std::string GenerateCSharpApiPass::ToCSType(const cppast::cpp_type& type, bool d
     else
         typeName = toCSType(type);
 
+    if (!disallowInterfaces)
+    {
+        if (auto* sym = generator->GetSymbol(cppast::to_string(GetBaseType(type))))
+        {
+            if (sym->flags_ & HintInterface)
+                typeName = fmt::format("{}::I{}", sym->GetParent()->symbolName_, sym->name_);
+        }
+    }
+
     if (!disallowReferences && isRef)
         typeName = "ref " + typeName;
 
@@ -735,7 +762,7 @@ std::string GenerateCSharpApiPass::MapToPInvoke(const cppast::cpp_type& type, co
         // Arrays are handled by custom marshaller
         return expression;
     else if (IsComplexType(type))
-        return fmt::format("{}.GetNativeInstance({})", ToCSType(type, true), expression);
+        return fmt::format("{}.GetNativeInstance({})", ToCSType(type, true, true), expression);
 
     return expression;
 }
@@ -790,7 +817,7 @@ std::string GenerateCSharpApiPass::ConvertDefaultValueToCS(MetaEntity* user, std
 
     if (auto* map = generator->GetTypeMap(type, false))
     {
-        if (map->isValueType_ && !allowComplex)
+        if (map->isValueType_ && !allowComplex && map->csType_ != "string")
         {
             // Value type parameters are turned to nullables when they have default values.
             return "null";

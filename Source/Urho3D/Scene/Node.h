@@ -113,6 +113,8 @@ public:
     bool SaveXML(Serializer& dest, const String& indentation = "\t") const;
     /// Save to a JSON file. Return true if successful.
     bool SaveJSON(Serializer& dest, const String& indentation = "\t") const;
+    /// Save to a YAML file. Return true if successful.
+    bool SaveYAML(Serializer& dest, int indentation = 2) const;
     /// Set name of the scene node. Names are not required to be unique.
     void SetName(const String& name);
 
@@ -401,6 +403,7 @@ public:
     /// Return parent space transform matrix.
     Matrix3x4 GetTransform() const { return Matrix3x4(position_, rotation_, scale_); }
 
+
     /// Return position in world space.
     Vector3 GetWorldPosition() const
     {
@@ -491,12 +494,18 @@ public:
     Vector3 LocalToWorld(const Vector3& position) const;
     /// Convert a local space position or rotation to world space.
     Vector3 LocalToWorld(const Vector4& vector) const;
+    /// Convert a local space position or rotation to world space.
+    Matrix3x4 LocalToWorld(const Matrix3x4& transform) const;
+
+
     /// Convert a local space position or rotation to world space (for Urho2D).
     Vector2 LocalToWorld2D(const Vector2& vector) const;
     /// Convert a world space position to local space.
     Vector3 WorldToLocal(const Vector3& position) const;
     /// Convert a world space position or rotation to local space.
     Vector3 WorldToLocal(const Vector4& vector) const;
+    /// Convert a world space position or rotation to local space.
+    Matrix3x4 WorldToLocal(const Matrix3x4& transform) const;
     /// Convert a world space position or rotation to local space (for Urho2D).
     Vector2 WorldToLocal2D(const Vector2& vector) const;
 

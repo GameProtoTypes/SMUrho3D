@@ -42,6 +42,8 @@ enum CppEntityHints
     HintProperty = 8,
     HintDefaultValueFinal = 16,
     HintNoStatic = 32,
+    HintNoPublicApi = 64,
+    HintCSharpApi = 128,
 };
 
 /// Wrapper over cppast::cpp_entity. Overlay-AST is assembled from these entities. This allows freely modifying AST
@@ -112,8 +114,11 @@ struct MetaEntity : public std::enable_shared_from_this<MetaEntity>
         entity->parent_ = std::weak_ptr<MetaEntity>(shared_from_this());
         if (symbolName_.empty())
             entity->symbolName_ = entity->name_;
-        else
+        else if (kind_ != cppast::cpp_entity_kind::file_t)
             entity->symbolName_ = symbolName_ + "::" + entity->name_;
+        else
+            entity->symbolName_ = entity->name_;
+
         children_.emplace_back(std::move(ref));
         entity->Register();
     }

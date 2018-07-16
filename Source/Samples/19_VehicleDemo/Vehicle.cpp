@@ -24,11 +24,11 @@
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Graphics/Model.h>
 #include <Urho3D/Graphics/StaticModel.h>
-#include <Urho3D/Physics/CollisionShape.h>
+#include <Urho3D/Physics/NewtonCollisionShape.h>
 #include <Urho3D/Physics/Constraint.h>
 #include <Urho3D/Physics/PhysicsEvents.h>
 #include <Urho3D/Physics/PhysicsWorld.h>
-#include <Urho3D/Physics/RigidBody.h>
+#include <Urho3D/Physics/NewtonRigidBody.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
 
@@ -66,7 +66,7 @@ void Vehicle::ApplyAttributes()
     frontRight_ = scene->GetNode(frontRightID_);
     rearLeft_ = scene->GetNode(rearLeftID_);
     rearRight_ = scene->GetNode(rearRightID_);
-    hullBody_ = node_->GetComponent<RigidBody>();
+    hullBody_ = node_->GetComponent<NewtonRigidBody>();
 
     GetWheelComponents();
 }
@@ -124,8 +124,8 @@ void Vehicle::Init()
     auto* cache = GetSubsystem<ResourceCache>();
 
     auto* hullObject = node_->CreateComponent<StaticModel>();
-    hullBody_ = node_->CreateComponent<RigidBody>();
-    auto* hullShape = node_->CreateComponent<CollisionShape>();
+    hullBody_ = node_->CreateComponent<NewtonRigidBody>();
+    auto* hullShape = node_->CreateComponent<NewtonCollisionShape>();
 
     node_->SetScale(Vector3(1.5f, 1.0f, 3.0f));
     hullObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
@@ -160,8 +160,8 @@ void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>
     wheelNodeID = wheelNode->GetID();
 
     auto* wheelObject = wheelNode->CreateComponent<StaticModel>();
-    auto* wheelBody = wheelNode->CreateComponent<RigidBody>();
-    auto* wheelShape = wheelNode->CreateComponent<CollisionShape>();
+    auto* wheelBody = wheelNode->CreateComponent<NewtonRigidBody>();
+    auto* wheelShape = wheelNode->CreateComponent<NewtonCollisionShape>();
     auto* wheelConstraint = wheelNode->CreateComponent<Constraint>();
 
     wheelObject->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
@@ -174,7 +174,7 @@ void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>
     wheelBody->SetAngularDamping(0.75f); // Could also use rolling friction
     wheelBody->SetCollisionLayer(1);
     wheelConstraint->SetConstraintType(CONSTRAINT_HINGE);
-    wheelConstraint->SetOtherBody(GetComponent<RigidBody>()); // Connect to the hull body
+    wheelConstraint->SetOtherBody(GetComponent<NewtonRigidBody>()); // Connect to the hull body
     wheelConstraint->SetWorldPosition(wheelNode->GetPosition()); // Set constraint's both ends at wheel's location
     wheelConstraint->SetAxis(Vector3::UP); // Wheel rotates around its local Y-axis
     wheelConstraint->SetOtherAxis(offset.x_ >= 0.0 ? Vector3::RIGHT : Vector3::LEFT); // Wheel's hull axis points either left or right
@@ -187,8 +187,8 @@ void Vehicle::GetWheelComponents()
 {
     frontLeftAxis_ = frontLeft_->GetComponent<Constraint>();
     frontRightAxis_ = frontRight_->GetComponent<Constraint>();
-    frontLeftBody_ = frontLeft_->GetComponent<RigidBody>();
-    frontRightBody_ = frontRight_->GetComponent<RigidBody>();
-    rearLeftBody_ = rearLeft_->GetComponent<RigidBody>();
-    rearRightBody_ = rearRight_->GetComponent<RigidBody>();
+    frontLeftBody_ = frontLeft_->GetComponent<NewtonRigidBody>();
+    frontRightBody_ = frontRight_->GetComponent<NewtonRigidBody>();
+    rearLeftBody_ = rearLeft_->GetComponent<NewtonRigidBody>();
+    rearRightBody_ = rearRight_->GetComponent<NewtonRigidBody>();
 }

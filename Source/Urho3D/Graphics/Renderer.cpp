@@ -329,7 +329,7 @@ void Renderer::SetTextureFilterMode(TextureFilterMode mode)
     textureFilterMode_ = mode;
 }
 
-void Renderer::SetTextureQuality(int quality)
+void Renderer::SetTextureQuality(MaterialQuality quality)
 {
     quality = Clamp(quality, QUALITY_LOW, QUALITY_HIGH);
 
@@ -340,7 +340,7 @@ void Renderer::SetTextureQuality(int quality)
     }
 }
 
-void Renderer::SetMaterialQuality(int quality)
+void Renderer::SetMaterialQuality(MaterialQuality quality)
 {
     quality = Clamp(quality, QUALITY_LOW, QUALITY_MAX);
 

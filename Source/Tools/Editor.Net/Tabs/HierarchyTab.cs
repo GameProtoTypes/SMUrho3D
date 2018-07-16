@@ -31,15 +31,24 @@ namespace Editor.Tabs
     {
         private IHierarchyProvider _hierarchyProvider;
 
-        public HierarchyTab(Context context, string title, Vector2? initialSize = null, string placeNextToDock = null,
-            DockSlot slot = DockSlot.SlotNone) : base(context, title, initialSize, placeNextToDock, slot)
+        public HierarchyTab(Context context, string title, TabLifetime lifetime, Vector2? initialSize = null,
+            string placeNextToDock = null, DockSlot slot = DockSlot.SlotNone) : base(context, title, lifetime,
+            initialSize, placeNextToDock, slot)
         {
+            Uuid = "af235811-2493-4adf-aa88-e40332b45150";
             SubscribeToEvent<InspectHierarchy>(OnInspect);
+            SubscribeToEvent<EditorTabClosed>(OnTabClosed);
         }
 
-        private void OnInspect(VariantMap args)
+        private void OnTabClosed(Event args)
         {
-            _hierarchyProvider = (IHierarchyProvider) args[InspectHierarchy.HierarchyProvider].Object;
+            if (args.GetObject(EditorTabClosed.TabInstance) == _hierarchyProvider)
+                _hierarchyProvider = null;
+        }
+
+        private void OnInspect(Event args)
+        {
+            _hierarchyProvider = (IHierarchyProvider) args.GetObject(InspectHierarchy.HierarchyProvider);
         }
 
         protected override void Render()

@@ -19,11 +19,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-using System;
-using System.Diagnostics;
-using System.Reflection;
-using Urho3D.CSharp;
-
 
 namespace Urho3D
 {
@@ -31,9 +26,9 @@ namespace Urho3D
     {
         public T GetComponent<T>() where T : Component
         {
-            return GetManagedInstance<T>(
+            return GetManagedInstanceGeneric<T>(
                 Urho3D__Component__GetComponent_Urho3D__StringHash__const(
-                    NativeInstance, StringHash.Calculate(typeof(T).Name)), false);
+                    NativeInstance, StringHash.Calculate(typeof(T).Name)));
         }
     }
 }

@@ -64,6 +64,9 @@ std::regex WildcardToRegex(const std::string& wildcard)
 
 std::string GetScopeName(const cppast::cpp_entity& e)
 {
+    if (e.kind() == cppast::cpp_entity_kind::file_t)
+        return "";
+
     std::string name = e.name();
     if (name.empty())
         // Give unique symbol to anonymous entities
@@ -233,7 +236,7 @@ bool IsEnumType(const cppast::cpp_type& type)
     return false;
 }
 
-bool IsComplexType(const cppast::cpp_type& type)
+bool IsComplexType_P(const cppast::cpp_type& type)
 {
     if (auto* map = generator->GetTypeMap(type))
         return !map->isValueType_;
@@ -257,6 +260,11 @@ bool IsComplexType(const cppast::cpp_type& type)
     default:
         return true;
     }
+}
+
+bool IsComplexType(const cppast::cpp_type& type)
+{
+    return IsComplexType_P(generator->DealiasType(type));
 }
 
 bool IsValueType(const cppast::cpp_type& type)
@@ -340,12 +348,9 @@ const cppast::cpp_entity* GetEntity(const cppast::cpp_type& type)
     if (realType.kind() == cppast::cpp_type_kind::user_defined_t)
     {
         const auto& userType = dynamic_cast<const cppast::cpp_user_defined_type&>(realType);
-        auto it = generator->symbols_.find(cppast::to_string(userType));
-        if (it != generator->symbols_.end())
-        {
-            if (!it->second.expired())
-                return it->second.lock()->ast_;
-        }
+        auto* sym = generator->GetSymbol(cppast::to_string(userType));
+        if (sym != nullptr)
+            return sym->ast_;
     }
     return nullptr;
 }
@@ -792,7 +797,16 @@ std::string SanitizeConstant(std::string parentName, std::string constantName)
         std::transform(parentName.begin(), parentName.end(), parentName.begin(), tolower);
         parentName = parentName.substr(0, firstWord.length());
         if (firstWord == parentName)
+        {
+            static std::regex number("[0-9]+");
             constantWords.erase(constantWords.begin());
+            if (constantWords.size() == 1 && std::regex_match(constantWords.front(), number))
+            {
+                // Constant name may end up being a number. Number is not a valid identifier therefore we prepend "Num".
+                constantWords.emplace_back("Num");
+                std::reverse(constantWords.begin(), constantWords.end());
+            }
+        }
         else
         {
             // If constant starts with a word that consists of first letters of parent name - remove this abbreviation.

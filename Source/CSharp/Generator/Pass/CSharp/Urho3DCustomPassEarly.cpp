@@ -51,7 +51,13 @@ bool Urho3DCustomPassEarly::Visit(MetaEntity* entity, cppast::visitor_info info)
     if (info.event == info.container_entity_exit)
         return true;
 
-    if (entity->kind_ != cppast::cpp_entity_kind::enum_value_t &&
+    if (entity->kind_ == cppast::cpp_entity_kind::enum_value_t)
+    {
+        auto defaultValue = entity->GetDefaultValue();
+        if (str::starts_with(defaultValue, "SDL_") || str::starts_with(defaultValue, "SDLK_"))
+            entity->defaultValue_ = "SDL." + defaultValue;
+    }
+    else if (entity->kind_ != cppast::cpp_entity_kind::enum_value_t &&
         entity->kind_ != cppast::cpp_entity_kind::variable_t &&
         str::starts_with(entity->name_, "SDL_"))
     {
@@ -101,7 +107,7 @@ bool Urho3DCustomPassEarly::Visit(MetaEntity* entity, cppast::visitor_info info)
                 // These event classes are moved to ParentNamespace.Events namespace.
                 auto* parentSpaceDest = eventNamespace->GetParent();
                 std::string parentSpaceSymbol(parentSpaceDest->symbolName_ + "::Events");
-                MetaEntity* eventsParentSpace = generator->GetSymbol(parentSpaceSymbol);
+                MetaEntity* eventsParentSpace = generator->GetSymbol(parentSpaceSymbol, true);
                 if (eventsParentSpace == nullptr)
                 {
                     std::shared_ptr<MetaEntity> eventsParentSpaceStorage(new MetaEntity());
@@ -110,7 +116,7 @@ bool Urho3DCustomPassEarly::Visit(MetaEntity* entity, cppast::visitor_info info)
                     eventsParentSpace->uniqueName_ = parentSpaceSymbol;
                     eventsParentSpace->kind_ = cppast::cpp_entity_kind::namespace_t;
                     parentSpaceDest->Add(eventsParentSpace);
-                    generator->symbols_[parentSpaceSymbol] = eventsParentSpace->shared_from_this();
+                    generator->currentModule_->symbols_[parentSpaceSymbol] = eventsParentSpace->shared_from_this();
                 }
                 eventsParentSpace->Add(eventNamespace);
 

@@ -19,47 +19,101 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+
+using System;
+using System.Linq;
+using Editor.Events;
 using ImGui;
 using Urho3D;
+using Urho3D.Events;
 
 
 namespace Editor.Tabs
 {
+    public enum TabLifetime
+    {
+        Temporary,
+        Persistent
+    }
+
     public class Tab : Urho3D.Object
     {
-        public struct Location
-        {
-            public string NextDockName;
-            public DockSlot Slot;
-        }
-
-        private bool _isOpen = true;
-        public bool IsOpen
-        {
-            get => _isOpen;
-            set => _isOpen = value;
-        }
+        public bool IsOpen = true;
         public string Title { get; protected set; }
+        public string UniqueTitle => $"{Title}###{Uuid}";
         public System.Numerics.Vector2 InitialSize;
-        public Location InitialLocation;
+        public string InitialNextDockName;
+        public DockSlot InitialSlot;
         protected WindowFlags WindowFlags = WindowFlags.Default;
+        private bool _activateTab;
         public bool MouseHoversViewport { get; protected set; }
         public bool IsDockFocused { get; protected set; }
         public bool IsDockActive { get; protected set; }
-
-        public Tab(Context context, string title, Vector2? initialSize = null, string placeNextToDock = null,
-            DockSlot slot = DockSlot.SlotNone) : base(context)
+        public TabLifetime Lifetime { get; protected set; }
+        private string _resourcePath;
+        public string ResourcePath
         {
+            get => _resourcePath;
+            protected set => _resourcePath = Title = value;
+        }
+
+        public string ResourceType { get; protected set; }
+        public string Uuid { get; protected set; }
+
+        public Tab(Context context, string title, TabLifetime lifetime, Vector2? initialSize = null,
+            string placeNextToDock = null, DockSlot slot = DockSlot.SlotNone) : base(context)
+        {
+            Uuid = Guid.NewGuid().ToString().ToLower();
             Title = title;
+            Lifetime = lifetime;
             InitialSize = initialSize.GetValueOrDefault(new Vector2(-1, -1));
-            InitialLocation.NextDockName = placeNextToDock;
-            InitialLocation.Slot = slot;
+            InitialNextDockName = placeNextToDock;
+            InitialSlot = slot;
+
+            SubscribeToEvent<EditorProjectSave>(OnSaveProject);
+            SubscribeToEvent<EditorDeleteResource>(OnResourceDeleted);
+            SubscribeToEvent<ResourceRenamed>(OnResourceRenamed);
+        }
+
+        private void OnResourceRenamed(Event e)
+        {
+            if (ResourcePath == null)
+                return;
+
+            var from = e.GetString(ResourceRenamed.From);
+            var to = e.GetString(ResourceRenamed.To);
+
+            if (from == ResourcePath)
+                ResourcePath = to;
+        }
+
+        private void OnResourceDeleted(Event e)
+        {
+            if (Lifetime == TabLifetime.Temporary && e.GetString(EditorDeleteResource.ResourceName) == ResourcePath)
+                IsOpen = false;
+        }
+
+        public virtual void LoadResource(string resourcePath)
+        {
+            ResourcePath = resourcePath;
+        }
+
+        public virtual void LoadSave(JSONValue save)
+        {
+            throw new NotImplementedException();
         }
 
         public void OnRender()
         {
-            ImGuiDock.SetNextDockPos(InitialLocation.NextDockName, InitialLocation.Slot, ImGui.Condition.FirstUseEver);
-            if (ImGuiDock.BeginDock(Title, ref _isOpen, WindowFlags, InitialSize))
+            ImGuiDock.SetNextDockPos(InitialNextDockName, InitialSlot, ImGui.Condition.FirstUseEver);
+            var render = ImGuiDock.BeginDock(UniqueTitle, ref IsOpen, WindowFlags, InitialSize);
+            if (_activateTab)
+            {
+                ImGuiDock.SetDockActive();
+                _activateTab = false;
+            }
+
+            if (render)
             {
                 if (Input.IsMouseVisible)
                     MouseHoversViewport = ui.IsItemHovered(HoveredFlags.Default);
@@ -74,6 +128,28 @@ namespace Editor.Tabs
         protected virtual void Render()
         {
 
+        }
+
+        public void Activate()
+        {
+            _activateTab = true;
+        }
+
+        protected virtual void OnSaveProject(Event e)
+        {
+            if (string.IsNullOrEmpty(ResourceType))
+                return;
+
+            var projectSave = (JSONValue) e.GetObject(EditorProjectSave.SaveData);
+            var resources = projectSave.Get("resources");
+
+            var save = new JSONValue();            // This is object passed to LoadSave()
+            save.Set("type", ResourceType);
+            save.Set("path", ResourcePath);
+            save.Set("uuid", Uuid);
+
+            resources.Push(save);
+            projectSave.Set("resources", resources);
         }
     }
 }

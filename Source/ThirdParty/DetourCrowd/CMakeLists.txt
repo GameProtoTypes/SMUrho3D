@@ -21,9 +21,15 @@
 #
 
 file (GLOB_RECURSE SOURCE_FILES *.cpp *.h)
-add_library (DetourCrowd OBJECT ${SOURCE_FILES})
-target_link_objects(DetourCrowd Detour)
+add_library (DetourCrowd STATIC ${SOURCE_FILES})
+target_link_libraries(DetourCrowd Detour)
 target_include_directories(DetourCrowd
     INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/DetourCrowd>
+)
+
+install (TARGETS DetourCrowd EXPORT Urho3D
+    LIBRARY DESTINATION ${DEST_LIBRARY_DIR}
+    RUNTIME DESTINATION ${DEST_BIN_DIR}
+    ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR}
 )

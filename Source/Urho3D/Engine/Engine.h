@@ -140,6 +140,8 @@ private:
     /// Updates
     void Update();
 
+    void SendUpdateEvents();
+
     /// Renders
     void Render();
 
@@ -158,8 +160,8 @@ private:
 	HiresTimer updateTimer_;
 	HiresTimer renderGoalTimer_;
 
-	int renderTimeGoalUs{ 5000 };  //200 Hz   
-	int updateTimeGoalUs{ 16666 }; //60 Hz
+	int renderTimeGoalUs_{ 5000 };  //200 Hz   
+	int updateTimeGoalUs_{ 16666 }; //60 Hz
 
 	int avgRenderTimeUs_{ 5000 };
 	int avgUpdateTimeUs_{ 16666 };
