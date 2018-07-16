@@ -67,7 +67,7 @@ AttributeInspector::AttributeInspector(Urho3D::Context* context)
 {
     filter_.front() = 0;
 
-    SubscribeToEvent(E_ENDFRAME, [&](StringHash, VariantMap&) {
+    SubscribeToEvent(E_POSTUPDATE, [&](StringHash, VariantMap&) {
         lastMaxWidth_ = currentMaxWidth_;
         currentMaxWidth_ = 0;
     });
