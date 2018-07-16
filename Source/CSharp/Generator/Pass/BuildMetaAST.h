@@ -45,13 +45,12 @@ public:
     {
         switch (e.kind())
         {
-        case cppast::cpp_entity_kind::file_t:
         case cppast::cpp_entity_kind::include_directive_t:
         case cppast::cpp_entity_kind::language_linkage_t:
         case cppast::cpp_entity_kind::namespace_alias_t:
         case cppast::cpp_entity_kind::using_directive_t:
         case cppast::cpp_entity_kind::using_declaration_t:
-        case cppast::cpp_entity_kind::type_alias_t:
+        // case cppast::cpp_entity_kind::type_alias_t:
         case cppast::cpp_entity_kind::access_specifier_t:
         case cppast::cpp_entity_kind::function_template_t:
         case cppast::cpp_entity_kind::function_template_specialization_t:
@@ -60,7 +59,7 @@ public:
             break;
         }
 
-        if (!e.name().empty() /* anonymous */)
+        if (!e.name().empty() /* anonymous */ && e.kind() != cppast::cpp_entity_kind::file_t)
         {
             auto symbolName = GetUniqueName(e);
             if (!generator->currentNamespace_->symbolChecker_.IsIncluded(symbolName))

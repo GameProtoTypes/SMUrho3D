@@ -37,7 +37,7 @@ bool MoveGlobalsPass::Visit(MetaEntity* entity, cppast::visitor_info info)
     if (entity->kind_ == cppast::cpp_entity_kind::namespace_t)
     {
         // Convert non-top-level namespaces to classes if they have any functions or variables.
-        if (!entity->GetParent()->name_.empty() && entity->ast_ != nullptr)
+        if (entity->GetParent()->kind_ != cppast::cpp_entity_kind::file_t && entity->ast_ != nullptr)
         {
             const auto& ns = entity->Ast<cppast::cpp_namespace>();
             for (const auto& child : ns)
@@ -76,7 +76,7 @@ bool MoveGlobalsPass::Visit(MetaEntity* entity, cppast::visitor_info info)
                     toClass->sourceSymbolName_ = ns.sourceSymbolName_;
                     toClass->kind_ = cppast::cpp_entity_kind::class_t;
                     ns.Add(toClass);
-                    generator->symbols_[classSymbol] = toClass->shared_from_this();
+                    generator->currentModule_->symbols_[classSymbol] = toClass->shared_from_this();
                 }
 
                 toClass->Add(entity);

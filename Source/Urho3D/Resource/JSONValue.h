@@ -79,6 +79,14 @@ public:
         type_(0)
     {
     }
+
+    /// Construct a default value with defined type.
+    explicit JSONValue(JSONValueType valueType, JSONNumberType numberType = JSONNT_NAN) :
+        type_(0)
+    {
+        SetType(valueType, numberType);
+    }
+
     /// Construct with a boolean.
     JSONValue(bool value) :         // NOLINT(google-explicit-constructor)
         type_(0)
@@ -238,6 +246,8 @@ public:
     void Set(const String& key, const JSONValue& value);
     /// Return JSON value with key.
     const JSONValue& Get(const String& key) const;
+    /// Return JSON value with index.
+    const JSONValue& Get(int index) const;
     /// Erase a pair by key.
     bool Erase(const String& key);
     /// Return whether contains a pair with key.

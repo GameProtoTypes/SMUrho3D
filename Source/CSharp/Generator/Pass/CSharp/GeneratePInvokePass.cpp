@@ -116,7 +116,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
             printer_ << fmt::format("public unsafe partial class {} : INativeObject", entity->name_);
             printer_.Indent();
-            printer_ << fmt::format("internal {}(IntPtr instance, bool ownsInstance) : base(instance, ownsInstance)",
+            printer_ << fmt::format("internal {}(IntPtr __self__, NativeObjectFlags flags=NativeObjectFlags.None) : base(__self__, flags)",
                                     entity->name_);
             printer_.Indent();
             {
@@ -130,13 +130,18 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             {
                 printer_ << "OnDispose(disposing);";
                 printer_ << "InstanceCache.Remove(NativeInstance);";
-                printer_ << baseName + "_destructor(NativeInstance, OwnsNativeInstance);";
+                printer_ << "if (!NonOwningReference)";
+                printer_.Indent();
+                {
+                    printer_ << baseName + "_destructor(NativeInstance);";
+                }
+                printer_.Dedent();
             }
             printer_.Dedent();
             printer_ << "";
 
             // Helpers for marshalling type between public and pinvoke APIs
-            printer_ << fmt::format("internal {}static {} GetManagedInstance(IntPtr source, bool owns)", newTag,
+            printer_ << fmt::format("internal {}static {} GetManagedInstance(IntPtr source, NativeObjectFlags flags=NativeObjectFlags.None)", newTag,
                                     entity->name_);
             printer_.Indent();
             {
@@ -155,14 +160,14 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
                     printer_.Indent("");
                     {
                         printer_
-                            << fmt::format("return new {className}(ptr, owns);", fmt::arg("className", entity->name_));
+                            << fmt::format("return new {className}(ptr, flags);", fmt::arg("className", entity->name_));
                     }
                     printer_.Dedent("");
                     printer_ << "else";
                     printer_.Indent("");
                     {
                         printer_ << fmt::format(
-                            "return ({className})Activator.CreateInstance(type, BindingFlags.NonPublic | BindingFlags.Instance, null, new object[]{{ptr, owns}}, null);",
+                            "return ({className})Activator.CreateInstance(type, BindingFlags.NonPublic | BindingFlags.Instance, null, new object[]{{ptr, flags}}, null);",
                             fmt::arg("className", entity->name_));
                     }
                     printer_.Dedent("");
@@ -247,7 +252,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             // Destructor always exists even if it is not defined in the c++ class
             DllImport();
             printer_
-                << fmt::format("internal static extern void {}_destructor(IntPtr instance, bool owner);", baseName);
+                << fmt::format("internal static extern void {}_destructor(IntPtr __self__);", baseName);
             printer_ << "";
 
             // Method for pinning managed object to native instance
@@ -255,10 +260,15 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
                 IsSubclassOf(entity->Ast<cppast::cpp_class>(), "Urho3D::RefCounted"))
             {
                 DllImport();
-                printer_ << fmt::format("internal static extern void {}_setup(IntPtr instance, IntPtr gcHandle, "
-                                        "string typeName, ref int objSize);", baseName);
+                printer_ << fmt::format("internal static extern void {}_setup(IntPtr __self__, IntPtr gcHandle, "
+                                        "string typeName);", baseName);
                 printer_ << "";
             }
+
+            DllImport();
+            printer_ << fmt::format("internal static extern int {}_sizeof();", baseName);
+            printer_ << fmt::format("internal static int GetNativeTypeSize() {{ return {}_sizeof(); }}", baseName);
+            printer_ << "";
 
             // Method for getting type id.
             DllImport();
@@ -268,9 +278,9 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             printer_ << "";
 
             DllImport();
-            printer_ << fmt::format("private static extern IntPtr {}_instance_typeid(IntPtr instance);", baseName);
+            printer_ << fmt::format("private static extern IntPtr {}_instance_typeid(IntPtr __self__);", baseName);
             printer_ << fmt::format(
-                "internal static {}IntPtr GetNativeTypeId(IntPtr instance) {{ return {}_instance_typeid(instance); }}",
+                "internal static {}IntPtr GetNativeTypeId(IntPtr __self__) {{ return {}_instance_typeid(__self__); }}",
                 newTag, baseName);
             printer_ << "";
         }
@@ -326,7 +336,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
         auto csParam = ToPInvokeTypeParam(var.type(), true);
         WriteMarshalAttributeReturn(var.type());
         printer_
-            << fmt::format("internal static extern {} get_{}(IntPtr instance);", csReturnType, entity->cFunctionName_);
+            << fmt::format("internal static extern {} get_{}(IntPtr __self__);", csReturnType, entity->cFunctionName_);
         printer_ << "";
 
         // Setter
@@ -334,7 +344,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
         {
             DllImport();
             printer_
-                << fmt::format("internal static extern void set_{}(IntPtr instance, {} value);", entity->cFunctionName_,
+                << fmt::format("internal static extern void set_{}(IntPtr __self__, {} value);", entity->cFunctionName_,
                                csParam);
             printer_ << "";
         }
@@ -366,7 +376,7 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
         DllImport();
         WriteMarshalAttributeReturn(func.return_type());
-        printer_ << fmt::format("internal static extern {rtype} {cFunction}(IntPtr instance{pc}{csParams});",
+        printer_ << fmt::format("internal static extern {rtype} {cFunction}(IntPtr __self__{pc}{csParams});",
                                 FMT_CAPTURE(rtype), FMT_CAPTURE(cFunction), FMT_CAPTURE(pc), FMT_CAPTURE(csParams));
         printer_ << "";
 
@@ -375,12 +385,12 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
             // API for setting callbacks of virtual methods
             printer_ << "[UnmanagedFunctionPointer(CallingConvention.Cdecl)]";
             printer_ << fmt::format(
-                "internal delegate {rtype} {className}{cFunction}Delegate(IntPtr instance{pc}{csParams});",
+                "internal delegate {rtype} {className}{cFunction}Delegate(IntPtr __self__{pc}{csParams});",
                 FMT_CAPTURE(rtype), FMT_CAPTURE(className), FMT_CAPTURE(cFunction), FMT_CAPTURE(pc),
                 FMT_CAPTURE(csParams));
             printer_ << "";
             DllImport();
-            printer_ << fmt::format("internal static extern void set_fn{cFunction}(IntPtr instance, IntPtr cb);",
+            printer_ << fmt::format("internal static extern void set_fn{cFunction}(IntPtr __self__, IntPtr cb);",
                                     FMT_CAPTURE(cFunction), FMT_CAPTURE(className));
             printer_ << "";
         }
@@ -405,7 +415,8 @@ bool GeneratePInvokePass::Visit(MetaEntity* entity, cppast::visitor_info info)
 
 void GeneratePInvokePass::Stop()
 {
-    auto outputFile = generator->currentModule_->outputDirCs_ + "PInvoke.cs";
+    auto outputFile = fmt::format("{}/{}PInvoke.cs", generator->currentModule_->outputDirCs_,
+                                  generator->currentModule_->moduleName_);
     std::ofstream fp(outputFile);
     if (!fp.is_open())
     {
@@ -435,8 +446,10 @@ std::string GeneratePInvokePass::ToPInvokeTypeParam(const cppast::cpp_type& type
     return result;
 }
 
-std::string GeneratePInvokePass::ToPInvokeType(const cppast::cpp_type& type, bool disallowReferences)
+std::string GeneratePInvokePass::ToPInvokeType(const cppast::cpp_type& usedType, bool disallowReferences)
 {
+    const auto& type = generator->DealiasType(usedType);
+
     std::function<std::string(const cppast::cpp_type&)> toPInvokeType = [&](const cppast::cpp_type& t) -> std::string
     {
         switch (t.kind())
@@ -482,7 +495,7 @@ std::string GeneratePInvokePass::ToPInvokeType(const cppast::cpp_type& type, boo
         {
             const auto& tpl = dynamic_cast<const cppast::cpp_template_instantiation_type&>(t);
             auto tplName = tpl.primary_template().name();
-            if (tplName != "FlagSet")
+            if (container::contains(generator->valueTemplates_, tplName))
                 return tpl.unexposed_arguments();
             else if (container::contains(generator->wrapperTemplates_, tplName))
                 return "IntPtr";

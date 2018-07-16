@@ -39,8 +39,8 @@ struct ManagedRuntime
     void(*Unlock)(gchandle handle) = nullptr;
     gchandle(*CloneHandle)(gchandle handle) = nullptr;
     Object*(*CreateObject)(Context* context, unsigned managedType) = nullptr;
-    void(*HandleEventWithType)(gchandle gcHandle, unsigned type, VariantMap* args) = nullptr;
-    void(*HandleEventWithoutType)(gchandle gcHandle, unsigned type, VariantMap* args) = nullptr;
+    void(*HandleEvent)(gchandle gcHandle, unsigned type, VariantMap* args) = nullptr;
+    gchandle(*InvokeMethod)(gchandle callback, int paramCount, void* parameters[]) = nullptr;
 };
 
 struct NativeRuntime
@@ -73,11 +73,11 @@ public:
 
     /// Register types of inheritable native objects. They are used in factory which creates managed subclasses of these objects.
     template<typename T>
-    void RegisterType() { typeInfos_[T::GetTypeStatic()] = T::GetTypeInfoStatic(); }
+    static void RegisterType() { typeInfos_[T::GetTypeStatic()] = T::GetTypeInfoStatic(); }
     /// Returns type information of registered base native type.
     const TypeInfo* GetRegisteredType(StringHash type);
     /// Schedule ReleaseRef() call to be called on the main thread.
-    void QueueReleaseRef(RefCounted* instance);
+    static void QueueReleaseRef(RefCounted* instance);
     /// Registers current thread with .net runtime.
     void RegisterCurrentThread();
 
@@ -93,80 +93,92 @@ public:
     static NativeRuntime native_;
 
 protected:
-    /// Initializes object.
-    void Init();
     /// Perform housekeeping tasks.
     void OnPostUpdate(StringHash, VariantMap&);
 
-    /// Types of inheritable native classes.
-    HashMap<StringHash, const TypeInfo*> typeInfos_;
     /// Queue of objects that should have their ReleaseRef() method called on main thread.
-    PODVector<RefCounted*> releaseQueue_;
+    static PODVector<RefCounted*> releaseQueue_;
     /// Mutex protecting resources related to queuing ReleaseRef() calls.
-    Mutex mutex_;
+    static Mutex mutex_;
+    /// Types of inheritable native classes.
+    static HashMap<StringHash, const TypeInfo*> typeInfos_;
 };
 
-/// Allocator used for data marshalling between managed and unmanaged worlds. Lifetime of allocated memory is controlled
-/// by custom marshallers used in binding code.
+/// LIFO allocator used for marshalling data between managed and native worlds.
 class URHO3D_API MarshalAllocator
 {
 public:
-    struct Block
-    {
-        void* memory_;
-        int32_t itemCount_;
-        int32_t sizeOfItem_;
-        int32_t allocatorIndex_;
-    };
-
-    enum AllocationType
-    {
-        /// If `index` parameter in the header is less than this value then it is index of allocator in `allocators_` array.
-        CustomAllocationType = 200,
-        /// If `index` parameter in header is this value then memory is to be freed using OS functions instead of allocator.
-        HeapAllocator = 255,
-    };
-
-    struct AllocatorInfo
-    {
-        AllocatorBlock* Allocator;
-        int BlockSize;
-
-        AllocatorInfo(int size, int capacity);
-    };
-
-protected:
-    /// Construct
-    MarshalAllocator();
-
-public:
-    /// Destruct
-    ~MarshalAllocator();
+    MarshalAllocator() : memory_(0x100000) { }
     /// Get thread-local instance of this allocator
     static MarshalAllocator& Get();
-    /// Allocate memory for array of items.
-    template<typename T>
-    Block* AllocArray(int count)
+    /// Allocate a block of memory. Last allocated block must be freed first.
+    void* Alloc(unsigned length);
+    /// Free previously allocated block.
+    void Free(void* ptr);
+    /// Return number of bytes remaining in scratch buffer.
+    unsigned Remaining() const { return memory_.Size() - static_cast<unsigned>(used_); }
+    /// Return length of allocated memory block.
+    static inline unsigned GetMemoryLength(void* memory) { return *((uint8_t*)memory - sizeof(unsigned)) & ~ALLOCATOR_MALLOC; }
+
+private:
+    enum
     {
-        auto* block = AllocInternal(sizeof(T) * count);
-        block->sizeOfItem_ = sizeof(T);
-        block->itemCount_ = count;
-        return block;
-    }
-    /// Allocate block of memory.
-    Block* Alloc(int length)
+        /// Tag indicating that allocator allocated memory using malloc.
+        ALLOCATOR_MALLOC = 1 << 31
+    };
+
+    /// Memory used by allocator.
+    PODVector<uint8_t> memory_;
+    /// Current used memory size.
+    int used_ = 0;
+    /// New size of memory block which will be applied next time all items in allocator are freed.
+    unsigned nextSize_ = 0;
+
+};
+
+struct URHO3D_API GcHandleContainer
+{
+    GcHandleContainer(gchandle handle)
+        : handle_(handle)
     {
-        return AllocArray<uint8_t>(length);
     }
 
-    /// Free block of memory.
-    void Free(Block* memory);
+    GcHandleContainer(const GcHandleContainer& rhs)
+        : handle_(nullptr)
+    {
+        if (rhs.handle_ != nullptr)
+            handle_ = ScriptSubsystem::managed_.CloneHandle(rhs.handle_);
+    }
 
-protected:
-    /// Allocate block of memory.
-    Block* AllocInternal(int length);
+    GcHandleContainer(GcHandleContainer&& rhs)
+    {
+        handle_ = rhs.handle_;
+        rhs.handle_ = nullptr;
+    }
 
-    AllocatorInfo allocators_[3];
+    ~GcHandleContainer()
+    {
+        ReleaseHandle();
+    }
+
+    GcHandleContainer& operator =(const GcHandleContainer& rhs)
+    {
+        ReleaseHandle();
+        if (rhs.handle_ != nullptr)
+            handle_ = ScriptSubsystem::managed_.CloneHandle(rhs.handle_);
+        return *this;
+    }
+
+    void ReleaseHandle()
+    {
+        if (handle_ != nullptr)
+        {
+            ScriptSubsystem::managed_.Unlock(handle_);
+            handle_ = nullptr;
+        }
+    }
+
+    gchandle handle_;
 };
 
 }

@@ -35,4 +35,42 @@ namespace Editor.Events
     {
         public static readonly StringHash HierarchyProvider = "HierarchyProvider";
     }
+
+    [Event(EventName = "EditorTabClosed")]
+    public class EditorTabClosed
+    {
+        public static readonly StringHash TabInstance = "TabInstance";
+    }
+
+    [Event(EventName = "EditorKeyCombo")]
+    public class EditorKeyCombo
+    {
+        public enum Kind
+        {
+            None,
+            Undo,
+            Redo,
+            Save
+        }
+
+        public static readonly StringHash KeyCombo = "KeyCombo";
+    }
+
+    [Event]
+    public class EditorProjectSave
+    {
+        public static readonly StringHash SaveData = "SaveData";
+    }
+
+    [Event]
+    public class EditorProjectLoad
+    {
+        public static readonly StringHash SaveData = "SaveData";
+    }
+
+    [Event]
+    public class EditorDeleteResource
+    {
+        public static readonly string ResourceName = "ResourceName";
+    }
 }

@@ -29,25 +29,31 @@ namespace Editor.Tabs
 {
     public class InspectorTab : Tab
     {
-        private readonly AttributeInspector _inspector;
         private IInspectable _inspectable;
-        public InspectorTab(Context context, string title, Vector2? initialSize = null, string placeNextToDock = null,
-            DockSlot slot = DockSlot.SlotNone) : base(context, title, initialSize, placeNextToDock, slot)
-        {
-            _inspector = new AttributeInspector(Context);
 
+        public InspectorTab(Context context, string title, TabLifetime lifetime, Vector2? initialSize = null,
+            string placeNextToDock = null, DockSlot slot = DockSlot.SlotNone) : base(context, title, lifetime,
+            initialSize, placeNextToDock, slot)
+        {
+            Uuid = "edd8df51-a31b-4585-bc0f-7665c99a12ac";
             SubscribeToEvent<InspectItem>(OnInspect);
+            SubscribeToEvent<EditorTabClosed>(OnTabClosed);
         }
 
-        protected void OnInspect(VariantMap args)
+        private void OnTabClosed(Event args)
         {
-            _inspectable = (IInspectable) args[InspectItem.Inspectable].Object;
+            if (args.GetObject(EditorTabClosed.TabInstance) == _inspectable)
+                _inspectable = null;
+        }
+
+        private void OnInspect(Event args)
+        {
+            _inspectable = (IInspectable) args.GetObject(InspectItem.Inspectable);
         }
 
         protected override void Render()
         {
-            if (_inspectable != null)
-                _inspector.RenderAttributes(_inspectable.GetInspectableObjects());
+            _inspectable?.RenderInspector();
         }
     }
 }

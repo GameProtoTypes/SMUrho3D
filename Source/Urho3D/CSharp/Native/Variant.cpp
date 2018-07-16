@@ -28,51 +28,6 @@
 namespace Urho3D
 {
 
-struct GcHandleContainer
-{
-    GcHandleContainer(gchandle handle)
-        : handle_(handle)
-    {
-    }
-
-    GcHandleContainer(const GcHandleContainer& rhs)
-        : handle_(nullptr)
-    {
-        if (rhs.handle_ != nullptr)
-            handle_ = ScriptSubsystem::managed_.CloneHandle(rhs.handle_);
-    }
-
-    GcHandleContainer(GcHandleContainer&& rhs)
-    {
-        handle_ = rhs.handle_;
-        rhs.handle_ = nullptr;
-    }
-
-    ~GcHandleContainer()
-    {
-        ReleaseHandle();
-    }
-
-    GcHandleContainer& operator =(const GcHandleContainer& rhs)
-    {
-        ReleaseHandle();
-        if (rhs.handle_ != nullptr)
-            handle_ = ScriptSubsystem::managed_.CloneHandle(rhs.handle_);
-        return *this;
-    }
-
-    void ReleaseHandle()
-    {
-        if (handle_ != nullptr)
-        {
-            ScriptSubsystem::managed_.Unlock(handle_);
-            handle_ = nullptr;
-        }
-    }
-
-    gchandle handle_;
-};
-
 extern "C"
 {
 
@@ -93,13 +48,6 @@ EXPORT_API gchandle Urho3D_Variant__GetObject(Variant* variant)
     return storage->handle_;
 }
 
-EXPORT_API RefCounted* Urho3D_Variant__GetPtrValue(Variant* variant)
-{
-    if (variant == nullptr)
-        return nullptr;
-    return variant->GetPtr();
-}
-
 EXPORT_API VariantType Urho3D_Variant__GetValueType(Variant* variant)
 {
     if (variant == nullptr)
@@ -107,15 +55,7 @@ EXPORT_API VariantType Urho3D_Variant__GetValueType(Variant* variant)
     return variant->GetType();
 }
 
-
-EXPORT_API void Urho3D_Variant__SetPtrValue(Variant* variant, RefCounted* value)
-{
-    if (variant == nullptr)
-        return;
-    *variant = value;
-}
-
-EXPORT_API void Urho3D_Variant__SetGcHandleValue(Variant* variant, gchandle handle)
+EXPORT_API void Urho3D_Variant__SetObject(Variant* variant, gchandle handle)
 {
     if (variant == nullptr)
         return;

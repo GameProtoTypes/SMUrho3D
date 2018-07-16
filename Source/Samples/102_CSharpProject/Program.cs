@@ -33,7 +33,7 @@ namespace DemoApplication
     {
         public RotateObject(Context context) : base(context)
         {
-            UpdateEventMask = UseUpdate;
+            UpdateEventMask = UpdateEvent.UseUpdate;
         }
 
         public override void Update(float timeStep)
@@ -99,7 +99,7 @@ namespace DemoApplication
 
             SubscribeToEvent<Update>(args =>
             {
-                var timestep = args[Update.TimeStep].Float;
+                var timestep = args.GetFloat(Update.TimeStep);
                 Debug.Assert(this != null);
 
                 if (ui.Begin("Urho3D.NET"))
