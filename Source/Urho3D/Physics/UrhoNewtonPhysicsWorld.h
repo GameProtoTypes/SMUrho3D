@@ -17,7 +17,7 @@ namespace Urho3D
     class NewtonMeshObject;
 
     static const Vector3 DEF_GRAVITY = Vector3(0, -9.81, 0);
-
+    static const String DEF_PHYSICS_CATEGORY = "Physics";
 
 
 

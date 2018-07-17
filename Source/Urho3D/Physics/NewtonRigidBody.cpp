@@ -31,7 +31,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonRigidBody>();
+        context->RegisterFactory<NewtonRigidBody>(DEF_PHYSICS_CATEGORY.CString());
 
        // URHO3D_ATTRIBUTE_EX("Mass", float, mass_, MarkBodyDirty, DEFAULT_MASS, AM_DEFAULT);
         //URHO3D_ACCESSOR_ATTRIBUTE("Friction", GetFriction, SetFriction, float, DEFAULT_FRICTION, AM_DEFAULT);

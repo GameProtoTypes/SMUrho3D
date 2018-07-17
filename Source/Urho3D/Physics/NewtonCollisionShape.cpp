@@ -37,7 +37,7 @@ namespace Urho3D {
 
     void NewtonCollisionShape::RegisterObject(Context* context)
     {
-        bool s = context->RegisterFactory<NewtonCollisionShape>();
+        bool s = context->RegisterFactory<NewtonCollisionShape>(DEF_PHYSICS_CATEGORY.CString());
     }
 
     void NewtonCollisionShape::SetBox(const Vector3& size, const Vector3& position, const Quaternion& rotation)

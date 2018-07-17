@@ -33,7 +33,7 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::RegisterObject(Context* context)
     {
-        context->RegisterFactory<UrhoNewtonPhysicsWorld>();
+        context->RegisterFactory<UrhoNewtonPhysicsWorld>(DEF_PHYSICS_CATEGORY.CString());
     }
 
 
