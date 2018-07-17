@@ -81,7 +81,7 @@ namespace Urho3D
         WeakPtr<NewtonCollisionShape> colShape_;
     
 
-        /// Mass.
+        /// density.
         float mass_ = 0.0f;
         ///Continuous Collision
         bool continuousCollision_ = false;

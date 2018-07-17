@@ -170,7 +170,7 @@ void Physics::CreateScene()
                 body->SetMass(1.0f);
                 body->SetFriction(0.75f);
                 auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-                shape->SetBox(Vector3::ONE);
+                shape->SetSphere(1.0f);
             }
         }
     }

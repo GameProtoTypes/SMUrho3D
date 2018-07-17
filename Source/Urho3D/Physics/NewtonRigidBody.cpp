@@ -214,6 +214,9 @@ namespace Urho3D {
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
+            //scale the collision with the node.
+            NewtonBodySetCollisionScale(newtonBody_, node_->GetScale().x_, node_->GetScale().y_, node_->GetScale().z_);
+
             NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
 
             NewtonBodySetUserData(newtonBody_, (void*)this);

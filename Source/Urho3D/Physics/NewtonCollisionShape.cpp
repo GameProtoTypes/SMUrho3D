@@ -52,6 +52,50 @@ namespace Urho3D {
     }
 
 
+    void NewtonCollisionShape::SetSphere(float diameter, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        shapeType_ = SHAPE_SPHERE;
+        size_ = Vector3(diameter, 0, 0);
+        position_ = position;
+        rotation_ = rotation;
+
+        reEvaluateCollision();
+        notifyRigidBody();
+    }
+
+    void NewtonCollisionShape::SetCylinder(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        shapeType_ = SHAPE_CYLINDER;
+        size_ = Vector3(diameter, height, 0);
+        position_ = position;
+        rotation_ = rotation;
+
+        reEvaluateCollision();
+        notifyRigidBody();
+    }
+
+    void NewtonCollisionShape::SetCapsule(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        shapeType_ = SHAPE_CAPSULE;
+        size_ = Vector3(diameter, height, 0);
+        position_ = position;
+        rotation_ = rotation;
+
+        reEvaluateCollision();
+        notifyRigidBody();
+    }
+
+    void NewtonCollisionShape::SetCone(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        shapeType_ = SHAPE_CONE;
+        size_ = Vector3(diameter, height, 0);
+        position_ = position;
+        rotation_ = rotation;
+
+        reEvaluateCollision();
+        notifyRigidBody();
+    }
+
     void NewtonCollisionShape::SetTriangleMesh(Model* model, unsigned lodLevel /*= 0*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
     {
         if (!model)
@@ -117,7 +161,7 @@ namespace Urho3D {
         NewtonWorld * world = physicsWorld_->GetNewtonWorld();
 
         Matrix4 mat;
-        //mat.SetScale(size_);
+        mat.SetScale(node_->GetScale());
         mat.SetTranslation(position_);
         mat.SetRotation(rotation_.RotationMatrix());
         dMatrix nMat = UrhoToNewton(mat);
@@ -126,13 +170,27 @@ namespace Urho3D {
         if (shapeType_ == SHAPE_BOX) {
 
             // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
-            newtonCollision_ = NewtonCreateBox(world, size_.x_*node_->GetScale().x_,
-                size_.y_*node_->GetScale().y_,
-                size_.z_*node_->GetScale().z_, 0, &nMat[0][0]);
+            newtonCollision_ = NewtonCreateBox(world, size_.x_,
+                size_.y_,
+                size_.z_, 0, &nMat[0][0]);
 
         }
+        else if (shapeType_ == SHAPE_SPHERE) {
+            newtonCollision_ = NewtonCreateSphere(world, size_.x_*0.5f, 0, &nMat[0][0]);
+        }
+        else if (shapeType_ == SHAPE_CONE) {
+            newtonCollision_ = NewtonCreateCone(world, size_.x_*0.5f, size_.z_, 0, &nMat[0][0]);
+        }
+        else if (shapeType_ == SHAPE_CYLINDER) {
+            newtonCollision_ == NewtonCreateCylinder(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, &nMat[0][0]);
+        }
+        else if (shapeType_ == SHAPE_CAPSULE) {
+            newtonCollision_ == NewtonCreateCapsule(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, &nMat[0][0]);
+        }
+        else if (shapeType_ == SHAPE_CHAMFERCYLINDER) {
+            newtonCollision_ == NewtonCreateChamferCylinder(world, size_.x_*0.5f, size_.z_, 0, &nMat[0][0]);
+        }
         else if (shapeType_ == SHAPE_CONVEXHULL) {
-
             formConvexHullCollision();
         }
         else if (shapeType_ == SHAPE_COMPOUND) {
