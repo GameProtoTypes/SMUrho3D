@@ -157,10 +157,11 @@ void Physics::CreateScene()
             for (int x = -y; x <= y; ++x)
             {
 
-                Node* boxNode = scene_->CreateChild("Box");
+                Node* boxNode = scene_->CreateChild("Sphere");
+                boxNode->SetScale(Random(1.0f, 0.05f));
                 boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f) + Vector3(x2, 0, y2)*50.0f);
                 auto* boxObject = boxNode->CreateComponent<StaticModel>();
-                boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+                boxObject->SetModel(cache->GetResource<Model>("Models/Sphere.mdl"));
                 boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
                 boxObject->SetCastShadows(true);
 

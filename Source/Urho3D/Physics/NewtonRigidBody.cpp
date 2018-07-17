@@ -115,8 +115,6 @@ namespace Urho3D {
         URHO3D_LOGINFO("reEvaluating Body.");
 
 
-        colShape_ = node_->GetComponent<NewtonCollisionShape>();
-
         //determine if there is a parent rigid body and if there is we do not want to create a new body - we want to form a compound collision on the parent
         Node* curNode = node_;
         Node* parentNodeWithRigidBody = nullptr;
@@ -135,99 +133,83 @@ namespace Urho3D {
         }
 
 
+        //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
+        PODVector<Node*> nodesWithCollision;
+        node_->GetChildrenWithComponent<NewtonCollisionShape>(nodesWithCollision, true);
+
+        if(node_->HasComponent<NewtonCollisionShape>())
+            nodesWithCollision += node_;
 
 
-
-
-
-
-
-        if (colShape_ &&
-            (colShape_->GetNewtonCollision() != nullptr) ) {
-
-            Matrix4 transform;
-            transform.SetTranslation(node_->GetWorldPosition());
-            transform.SetRotation(node_->GetWorldRotation().RotationMatrix());
-           
-            dMatrix mat = UrhoToNewton(transform);
-
-            NewtonWorld* newtWorld = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetNewtonWorld();
-
-
-            float finalMass = colShape_->effectiveMass();
-
-            //evaluate child nodes and see if there are more collision shapes - if so create a compound collision.
-            PODVector<Node*> children;
-            node_->GetChildrenWithComponent<NewtonCollisionShape>(children, true);
-
+        if (nodesWithCollision.Size())
+        {
             NewtonCollision* resolvedCollision = nullptr;
             if (compoundCollision_) {
                 NewtonDestroyCollision(compoundCollision_);
                 compoundCollision_ = nullptr;
             }
+            bool compoundNeeded = (nodesWithCollision.Size() > 1);
 
-            if (children.Size())
-            {
-                compoundCollision_ = NewtonCreateCompoundCollision(newtWorld, 0);
-
-                //...
+            if (compoundNeeded) {
+                compoundCollision_ = NewtonCreateCompoundCollision(physicsWorld_->GetNewtonWorld(), 0);
                 NewtonCompoundCollisionBeginAddRemove(compoundCollision_);
-
-                for (Node* childNode : children)
-                {
-                    NewtonCollisionShape* colComp = childNode->GetComponent<NewtonCollisionShape>();
-                    NewtonCollision* childCollision = colComp->GetNewtonCollision();
-                    NewtonCollision* tempTransformedChildCollision = NewtonCollisionCreateInstance(childCollision);
-
-                    dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(childNode->GetWorldTransform()));
-
-                   finalMass += colComp->effectiveMass();
-
-                    NewtonCollisionSetMatrix(tempTransformedChildCollision, &localTransform[0][0]);
-
-                    NewtonCompoundCollisionAddSubCollision(compoundCollision_, tempTransformedChildCollision);
-
-                    NewtonDestroyCollision(tempTransformedChildCollision);
-
-                    
-                }
-
-                //finally add this collision
-                NewtonCompoundCollisionAddSubCollision(compoundCollision_, colShape_->GetNewtonCollision());
-
-
-                NewtonCompoundCollisionEndAddRemove(compoundCollision_);
-
-
-                resolvedCollision = compoundCollision_;
-
             }
-            else
+
+            float accumMass = 0.0f;
+            for (Node* curNode : nodesWithCollision)
             {
-                resolvedCollision = colShape_->GetNewtonCollision();
+                NewtonCollisionShape* colComp = curNode->GetComponent<NewtonCollisionShape>();
+                NewtonCollision* childCollision = colComp->GetNewtonCollision();
+                NewtonCollision* usedCollision = nullptr;
+
+                if (compoundNeeded)
+                    usedCollision = NewtonCollisionCreateInstance(childCollision);
+                else
+                    usedCollision = childCollision;
+
+
+                dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(curNode->GetWorldTransform()));
+
+    
+                NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
+                accumMass += colComp->effectiveMass();
+
+
+                if (compoundNeeded) {
+                    NewtonCompoundCollisionAddSubCollision(compoundCollision_, usedCollision);
+                    NewtonDestroyCollision(usedCollision);
+                }
+                else
+                    resolvedCollision = usedCollision;
+
+                
+            }
+
+            if (compoundNeeded) {
+                NewtonCompoundCollisionEndAddRemove(compoundCollision_);
+                resolvedCollision = compoundCollision_;
             }
 
 
 
+            //create the body at node transform
+            Matrix4 transform;
+            transform.SetTranslation(node_->GetWorldPosition());
+            transform.SetRotation(node_->GetWorldRotation().RotationMatrix());
+            dMatrix mat = UrhoToNewton(transform);
 
-            if(!newtonBody_)
-                newtonBody_ = NewtonCreateDynamicBody(newtWorld, resolvedCollision, &mat[0][0]);
-
-
+            if (!newtonBody_)
+                newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
 
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
-            
-
-
-
             //scale the collision with the node.
-            NewtonBodySetCollisionScale(newtonBody_, node_->GetScale().x_, node_->GetScale().y_, node_->GetScale().z_);
+            //NewtonBodySetCollisionScale(newtonBody_, node_->GetWorldScale().x_, node_->GetWorldScale().y_, node_->GetWorldScale().z_);
 
-            mass_ = finalMass*massScale_;
+            mass_ = accumMass * massScale_;
             NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
-
+            URHO3D_LOGINFO("finalMass: " + String(mass_));
             NewtonBodySetUserData(newtonBody_, (void*)this);
 
             NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
@@ -240,9 +222,6 @@ namespace Urho3D {
 
             bakeForceAndTorque();
         }
-
-
-
 
     }
 
@@ -266,12 +245,27 @@ namespace Urho3D {
     {
         if (node)
         {
+
+            if (node == GetScene())
+                URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
+
+            //Auto-create a physics world on the scene if it does not yet exist.
+            physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
+            URHO3D_LOGINFO("Scene Set");
+            physicsWorld_->addRigidBody(this);
+
+
             reEvaluateBody();
             if(colShape_)
                 colShape_->updateReferenceToRigidBody();
         }
         else
         {
+            URHO3D_LOGINFO("Removed From node");
+
+            if (physicsWorld_)
+                physicsWorld_->removeRigidBody(this);
+
             freeBody();
             if (colShape_)
                 colShape_->updateReferenceToRigidBody();
@@ -282,18 +276,19 @@ namespace Urho3D {
     {
         if (scene)
         {
-            if (scene == node_)
-                URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
+            //if (scene == node_)
+            //    URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
 
-            //Auto-create a physics world on the scene if it does not yet exist.
-            physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(scene->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
-            physicsWorld_->addRigidBody(this);
+            ////Auto-create a physics world on the scene if it does not yet exist.
+            //physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(scene->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
+            //URHO3D_LOGINFO("Scene Set");
+            //physicsWorld_->addRigidBody(this);
         }
         else
         {
 
-            if (physicsWorld_)
-                physicsWorld_->removeRigidBody(this);
+            //if (physicsWorld_)
+            //    physicsWorld_->removeRigidBody(this);
 
         }
     }
