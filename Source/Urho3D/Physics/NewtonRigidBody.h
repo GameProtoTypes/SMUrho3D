@@ -24,10 +24,8 @@ namespace Urho3D
         /// Register object factory.
         static void RegisterObject(Context* context);
 
-
-        /// Set mass. Zero mass makes the body static.
-        void SetMass(float mass);
-
+        ///Set a scaler on the mass of the rigid body - (scale is applied after collision shape densities)
+        void SetMassScale(float massDensityScale);
 
         /// Set friction coefficient.
         void SetFriction(float friction);
@@ -79,10 +77,8 @@ namespace Urho3D
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
         /// Rigid body.
         WeakPtr<NewtonCollisionShape> colShape_;
-    
 
-        /// density.
-        float mass_ = 0.0f;
+
         ///Continuous Collision
         bool continuousCollision_ = false;
 
@@ -94,8 +90,10 @@ namespace Urho3D
         dVector netForceNewton_;
         dVector netTorqueNewton_;
 
-
-
+        ///effective mass
+        float mass_;
+        ///mass scale
+        float massScale_;
 
 
         void freeBody();

@@ -137,7 +137,8 @@ void Physics::CreateScene()
         // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
         // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
         // in the physics simulation
-        /*NewtonRigidBody* body = */floorNode->CreateComponent<NewtonRigidBody>();
+        NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
+        body->SetMassScale(0.0f);
         auto* shape = floorNode->CreateComponent<NewtonCollisionShape>();
         // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
         // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
@@ -167,7 +168,7 @@ void Physics::CreateScene()
                 // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
                 // objects are significant
                 auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-                body->SetMass(1.0f);
+                body->SetMassScale(1.0f);
                 body->SetFriction(0.75f);
                 auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
                 shape->SetSphere(1.0f);
@@ -358,7 +359,7 @@ void Physics::SpawnObject()
 
          // Create physics components, use a smaller mass also
          auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-         body->SetMass(0.1f);
+         body->SetMassScale(0.1f);
          body->SetFriction(0.75f);
          body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
          body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
@@ -402,7 +403,7 @@ void Physics::SpawnTrimeshObject()
 
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    body->SetMass(1.0f);
+    body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
     body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
     body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
@@ -446,7 +447,7 @@ void Physics::SpawnConvexHull()
 
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    body->SetMass(1.0f);
+    body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
     body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
     body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
@@ -489,7 +490,7 @@ void Physics::SpawnCompound()
 
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    body->SetMass(1.0f);
+    body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
     body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
     body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));

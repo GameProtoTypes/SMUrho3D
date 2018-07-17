@@ -66,11 +66,9 @@ namespace Urho3D {
     }
 
 
-
-    void NewtonRigidBody::SetMass(float mass)
+    void NewtonRigidBody::SetMassScale(float massDensityScale)
     {
-        mass_ = mass;
-
+        massScale_ = massDensityScale;
         reEvaluateBody();
     }
 
@@ -137,6 +135,13 @@ namespace Urho3D {
         }
 
 
+
+
+
+
+
+
+
         if (colShape_ &&
             (colShape_->GetNewtonCollision() != nullptr) ) {
 
@@ -149,6 +154,7 @@ namespace Urho3D {
             NewtonWorld* newtWorld = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetNewtonWorld();
 
 
+            float finalMass = colShape_->effectiveMass();
 
             //evaluate child nodes and see if there are more collision shapes - if so create a compound collision.
             PODVector<Node*> children;
@@ -169,23 +175,21 @@ namespace Urho3D {
 
                 for (Node* childNode : children)
                 {
-                    if (childNode->GetComponent<NewtonRigidBody>()) {
-                        mass_ += childNode->GetComponent<NewtonRigidBody>()->mass_;
-                    }
-
-
-                    NewtonCollision* childCollision = childNode->GetComponent<NewtonCollisionShape>()->GetNewtonCollision();
+                    NewtonCollisionShape* colComp = childNode->GetComponent<NewtonCollisionShape>();
+                    NewtonCollision* childCollision = colComp->GetNewtonCollision();
                     NewtonCollision* tempTransformedChildCollision = NewtonCollisionCreateInstance(childCollision);
 
                     dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(childNode->GetWorldTransform()));
 
-
+                   finalMass += colComp->effectiveMass();
 
                     NewtonCollisionSetMatrix(tempTransformedChildCollision, &localTransform[0][0]);
 
                     NewtonCompoundCollisionAddSubCollision(compoundCollision_, tempTransformedChildCollision);
 
                     NewtonDestroyCollision(tempTransformedChildCollision);
+
+                    
                 }
 
                 //finally add this collision
@@ -214,9 +218,14 @@ namespace Urho3D {
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
+            
+
+
+
             //scale the collision with the node.
             NewtonBodySetCollisionScale(newtonBody_, node_->GetScale().x_, node_->GetScale().y_, node_->GetScale().z_);
 
+            mass_ = finalMass*massScale_;
             NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
 
             NewtonBodySetUserData(newtonBody_, (void*)this);

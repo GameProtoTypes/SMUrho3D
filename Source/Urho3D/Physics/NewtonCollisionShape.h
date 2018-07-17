@@ -84,6 +84,10 @@ namespace Urho3D
         /// Shape size.
         Vector3 size_ = Vector3(1.0f, 1.0f, 1.0f);
 
+
+        ///volumetric mass density (mass/unit^2)
+        float density_ = 1.0f;
+
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
         void reEvaluateCollision();
 
@@ -96,7 +100,8 @@ namespace Urho3D
         /// Called when there is a change to the rigid body component;
         void updateReferenceToRigidBody();
 
-
+        /// Calculates the effective mass based off density and size. (could be expensive)
+        float effectiveMass();
 
 
         void formTriangleMeshCollision();

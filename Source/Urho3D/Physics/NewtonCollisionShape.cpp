@@ -232,6 +232,21 @@ namespace Urho3D {
         rigidBody_ = node_->GetComponent<NewtonRigidBody>();
     }
 
+    float NewtonCollisionShape::effectiveMass()
+    {
+        float vol = 0.0f;
+        if (newtonCollision_)
+            vol = NewtonConvexCollisionCalculateVolume(newtonCollision_);
+
+        if (vol <= M_EPSILON) {
+            return 0.0f;
+        }
+        else
+        {
+            return vol * density_;
+        }
+    }
+
     void NewtonCollisionShape::formTriangleMeshCollision()
     {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
