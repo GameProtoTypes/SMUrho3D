@@ -65,6 +65,9 @@ namespace Urho3D
         NewtonCollision* newtonCollision_ = nullptr;
         /// newton Mesh reference
         WeakPtr<NewtonMeshObject> newtonMesh_ = nullptr;
+        /// volume
+        float volume_ = 0.0f;
+
 
         /// Collision shape type.
         ShapeType shapeType_ = SHAPE_BOX;
@@ -84,10 +87,6 @@ namespace Urho3D
         /// Shape size.
         Vector3 size_ = Vector3(1.0f, 1.0f, 1.0f);
 
-
-        ///volumetric mass density (mass/unit^2)
-        float density_ = 1.0f;
-
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
         void reEvaluateCollision();
 
@@ -101,7 +100,7 @@ namespace Urho3D
         void updateReferenceToRigidBody();
 
         /// Calculates the effective mass based off density and size. (could be expensive)
-        float effectiveMass();
+        float updateVolume();
 
 
         void formTriangleMeshCollision();

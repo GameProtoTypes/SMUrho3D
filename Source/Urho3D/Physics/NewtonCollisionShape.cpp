@@ -240,19 +240,20 @@ namespace Urho3D {
         rigidBody_ = node_->GetComponent<NewtonRigidBody>();
     }
 
-    float NewtonCollisionShape::effectiveMass()
-    {
+    float NewtonCollisionShape::updateVolume()
+{
         float vol = 0.0f;
         if (newtonCollision_)
             vol = NewtonConvexCollisionCalculateVolume(newtonCollision_);
 
-        if (vol <= M_EPSILON) {
+        if (vol <= 0.0f) {
+            volume_ = 0.0f;
             return 0.0f;
         }
         else
         {
-            URHO3D_LOGINFO("Vol: " + String(vol));
-            return vol * density_;
+            volume_ = vol;
+            return vol;
         }
     }
 

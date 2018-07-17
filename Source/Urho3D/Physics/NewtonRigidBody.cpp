@@ -112,7 +112,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::reEvaluateBody()
     {
-        URHO3D_LOGINFO("reEvaluating Body.");
+        //URHO3D_LOGINFO("reEvaluating Body.");
 
 
         //determine if there is a parent rigid body and if there is we do not want to create a new body - we want to form a compound collision on the parent
@@ -172,7 +172,7 @@ namespace Urho3D {
 
     
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
-                accumMass += colComp->effectiveMass();
+                accumMass += colComp->updateVolume();
 
 
                 if (compoundNeeded) {
@@ -209,7 +209,7 @@ namespace Urho3D {
 
             mass_ = accumMass * massScale_;
             NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
-            URHO3D_LOGINFO("finalMass: " + String(mass_));
+            
             NewtonBodySetUserData(newtonBody_, (void*)this);
 
             NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
@@ -251,7 +251,6 @@ namespace Urho3D {
 
             //Auto-create a physics world on the scene if it does not yet exist.
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
-            URHO3D_LOGINFO("Scene Set");
             physicsWorld_->addRigidBody(this);
 
 
@@ -261,7 +260,6 @@ namespace Urho3D {
         }
         else
         {
-            URHO3D_LOGINFO("Removed From node");
 
             if (physicsWorld_)
                 physicsWorld_->removeRigidBody(this);
@@ -276,19 +274,12 @@ namespace Urho3D {
     {
         if (scene)
         {
-            //if (scene == node_)
-            //    URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
 
-            ////Auto-create a physics world on the scene if it does not yet exist.
-            //physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(scene->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
-            //URHO3D_LOGINFO("Scene Set");
-            //physicsWorld_->addRigidBody(this);
         }
         else
         {
 
-            //if (physicsWorld_)
-            //    physicsWorld_->removeRigidBody(this);
+
 
         }
     }
@@ -346,16 +337,6 @@ namespace Urho3D {
         NewtonBodyGetPosition(newtonBody_, &pos[0]);
         NewtonBodyGetRotation(newtonBody_, &quat[0]);
 
-
-        //Vector3 positionalOffset;
-        //if (compoundCollision_) {
-        //    dVector localCenterOfMass;
-        //    NewtonBodyGetCentreOfMass(newtonBody_, &localCenterOfMass[0]);
-        //    positionalOffset = -NewtonToUrhoVec3(localCenterOfMass);
-
-        //}
-
-        //node_->SetWorldTransform(NewtonToUrhoVec3(pos), Quaternion());
         node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat));
     }
 
