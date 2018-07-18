@@ -687,6 +687,7 @@ bool Node::LookAt(const Vector3& target, const Vector3& up, TransformSpace space
     // Check if target is very close, in that case can not reliably calculate lookat direction
     if (lookDir.Equals(Vector3::ZERO))
         return false;
+
     Quaternion newRotation;
     // Do nothing if setting look rotation failed
     if (!newRotation.FromLookRotation(lookDir, up))

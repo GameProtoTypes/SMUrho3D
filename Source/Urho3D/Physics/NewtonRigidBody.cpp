@@ -166,14 +166,18 @@ namespace Urho3D {
                 else
                     usedCollision = curNewtCollision;
 
-
-                dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(curNode->GetWorldTransform()));
+                //Matrix4 uMat = node_->WorldToLocal(curNode->GetWorldTransform());
+                Matrix3x4 uMat = curNode->GetWorldTransform();
+                //uMat.SetTranslation(curNode->GetWorldPosition());
+                //uMat.SetRotation(curNode->GetWorldRotation().RotationMatrix());
+                //uMat.SetScale(1.0f);
+                dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(uMat));
 
     
                 
-                NewtonCollisionSetScale(usedCollision, curNode->GetWorldScale().x_, curNode->GetWorldScale().y_, curNode->GetWorldScale().z_);
+                NewtonCollisionSetScale(usedCollision, curNode->GetScale().x_, curNode->GetScale().y_, curNode->GetScale().z_);
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
-                accumMass += colComp->GetVolume();
+                accumMass += colComp->GetVolume()*1.0f;
 
 
                 if (compoundNeeded) {

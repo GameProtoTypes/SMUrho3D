@@ -206,16 +206,16 @@ void Physics::createScaleTest()
     {
         curNode = curNode->CreateChild();
         
-        float rotDelta = 0.0f;// Random(-5.0f, 5.0f);
+        float rotDelta = Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
-        curNode->Scale(1.0f);
+        curNode->SetScale(1.0f);
         curNode->Translate(Vector3(0, 2, 0));
 
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
         stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-
+        stMdl->SetCastShadows(true);
         NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
         rigBody->SetMassScale(1.0f);
 

@@ -373,6 +373,10 @@ public:
     /// Return owner connection in networking.
     Connection* GetOwner() const { return impl_->owner_; }
 
+
+
+
+
     /// Return position in parent space.
     const Vector3& GetPosition() const { return position_; }
 
