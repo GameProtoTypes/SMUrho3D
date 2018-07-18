@@ -112,7 +112,6 @@ namespace Urho3D {
 
     void NewtonRigidBody::reEvaluateBody()
     {
-        //URHO3D_LOGINFO("reEvaluating Body.");
 
 
         //determine if there is a parent rigid body and if there is we do not want to create a new body - we want to form a compound collision on the parent
@@ -159,20 +158,20 @@ namespace Urho3D {
             for (Node* curNode : nodesWithCollision)
             {
                 NewtonCollisionShape* colComp = curNode->GetComponent<NewtonCollisionShape>();
-                NewtonCollision* childCollision = colComp->GetNewtonCollision();
+                NewtonCollision* curNewtCollision = colComp->GetNewtonCollision();
                 NewtonCollision* usedCollision = nullptr;
 
                 if (compoundNeeded)
-                    usedCollision = NewtonCollisionCreateInstance(childCollision);
+                    usedCollision = NewtonCollisionCreateInstance(curNewtCollision);
                 else
-                    usedCollision = childCollision;
+                    usedCollision = curNewtCollision;
 
 
                 dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(curNode->GetWorldTransform()));
 
     
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
-                accumMass += colComp->updateVolume();
+                accumMass += colComp->GetVolume();
 
 
                 if (compoundNeeded) {
@@ -204,9 +203,6 @@ namespace Urho3D {
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
-            //scale the collision with the node.
-            //NewtonBodySetCollisionScale(newtonBody_, node_->GetWorldScale().x_, node_->GetWorldScale().y_, node_->GetWorldScale().z_);
-
             mass_ = accumMass * massScale_;
             NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
             
@@ -224,8 +220,6 @@ namespace Urho3D {
         }
 
     }
-
-
 
 
 
@@ -278,7 +272,6 @@ namespace Urho3D {
         }
         else
         {
-
 
 
         }

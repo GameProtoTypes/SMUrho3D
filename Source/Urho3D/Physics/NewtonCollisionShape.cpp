@@ -203,6 +203,7 @@ namespace Urho3D {
         }
 
         NewtonCollisionSetScale(newtonCollision_, node_->GetWorldScale().x_, node_->GetWorldScale().y_, node_->GetWorldScale().z_);
+        updateVolume();
     }
 
     void NewtonCollisionShape::freeInternalCollision()

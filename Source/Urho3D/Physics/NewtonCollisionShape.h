@@ -50,6 +50,8 @@ namespace Urho3D
         void SetCompound(Model* model, unsigned lodLevel = 0, float tolerance = 0.0f, const Vector3& scale = Vector3::ONE, const Vector3& position = Vector3::ZERO,
             const Quaternion& rotation = Quaternion::IDENTITY);
 
+        /// Returns the volume of the collision shape (convex only);
+        float GetVolume() { return volume_; }
 
         /// Returns the internal newton collision
         NewtonCollision* GetNewtonCollision();

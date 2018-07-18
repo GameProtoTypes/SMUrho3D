@@ -146,7 +146,7 @@ void Physics::CreateScene()
     }
 
 
-
+    //create pyramids
     const int numIslands = 0;
     for(int x2 = -numIslands; x2 <= numIslands; x2++)
         for (int y2 = -numIslands; y2 <= numIslands; y2++)
@@ -178,6 +178,14 @@ void Physics::CreateScene()
         }
     }
 
+
+    //create scale test
+    createScaleTest();
+
+
+
+
+
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
     cameraNode_ = new Node(context_);
@@ -186,6 +194,40 @@ void Physics::CreateScene()
 
     // Set an initial position for the camera scene node above the floor
     cameraNode_->SetPosition(Vector3(0.0f, 5.0f, -20.0f));
+}
+
+void Physics::createScaleTest()
+{
+    Node* root = scene_->CreateChild();
+    root->SetPosition(Vector3(50.0f, 0.0f, 50.0f));
+    const int levelCount = 5;
+    Node* curNode = root;
+    for (int i = 0; i < levelCount; i++)
+    {
+        curNode = curNode->CreateChild();
+        curNode->Translate(Vector3(0, 2, 0));
+        float rotDelta = Random(-5.0f, 5.0f);
+        curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
+        curNode->Scale(Random(0.5f, 1.5f));
+
+
+
+        StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
+        stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
+        stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+
+        NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
+        rigBody->SetMassScale(1.0f);
+
+        NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape>();
+        colShape->SetBox(Vector3(1.0f, 1.0f, 1.0f));
+
+
+
+    }
+
+
+
 }
 
 void Physics::CreateInstructions()
