@@ -170,6 +170,8 @@ namespace Urho3D {
                 dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(curNode->GetWorldTransform()));
 
     
+                
+                NewtonCollisionSetScale(usedCollision, curNode->GetWorldScale().x_, curNode->GetWorldScale().y_, curNode->GetWorldScale().z_);
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
                 accumMass += colComp->GetVolume();
 

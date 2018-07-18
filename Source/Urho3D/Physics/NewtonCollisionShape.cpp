@@ -160,11 +160,7 @@ namespace Urho3D {
 
         NewtonWorld * world = physicsWorld_->GetNewtonWorld();
 
-        Matrix4 mat;
-        //mat.SetScale(node_->GetWorldScale());
-        mat.SetTranslation(position_);
-        mat.SetRotation(rotation_.RotationMatrix());
-        dMatrix nMat = UrhoToNewton(mat);
+
 
 
         if (shapeType_ == SHAPE_BOX) {
@@ -172,23 +168,23 @@ namespace Urho3D {
             // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
             newtonCollision_ = NewtonCreateBox(world, size_.x_,
                 size_.y_,
-                size_.z_, 0, &nMat[0][0]);
+                size_.z_, 0, nullptr);
 
         }
         else if (shapeType_ == SHAPE_SPHERE) {
-            newtonCollision_ = NewtonCreateSphere(world, size_.x_*0.5f, 0, &nMat[0][0]);
+            newtonCollision_ = NewtonCreateSphere(world, size_.x_*0.5f, 0, nullptr);
         }
         else if (shapeType_ == SHAPE_CONE) {
-            newtonCollision_ = NewtonCreateCone(world, size_.x_*0.5f, size_.z_, 0, &nMat[0][0]);
+            newtonCollision_ = NewtonCreateCone(world, size_.x_*0.5f, size_.z_, 0, nullptr);
         }
         else if (shapeType_ == SHAPE_CYLINDER) {
-            newtonCollision_ == NewtonCreateCylinder(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, &nMat[0][0]);
+            newtonCollision_ == NewtonCreateCylinder(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
         }
         else if (shapeType_ == SHAPE_CAPSULE) {
-            newtonCollision_ == NewtonCreateCapsule(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, &nMat[0][0]);
+            newtonCollision_ == NewtonCreateCapsule(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
         }
         else if (shapeType_ == SHAPE_CHAMFERCYLINDER) {
-            newtonCollision_ == NewtonCreateChamferCylinder(world, size_.x_*0.5f, size_.z_, 0, &nMat[0][0]);
+            newtonCollision_ == NewtonCreateChamferCylinder(world, size_.x_*0.5f, size_.z_, 0, nullptr);
         }
         else if (shapeType_ == SHAPE_CONVEXHULL) {
             formConvexHullCollision();
@@ -202,7 +198,7 @@ namespace Urho3D {
             formTriangleMeshCollision();
         }
 
-        NewtonCollisionSetScale(newtonCollision_, node_->GetWorldScale().x_, node_->GetWorldScale().y_, node_->GetWorldScale().z_);
+        
         updateVolume();
     }
 

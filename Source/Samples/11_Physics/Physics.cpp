@@ -152,7 +152,7 @@ void Physics::CreateScene()
         for (int y2 = -numIslands; y2 <= numIslands; y2++)
     {
          //Create a pyramid of movable physics objects
-        int size = 32;
+        int size = 8;
         for (int y = 0; y < size; ++y)
         {
             for (int x = -y; x <= y; ++x)
@@ -205,11 +205,11 @@ void Physics::createScaleTest()
     for (int i = 0; i < levelCount; i++)
     {
         curNode = curNode->CreateChild();
-        curNode->Translate(Vector3(0, 2, 0));
-        float rotDelta = Random(-5.0f, 5.0f);
+        
+        float rotDelta = 0.0f;// Random(-5.0f, 5.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
-        curNode->Scale(Random(0.5f, 1.5f));
-
+        curNode->Scale(1.0f);
+        curNode->Translate(Vector3(0, 2, 0));
 
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
