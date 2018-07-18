@@ -456,227 +456,212 @@ void Node::RemoveAllTags()
     MarkNetworkUpdate();
 }
 
-void Node::SetPosition(const Vector3& position)
+bool Node::SetPosition(const Vector3& position)
 {
-    position_ = position;
-    MarkDirty();
-
-    MarkNetworkUpdate();
+    return SetTransform(position, rotation_, scale_);
 }
 
-void Node::SetRotation(const Quaternion& rotation)
-{
-    rotation_ = rotation;
-    MarkDirty();
 
-    MarkNetworkUpdate();
+bool Node::SetRotation(const Quaternion& rotation)
+{
+    return SetTransform(position_, rotation, scale_);
 }
 
-void Node::SetDirection(const Vector3& direction)
+
+bool Node::SetDirection(const Vector3& direction)
 {
-    SetRotation(Quaternion(Vector3::FORWARD, direction));
+    return SetRotation(Quaternion(Vector3::FORWARD, direction));
 }
 
-void Node::SetScale(float scale)
+
+bool Node::SetScale(float scale)
 {
-    SetScale(Vector3(scale, scale, scale));
+    return SetScale(Vector3(scale, scale, scale));
 }
 
-void Node::SetScale(const Vector3& scale)
+bool Node::SetScale(Vector3 scale)
 {
-    scale_ = scale;
     // Prevent exact zero scale e.g. from momentary edits as this may cause division by zero
     // when decomposing the world transform matrix
-    if (scale_.x_ == 0.0f)
-        scale_.x_ = M_EPSILON;
-    if (scale_.y_ == 0.0f)
-        scale_.y_ = M_EPSILON;
-    if (scale_.z_ == 0.0f)
-        scale_.z_ = M_EPSILON;
+    if (scale.x_ == 0.0f)
+        scale.x_ = M_EPSILON;
+    if (scale.y_ == 0.0f)
+        scale.y_ = M_EPSILON;
+    if (scale.z_ == 0.0f)
+        scale.z_ = M_EPSILON;
 
-    MarkDirty();
-    MarkNetworkUpdate();
+    return SetTransform(position_, rotation_, scale);
 }
 
-void Node::SetTransform(const Vector3& position, const Quaternion& rotation)
+bool Node::SetTransform(const Vector3& position, const Quaternion& rotation)
 {
-    position_ = position;
-    rotation_ = rotation;
-    MarkDirty();
-
-    MarkNetworkUpdate();
+    return SetTransform(position, rotation, scale_);
 }
 
-void Node::SetTransform(const Vector3& position, const Quaternion& rotation, float scale)
+bool Node::SetTransform(const Vector3& position, const Quaternion& rotation, float scale)
 {
-    SetTransform(position, rotation, Vector3(scale, scale, scale));
+    return SetTransform(position, rotation, Vector3(scale, scale, scale));
 }
 
-void Node::SetTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale)
+bool Node::SetTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale)
 {
     position_ = position;
     rotation_ = rotation;
     scale_ = scale;
+
     MarkDirty();
-
     MarkNetworkUpdate();
+
+    return true;
 }
 
-void Node::SetTransform(const Matrix3x4& matrix)
+bool Node::SetTransform(const Matrix3x4& matrix)
 {
-    SetTransform(matrix.Translation(), matrix.Rotation(), matrix.Scale());
+    return SetTransform(matrix.Translation(), matrix.Rotation(), matrix.Scale());
 }
 
-void Node::SetWorldPosition(const Vector3& position)
+bool Node::SetWorldPosition(const Vector3& position)
 {
-    SetPosition((parent_ == scene_ || !parent_) ? position : parent_->GetWorldTransform().Inverse() * position);
+    return SetWorldTransform(position, GetWorldRotation(), GetWorldScale());
 }
 
-void Node::SetWorldRotation(const Quaternion& rotation)
+bool Node::SetWorldRotation(const Quaternion& rotation)
 {
-    SetRotation((parent_ == scene_ || !parent_) ? rotation : parent_->GetWorldRotation().Inverse() * rotation);
+    return SetWorldTransform(GetWorldPosition(), rotation, GetWorldScale());
 }
 
-void Node::SetWorldDirection(const Vector3& direction)
+bool Node::SetWorldDirection(const Vector3& direction)
 {
     Vector3 localDirection = (parent_ == scene_ || !parent_) ? direction : parent_->GetWorldRotation().Inverse() * direction;
-    SetRotation(Quaternion(Vector3::FORWARD, localDirection));
+    return SetRotation(Quaternion(Vector3::FORWARD, localDirection));
 }
 
-void Node::SetWorldScale(float scale)
+bool Node::SetWorldScale(float scale)
 {
-    SetWorldScale(Vector3(scale, scale, scale));
+    return SetWorldTransform(GetWorldPosition(), GetWorldRotation(), Vector3(scale,scale,scale));
 }
 
-void Node::SetWorldScale(const Vector3& scale)
+bool Node::SetWorldScale(const Vector3& scale)
 {
-    SetScale((parent_ == scene_ || !parent_) ? scale : scale / parent_->GetWorldScale());
+    return SetWorldTransform(GetWorldPosition(), GetWorldRotation(), scale);
 }
 
-void Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation)
+bool Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation)
 {
-    SetWorldPosition(position);
-    SetWorldRotation(rotation);
+    return SetWorldTransform(position, rotation, GetWorldScale());
 }
 
-void Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation, float scale)
+bool Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation, float scale)
 {
-    SetWorldPosition(position);
-    SetWorldRotation(rotation);
-    SetWorldScale(scale);
+    return SetWorldTransform(position, rotation, Vector3(scale, scale, scale));
 }
 
-void Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale)
+bool Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale)
 {
-    SetWorldPosition(position);
-    SetWorldRotation(rotation);
-    SetWorldScale(scale);
+    bool ret = true;
+    ret &= SetPosition((parent_ == scene_ || !parent_) ? position : parent_->GetWorldTransform().Inverse() * position);
+    ret &= SetRotation((parent_ == scene_ || !parent_) ? rotation : parent_->GetWorldRotation().Inverse() * rotation);
+    ret &= SetScale((parent_ == scene_ || !parent_) ? scale : scale / parent_->GetWorldScale());
+    return ret;
 }
 
-void Node::Translate(const Vector3& delta, TransformSpace space)
+bool Node::Translate(const Vector3& delta, TransformSpace space)
 {
     switch (space)
     {
     case TS_LOCAL:
         // Note: local space translation disregards local scale for scale-independent movement speed
-        position_ += rotation_ * delta;
-        break;
+        return SetPosition(position_ + rotation_ * delta);
 
     case TS_PARENT:
-        position_ += delta;
-        break;
+        return SetPosition(position_ + delta);
+
 
     case TS_WORLD:
-        position_ += (parent_ == scene_ || !parent_) ? delta : parent_->GetWorldTransform().Inverse() * Vector4(delta, 0.0f);
-        break;
+        return SetWorldPosition(GetWorldPosition() + delta);
     }
 
-    MarkDirty();
-
-    MarkNetworkUpdate();
+    return false;
 }
 
-void Node::Rotate(const Quaternion& delta, TransformSpace space)
+bool Node::Rotate(const Quaternion& delta, TransformSpace space)
 {
     switch (space)
     {
     case TS_LOCAL:
-        rotation_ = (rotation_ * delta).Normalized();
+        return SetRotation((rotation_*delta).Normalized());
         break;
 
     case TS_PARENT:
-        rotation_ = (delta * rotation_).Normalized();
-        break;
+        return SetRotation((delta * rotation_).Normalized());
+
 
     case TS_WORLD:
         if (parent_ == scene_ || !parent_)
-            rotation_ = (delta * rotation_).Normalized();
+            return SetRotation((delta * rotation_).Normalized());
         else
         {
             Quaternion worldRotation = GetWorldRotation();
-            rotation_ = rotation_ * worldRotation.Inverse() * delta * worldRotation;
+            return SetWorldRotation(worldRotation);
         }
         break;
     }
 
-    MarkDirty();
-
-    MarkNetworkUpdate();
+    return false;
 }
 
-void Node::RotateAround(const Vector3& point, const Quaternion& delta, TransformSpace space)
+bool Node::RotateAround(const Vector3& point, const Quaternion& delta, TransformSpace space)
 {
     Vector3 parentSpacePoint;
     Quaternion oldRotation = rotation_;
-
+    bool suc = true;
     switch (space)
     {
     case TS_LOCAL:
         parentSpacePoint = GetTransform() * point;
-        rotation_ = (rotation_ * delta).Normalized();
+        suc &= SetRotation((rotation_*delta).Normalized());
+
         break;
 
     case TS_PARENT:
         parentSpacePoint = point;
-        rotation_ = (delta * rotation_).Normalized();
+        suc &= SetRotation((delta * rotation_).Normalized());
         break;
 
     case TS_WORLD:
         if (parent_ == scene_ || !parent_)
         {
             parentSpacePoint = point;
-            rotation_ = (delta * rotation_).Normalized();
+            suc &= SetRotation((delta * rotation_).Normalized());
         }
         else
         {
             parentSpacePoint = parent_->GetWorldTransform().Inverse() * point;
             Quaternion worldRotation = GetWorldRotation();
-            rotation_ = rotation_ * worldRotation.Inverse() * delta * worldRotation;
+            suc &= SetWorldRotation(worldRotation);
         }
         break;
     }
 
     Vector3 oldRelativePos = oldRotation.Inverse() * (position_ - parentSpacePoint);
-    position_ = rotation_ * oldRelativePos + parentSpacePoint;
+    suc &= SetPosition(rotation_ * oldRelativePos + parentSpacePoint);
 
-    MarkDirty();
-
-    MarkNetworkUpdate();
+    return suc;
 }
 
-void Node::Yaw(float angle, TransformSpace space)
+bool Node::Yaw(float angle, TransformSpace space)
 {
-    Rotate(Quaternion(angle, Vector3::UP), space);
+    return Rotate(Quaternion(angle, Vector3::UP), space);
 }
 
-void Node::Pitch(float angle, TransformSpace space)
+bool Node::Pitch(float angle, TransformSpace space)
 {
-    Rotate(Quaternion(angle, Vector3::RIGHT), space);
+    return Rotate(Quaternion(angle, Vector3::RIGHT), space);
 }
 
-void Node::Roll(float angle, TransformSpace space)
+bool Node::Roll(float angle, TransformSpace space)
 {
-    Rotate(Quaternion(angle, Vector3::FORWARD), space);
+    return Rotate(Quaternion(angle, Vector3::FORWARD), space);
 }
 
 bool Node::LookAt(const Vector3& target, const Vector3& up, TransformSpace space)
@@ -702,26 +687,23 @@ bool Node::LookAt(const Vector3& target, const Vector3& up, TransformSpace space
     // Check if target is very close, in that case can not reliably calculate lookat direction
     if (lookDir.Equals(Vector3::ZERO))
         return false;
+
     Quaternion newRotation;
     // Do nothing if setting look rotation failed
     if (!newRotation.FromLookRotation(lookDir, up))
         return false;
 
-    SetWorldRotation(newRotation);
-    return true;
+    return SetWorldRotation(newRotation);
 }
 
-void Node::Scale(float scale)
+bool Node::Scale(float scale)
 {
-    Scale(Vector3(scale, scale, scale));
+    return Scale(Vector3(scale, scale, scale));
 }
 
-void Node::Scale(const Vector3& scale)
+bool Node::Scale(const Vector3& scale)
 {
-    scale_ *= scale;
-    MarkDirty();
-
-    MarkNetworkUpdate();
+    return SetScale(scale_ * scale);
 }
 
 void Node::SetEnabled(bool enable)

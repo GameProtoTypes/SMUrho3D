@@ -37,7 +37,7 @@ namespace Urho3D {
 
     void NewtonCollisionShape::RegisterObject(Context* context)
     {
-        bool s = context->RegisterFactory<NewtonCollisionShape>();
+        bool s = context->RegisterFactory<NewtonCollisionShape>(DEF_PHYSICS_CATEGORY.CString());
     }
 
     void NewtonCollisionShape::SetBox(const Vector3& size, const Vector3& position, const Quaternion& rotation)
@@ -51,6 +51,50 @@ namespace Urho3D {
         notifyRigidBody();
     }
 
+
+    void NewtonCollisionShape::SetSphere(float diameter, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        shapeType_ = SHAPE_SPHERE;
+        size_ = Vector3(diameter, 0, 0);
+        position_ = position;
+        rotation_ = rotation;
+
+        reEvaluateCollision();
+        notifyRigidBody();
+    }
+
+    void NewtonCollisionShape::SetCylinder(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        shapeType_ = SHAPE_CYLINDER;
+        size_ = Vector3(diameter, height, 0);
+        position_ = position;
+        rotation_ = rotation;
+
+        reEvaluateCollision();
+        notifyRigidBody();
+    }
+
+    void NewtonCollisionShape::SetCapsule(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        shapeType_ = SHAPE_CAPSULE;
+        size_ = Vector3(diameter, height, 0);
+        position_ = position;
+        rotation_ = rotation;
+
+        reEvaluateCollision();
+        notifyRigidBody();
+    }
+
+    void NewtonCollisionShape::SetCone(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    {
+        shapeType_ = SHAPE_CONE;
+        size_ = Vector3(diameter, height, 0);
+        position_ = position;
+        rotation_ = rotation;
+
+        reEvaluateCollision();
+        notifyRigidBody();
+    }
 
     void NewtonCollisionShape::SetTriangleMesh(Model* model, unsigned lodLevel /*= 0*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
     {
@@ -116,23 +160,33 @@ namespace Urho3D {
 
         NewtonWorld * world = physicsWorld_->GetNewtonWorld();
 
-        Matrix4 mat;
-        //mat.SetScale(size_);
-        mat.SetTranslation(position_);
-        mat.SetRotation(rotation_.RotationMatrix());
-        dMatrix nMat = UrhoToNewton(mat);
+
 
 
         if (shapeType_ == SHAPE_BOX) {
 
             // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
-            newtonCollision_ = NewtonCreateBox(world, size_.x_*node_->GetScale().x_,
-                size_.y_*node_->GetScale().y_,
-                size_.z_*node_->GetScale().z_, 0, &nMat[0][0]);
+            newtonCollision_ = NewtonCreateBox(world, size_.x_,
+                size_.y_,
+                size_.z_, 0, nullptr);
 
         }
+        else if (shapeType_ == SHAPE_SPHERE) {
+            newtonCollision_ = NewtonCreateSphere(world, size_.x_*0.5f, 0, nullptr);
+        }
+        else if (shapeType_ == SHAPE_CONE) {
+            newtonCollision_ = NewtonCreateCone(world, size_.x_*0.5f, size_.z_, 0, nullptr);
+        }
+        else if (shapeType_ == SHAPE_CYLINDER) {
+            newtonCollision_ == NewtonCreateCylinder(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
+        }
+        else if (shapeType_ == SHAPE_CAPSULE) {
+            newtonCollision_ == NewtonCreateCapsule(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
+        }
+        else if (shapeType_ == SHAPE_CHAMFERCYLINDER) {
+            newtonCollision_ == NewtonCreateChamferCylinder(world, size_.x_*0.5f, size_.z_, 0, nullptr);
+        }
         else if (shapeType_ == SHAPE_CONVEXHULL) {
-
             formConvexHullCollision();
         }
         else if (shapeType_ == SHAPE_COMPOUND) {
@@ -143,6 +197,9 @@ namespace Urho3D {
         {
             formTriangleMeshCollision();
         }
+
+        
+        updateVolume();
     }
 
     void NewtonCollisionShape::freeInternalCollision()
@@ -155,7 +212,9 @@ namespace Urho3D {
 
     void NewtonCollisionShape::notifyRigidBody()
     {
-        rigidBody_ = node_->GetComponent<NewtonRigidBody>();
+        if(!rigidBody_)
+            rigidBody_ = node_->GetComponent<NewtonRigidBody>();
+
         if (rigidBody_) {
             rigidBody_->reEvaluateBody();
         }
@@ -163,6 +222,10 @@ namespace Urho3D {
 
     NewtonCollision* NewtonCollisionShape::GetNewtonCollision()
     {
+        if (newtonCollision_ == nullptr)
+        {
+            reEvaluateCollision();
+        }
         return newtonCollision_;
     }
 
@@ -172,6 +235,23 @@ namespace Urho3D {
     void NewtonCollisionShape::updateReferenceToRigidBody()
 {
         rigidBody_ = node_->GetComponent<NewtonRigidBody>();
+    }
+
+    float NewtonCollisionShape::updateVolume()
+{
+        float vol = 0.0f;
+        if (newtonCollision_)
+            vol = NewtonConvexCollisionCalculateVolume(newtonCollision_);
+
+        if (vol <= 0.0f) {
+            volume_ = 0.0f;
+            return 0.0f;
+        }
+        else
+        {
+            volume_ = vol;
+            return vol;
+        }
     }
 
     void NewtonCollisionShape::formTriangleMeshCollision()
@@ -311,25 +391,19 @@ namespace Urho3D {
 
     void NewtonCollisionShape::OnNodeSet(Node* node)
     {
-       
-    }
 
-    void NewtonCollisionShape::OnSceneSet(Scene* scene)
-    {
-        if (scene)
+        if (node)
         {
-            if (scene == node_)
+            if (GetScene() == node_)
                 URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
 
-            physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(scene->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
+            physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
 
             reEvaluateCollision();
 
 
             physicsWorld_->addCollisionShape(this);
 
-
-            notifyRigidBody();
         }
         else
         {
@@ -338,9 +412,14 @@ namespace Urho3D {
             if (physicsWorld_)
                 physicsWorld_->removeCollisionShape(this);
 
-
-            notifyRigidBody();
         }
+
+
+    }
+
+    void NewtonCollisionShape::OnSceneSet(Scene* scene)
+    {
+       
     }
 
     void NewtonCollisionShape::OnMarkedDirty(Node* node)

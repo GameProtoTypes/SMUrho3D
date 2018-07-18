@@ -75,19 +75,41 @@ protected:
 private:
     /// Construct the scene content.
     void CreateScene();
+
+    void createScaleTest();
+
+
+
     /// Construct an instruction text to the UI.
     void CreateInstructions();
     /// Set up a viewport for displaying the scene.
     void SetupViewport();
     /// Subscribe to application-wide logic update and post-render update events.
     void SubscribeToEvents();
+
+
+
+
+
     /// Read input and moves the camera.
     void MoveCamera(float timeStep);
+
+
+
+
+
     /// Spawn a physics object from the camera position.
     void SpawnObject();
     void SpawnTrimeshObject();
     void SpawnConvexHull();
     void SpawnCompound();
+
+
+
+
+
+
+
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle the post-render update event.

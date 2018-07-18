@@ -32,6 +32,14 @@ namespace Urho3D
 
         /// Set as a box.
         void SetBox(const Vector3& size, const Vector3& position = Vector3::ZERO, const Quaternion& rotation = Quaternion::IDENTITY);
+        /// Set as a sphere.
+        void SetSphere(float diameter, const Vector3& position = Vector3::ZERO, const Quaternion& rotation = Quaternion::IDENTITY);
+        /// Set as a cylinder.
+        void SetCylinder(float diameter, float height, const Vector3& position = Vector3::ZERO, const Quaternion& rotation = Quaternion::IDENTITY);
+        /// Set as a capsule.
+        void SetCapsule(float diameter, float height, const Vector3& position = Vector3::ZERO, const Quaternion& rotation = Quaternion::IDENTITY);
+        /// Set as a cone.
+        void SetCone(float diameter, float height, const Vector3& position = Vector3::ZERO, const Quaternion& rotation = Quaternion::IDENTITY);
         /// Set as a triangle mesh from Model. 
         void SetTriangleMesh(Model* model, unsigned lodLevel = 0, const Vector3& scale = Vector3::ONE, const Vector3& position = Vector3::ZERO,
             const Quaternion& rotation = Quaternion::IDENTITY);
@@ -42,6 +50,8 @@ namespace Urho3D
         void SetCompound(Model* model, unsigned lodLevel = 0, float tolerance = 0.0f, const Vector3& scale = Vector3::ONE, const Vector3& position = Vector3::ZERO,
             const Quaternion& rotation = Quaternion::IDENTITY);
 
+        /// Returns the volume of the collision shape (convex only);
+        float GetVolume() { return volume_; }
 
         /// Returns the internal newton collision
         NewtonCollision* GetNewtonCollision();
@@ -57,6 +67,9 @@ namespace Urho3D
         NewtonCollision* newtonCollision_ = nullptr;
         /// newton Mesh reference
         WeakPtr<NewtonMeshObject> newtonMesh_ = nullptr;
+        /// volume
+        float volume_ = 0.0f;
+
 
         /// Collision shape type.
         ShapeType shapeType_ = SHAPE_BOX;
@@ -88,7 +101,8 @@ namespace Urho3D
         /// Called when there is a change to the rigid body component;
         void updateReferenceToRigidBody();
 
-
+        /// Calculates the effective mass based off density and size. (could be expensive)
+        float updateVolume();
 
 
         void formTriangleMeshCollision();

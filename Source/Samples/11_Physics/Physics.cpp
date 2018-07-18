@@ -137,7 +137,8 @@ void Physics::CreateScene()
         // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
         // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
         // in the physics simulation
-        /*NewtonRigidBody* body = */floorNode->CreateComponent<NewtonRigidBody>();
+        NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
+        body->SetMassScale(0.0f);
         auto* shape = floorNode->CreateComponent<NewtonCollisionShape>();
         // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
         // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
@@ -145,21 +146,23 @@ void Physics::CreateScene()
     }
 
 
-
+    //create pyramids
     const int numIslands = 0;
     for(int x2 = -numIslands; x2 <= numIslands; x2++)
         for (int y2 = -numIslands; y2 <= numIslands; y2++)
     {
          //Create a pyramid of movable physics objects
-        for (int y = 0; y < 16; ++y)
+        int size = 8;
+        for (int y = 0; y < size; ++y)
         {
             for (int x = -y; x <= y; ++x)
             {
 
-                Node* boxNode = scene_->CreateChild("Box");
-                boxNode->SetPosition(Vector3((float)x, -(float)y + 16.0f, 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                Node* boxNode = scene_->CreateChild("Sphere");
+                boxNode->SetScale(Vector3(Random(1.0f, 0.5f), Random(1.0f, 0.5f), Random(1.0f, 0.5f)));
+                boxNode->SetPosition(Vector3((float)x, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
                 auto* boxObject = boxNode->CreateComponent<StaticModel>();
-                boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+                boxObject->SetModel(cache->GetResource<Model>("Models/Sphere.mdl"));
                 boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
                 boxObject->SetCastShadows(true);
 
@@ -167,13 +170,21 @@ void Physics::CreateScene()
                 // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
                 // objects are significant
                 auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-                body->SetMass(1.0f);
+                body->SetMassScale(1.0f);
                 body->SetFriction(0.75f);
                 auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-                shape->SetBox(Vector3::ONE);
+                shape->SetSphere(1.0f);
             }
         }
     }
+
+
+    //create scale test
+    createScaleTest();
+
+
+
+
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
@@ -183,6 +194,40 @@ void Physics::CreateScene()
 
     // Set an initial position for the camera scene node above the floor
     cameraNode_->SetPosition(Vector3(0.0f, 5.0f, -20.0f));
+}
+
+void Physics::createScaleTest()
+{
+    Node* root = scene_->CreateChild();
+    root->SetPosition(Vector3(50.0f, 0.0f, 50.0f));
+    const int levelCount = 5;
+    Node* curNode = root;
+    for (int i = 0; i < levelCount; i++)
+    {
+        curNode = curNode->CreateChild();
+        
+        float rotDelta = Random(-20.0f, 20.0f);
+        curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
+        curNode->SetScale(1.0f);
+        curNode->Translate(Vector3(0, 2, 0));
+
+
+        StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
+        stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
+        stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        stMdl->SetCastShadows(true);
+        NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
+        rigBody->SetMassScale(1.0f);
+
+        NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape>();
+        colShape->SetBox(Vector3(1.0f, 1.0f, 1.0f));
+
+
+
+    }
+
+
+
 }
 
 void Physics::CreateInstructions()
@@ -358,7 +403,7 @@ void Physics::SpawnObject()
 
          // Create physics components, use a smaller mass also
          auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-         body->SetMass(0.1f);
+         body->SetMassScale(0.1f);
          body->SetFriction(0.75f);
          body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
          body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
@@ -402,7 +447,7 @@ void Physics::SpawnTrimeshObject()
 
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    body->SetMass(1.0f);
+    body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
     body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
     body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
@@ -446,7 +491,7 @@ void Physics::SpawnConvexHull()
 
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    body->SetMass(1.0f);
+    body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
     body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
     body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
@@ -489,7 +534,7 @@ void Physics::SpawnCompound()
 
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    body->SetMass(1.0f);
+    body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
     body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
     body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));

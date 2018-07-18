@@ -132,146 +132,146 @@ public:
     void RemoveAllTags();
 
     /// Set position in parent space. If the scene node is on the root level (is child of the scene itself), this is same as world space.
-    void SetPosition(const Vector3& position);
+    bool SetPosition(const Vector3& position);
 
     /// Set position in parent space (for Urho2D).
-    void SetPosition2D(const Vector2& position) { SetPosition(Vector3(position)); }
+    bool SetPosition2D(const Vector2& position) { return SetPosition(Vector3(position)); }
 
     /// Set position in parent space (for Urho2D).
-    void SetPosition2D(float x, float y) { SetPosition(Vector3(x, y, 0.0f)); }
+    bool SetPosition2D(float x, float y) { return SetPosition(Vector3(x, y, 0.0f)); }
 
     /// Set rotation in parent space.
-    void SetRotation(const Quaternion& rotation);
+    bool SetRotation(const Quaternion& rotation);
 
     /// Set rotation in parent space (for Urho2D).
-    void SetRotation2D(float rotation) { SetRotation(Quaternion(rotation)); }
+    bool SetRotation2D(float rotation) { return SetRotation(Quaternion(rotation)); }
 
     /// Set forward direction in parent space. Positive Z axis equals identity rotation.
-    void SetDirection(const Vector3& direction);
+    bool SetDirection(const Vector3& direction);
     /// Set uniform scale in parent space.
-    void SetScale(float scale);
+    bool SetScale(float scale);
     /// Set scale in parent space.
-    void SetScale(const Vector3& scale);
+    bool SetScale(Vector3 scale);
 
     /// Set scale in parent space (for Urho2D).
-    void SetScale2D(const Vector2& scale) { SetScale(Vector3(scale, 1.0f)); }
+    bool SetScale2D(const Vector2& scale) { return SetScale(Vector3(scale, 1.0f)); }
 
     /// Set scale in parent space (for Urho2D).
-    void SetScale2D(float x, float y) { SetScale(Vector3(x, y, 1.0f)); }
+    bool SetScale2D(float x, float y) { return SetScale(Vector3(x, y, 1.0f)); }
 
     /// Set both position and rotation in parent space as an atomic operation. This is faster than setting position and rotation separately.
-    void SetTransform(const Vector3& position, const Quaternion& rotation);
+    bool SetTransform(const Vector3& position, const Quaternion& rotation);
     /// Set both position, rotation and uniform scale in parent space as an atomic operation.
-    void SetTransform(const Vector3& position, const Quaternion& rotation, float scale);
+    bool SetTransform(const Vector3& position, const Quaternion& rotation, float scale);
     /// Set both position, rotation and scale in parent space as an atomic operation.
-    void SetTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale);
+    bool SetTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale);
     /// Set node transformation in parent space as an atomic operation.
-    void SetTransform(const Matrix3x4& matrix);
+    bool SetTransform(const Matrix3x4& matrix);
 
     /// Set both position and rotation in parent space as an atomic operation (for Urho2D).
-    void SetTransform2D(const Vector2& position, float rotation) { SetTransform(Vector3(position), Quaternion(rotation)); }
+    bool SetTransform2D(const Vector2& position, float rotation) { return SetTransform(Vector3(position), Quaternion(rotation)); }
 
     /// Set both position, rotation and uniform scale in parent space as an atomic operation (for Urho2D).
-    void SetTransform2D(const Vector2& position, float rotation, float scale)
+    bool SetTransform2D(const Vector2& position, float rotation, float scale)
     {
-        SetTransform(Vector3(position), Quaternion(rotation), scale);
+        return SetTransform(Vector3(position), Quaternion(rotation), scale);
     }
 
     /// Set both position, rotation and scale in parent space as an atomic operation (for Urho2D).
-    void SetTransform2D(const Vector2& position, float rotation, const Vector2& scale)
+    bool SetTransform2D(const Vector2& position, float rotation, const Vector2& scale)
     {
-        SetTransform(Vector3(position), Quaternion(rotation), Vector3(scale, 1.0f));
+        return SetTransform(Vector3(position), Quaternion(rotation), Vector3(scale, 1.0f));
     }
 
     /// Set position in world space.
-    void SetWorldPosition(const Vector3& position);
+    bool SetWorldPosition(const Vector3& position);
 
     /// Set position in world space (for Urho2D).
-    void SetWorldPosition2D(const Vector2& position) { SetWorldPosition(Vector3(position)); }
+    bool SetWorldPosition2D(const Vector2& position) { return SetWorldPosition(Vector3(position)); }
 
     /// Set position in world space (for Urho2D).
-    void SetWorldPosition2D(float x, float y) { SetWorldPosition(Vector3(x, y, 0.0f)); }
+    bool SetWorldPosition2D(float x, float y) { return SetWorldPosition(Vector3(x, y, 0.0f)); }
 
     /// Set rotation in world space.
-    void SetWorldRotation(const Quaternion& rotation);
+    bool SetWorldRotation(const Quaternion& rotation);
 
     /// Set rotation in world space (for Urho2D).
-    void SetWorldRotation2D(float rotation) { SetWorldRotation(Quaternion(rotation)); }
+    bool SetWorldRotation2D(float rotation) { return SetWorldRotation(Quaternion(rotation)); }
 
     /// Set forward direction in world space.
-    void SetWorldDirection(const Vector3& direction);
+    bool SetWorldDirection(const Vector3& direction);
     /// Set uniform scale in world space.
-    void SetWorldScale(float scale);
+    bool SetWorldScale(float scale);
     /// Set scale in world space.
-    void SetWorldScale(const Vector3& scale);
+    bool SetWorldScale(const Vector3& scale);
 
     /// Set scale in world space (for Urho2D).
-    void SetWorldScale2D(const Vector2& scale) { SetWorldScale(Vector3(scale, 1.0f)); }
+    bool SetWorldScale2D(const Vector2& scale) { return SetWorldScale(Vector3(scale, 1.0f)); }
 
     /// Set scale in world space (for Urho2D).
-    void SetWorldScale2D(float x, float y) { SetWorldScale(Vector3(x, y, 1.0f)); }
+    bool SetWorldScale2D(float x, float y) { return SetWorldScale(Vector3(x, y, 1.0f)); }
 
     /// Set both position and rotation in world space as an atomic operation.
-    void SetWorldTransform(const Vector3& position, const Quaternion& rotation);
+    bool SetWorldTransform(const Vector3& position, const Quaternion& rotation);
     /// Set both position, rotation and uniform scale in world space as an atomic operation.
-    void SetWorldTransform(const Vector3& position, const Quaternion& rotation, float scale);
+    bool SetWorldTransform(const Vector3& position, const Quaternion& rotation, float scale);
     /// Set both position, rotation and scale in world space as an atomic opration.
-    void SetWorldTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale);
+    bool SetWorldTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale);
 
     /// Set both position and rotation in world space as an atomic operation (for Urho2D).
-    void SetWorldTransform2D(const Vector2& position, float rotation)
+    bool SetWorldTransform2D(const Vector2& position, float rotation)
     {
-        SetWorldTransform(Vector3(position), Quaternion(rotation));
+        return SetWorldTransform(Vector3(position), Quaternion(rotation));
     }
 
     /// Set both position, rotation and uniform scale in world space as an atomic operation (for Urho2D).
-    void SetWorldTransform2D(const Vector2& position, float rotation, float scale)
+    bool SetWorldTransform2D(const Vector2& position, float rotation, float scale)
     {
-        SetWorldTransform(Vector3(position), Quaternion(rotation), scale);
+        return SetWorldTransform(Vector3(position), Quaternion(rotation), scale);
     }
 
     /// Set both position, rotation and scale in world space as an atomic opration (for Urho2D).
-    void SetWorldTransform2D(const Vector2& position, float rotation, const Vector2& scale)
+    bool SetWorldTransform2D(const Vector2& position, float rotation, const Vector2& scale)
     {
-        SetWorldTransform(Vector3(position), Quaternion(rotation), Vector3(scale, 1.0f));
+        return SetWorldTransform(Vector3(position), Quaternion(rotation), Vector3(scale, 1.0f));
     }
 
     /// Move the scene node in the chosen transform space.
-    void Translate(const Vector3& delta, TransformSpace space = TS_LOCAL);
+    bool Translate(const Vector3& delta, TransformSpace space = TS_LOCAL);
 
     /// Move the scene node in the chosen transform space (for Urho2D).
-    void Translate2D(const Vector2& delta, TransformSpace space = TS_LOCAL) { Translate(Vector3(delta), space); }
+    bool Translate2D(const Vector2& delta, TransformSpace space = TS_LOCAL) { return Translate(Vector3(delta), space); }
 
     /// Rotate the scene node in the chosen transform space.
-    void Rotate(const Quaternion& delta, TransformSpace space = TS_LOCAL);
+    bool Rotate(const Quaternion& delta, TransformSpace space = TS_LOCAL);
 
     /// Rotate the scene node in the chosen transform space (for Urho2D).
-    void Rotate2D(float delta, TransformSpace space = TS_LOCAL) { Rotate(Quaternion(delta), space); }
+    bool Rotate2D(float delta, TransformSpace space = TS_LOCAL) { return Rotate(Quaternion(delta), space); }
 
     /// Rotate around a point in the chosen transform space.
-    void RotateAround(const Vector3& point, const Quaternion& delta, TransformSpace space = TS_LOCAL);
+    bool RotateAround(const Vector3& point, const Quaternion& delta, TransformSpace space = TS_LOCAL);
 
     /// Rotate around a point in the chosen transform space (for Urho2D).
-    void RotateAround2D(const Vector2& point, float delta, TransformSpace space = TS_LOCAL)
+    bool RotateAround2D(const Vector2& point, float delta, TransformSpace space = TS_LOCAL)
     {
-        RotateAround(Vector3(point), Quaternion(delta), space);
+        return RotateAround(Vector3(point), Quaternion(delta), space);
     }
 
     /// Rotate around the X axis.
-    void Pitch(float angle, TransformSpace space = TS_LOCAL);
+    bool Pitch(float angle, TransformSpace space = TS_LOCAL);
     /// Rotate around the Y axis.
-    void Yaw(float angle, TransformSpace space = TS_LOCAL);
+    bool Yaw(float angle, TransformSpace space = TS_LOCAL);
     /// Rotate around the Z axis.
-    void Roll(float angle, TransformSpace space = TS_LOCAL);
+    bool Roll(float angle, TransformSpace space = TS_LOCAL);
     /// Look at a target position in the chosen transform space. Note that the up vector is always specified in world space. Return true if successful, or false if resulted in an illegal rotation, in which case the current rotation remains.
     bool LookAt(const Vector3& target, const Vector3& up = Vector3::UP, TransformSpace space = TS_WORLD);
     /// Modify scale in parent space uniformly.
-    void Scale(float scale);
+    bool Scale(float scale);
     /// Modify scale in parent space.
-    void Scale(const Vector3& scale);
+    bool Scale(const Vector3& scale);
 
     /// Modify scale in parent space (for Urho2D).
-    void Scale2D(const Vector2& scale) { Scale(Vector3(scale, 1.0f)); }
+    bool Scale2D(const Vector2& scale) { return Scale(Vector3(scale, 1.0f)); }
 
     /// Set enabled/disabled state without recursion. Components in a disabled node become effectively disabled regardless of their own enable/disable state.
     void SetEnabled(bool enable);
@@ -372,6 +372,10 @@ public:
 
     /// Return owner connection in networking.
     Connection* GetOwner() const { return impl_->owner_; }
+
+
+
+
 
     /// Return position in parent space.
     const Vector3& GetPosition() const { return position_; }
