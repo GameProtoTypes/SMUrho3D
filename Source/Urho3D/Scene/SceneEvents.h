@@ -110,6 +110,17 @@ URHO3D_EVENT(E_ASYNCLOADFINISHED, AsyncLoadFinished)
     URHO3D_PARAM(P_SCENE, Scene);                  // Scene pointer
 };
 
+
+/// A node has changed parents. 
+URHO3D_EVENT(E_NODEPARENTCHANGE, NodeParentChange)
+{
+    URHO3D_PARAM(P_OLD_PARENT, Parent);            // Node pointer
+    URHO3D_PARAM(P_NEW_PARENT, Parent);            // Node pointer
+    URHO3D_PARAM(P_NODE, Node);                    // Node pointer
+}
+
+
+
 /// A child node has been added to a parent node.
 URHO3D_EVENT(E_NODEADDED, NodeAdded)
 {

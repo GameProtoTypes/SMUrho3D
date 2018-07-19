@@ -810,8 +810,12 @@ void Node::AddChild(Node* node, unsigned index)
     if (oldParent)
     {
         // If old parent is in different scene, perform the full removal
-        if (oldParent->GetScene() != scene_)
+        if (oldParent->GetScene() != scene_) {
+
             oldParent->RemoveChild(node);
+
+
+        }
         else
         {
             if (scene_)
@@ -846,14 +850,18 @@ void Node::AddChild(Node* node, unsigned index)
     // Send change event
     if (scene_)
     {
-        using namespace NodeAdded;
-
         VariantMap& eventData = GetEventDataMap();
-        eventData[P_SCENE] = scene_;
-        eventData[P_PARENT] = this;
-        eventData[P_NODE] = node;
-
+        eventData[NodeAdded::P_SCENE] = scene_;
+        eventData[NodeAdded::P_PARENT] = this;
+        eventData[NodeAdded::P_NODE] = node;
         scene_->SendEvent(E_NODEADDED, eventData);
+
+
+        eventData[NodeParentChange::P_OLD_PARENT] = oldParent;
+        eventData[NodeParentChange::P_NEW_PARENT] = this;
+        eventData[NodeParentChange::P_NODE] = node;
+        scene_->SendEvent(E_NODEPARENTCHANGE, eventData);
+
     }
 }
 
