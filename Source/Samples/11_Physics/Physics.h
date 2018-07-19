@@ -77,7 +77,7 @@ private:
     void CreateScene();
 
     void createScaleTest();
-
+    void CreatePyramids();
 
 
     /// Construct an instruction text to the UI.
