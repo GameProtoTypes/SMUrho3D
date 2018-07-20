@@ -36,23 +36,14 @@ using namespace ui::litterals;
 namespace Urho3D
 {
 
-UITab::UITab(Urho3D::Context* context, Urho3D::StringHash id, const Urho3D::String& afterDockName,
-    ui::DockSlot position)
-    : Tab(context, id, afterDockName, position)
+UITab::UITab(Context* context)
+    : Tab(context)
     , undo_(context)
 {
     SetTitle("New UI Layout");
     windowFlags_ = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
-    texture_ = new Texture2D(context);
-    texture_->SetFilterMode(FILTER_BILINEAR);
-    texture_->SetAddressMode(COORD_U, ADDRESS_CLAMP);
-    texture_->SetAddressMode(COORD_V, ADDRESS_CLAMP);
-    texture_->SetNumLevels(1);                                        // No mipmaps
-
-    rootElement_ = new RootUIElement(context);
-    rootElement_->SetRenderTexture(texture_);
-    rootElement_->SetEnabled(true);
+    rootElement_ = new RootUIElement(context_);
 
     undo_.Connect(rootElement_);
     undo_.Connect(&inspector_);
@@ -63,7 +54,7 @@ UITab::UITab(Urho3D::Context* context, Urho3D::StringHash id, const Urho3D::Stri
     AutoLoadDefaultStyle();
 }
 
-void UITab::RenderNodeTree()
+void UITab::RenderHierarchy()
 {
     auto oldSpacing = ui::GetStyle().IndentSpacing;
     ui::GetStyle().IndentSpacing = 10;
@@ -305,6 +296,18 @@ void UITab::OnActiveUpdate()
 
 IntRect UITab::UpdateViewRect()
 {
+    if (texture_.Null())
+    {
+        // TODO: Stinks. These need to be initialized after at least one SystemUI frame has rendered. However project may be loaded from command line and that would call initializing code too early.
+        texture_ = new Texture2D(context_);
+        texture_->SetFilterMode(FILTER_BILINEAR);
+        texture_->SetAddressMode(COORD_U, ADDRESS_CLAMP);
+        texture_->SetAddressMode(COORD_V, ADDRESS_CLAMP);
+        texture_->SetNumLevels(1);
+        rootElement_->SetRenderTexture(texture_);
+        rootElement_->SetEnabled(true);
+    }
+
     IntRect rect = Tab::UpdateViewRect();
 
     if (rect.Width() != texture_->GetWidth() || rect.Height() != texture_->GetHeight())
@@ -550,16 +553,15 @@ void UITab::RenderElementContextMenu()
     }
 }
 
-void UITab::SaveProject(JSONValue& tab)
+void UITab::OnSaveProject(JSONValue& tab)
 {
-    tab["type"] = "ui";
-    tab["id"] = id_.ToString();
+    Tab::OnSaveProject(tab);
     tab["path"] = path_;
 }
 
-void UITab::LoadProject(const JSONValue& tab)
+void UITab::OnLoadProject(const JSONValue& tab)
 {
-    id_ = StringHash(ToUInt(tab["id"].GetString(), 16));
+    Tab::OnLoadProject(tab);
     LoadResource(tab["path"].GetString());
 }
 
@@ -809,6 +811,12 @@ void UITab::AttributeCustomize(VariantMap& args)
             args[P_TOOLTIP] = "Style value was modified.";
         }
     }
+}
+
+void UITab::OnFocused()
+{
+    SendEvent(E_EDITORRENDERINSPECTOR, EditorRenderInspector::P_INSPECTABLE, this);
+    SendEvent(E_EDITORRENDERHIERARCHY, EditorRenderHierarchy::P_INSPECTABLE, this);
 }
 
 }
