@@ -146,37 +146,7 @@ void Physics::CreateScene()
     }
 
 
-    //create pyramids
-    const int numIslands = 0;
-    for(int x2 = -numIslands; x2 <= numIslands; x2++)
-        for (int y2 = -numIslands; y2 <= numIslands; y2++)
-    {
-         //Create a pyramid of movable physics objects
-        int size = 8;
-        for (int y = 0; y < size; ++y)
-        {
-            for (int x = -y; x <= y; ++x)
-            {
-
-                Node* boxNode = scene_->CreateChild("Sphere");
-                boxNode->SetScale(Vector3(Random(1.0f, 0.5f), Random(1.0f, 0.5f), Random(1.0f, 0.5f)));
-                boxNode->SetPosition(Vector3((float)x, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
-                auto* boxObject = boxNode->CreateComponent<StaticModel>();
-                boxObject->SetModel(cache->GetResource<Model>("Models/Sphere.mdl"));
-                boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-                boxObject->SetCastShadows(true);
-
-                // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
-                // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
-                // objects are significant
-                auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-                body->SetMassScale(1.0f);
-                body->SetFriction(0.75f);
-                auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-                shape->SetSphere(1.0f);
-            }
-        }
-    }
+    //createPyramids();
 
 
     //create scale test
@@ -199,7 +169,7 @@ void Physics::CreateScene()
 void Physics::createScaleTest()
 {
     Node* root = scene_->CreateChild();
-    root->SetPosition(Vector3(50.0f, 0.0f, 50.0f));
+    root->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
     const int levelCount = 5;
     Node* curNode = root;
     for (int i = 0; i < levelCount; i++)
@@ -221,14 +191,47 @@ void Physics::createScaleTest()
 
         NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape>();
         colShape->SetBox(Vector3(1.0f, 1.0f, 1.0f));
-
-
-
     }
 
 
 
 }
+
+
+void Physics::CreatePyramids()
+{
+    //create pyramids
+    const int numIslands = 0;
+    for (int x2 = -numIslands; x2 <= numIslands; x2++)
+        for (int y2 = -numIslands; y2 <= numIslands; y2++)
+        {
+            //Create a pyramid of movable physics objects
+            int size = 8;
+            for (int y = 0; y < size; ++y)
+            {
+                for (int x = -y; x <= y; ++x)
+                {
+                    Node* boxNode = scene_->CreateChild("Sphere");
+                    boxNode->SetScale(Vector3(Random(1.0f, 0.5f), Random(1.0f, 0.5f), Random(1.0f, 0.5f)));
+                    boxNode->SetPosition(Vector3((float)x, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    auto* boxObject = boxNode->CreateComponent<StaticModel>();
+                    boxObject->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl"));
+                    boxObject->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+                    boxObject->SetCastShadows(true);
+
+                    // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
+                    // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
+                    // objects are significant
+                    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+                    body->SetMassScale(1.0f);
+                    body->SetFriction(0.75f);
+                    auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+                    shape->SetSphere(1.0f);
+                }
+            }
+        }
+}
+
 
 void Physics::CreateInstructions()
 {
@@ -581,10 +584,21 @@ void Physics::DecomposePhysicsTree()
     PODVector<RayQueryResult> res;
     Ray ray(cameraNode_->GetWorldPosition(), cameraNode_->GetWorldDirection());
     RayOctreeQuery querry(res, ray);
-    
+
+
     scene_->GetComponent<Octree>()->Raycast(querry);
 
     if (res.Size() > 1) {
+
+        PODVector<Node*> children;
+        res[1].node_->GetChildren(children, true);
+
+        GSS<VisualDebugger>()->AddOrb(res[1].node_->GetWorldPosition(), 1.0f, Color::RED);
+
+        for (auto* child : children) {
+            GSS<VisualDebugger>()->AddOrb(child->GetWorldPosition(), 1.0f, Color(Random(), Random(), Random()));
+            child->SetParent(scene_);
+        }
 
         //while(res[1].node_->SetParent())
         //res[1].node_->GetChildren(true).Front()->SetParent(scene_);
