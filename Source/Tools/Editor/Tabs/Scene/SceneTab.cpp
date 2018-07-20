@@ -38,8 +38,8 @@
 namespace Urho3D
 {
 
-SceneTab::SceneTab(Context* context, StringHash id, const String& afterDockName, ui::DockSlot position)
-    : Tab(context, id, afterDockName, position)
+SceneTab::SceneTab(Context* context)
+    : Tab(context)
     , view_(context, {0, 0, 1024, 768})
     , gizmo_(context)
     , undo_(context)
@@ -48,7 +48,7 @@ SceneTab::SceneTab(Context* context, StringHash id, const String& afterDockName,
     SetTitle("New Scene");
     windowFlags_ = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
-    settings_ = new SceneSettings(context);
+    settings_ = new SceneSettings(context_);
     effectSettings_ = new SceneEffects(this);
 
     SubscribeToEvent(this, E_EDITORSELECTIONCHANGED, std::bind(&SceneTab::OnNodeSelectionChanged, this));
@@ -84,6 +84,8 @@ SceneTab::SceneTab(Context* context, StringHash id, const String& afterDockName,
 
     CreateObjects();
     undo_.Clear();
+
+    UpdateUniqueTitle();
 }
 
 SceneTab::~SceneTab() = default;
@@ -399,7 +401,7 @@ void SceneTab::RenderInspector()
     }
 }
 
-void SceneTab::RenderNodeTree()
+void SceneTab::RenderHierarchy()
 {
     auto oldSpacing = ui::GetStyle().IndentSpacing;
     ui::GetStyle().IndentSpacing = 10;
@@ -416,7 +418,7 @@ void SceneTab::RenderNodeTree(Node* node)
     if (node->IsTemporary())
         return;
 
-    String name = ToString("%s (%d)", (node->GetName().Empty() ? node->GetTypeName() : node->GetName()).CString(), node->GetID());
+    String name = node->GetName().Empty() ? ToString("%s %d", node->GetTypeName().CString(), node->GetID()) : node->GetName();
     bool isSelected = IsSelected(node) && selectedComponent_.Expired();
 
     if (isSelected)
@@ -508,16 +510,17 @@ void SceneTab::RenderNodeTree(Node* node)
         ui::PopID();
 }
 
-void SceneTab::LoadProject(const JSONValue& scene)
+void SceneTab::OnLoadProject(const JSONValue& tab)
 {
+    Tab::OnLoadProject(tab);
+
     undo_.Clear();
     auto isTracking = undo_.IsTrackingEnabled();
     undo_.SetTrackingEnabled(false);
 
-    id_ = StringHash(ToUInt(scene["id"].GetString(), 16));
-    LoadResource(scene["path"].GetString());
+    LoadResource(tab["path"].GetString());
 
-    const auto& camera = scene["camera"];
+    const auto& camera = tab["camera"];
     if (camera.IsObject())
     {
         Node* cameraNode = view_.GetCamera()->GetNode();
@@ -527,16 +530,16 @@ void SceneTab::LoadProject(const JSONValue& scene)
             lightComponent->SetEnabled(camera["light"].GetBool());
     }
 
-    settings_->LoadProject(scene["settings"]);
-    effectSettings_->LoadProject(scene["effects"]);
+    settings_->LoadProject(tab["settings"]);
+    effectSettings_->LoadProject(tab["effects"]);
 
     undo_.SetTrackingEnabled(isTracking);
 }
 
-void SceneTab::SaveProject(JSONValue& tab)
+void SceneTab::OnSaveProject(JSONValue& tab)
 {
-    tab["type"] = "scene";
-    tab["id"] =  id_.ToString();
+    Tab::OnSaveProject(tab);
+
     tab["path"] = path_;
 
     auto& camera = tab["camera"];
@@ -876,27 +879,10 @@ void SceneTab::OnComponentRemoved(VariantMap& args)
     }
 }
 
-void SceneTab::OnEditorUserCodeReLoadStart(StringHash event, VariantMap& data)
+void SceneTab::OnFocused()
 {
-    Pause();
-    SceneStateSave();
-    PODVector<Node*> nodes = GetScene()->GetChildren(true);
-    //copy vector to temp vector of shared pts just in case we remove a parent node in the scene in the next pass below.
-    Vector<SharedPtr<Node>> nodesSharedPtrs;
-    for (Node* node : nodes)
-    {
-        nodesSharedPtrs.Push(SharedPtr<Node>(node));
-    }
-
-    //remove what we need from the scene graph..
-    for (SharedPtr<Node> node : nodesSharedPtrs)
-    {
-        if(node.NotNull())
-            if (!node->HasTag("__EDITOR_OBJECT__"))
-                node->Remove();
-    }
-
-    //shared ptrs released so actual nodes that need released will be released at this point.
+    SendEvent(E_EDITORRENDERINSPECTOR, EditorRenderInspector::P_INSPECTABLE, this);
+    SendEvent(E_EDITORRENDERHIERARCHY, EditorRenderHierarchy::P_INSPECTABLE, this);
 }
 
 }

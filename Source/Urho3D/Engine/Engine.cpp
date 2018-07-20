@@ -127,9 +127,6 @@ Engine::Engine(Context* context) :
     // Create subsystems which do not depend on engine initialization or startup parameters
     context_->RegisterSubsystem(new Time(context_));
     context_->RegisterSubsystem(new WorkQueue(context_));
-#ifdef URHO3D_PROFILING
-    context_->RegisterSubsystem(new Profiler(context_));
-#endif
     context_->RegisterSubsystem(new FileSystem(context_));
 	context_->RegisterFactory<FileWatcher>();
 #ifdef URHO3D_LOGGING
@@ -178,16 +175,6 @@ bool Engine::Initialize(const VariantMap& parameters)
 {
     if (initialized_)
         return true;
-
-#ifdef URHO3D_PROFILING
-    if (auto* profiler = GetSubsystem<Profiler>())
-    {
-        profiler->SetEnabled(true);
-        profiler->SetEventProfilingEnabled(GetParameter(parameters, EP_EVENT_PROFILER, true).GetBool());
-        if (GetParameter(parameters, EP_PROFILER_LISTEN, false).GetBool())
-            profiler->StartListen((unsigned short)GetParameter(parameters, EP_PROFILER_PORT, PROFILER_DEFAULT_PORT).GetInt());
-    }
-#endif
 
     URHO3D_PROFILE("InitEngine");
 
