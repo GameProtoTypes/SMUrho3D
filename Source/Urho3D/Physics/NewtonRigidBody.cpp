@@ -206,7 +206,7 @@ namespace Urho3D {
 
             if (!newtonBody_)
                 newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
-
+            
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
@@ -313,6 +313,10 @@ namespace Urho3D {
             if (oldParent->HasComponent<NewtonRigidBody>())
             {
                 oldParent->GetComponent<NewtonRigidBody>()->reEvaluateBody();
+            }
+            if (newParent->HasComponent<NewtonRigidBody>())
+            {
+                newParent->GetComponent<NewtonRigidBody>()->reEvaluateBody();
             }
             if (node->HasComponent<NewtonRigidBody>())
             {
