@@ -100,8 +100,8 @@ void Editor::Setup()
     engineParameters_[EP_WINDOW_WIDTH] = 1920;
     engineParameters_[EP_LOG_LEVEL] = LOG_DEBUG;
     engineParameters_[EP_WINDOW_RESIZABLE] = true;
-    engineParameters_[EP_AUTOLOAD_PATHS] = "Autoload";
-    engineParameters_[EP_RESOURCE_PATHS] = "Data;CoreData;EditorData";
+    engineParameters_[EP_AUTOLOAD_PATHS] = "";
+    engineParameters_[EP_RESOURCE_PATHS] = "CoreData;EditorData";
     engineParameters_[EP_RESOURCE_PREFIX_PATHS] = coreResourcePrefixPath_;
 
     SetRandomSeed(Time::GetTimeSinceEpoch());
@@ -218,7 +218,8 @@ void Editor::OnUpdate(VariantMap& args)
                 }
             }
         }
-        else
+        else if (!tab->IsUtility())
+            // Content tabs get closed permanently
             tabs_.Erase(tabs_.Find(tab));
     }
 
@@ -240,13 +241,13 @@ void Editor::RenderMenuBar()
                 {
                     if (project_->GetProjectFilePath().Empty())
                     {
-                        nfdchar_t* savePath = nullptr;
-                        if (NFD_SaveDialog("project", "", &savePath) == NFD_OKAY)
+                        nfdchar_t* projectDir = nullptr;
+                        if (NFD_PickFolder("", &projectDir) == NFD_OKAY)
                         {
                             for (auto& tab : tabs_)
                                 tab->SaveResource();
-                            project_->SaveProject(savePath);
-                            NFD_FreePath(savePath);
+                            project_->SaveProject();
+                            NFD_FreePath(projectDir);
                         }
                     }
                     else
@@ -256,46 +257,17 @@ void Editor::RenderMenuBar()
                         project_->SaveProject();
                     }
                 }
-
-                if (ui::MenuItem("Save Project As"))
-                {
-                    nfdchar_t* savePath = nullptr;
-                    if (NFD_SaveDialog("project", "", &savePath) == NFD_OKAY)
-                    {
-                        for (auto& tab : tabs_)
-                            tab->SaveResource();
-                        project_->SaveProject(savePath);
-                        NFD_FreePath(savePath);
-                    }
-                }
             }
 
-            if (ui::MenuItem("Open Project"))
+            if (ui::MenuItem("Open/Create Project"))
             {
-                nfdchar_t* projectFilePath = nullptr;
-                if (NFD_OpenDialog("project", "", &projectFilePath) == NFD_OKAY)
+                nfdchar_t* projectDir = nullptr;
+                if (NFD_PickFolder("", &projectDir) == NFD_OKAY)
                 {
-                    if (OpenProject(projectFilePath) == nullptr)
+                    if (OpenProject(projectDir) == nullptr)
                         URHO3D_LOGERROR("Loading project failed.");
-                    NFD_FreePath(projectFilePath);
+                    NFD_FreePath(projectDir);
                 }
-            }
-
-            if (ui::MenuItem("Create Project"))
-            {
-                OpenProject();
-                LoadDefaultLayout();
-            }
-
-            if (project_.NotNull())
-            {
-                ui::Separator();
-
-                if (ui::MenuItem("New Scene"))
-                    CreateTab<SceneTab>();
-
-                if (ui::MenuItem("New UI Layout"))
-                    CreateTab<UITab>();
             }
 
             ui::Separator();
@@ -315,18 +287,16 @@ void Editor::RenderMenuBar()
         }
         if (project_.NotNull())
         {
-            if (ui::BeginMenu("Settings"))
+            if (ui::BeginMenu("View"))
             {
-                if (ImGui::CollapsingHeader("Data directories"))
+                for (auto& tab : tabs_)
                 {
-                    // TODO: This is very out of place. To be moved somewhere better fitting.
-                    const auto& cacheDirectories = GetCache()->GetResourceDirs();
-                    auto programDir = GetFileSystem()->GetProgramDir();
-                    for (const auto& dir : cacheDirectories)
+                    if (tab->IsUtility())
                     {
-                        String relativeDir;
-                        GetRelativePath(programDir, dir, relativeDir);
-                        ui::TextUnformatted(relativeDir.CString());
+                        // Tabs that can not be closed permanently
+                        auto open = tab->IsOpen();
+                        if (ui::MenuItem(tab->GetUniqueTitle().CString(), nullptr, &open))
+                            tab->SetOpen(open);
                     }
                 }
                 ui::EndMenu();

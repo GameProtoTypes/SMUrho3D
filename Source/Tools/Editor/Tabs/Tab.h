@@ -74,13 +74,11 @@ public:
     /// Load project data from xml.
     virtual void OnLoadProject(const JSONValue& tab);
     /// Load a file from resource path.
-    virtual void LoadResource(const String& resourcePath) { }
+    virtual bool LoadResource(const String& resourcePath) { return true; }
     /// Save tab contents to a resource file.
-    virtual bool SaveResource(const String& resourcePath) { return false; }
+    virtual bool SaveResource() { return true; }
     /// Called when tab focused.
     virtual void OnFocused() { }
-    /// Save tab contents to a previously loaded resource file.
-    bool SaveResource() { return SaveResource(String::EMPTY); }
     /// Set scene view tab title.
     void SetTitle(const String& title);
     /// Get scene view tab title.
@@ -99,6 +97,10 @@ public:
     bool IsUtility() const { return isUtility_; }
     /// Position tab automatically to most appropriate place.
     void AutoPlace();
+    /// Returns true when tab is open.
+    bool IsOpen() const { return open_; }
+    /// Open/close tab without permanently removing it.
+    void SetOpen(bool open) { open_ = open; }
 
 protected:
     ///
@@ -130,6 +132,8 @@ protected:
     IntVector2 lastMousePosition_;
     /// Initial tab size.
     Vector2 initialSize_;
+    /// Flag indicating that tab is open and renders it's contents.
+    bool open_ = true;
 };
 
 }

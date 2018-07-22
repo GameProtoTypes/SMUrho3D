@@ -20,30 +20,24 @@
 // THE SOFTWARE.
 //
 
-#pragma once
+#if _WIN32
+#   include <windows.h>
+#else
+#   include "pthread.h"
+#endif
 
-
-#include <Toolbox/SystemUI/ResourceBrowser.h>
-#include "Tabs/Tab.h"
-
+#include "Profiler.h"
 
 namespace Urho3D
 {
 
-class ResourceTab : public Tab
+void SetProfilerThreadName(const char* name)
 {
-    URHO3D_OBJECT(ResourceTab, Tab)
-public:
-    explicit ResourceTab(Context* context);
-
-    bool RenderWindowContent() override;
-
-protected:
-    String GetNewResourcePath(const String& name);
-
-    String resourcePath_;
-    String resourceSelection_;
-    ResourceBrowserFlags flags_{RBF_NONE};
-};
+#if _WIN32
+    tracy::SetThreadName(GetCurrentThread(), name);
+#else
+    tracy::SetThreadName(pthread_self(), name);
+#endif
+}
 
 }

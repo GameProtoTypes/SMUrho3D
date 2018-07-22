@@ -22,10 +22,6 @@
 
 #pragma once
 
-#include "../Container/Str.h"
-#include "../Core/Thread.h"
-#include "../Core/Timer.h"
-
 #if URHO3D_PROFILING
 #   include <tracy/Tracy.hpp>
 #endif
@@ -36,16 +32,14 @@ namespace Urho3D
 static const unsigned PROFILER_COLOR_EVENTS = 0xb26d19;
 static const unsigned PROFILER_COLOR_RESOURCES = 0x006b82;
 
+void SetProfilerThreadName(const char* name);
+
 }
 
 #if URHO3D_PROFILING
 #   define URHO3D_PROFILE_C(name, color)          ZoneScopedNC(name, color)
 #   define URHO3D_PROFILE(name)                   ZoneScopedN(name)
-#if _WIN32
-#   define URHO3D_PROFILE_THREAD(name)            tracy::SetThreadName(GetCurrentThread(), name);
-#else
-#   define URHO3D_PROFILE_THREAD(name)            tracy::SetThreadName(pthread_self(), name);
-#endif
+#   define URHO3D_PROFILE_THREAD(name)            SetProfilerThreadName(name)
 #   define URHO3D_PROFILE_VALUE(name, value)      TracyPlot(name, value)
 #   define URHO3D_PROFILE_FRAME()                 FrameMark
 #   define URHO3D_PROFILE_MESSAGE(txt, len)       TracyMessage(txt, len)
