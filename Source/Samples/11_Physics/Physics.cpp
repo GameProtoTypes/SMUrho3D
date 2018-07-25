@@ -146,7 +146,7 @@ void Physics::CreateScene()
     }
 
 
-    //createPyramids();
+    CreatePyramids();
 
 
     //create scale test
@@ -206,7 +206,7 @@ void Physics::CreatePyramids()
         for (int y2 = -numIslands; y2 <= numIslands; y2++)
         {
             //Create a pyramid of movable physics objects
-            int size = 8;
+            int size = 32;
             for (int y = 0; y < size; ++y)
             {
                 for (int x = -y; x <= y; ++x)
