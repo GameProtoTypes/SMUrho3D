@@ -97,6 +97,7 @@ protected:
 	void HandleEndRenderPostSwap(StringHash event, VariantMap& data);
 	void HandlePostUpdate(StringHash event, VariantMap& data);
 	void HandlePreUpdate(StringHash event, VariantMap& data);
+    void HandleApplicationStarted(StringHash event, VariantMap& data);
 };
 
 /// Convert Color to ImVec4.

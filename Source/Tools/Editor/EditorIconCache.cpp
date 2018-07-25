@@ -34,7 +34,7 @@ namespace Urho3D
 EditorIconCache::EditorIconCache(Context* context)
     : Object(context)
 {
-    ResourceCache* cache = ui::GetSystemUI()->GetSubsystem<ResourceCache>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
     auto* icons = cache->GetResource<XMLFile>("UI/EditorIcons.xml");
     if (icons == nullptr)
         return;

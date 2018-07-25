@@ -78,21 +78,9 @@ SystemUI::SystemUI(Urho3D::Context* context)
 
     SetScale(Vector3::ZERO, false);
 
-	SubscribeToEvent(E_APPLICATIONSTARTED, [&](StringHash, VariantMap&) {
-		if (io.Fonts->Fonts.empty())
-		{
-			io.Fonts->AddFontDefault();
-			ReallocateFontTexture();
-		}
-		UpdateProjectionMatrix();
-		// Initializes ImGui. ImGui::Render() can not be called unless imgui is initialized. This call avoids initialization
-		// check on every frame in E_ENDRENDERING.
-		ImGui::NewFrame();
-		ImGui::EndFrame();
-		UnsubscribeFromEvent(E_APPLICATIONSTARTED);
-	});
-
 	// Subscribe to events
+
+    SubscribeToEvent(E_APPLICATIONSTARTED, URHO3D_HANDLER(SystemUI, HandleApplicationStarted));
 	SubscribeToEvent(E_SDLRAWINPUT, std::bind(&SystemUI::OnRawEvent, this, _2));
 	SubscribeToEvent(E_SCREENMODE, std::bind(&SystemUI::UpdateProjectionMatrix, this));
 	SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(SystemUI, HandlePostUpdate));
@@ -125,6 +113,23 @@ void SystemUI::HandlePreUpdate(StringHash event, VariantMap& data)
 }
 
 
+
+void SystemUI::HandleApplicationStarted(StringHash event, VariantMap& data)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.Fonts->Fonts.empty())
+    {
+        io.Fonts->AddFontDefault();
+        ReallocateFontTexture();
+    }
+    UpdateProjectionMatrix();
+    // Initializes ImGui. ImGui::Render() can not be called unless imgui is initialized. This call avoids initialization
+    // check on every frame in E_ENDRENDERING.
+    ImGui::NewFrame();
+    ImGui::EndFrame();
+    UnsubscribeFromEvent(E_APPLICATIONSTARTED);
+
+}
 
 SystemUI::~SystemUI()
 {
