@@ -206,7 +206,7 @@ void Physics::CreatePyramids()
         for (int y2 = -numIslands; y2 <= numIslands; y2++)
         {
             //Create a pyramid of movable physics objects
-            int size = 8;
+            int size = 32;
             for (int y = 0; y < size; ++y)
             {
                 for (int x = -y; x <= y; ++x)
@@ -729,18 +729,18 @@ void Physics::UpdatePickPull()
     if (!rigBody)
         return;
 
-    rigBody->ResetForces();
     Vector3 delta = (pickTarget->GetWorldPosition() - pickSource->GetWorldPosition());
 
-    float forceFactor = 100.0f / (delta.Length()*0.1f);
-    float cuttoff = 100.0f;
-    if (forceFactor > cuttoff)
-        forceFactor = cuttoff;
+    float forceFactor = delta.Length()*100.0f;
+    float cuttoff = 10.0f;
+
+
 
     Vector3 netForce;
     netForce = delta * forceFactor;
-    //netForce -= scene_->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity();
+    netForce -= scene_->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity();
 
+    rigBody->ResetForces();
     rigBody->AddWorldForce(netForce);
 
 }

@@ -332,7 +332,6 @@ namespace Urho3D {
                 eventData[NodeTransformChange::P_NEW_ORIENTATION].GetQuaternion(),
                 Vector3::ONE);
 
-            // Matrix4 mat4 = mat.ToMatrix4()
             NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
 
 
@@ -359,6 +358,27 @@ namespace Urho3D {
         netForce_ += force;
         netTorque_ += localPosition.CrossProduct(force);
         bakeForceAndTorque();
+    }
+
+    void NewtonRigidBody::AddWorldTorque(const Vector3& torque)
+    {
+        netTorque_ += torque;
+        bakeForceAndTorque();
+    }
+
+    void NewtonRigidBody::AddLocalForce(const Vector3& force)
+    {
+        AddWorldForce(node_->LocalToWorld(force));
+    }
+
+    void NewtonRigidBody::AddLocalForce(const Vector3& force, const Vector3& localPosition)
+    {
+        AddWorldForce(node_->LocalToWorld(force), localPosition);
+    }
+
+    void NewtonRigidBody::AddLocalTorque(const Vector3& torque)
+    {
+        AddWorldTorque(node_->LocalToWorld(torque));
     }
 
     void NewtonRigidBody::ResetForces()
@@ -390,6 +410,20 @@ namespace Urho3D {
             }
             return nullptr;
         }
+    }
+
+    Vector3 NewtonRigidBody::GetCenterOfMassPosition()
+    {
+        dVector pos;
+        NewtonBodyGetPosition(newtonBody_, &pos[0]);
+        return NewtonToUrhoVec3(pos);
+    }
+
+    Quaternion NewtonRigidBody::GetCenterOfMassRotation()
+    {
+        dgQuaternion quat;
+        NewtonBodyGetRotation(newtonBody_, &quat[0]);
+        return NewtonToUrhoQuat(quat);
     }
 
     void NewtonRigidBody::ApplyTransform()

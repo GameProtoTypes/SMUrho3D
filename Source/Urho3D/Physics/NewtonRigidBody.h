@@ -33,14 +33,24 @@ namespace Urho3D
         /// Set linear velocity.
         void SetLinearVelocity(const Vector3& velocity);
 
+
+        /// Set continuous collision so that the body will not pass through walls.
         void SetContinuousCollision(bool sweptCollision);
 
 
-
+        /// Add a force to the body in world cordinates on the body's center of mass.
         void AddWorldForce(const Vector3& force);
-
+        /// Add a force to the body in world cordinates localPosition from the body's center of mass.
         void AddWorldForce(const Vector3& force, const Vector3& localPosition);
+        /// Add a torque to the body in world space
+        void AddWorldTorque(const Vector3& torque);
 
+        /// Add a force to the body in local cordinates on the body's center of mass.
+        void AddLocalForce(const Vector3& force);
+        /// Add a force to the body in local cordinates localPosition from the body's center of mass.
+        void AddLocalForce(const Vector3& force, const Vector3& localPosition);
+        /// Add a torque to the body in local space
+        void AddLocalTorque(const Vector3& torque);
 
         /// Reset accumulated forces.
         void ResetForces();
@@ -48,11 +58,19 @@ namespace Urho3D
         /// Return the net force acting on the body.
         Vector3 GetNetForce();
 
-        /// Return the net force acting on the body.
+        /// Return the net torque acting on the body.
         Vector3 GetNetTorque();
 
         /// Return the currently used newton collision
         NewtonCollision* GetEffectiveNewtonCollision();
+
+
+        /// Return the world position of the center of mass.
+        Vector3 GetCenterOfMassPosition();
+        /// Return the world orientation of the center of mass.
+        Quaternion GetCenterOfMassRotation();
+
+
 
         ///Apply the current newton body transform to the node.
         void ApplyTransform();
