@@ -118,5 +118,6 @@ private:
     /// Flag for drawing debug geometry.
     bool drawDebug_;
     void DecomposePhysicsTree();
+    void RecomposePhysicsTree();
     void  TransportNode();
 };

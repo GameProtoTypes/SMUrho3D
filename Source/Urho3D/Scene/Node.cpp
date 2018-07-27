@@ -889,11 +889,6 @@ void Node::AddChild(Node* node, unsigned index)
         eventData[NodeAdded::P_NODE] = node;
         scene_->SendEvent(E_NODEADDED, eventData);
 
-        //#todo is this right?
-        //eventData[NodeParentChange::P_OLD_PARENT] = oldParent;
-        //eventData[NodeParentChange::P_NEW_PARENT] = this;
-        //eventData[NodeParentChange::P_NODE] = node;
-        //scene_->SendEvent(E_NODEPARENTCHANGE, eventData);
 
     }
 }

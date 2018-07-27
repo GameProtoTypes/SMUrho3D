@@ -24,7 +24,6 @@ namespace Urho3D {
     {
         SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeAdded));
         SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeRemoved));
-        SubscribeToEvent(E_NODEPARENTCHANGE, URHO3D_HANDLER(NewtonRigidBody, HandleNodeParentChange));
 
     }
 
@@ -302,9 +301,6 @@ namespace Urho3D {
             }
             if (oldNodeParent_)
             {
-
-                
-
                 NewtonRigidBody* oldParentRigidBody = oldNodeParent_->GetComponent<NewtonRigidBody>();
                 if(!oldParentRigidBody)
                     oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
@@ -322,35 +318,9 @@ namespace Urho3D {
         if (node == node_)
         {
             Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
-            //Node* newParent = static_cast<Node*>(eventData[NodeParentChange::P_NEW_PARENT].GetPtr());
             oldNodeParent_ = oldParent;
         }
     }
-
-    void NewtonRigidBody::HandleNodeParentChange(StringHash event, VariantMap& eventData)
-    {
-        //Node* node = static_cast<Node*>(eventData[NodeParentChange::P_NODE].GetPtr());
-        //if (node == node_)
-        //{
-        //    Node* oldParent = static_cast<Node*>(eventData[NodeParentChange::P_OLD_PARENT].GetPtr());
-        //    Node* newParent = static_cast<Node*>(eventData[NodeParentChange::P_NEW_PARENT].GetPtr());
-
-        //    if (oldParent)
-        //    {
-        //        NewtonRigidBody* oldParentRigidBody = oldParent->GetParentComponent<NewtonRigidBody>(true);
-        //        if(oldParentRigidBody)
-        //            oldParentRigidBody->reEvaluateBody();
-
-        //    }
-
-        //    if (node->HasComponent<NewtonRigidBody>())
-        //    {
-        //        node->GetComponent<NewtonRigidBody>()->reEvaluateBody();
-        //    }
-        //}
-    }
-
-
 
     void NewtonRigidBody::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
     {

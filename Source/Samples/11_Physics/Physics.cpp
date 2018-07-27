@@ -170,16 +170,16 @@ void Physics::createScaleTest()
 {
     Node* root = scene_->CreateChild();
     root->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    const int levelCount = 5;
+    const int levelCount = 100;
     Node* curNode = root;
     for (int i = 0; i < levelCount; i++)
     {
         curNode = curNode->CreateChild();
-        
+        curNode->AddTag("scaleTestCube");
         float rotDelta = Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
         curNode->SetScale(1.0f);
-        curNode->Translate(Vector3(0, 3, 0));
+        curNode->Translate(Vector3(0, 1.5f, 0));
 
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
@@ -342,6 +342,9 @@ void Physics::MoveCamera(float timeStep)
 
     if (input->GetKeyPress(KEY_T))
         TransportNode();
+
+    if (input->GetKeyPress(KEY_Y))
+        RecomposePhysicsTree();
 
     // Check for loading/saving the scene. Save the scene to the file Data/Scenes/Physics.xml relative to the executable
     // directory
@@ -598,16 +601,28 @@ void Physics::DecomposePhysicsTree()
 
         GSS<VisualDebugger>()->AddOrb(res[1].node_->GetWorldPosition(), 1.0f, Color::RED);
 
-        //for (auto* child : children) {
-        //    GSS<VisualDebugger>()->AddOrb(child->GetWorldPosition(), 1.0f, Color(Random(), Random(), Random()));
-        //    child->SetParent(scene_);
-        //}
+        for (auto* child : children) {
+            GSS<VisualDebugger>()->AddOrb(child->GetWorldPosition(), 1.0f, Color(Random(), Random(), Random()));
+            child->SetParent(scene_);
+        }
 
         //while(res[1].node_->SetParent())
         //res[1].node_->GetChildren(true).Front()->SetParent(scene_);
         res[1].node_->SetParent(scene_);
     }
 }
+
+void Physics::RecomposePhysicsTree()
+{
+
+    PODVector<Node*> nodes = scene_->GetChildrenWithTag("scaleTestCube");
+
+    for (int i = 1; i < nodes.Size(); i++) {
+        nodes[i]->SetParent(nodes[0]);
+    }
+
+}
+
 
 void Physics::TransportNode()
 {

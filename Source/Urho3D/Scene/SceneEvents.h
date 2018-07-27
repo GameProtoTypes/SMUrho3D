@@ -111,14 +111,6 @@ URHO3D_EVENT(E_ASYNCLOADFINISHED, AsyncLoadFinished)
 };
 
 
-/// A node has changed parents. 
-URHO3D_EVENT(E_NODEPARENTCHANGE, NodeParentChange)
-{
-    URHO3D_PARAM(P_OLD_PARENT, Parent);            // Node pointer
-    URHO3D_PARAM(P_NEW_PARENT, Parent);            // Node pointer
-    URHO3D_PARAM(P_NODE, Node);                    // Node pointer
-}
-
 /// A node's local transform has been changed.  Note avoid changing the node's transform inside the handler of this event to avoid recursion Or use Node::SetEnableTransformEvents(false) temporarily.
 /// Sent from the node.
 URHO3D_EVENT(E_NODETRANSFORMCHANGE, NodeTransformChange)
