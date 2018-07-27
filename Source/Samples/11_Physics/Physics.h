@@ -120,4 +120,19 @@ private:
     void DecomposePhysicsTree();
     void RecomposePhysicsTree();
     void  TransportNode();
+
+
+
+    void HandleMouseButtonUp(StringHash eventType, VariantMap& eventData);
+    void HandleMouseButtonDown(StringHash eventType, VariantMap& eventData);
+
+
+    Node* pickPullNode = nullptr;
+    Vector3 pickPullStartPositionWorld;
+    Vector3 pickPullEndPositionWorld;
+    void CreatePickTargetNodeOnPhysics();
+    void ReleasePickTargetOnPhysics();
+    void UpdatePickPull();
+    RayQueryResult GetCameraPickNode();
+
 };

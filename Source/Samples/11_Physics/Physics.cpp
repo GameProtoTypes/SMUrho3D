@@ -146,7 +146,7 @@ void Physics::CreateScene()
     }
 
 
-    //CreatePyramids();
+    CreatePyramids();
 
 
     //create scale test
@@ -170,7 +170,7 @@ void Physics::createScaleTest()
 {
     Node* root = scene_->CreateChild();
     root->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    const int levelCount = 100;
+    const int levelCount = 10;
     Node* curNode = root;
     for (int i = 0; i < levelCount; i++)
     {
@@ -273,6 +273,10 @@ void Physics::SubscribeToEvents()
     // Subscribe HandlePostRenderUpdate() function for processing the post-render update event, during which we request
     // debug geometry
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(Physics, HandlePostRenderUpdate));
+
+    SubscribeToEvent(E_MOUSEBUTTONUP, URHO3D_HANDLER(Physics, HandleMouseButtonUp));
+
+    SubscribeToEvent(E_MOUSEBUTTONDOWN, URHO3D_HANDLER(Physics, HandleMouseButtonDown));
 }
 
 void Physics::MoveCamera(float timeStep)
@@ -307,8 +311,15 @@ void Physics::MoveCamera(float timeStep)
     if (input->GetKeyDown(KEY_D))
         cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * timeStep);
 
-    // "Shoot" a physics object with left mousebutton
-    if (input->GetMouseButtonPress(MOUSEB_LEFT)) {
+
+
+    if (input->GetMouseButtonPress(MOUSEB_LEFT))
+        CreatePickTargetNodeOnPhysics();
+
+
+
+
+    if (input->GetKeyPress(KEY_R)) {
 
         int rando = Random(4);
 
@@ -335,6 +346,8 @@ void Physics::MoveCamera(float timeStep)
         }
       
     }
+
+
 
 
     if (input->GetMouseButtonPress(MOUSEB_RIGHT))
@@ -414,8 +427,7 @@ void Physics::SpawnObject()
          auto* body = boxNode->CreateComponent<NewtonRigidBody>();
          body->SetMassScale(0.1f);
          body->SetFriction(0.75f);
-         body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
-         body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
+        
         
 
         isFirstNode = false;
@@ -458,8 +470,6 @@ void Physics::SpawnTrimeshObject()
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
     body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
-    body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
-    body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
 
 
     //body->SetContinuousCollision(true);
@@ -502,8 +512,6 @@ void Physics::SpawnConvexHull()
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
     body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
-    body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
-    body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
 
 
     //body->SetContinuousCollision(true);
@@ -545,8 +553,6 @@ void Physics::SpawnCompound()
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
     body->SetMassScale(1.0f);
     body->SetFriction(0.75f);
-    body->AddForce(Vector3(0, 0, .001), Vector3(0.25f, 0, 0));
-    body->AddForce(Vector3(0, 0, -.001), Vector3(-0.25f, 0, 0));
 
 
     //body->SetContinuousCollision(true);
@@ -574,6 +580,8 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 
     // Move the camera, scale movement with time step
     MoveCamera(timeStep);
+
+    UpdatePickPull();
 }
 
 void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
@@ -625,20 +633,114 @@ void Physics::RecomposePhysicsTree()
 
 void Physics::TransportNode()
 {
-    PODVector<RayQueryResult> res;
-    Ray ray(cameraNode_->GetWorldPosition(), cameraNode_->GetWorldDirection());
-    RayOctreeQuery querry(res, ray);
+    RayQueryResult res = GetCameraPickNode();
 
-
-    scene_->GetComponent<Octree>()->Raycast(querry);
-
-    if (res.Size() > 1) {
+    if (res.node_) {
         PODVector<Node*> children;
-        if (res[1].node_->GetName() == "Floor")
+        if (res.node_->GetName() == "Floor")
             return;
 
-        res[1].node_->SetWorldPosition(res[1].node_->GetWorldPosition() + Vector3(Random(), Random()+1.0f, Random())*1.0f);
+        res.node_->SetWorldPosition(res.node_->GetWorldPosition() + Vector3(Random(), Random()+1.0f, Random())*1.0f);
         //res[1].node_->SetWorldRotation(Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f));
     }
 }
 
+void Physics::HandleMouseButtonUp(StringHash eventType, VariantMap& eventData)
+{
+    ReleasePickTargetOnPhysics();
+}
+
+void Physics::HandleMouseButtonDown(StringHash eventType, VariantMap& eventData)
+{
+
+}
+
+RayQueryResult Physics::GetCameraPickNode()
+{
+    PODVector<RayQueryResult> res;
+    Ray ray(cameraNode_->GetWorldPosition(), cameraNode_->GetWorldDirection());
+    RayOctreeQuery querry(res, ray);
+    scene_->GetComponent<Octree>()->Raycast(querry);
+
+    if (res.Size() > 1) {
+        return res[1];
+    }
+    return RayQueryResult();
+}
+
+
+
+void Physics::CreatePickTargetNodeOnPhysics()
+{
+    RayQueryResult res = GetCameraPickNode();
+    if (res.node_) {
+        if (res.node_->GetName() == "Floor")
+            return;
+
+        Node* pickTarget = cameraNode_->CreateChild("PickTarget");
+        pickTarget->SetWorldPosition(res.position_);
+        pickPullNode = res.node_;
+
+        if (res.node_->GetChild("PickSource"))
+        {
+            res.node_->GetChild("PickSource")->SetWorldPosition(res.position_);
+
+        }
+        else
+        {
+            res.node_->CreateChild("PickSource");
+            res.node_->GetChild("PickSource")->SetWorldPosition(res.position_);
+        }
+    }
+}
+
+void Physics::ReleasePickTargetOnPhysics()
+{
+    if (pickPullNode)
+    {
+        pickPullNode->RemoveChild(pickPullNode->GetChild("PickSource"));
+        NewtonRigidBody* rigBody = pickPullNode->GetComponent<NewtonRigidBody>();
+        if (rigBody)
+        {
+            rigBody->ResetForces();
+        }
+        pickPullNode = nullptr;
+    }
+
+    cameraNode_->RemoveChild(cameraNode_->GetChild("PickTarget"));
+}
+void Physics::UpdatePickPull()
+{
+    Node* pickTarget = cameraNode_->GetChild("PickTarget");
+    if (!pickTarget)
+        return;
+    if (!pickPullNode)
+        return;
+
+
+    Node* pickSource = pickPullNode->GetChild("PickSource");
+
+    if (!pickSource)
+        return;
+
+
+    NewtonRigidBody* rigBody = pickPullNode->GetComponent<NewtonRigidBody>();
+
+    if (!rigBody)
+        return;
+
+    rigBody->ResetForces();
+    Vector3 delta = (pickTarget->GetWorldPosition() - pickSource->GetWorldPosition());
+
+    float forceFactor = 100.0f / (delta.Length()*0.1f);
+    float cuttoff = 100.0f;
+    if (forceFactor > cuttoff)
+        forceFactor = cuttoff;
+
+    Vector3 netForce;
+    netForce = delta * forceFactor;
+    //netForce -= scene_->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity();
+
+    rigBody->AddWorldForce(netForce);
+
+}

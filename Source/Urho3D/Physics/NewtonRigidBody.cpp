@@ -234,12 +234,12 @@ namespace Urho3D {
     {
         Vector3 gravityForce = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity() * mass_;
 
-        Quaternion worldOrientation = GetNode()->GetWorldRotation();
-        Vector3 netForceWrldSpc = worldOrientation * netForce_;
-        Vector3 netTorqueWrldSpc = worldOrientation * netTorque_;
+        //Quaternion worldOrientation = node_->GetWorldRotation();
+        //Vector3 netForceWrldSpc = worldOrientation * netForce_;
+        //Vector3 netTorqueWrldSpc = worldOrientation * netTorque_;
 
-        netForceNewton_ = UrhoToNewton((gravityForce + netForceWrldSpc));
-        netTorqueNewton_ = UrhoToNewton(netTorqueWrldSpc);
+        netForceNewton_ = UrhoToNewton((gravityForce + netForce_));
+        netTorqueNewton_ = UrhoToNewton(netTorque_);
     }
 
     void NewtonRigidBody::OnNodeSet(Node* node)
@@ -347,15 +347,17 @@ namespace Urho3D {
         }
     }
 
-    void NewtonRigidBody::AddForce(const Vector3& force)
+
+
+    void NewtonRigidBody::AddWorldForce(const Vector3& force)
     {
-        AddForce(force, Vector3(0, 0, 0));
+        AddWorldForce(force, Vector3::ZERO);
     }
 
-    void NewtonRigidBody::AddForce(const Vector3& force, const Vector3& position)
+    void NewtonRigidBody::AddWorldForce(const Vector3& force, const Vector3& localPosition)
     {
         netForce_ += force;
-        netTorque_ += position.CrossProduct(force);
+        netTorque_ += localPosition.CrossProduct(force);
         bakeForceAndTorque();
     }
 

@@ -36,10 +36,11 @@ namespace Urho3D
         void SetContinuousCollision(bool sweptCollision);
 
 
-        /// Apply force to center of mass.
-        void AddForce(const Vector3& force);
-        /// Apply force at local position.
-        void AddForce(const Vector3& force, const Vector3& position);
+
+        void AddWorldForce(const Vector3& force);
+
+        void AddWorldForce(const Vector3& force, const Vector3& localPosition);
+
 
         /// Reset accumulated forces.
         void ResetForces();
@@ -114,7 +115,9 @@ namespace Urho3D
         void HandleNodeRemoved(StringHash event, VariantMap& eventData);
         void HandleNodeTransformChange(StringHash event, VariantMap& eventData);
 
+        ///temp node variable used for when the node is changing parents.
         Node* oldNodeParent_ = nullptr;
+
     };
 
 
