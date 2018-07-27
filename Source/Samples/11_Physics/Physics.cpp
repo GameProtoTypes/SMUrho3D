@@ -606,8 +606,7 @@ void Physics::DecomposePhysicsTree()
             child->SetParent(scene_);
         }
 
-        //while(res[1].node_->SetParent())
-        //res[1].node_->GetChildren(true).Front()->SetParent(scene_);
+
         res[1].node_->SetParent(scene_);
     }
 }
@@ -639,7 +638,7 @@ void Physics::TransportNode()
             return;
 
         res[1].node_->SetWorldPosition(res[1].node_->GetWorldPosition() + Vector3(Random(), Random()+1.0f, Random())*1.0f);
-        res[1].node_->SetWorldRotation(Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f));
+        //res[1].node_->SetWorldRotation(Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f));
     }
 }
 

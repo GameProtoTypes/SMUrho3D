@@ -324,8 +324,8 @@ namespace Urho3D {
 
     void NewtonRigidBody::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
     {
-
-        if (newtonBody_) {
+        NewtonRigidBody* parentRigidBody = node_->GetParentComponent<NewtonRigidBody>(true);
+        if (newtonBody_ && !parentRigidBody) {
             //the node's transform has explictly been changed.  set the rigid body transform to the same transform.
             //Ignore scale.
             Matrix3x4 mat(eventData[NodeTransformChange::P_NEW_POSITION].GetVector3(),
@@ -335,7 +335,15 @@ namespace Urho3D {
             // Matrix4 mat4 = mat.ToMatrix4()
             NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
 
-            //#todo - handle case where node is child of other rigid body (part of compound).
+
+        }
+        else
+        {
+            //handle case where node is child of other rigid body (part of compound).
+            if (parentRigidBody) {
+                parentRigidBody->reEvaluateBody();
+            }
+
         }
     }
 
