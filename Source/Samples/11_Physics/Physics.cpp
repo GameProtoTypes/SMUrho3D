@@ -146,7 +146,7 @@ void Physics::CreateScene()
     }
 
 
-    CreatePyramids();
+    //CreatePyramids();
 
 
     //create scale test
@@ -598,10 +598,10 @@ void Physics::DecomposePhysicsTree()
 
         GSS<VisualDebugger>()->AddOrb(res[1].node_->GetWorldPosition(), 1.0f, Color::RED);
 
-        for (auto* child : children) {
-            GSS<VisualDebugger>()->AddOrb(child->GetWorldPosition(), 1.0f, Color(Random(), Random(), Random()));
-            child->SetParent(scene_);
-        }
+        //for (auto* child : children) {
+        //    GSS<VisualDebugger>()->AddOrb(child->GetWorldPosition(), 1.0f, Color(Random(), Random(), Random()));
+        //    child->SetParent(scene_);
+        //}
 
         //while(res[1].node_->SetParent())
         //res[1].node_->GetChildren(true).Front()->SetParent(scene_);

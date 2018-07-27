@@ -120,6 +120,7 @@ URHO3D_EVENT(E_NODEPARENTCHANGE, NodeParentChange)
 }
 
 /// A node's local transform has been changed.  Note avoid changing the node's transform inside the handler of this event to avoid recursion Or use Node::SetEnableTransformEvents(false) temporarily.
+/// Sent from the node.
 URHO3D_EVENT(E_NODETRANSFORMCHANGE, NodeTransformChange)
 {
     URHO3D_PARAM(P_OLD_POSITION, OldPosition);        // Vector3

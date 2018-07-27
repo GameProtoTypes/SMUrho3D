@@ -22,8 +22,8 @@ namespace Urho3D {
 
     NewtonRigidBody::NewtonRigidBody(Context* context) : Component(context)
     {
-        //SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeAdded));
-        //SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeRemoved));
+        SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeAdded));
+        SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeRemoved));
         SubscribeToEvent(E_NODEPARENTCHANGE, URHO3D_HANDLER(NewtonRigidBody, HandleNodeParentChange));
 
     }
@@ -207,7 +207,7 @@ namespace Urho3D {
 
             if (!newtonBody_)
                 newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
-            
+
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
@@ -290,48 +290,67 @@ namespace Urho3D {
         }
     }
 
-    //void NewtonRigidBody::HandleNodeAdded(StringHash event, VariantMap& eventData)
-    //{
-    //    Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
-    //    
-    //    if (node == node_) {
-    //        Node* parentNode = static_cast<Node*>(eventData[NodeAdded::P_PARENT].GetPtr());
-    //    }
-    //}
 
-    //void NewtonRigidBody::HandleNodeRemoved(StringHash event, VariantMap& eventData)
-    //{
-    //    Node* node = static_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
-
-    //    if (node == node_) {
-    //        Node* parentNode = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
-    //    }
-    //}
-
-    void NewtonRigidBody::HandleNodeParentChange(StringHash event, VariantMap& eventData)
+    void NewtonRigidBody::HandleNodeAdded(StringHash event, VariantMap& eventData)
     {
-        Node* node = static_cast<Node*>(eventData[NodeParentChange::P_NODE].GetPtr());
+        Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
         if (node == node_)
         {
-            Node* oldParent = static_cast<Node*>(eventData[NodeParentChange::P_OLD_PARENT].GetPtr());
-            Node* newParent = static_cast<Node*>(eventData[NodeParentChange::P_NEW_PARENT].GetPtr());
-
-            if (oldParent->HasComponent<NewtonRigidBody>())
-            {
-                oldParent->GetComponent<NewtonRigidBody>()->reEvaluateBody();
-            }
-            if (newParent->HasComponent<NewtonRigidBody>())
-            {
-                newParent->GetComponent<NewtonRigidBody>()->reEvaluateBody();
-            }
             if (node->HasComponent<NewtonRigidBody>())
             {
                 node->GetComponent<NewtonRigidBody>()->reEvaluateBody();
             }
+            if (oldNodeParent_)
+            {
+
+                
+
+                NewtonRigidBody* oldParentRigidBody = oldNodeParent_->GetComponent<NewtonRigidBody>();
+                if(!oldParentRigidBody)
+                    oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
+
+                if (oldParentRigidBody)
+                    oldParentRigidBody->reEvaluateBody();
+            }
+            oldNodeParent_ = nullptr;
         }
-
-
     }
+
+    void NewtonRigidBody::HandleNodeRemoved(StringHash event, VariantMap& eventData)
+    {
+        Node* node = static_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
+        if (node == node_)
+        {
+            Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
+            //Node* newParent = static_cast<Node*>(eventData[NodeParentChange::P_NEW_PARENT].GetPtr());
+            oldNodeParent_ = oldParent;
+        }
+    }
+
+    void NewtonRigidBody::HandleNodeParentChange(StringHash event, VariantMap& eventData)
+    {
+        //Node* node = static_cast<Node*>(eventData[NodeParentChange::P_NODE].GetPtr());
+        //if (node == node_)
+        //{
+        //    Node* oldParent = static_cast<Node*>(eventData[NodeParentChange::P_OLD_PARENT].GetPtr());
+        //    Node* newParent = static_cast<Node*>(eventData[NodeParentChange::P_NEW_PARENT].GetPtr());
+
+        //    if (oldParent)
+        //    {
+        //        NewtonRigidBody* oldParentRigidBody = oldParent->GetParentComponent<NewtonRigidBody>(true);
+        //        if(oldParentRigidBody)
+        //            oldParentRigidBody->reEvaluateBody();
+
+        //    }
+
+        //    if (node->HasComponent<NewtonRigidBody>())
+        //    {
+        //        node->GetComponent<NewtonRigidBody>()->reEvaluateBody();
+        //    }
+        //}
+    }
+
+
 
     void NewtonRigidBody::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
     {
@@ -345,6 +364,8 @@ namespace Urho3D {
 
             // Matrix4 mat4 = mat.ToMatrix4()
             NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
+
+            //#todo - handle case where node is child of other rigid body (part of compound).
         }
     }
 
