@@ -25,6 +25,7 @@ namespace Urho3D {
         //SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeAdded));
         //SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeRemoved));
         SubscribeToEvent(E_NODEPARENTCHANGE, URHO3D_HANDLER(NewtonRigidBody, HandleNodeParentChange));
+
     }
 
     NewtonRigidBody::~NewtonRigidBody()
@@ -258,6 +259,9 @@ namespace Urho3D {
             reEvaluateBody();
             if (colShape_)
                 colShape_->updateReferenceToRigidBody();
+
+
+            SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(NewtonRigidBody, HandleNodeTransformChange));
         }
         else
         {
@@ -267,6 +271,8 @@ namespace Urho3D {
             freeBody();
             if (colShape_)
                 colShape_->updateReferenceToRigidBody();
+
+            UnsubscribeFromEvent(E_NODETRANSFORMCHANGE);
         }
 
     }
@@ -327,6 +333,21 @@ namespace Urho3D {
 
     }
 
+    void NewtonRigidBody::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
+    {
+
+        //the node's transform has explictly been changed.  set the rigid body transform to the same transform.
+        Matrix3x4 mat(eventData[NodeTransformChange::P_NEW_POSITION].GetVector3(),
+            eventData[NodeTransformChange::P_NEW_ORIENTATION].GetQuaternion(),
+            eventData[NodeTransformChange::P_NEW_SCALE].GetVector3());
+
+       // Matrix4 mat4 = mat.ToMatrix4()
+        NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
+
+        
+
+    }
+
     void NewtonRigidBody::AddForce(const Vector3& force)
     {
         AddForce(force, Vector3(0, 0, 0));
@@ -380,7 +401,14 @@ namespace Urho3D {
         NewtonBodyGetPosition(newtonBody_, &pos[0]);
         NewtonBodyGetRotation(newtonBody_, &quat[0]);
 
+        bool enableTEvents = node_->GetEnableTransformEvents();
+        if(enableTEvents)
+            node_->SetEnableTransformEvents(false);
+
+
         node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat));
+
+        node_->SetEnableTransformEvents(enableTEvents);
     }
 
 

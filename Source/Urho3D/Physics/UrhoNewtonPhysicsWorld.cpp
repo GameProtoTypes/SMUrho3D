@@ -15,6 +15,7 @@
 
 #include "Newton.h"
 #include "NewtonMeshObject.h"
+#include "Core/Thread.h"
 
 namespace Urho3D {
 
@@ -180,7 +181,6 @@ namespace Urho3D {
         NewtonUpdate(newtonWorld_, timeStep);
         NewtonWaitForUpdateToFinish(newtonWorld_);
         
-
         //apply the transform of all rigid body components to their respective nodes.
         for (NewtonRigidBody* rigBody : rigidBodyComponentList)
         {

@@ -206,7 +206,7 @@ void Physics::CreatePyramids()
         for (int y2 = -numIslands; y2 <= numIslands; y2++)
         {
             //Create a pyramid of movable physics objects
-            int size = 32;
+            int size = 8;
             for (int y = 0; y < size; ++y)
             {
                 for (int x = -y; x <= y; ++x)
@@ -339,6 +339,9 @@ void Physics::MoveCamera(float timeStep)
 
     if (input->GetMouseButtonPress(MOUSEB_RIGHT))
         DecomposePhysicsTree();
+
+    if (input->GetKeyPress(KEY_T))
+        TransportNode();
 
     // Check for loading/saving the scene. Save the scene to the file Data/Scenes/Physics.xml relative to the executable
     // directory
@@ -603,6 +606,21 @@ void Physics::DecomposePhysicsTree()
         //while(res[1].node_->SetParent())
         //res[1].node_->GetChildren(true).Front()->SetParent(scene_);
         res[1].node_->SetParent(scene_);
+    }
+}
+
+void Physics::TransportNode()
+{
+    PODVector<RayQueryResult> res;
+    Ray ray(cameraNode_->GetWorldPosition(), cameraNode_->GetWorldDirection());
+    RayOctreeQuery querry(res, ray);
+
+
+    scene_->GetComponent<Octree>()->Raycast(querry);
+
+    if (res.Size() > 1) {
+        PODVector<Node*> children;
+        res[1].node_->SetWorldPosition(res[1].node_->GetWorldPosition() + Vector3(Random(), 0, Random())*5.0f);
     }
 }
 
