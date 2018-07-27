@@ -336,16 +336,16 @@ namespace Urho3D {
     void NewtonRigidBody::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
     {
 
-        //the node's transform has explictly been changed.  set the rigid body transform to the same transform.
-        Matrix3x4 mat(eventData[NodeTransformChange::P_NEW_POSITION].GetVector3(),
-            eventData[NodeTransformChange::P_NEW_ORIENTATION].GetQuaternion(),
-            eventData[NodeTransformChange::P_NEW_SCALE].GetVector3());
+        if (newtonBody_) {
+            //the node's transform has explictly been changed.  set the rigid body transform to the same transform.
+            //Ignore scale.
+            Matrix3x4 mat(eventData[NodeTransformChange::P_NEW_POSITION].GetVector3(),
+                eventData[NodeTransformChange::P_NEW_ORIENTATION].GetQuaternion(),
+                Vector3::ONE);
 
-       // Matrix4 mat4 = mat.ToMatrix4()
-        NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
-
-        
-
+            // Matrix4 mat4 = mat.ToMatrix4()
+            NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
+        }
     }
 
     void NewtonRigidBody::AddForce(const Vector3& force)

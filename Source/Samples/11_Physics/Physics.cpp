@@ -620,7 +620,7 @@ void Physics::TransportNode()
 
     if (res.Size() > 1) {
         PODVector<Node*> children;
-        res[1].node_->SetWorldPosition(res[1].node_->GetWorldPosition() + Vector3(Random(), 0, Random())*5.0f);
+        res[1].node_->SetWorldPosition(res[1].node_->GetWorldPosition() + Vector3(Random(), Random()+1.0f, Random())*1.0f);
     }
 }
 
