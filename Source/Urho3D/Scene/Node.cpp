@@ -456,6 +456,11 @@ void Node::RemoveAllTags()
     MarkNetworkUpdate();
 }
 
+void Node::SetEnableTransformEvents(bool enable /*= true*/)
+{
+    sendTransformEvents_ = enable;
+}
+
 bool Node::SetPosition(const Vector3& position)
 {
     return SetTransform(position, rotation_, scale_);
@@ -505,12 +510,40 @@ bool Node::SetTransform(const Vector3& position, const Quaternion& rotation, flo
 
 bool Node::SetTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale)
 {
+
+    Vector3 oldPosition = position_;
+    Quaternion oldRotation = rotation_;
+    Vector3 oldScale = scale_;
+
+
     position_ = position;
     rotation_ = rotation;
     scale_ = scale;
 
+    if (sendTransformEvents_) {
+        //send node transform change event
+        VariantMap& eventMap = GetEventDataMap();
+        eventMap[NodeTransformChange::P_NEW_POSITION] = position;
+        eventMap[NodeTransformChange::P_NEW_SCALE] = scale;
+        eventMap[NodeTransformChange::P_NEW_ORIENTATION] = rotation;
+        eventMap[NodeTransformChange::P_OLD_POSITION] = oldPosition;
+        eventMap[NodeTransformChange::P_OLD_SCALE] = oldScale;
+        eventMap[NodeTransformChange::P_OLD_ORIENTATION] = oldRotation;
+
+        SendEvent(E_NODETRANSFORMCHANGE, eventMap);
+
+        //set the transform values again in case the handler altered the new transform.
+        position_ = eventMap[NodeTransformChange::P_NEW_POSITION].GetVector3();
+        rotation_ = eventMap[NodeTransformChange::P_NEW_ORIENTATION].GetQuaternion();
+        scale_ = eventMap[NodeTransformChange::P_NEW_SCALE].GetVector3();
+    }
+
+
+
+
     MarkDirty();
     MarkNetworkUpdate();
+
 
     return true;
 }

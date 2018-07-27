@@ -131,6 +131,12 @@ public:
     /// Remove all tags.
     void RemoveAllTags();
 
+    /// Use to temporarily disable sending events from transform change functions.  (default if true)
+    void SetEnableTransformEvents(bool enable = true);
+
+    /// Return whether transform events are currently enabled.
+    bool GetEnableTransformEvents() { return sendTransformEvents_; }
+
     /// Set position in parent space. If the scene node is on the root level (is child of the scene itself), this is same as world space.
     bool SetPosition(const Vector3& position);
 
@@ -680,15 +686,17 @@ private:
     mutable Matrix3x4 worldTransform_;
     /// World transform needs update flag.
     mutable bool dirty_;
+    /// Send Transform events when transform has changed via api.
+    bool sendTransformEvents_ = true;
     /// Enabled flag.
     bool enabled_;
     /// Last SetEnabled flag before any SetDeepEnabled.
     bool enabledPrev_;
 
+
 protected:
     /// Network update queued flag.
     bool networkUpdate_;
-
 private:
     /// Parent scene node.
     Node* parent_;
