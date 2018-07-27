@@ -179,7 +179,7 @@ void Physics::createScaleTest()
         float rotDelta = Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
         curNode->SetScale(1.0f);
-        curNode->Translate(Vector3(0, 2, 0));
+        curNode->Translate(Vector3(0, 3, 0));
 
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
@@ -620,7 +620,11 @@ void Physics::TransportNode()
 
     if (res.Size() > 1) {
         PODVector<Node*> children;
+        if (res[1].node_->GetName() == "Floor")
+            return;
+
         res[1].node_->SetWorldPosition(res[1].node_->GetWorldPosition() + Vector3(Random(), Random()+1.0f, Random())*1.0f);
+        res[1].node_->SetWorldRotation(Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f));
     }
 }
 
