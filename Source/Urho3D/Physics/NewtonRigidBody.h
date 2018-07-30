@@ -61,6 +61,8 @@ namespace Urho3D
         /// Return the net torque acting on the body.
         Vector3 GetNetTorque();
 
+        ///Get the currently used newton body.
+        NewtonBody* GetNewtonBody() { return newtonBody_; }
         /// Return the currently used newton collision
         NewtonCollision* GetEffectiveNewtonCollision();
 

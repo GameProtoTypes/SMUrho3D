@@ -16,13 +16,9 @@ namespace Urho3D {
         static void RegisterObject(Context* context);
 
 
-        void SetDistance(float distance);
-
-
     protected:
 
-        float distance_ = 1.0f;
-
+        virtual void buildConstraint() override;
     };
 
 

@@ -44,6 +44,7 @@
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
 #include "Physics.h"
+#include "PhysicsSamplesUtils.h"
 
 #include <Urho3D/DebugNew.h>
 #include "Urho3D/Graphics/VisualDebugger.h"
@@ -425,7 +426,7 @@ void Physics::CreatePyramids()
         for (int y2 = -numIslands; y2 <= numIslands; y2++)
         {
             //Create a pyramid of movable physics objects
-            int size = 32;
+            int size = 8;
             for (int y = 0; y < size; ++y)
             {
                 for (int x = -y; x <= y; ++x)
@@ -579,43 +580,16 @@ void Physics::SpawnCompound()
 void Physics::SpawnJointedObject()
 {
     //lets joint 2 spheres together with a distance limiting joint.
-    Node* sphere1 = scene_->CreateChild();
-    Node* sphere2 = scene_->CreateChild();
+    const float dist = 1.0f;
 
 
-    Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl");
-    Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
-
-    StaticModel* sphere1StMdl = sphere1->CreateComponent<StaticModel>();
-    StaticModel* sphere2StMdl = sphere2->CreateComponent<StaticModel>();
-
-    sphere1StMdl->SetModel(sphereMdl);
-    sphere1StMdl->SetMaterial(sphereMat);
-    sphere2StMdl->SetModel(sphereMdl);
-    sphere2StMdl->SetMaterial(sphereMat);
-
-    NewtonRigidBody* s1RigBody = sphere1->CreateComponent<NewtonRigidBody>();
-    NewtonRigidBody* s2RigBody = sphere2->CreateComponent<NewtonRigidBody>();
-
-    NewtonCollisionShape* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape>();
-    NewtonCollisionShape* s2ColShape = sphere2->CreateComponent<NewtonCollisionShape>();
-
-    s1ColShape->SetSphere(1.0f);
-    s2ColShape->SetSphere(1.0f);
-
-    sphere1->SetWorldPosition(cameraNode_->GetWorldPosition() - Vector3(2, 0, 0));
-    sphere2->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(2, 0, 0));
-
-    s1RigBody->SetMassScale(1.0f);
-    s2RigBody->SetMassScale(1.0f);
+        Node* sphere1 = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition() - Vector3(dist, 0, 0));
+        Node* sphere2 = SpawnSamplePhysicsBox(scene_, cameraNode_->GetWorldPosition() + Vector3(dist, 0, 0));
 
 
-
-
-    //make a joint
-    sphere1->CreateComponent<NewtonFixedDistanceConstraint>();
-
-
+        //make a joint
+        NewtonFixedDistanceConstraint* constraint = sphere1->CreateComponent<NewtonFixedDistanceConstraint>();
+        constraint->SetOtherBody(sphere2->GetComponent<NewtonRigidBody>());
 
 
 

@@ -16,6 +16,8 @@
 #include "Newton.h"
 #include "NewtonMeshObject.h"
 #include "Core/Thread.h"
+#include "NewtonConstraint.h"
+#include "NewtonFixedDistanceConstraint.h"
 
 namespace Urho3D {
 
@@ -294,6 +296,8 @@ namespace Urho3D {
         NewtonCollisionShape::RegisterObject(context);
         NewtonRigidBody::RegisterObject(context);
         NewtonMeshObject::RegisterObject(context);
+        NewtonConstraint::RegisterObject(context);
+        NewtonFixedDistanceConstraint::RegisterObject(context);
         //Constraint::RegisterObject(context);
         
         //RaycastVehicle::RegisterObject(context);
