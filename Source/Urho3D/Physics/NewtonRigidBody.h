@@ -110,9 +110,9 @@ namespace Urho3D
         dVector netTorqueNewton_;
 
         ///effective mass
-        float mass_;
+        float mass_ = 0.0f;
         ///mass scale
-        float massScale_;
+        float massScale_ = 1.0f;
 
 
         void freeBody();

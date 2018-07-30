@@ -103,7 +103,7 @@ private:
     void SpawnTrimeshObject();
     void SpawnConvexHull();
     void SpawnCompound();
-
+    void SpawnJointedObject();
 
 
 

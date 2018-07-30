@@ -47,6 +47,7 @@
 
 #include <Urho3D/DebugNew.h>
 #include "Urho3D/Graphics/VisualDebugger.h"
+#include "Urho3D/Physics/NewtonFixedDistanceConstraint.h"
 
 
 
@@ -165,74 +166,6 @@ void Physics::CreateScene()
     // Set an initial position for the camera scene node above the floor
     cameraNode_->SetPosition(Vector3(0.0f, 5.0f, -20.0f));
 }
-
-void Physics::createScaleTest()
-{
-    Node* root = scene_->CreateChild();
-    root->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    const int levelCount = 10;
-    Node* curNode = root;
-    for (int i = 0; i < levelCount; i++)
-    {
-        curNode = curNode->CreateChild();
-        curNode->AddTag("scaleTestCube");
-        float rotDelta = Random(-20.0f, 20.0f);
-        curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
-        curNode->SetScale(1.0f);
-        curNode->Translate(Vector3(0, 1.5f, 0));
-
-
-        StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
-        stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
-        stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-        stMdl->SetCastShadows(true);
-        NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
-        rigBody->SetMassScale(1.0f);
-
-        NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape>();
-        colShape->SetBox(Vector3(1.0f, 1.0f, 1.0f));
-    }
-
-
-
-}
-
-
-void Physics::CreatePyramids()
-{
-    //create pyramids
-    const int numIslands = 0;
-    for (int x2 = -numIslands; x2 <= numIslands; x2++)
-        for (int y2 = -numIslands; y2 <= numIslands; y2++)
-        {
-            //Create a pyramid of movable physics objects
-            int size = 32;
-            for (int y = 0; y < size; ++y)
-            {
-                for (int x = -y; x <= y; ++x)
-                {
-                    Node* boxNode = scene_->CreateChild("Sphere");
-                    boxNode->SetScale(Vector3(Random(1.0f, 0.5f), Random(1.0f, 0.5f), Random(1.0f, 0.5f)));
-                    boxNode->SetPosition(Vector3((float)x, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
-                    auto* boxObject = boxNode->CreateComponent<StaticModel>();
-                    boxObject->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl"));
-                    boxObject->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-                    boxObject->SetCastShadows(true);
-
-                    // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
-                    // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
-                    // objects are significant
-                    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-                    body->SetMassScale(1.0f);
-                    body->SetFriction(0.75f);
-                    auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-                    shape->SetSphere(1.0f);
-                }
-            }
-        }
-}
-
-
 void Physics::CreateInstructions()
 {
     auto* cache = GetSubsystem<ResourceCache>();
@@ -321,7 +254,7 @@ void Physics::MoveCamera(float timeStep)
 
     if (input->GetKeyPress(KEY_R)) {
 
-        int rando = Random(4);
+        int rando = Random(5);
 
         if (rando == 0)
         {
@@ -344,7 +277,11 @@ void Physics::MoveCamera(float timeStep)
             URHO3D_LOGINFO("Spawning Compound");
             SpawnCompound();
         }
-      
+        else if (rando == 4)
+        {
+            URHO3D_LOGINFO("Spawning Joint Gismo 1");
+            SpawnJointedObject();
+        }
     }
 
 
@@ -391,6 +328,39 @@ void Physics::MoveCamera(float timeStep)
     if (input->GetKeyPress(KEY_SPACE))
         drawDebug_ = !drawDebug_;
 }
+
+void Physics::createScaleTest()
+{
+    Node* root = scene_->CreateChild();
+    root->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+    const int levelCount = 10;
+    Node* curNode = root;
+    for (int i = 0; i < levelCount; i++)
+    {
+        curNode = curNode->CreateChild();
+        curNode->AddTag("scaleTestCube");
+        float rotDelta = Random(-20.0f, 20.0f);
+        curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
+        curNode->SetScale(1.0f);
+        curNode->Translate(Vector3(0, 1.5f, 0));
+
+
+        StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
+        stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
+        stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        stMdl->SetCastShadows(true);
+        NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
+        rigBody->SetMassScale(1.0f);
+
+        NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape>();
+        colShape->SetBox(Vector3(1.0f, 1.0f, 1.0f));
+    }
+
+
+
+}
+
+
 
 void Physics::SpawnObject()
 {
@@ -444,6 +414,41 @@ void Physics::SpawnObject()
     }
 
     firstNode->GetComponent<NewtonRigidBody>()->reEvaluateBody();
+}
+
+
+void Physics::CreatePyramids()
+{
+    //create pyramids
+    const int numIslands = 0;
+    for (int x2 = -numIslands; x2 <= numIslands; x2++)
+        for (int y2 = -numIslands; y2 <= numIslands; y2++)
+        {
+            //Create a pyramid of movable physics objects
+            int size = 32;
+            for (int y = 0; y < size; ++y)
+            {
+                for (int x = -y; x <= y; ++x)
+                {
+                    Node* boxNode = scene_->CreateChild("Sphere");
+                    boxNode->SetScale(Vector3(Random(1.0f, 0.5f), Random(1.0f, 0.5f), Random(1.0f, 0.5f)));
+                    boxNode->SetPosition(Vector3((float)x, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    auto* boxObject = boxNode->CreateComponent<StaticModel>();
+                    boxObject->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl"));
+                    boxObject->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+                    boxObject->SetCastShadows(true);
+
+                    // Create NewtonRigidBody and NewtonCollisionShape components like above. Give the NewtonRigidBody mass to make it movable
+                    // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
+                    // objects are significant
+                    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+                    body->SetMassScale(1.0f);
+                    body->SetFriction(0.75f);
+                    auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
+                    shape->SetSphere(1.0f);
+                }
+            }
+        }
 }
 
 void Physics::SpawnTrimeshObject()
@@ -570,6 +575,53 @@ void Physics::SpawnCompound()
 
 
 
+
+void Physics::SpawnJointedObject()
+{
+    //lets joint 2 spheres together with a distance limiting joint.
+    Node* sphere1 = scene_->CreateChild();
+    Node* sphere2 = scene_->CreateChild();
+
+
+    Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl");
+    Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+
+    StaticModel* sphere1StMdl = sphere1->CreateComponent<StaticModel>();
+    StaticModel* sphere2StMdl = sphere2->CreateComponent<StaticModel>();
+
+    sphere1StMdl->SetModel(sphereMdl);
+    sphere1StMdl->SetMaterial(sphereMat);
+    sphere2StMdl->SetModel(sphereMdl);
+    sphere2StMdl->SetMaterial(sphereMat);
+
+    NewtonRigidBody* s1RigBody = sphere1->CreateComponent<NewtonRigidBody>();
+    NewtonRigidBody* s2RigBody = sphere2->CreateComponent<NewtonRigidBody>();
+
+    NewtonCollisionShape* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape>();
+    NewtonCollisionShape* s2ColShape = sphere2->CreateComponent<NewtonCollisionShape>();
+
+    s1ColShape->SetSphere(1.0f);
+    s2ColShape->SetSphere(1.0f);
+
+    sphere1->SetWorldPosition(cameraNode_->GetWorldPosition() - Vector3(2, 0, 0));
+    sphere2->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(2, 0, 0));
+
+    s1RigBody->SetMassScale(1.0f);
+    s2RigBody->SetMassScale(1.0f);
+
+
+
+
+    //make a joint
+    sphere1->CreateComponent<NewtonFixedDistanceConstraint>();
+
+
+
+
+
+
+
+}
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
