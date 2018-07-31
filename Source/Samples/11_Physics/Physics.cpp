@@ -579,20 +579,32 @@ void Physics::SpawnCompound()
 
 void Physics::SpawnJointedObject()
 {
-    //lets joint 2 spheres together with a distance limiting joint.
-    const float dist = 1.0f;
+    //lets joint spheres together with a distance limiting joint.
+    const float dist = 10.0f;
+
+    const int numSpheres = 20;
+
+    PODVector<Node*> nodes;
+    //make lots of spheres
+    for (int i = 0; i < numSpheres; i++)
+    {
+        nodes += SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition() - Vector3(Random(), Random(), Random())*dist);
+    }
 
 
-        Node* sphere1 = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition() - Vector3(dist, 0, 0));
-        Node* sphere2 = SpawnSamplePhysicsBox(scene_, cameraNode_->GetWorldPosition() + Vector3(dist, 0, 0));
+    //connect them all O(n*n) joints
+    for (Node* node : nodes)
+    {
+        for (Node* node2 : nodes)
+        {
+            if (node2 == node)
+                continue;
 
+            NewtonFixedDistanceConstraint* constraint = node->CreateComponent<NewtonFixedDistanceConstraint>();
+            constraint->SetOtherBody(node2->GetComponent<NewtonRigidBody>());
+        }
+    }
 
-        //make a joint
-        NewtonFixedDistanceConstraint* constraint = sphere1->CreateComponent<NewtonFixedDistanceConstraint>();
-        constraint->SetOtherBody(sphere2->GetComponent<NewtonRigidBody>());
-
-
-        //sphere1->RemoveComponent<NewtonFixedDistanceConstraint>();
 
 
 }

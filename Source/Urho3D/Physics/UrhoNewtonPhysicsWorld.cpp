@@ -100,6 +100,10 @@ namespace Urho3D {
         if (debug)
         {
             //#todo draw physics world specific things. joints?
+            for (NewtonConstraint* consttraint : constraintList)
+            {
+                consttraint->DrawDebugGeometry(debug, depthTest);
+            }
 
             //draw debug geometry on rigid bodies.
             for (NewtonRigidBody* body : rigidBodyComponentList) {
