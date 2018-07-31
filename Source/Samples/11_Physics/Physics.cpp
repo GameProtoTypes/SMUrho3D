@@ -807,7 +807,7 @@ void Physics::UpdatePickPull()
     netForce -= scene_->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity();
 
     rigBody->ResetForces();
-    //rigBody->AddWorldForce(netForce, rigBody->GetNode()->WorldToLocal(pickSource->GetWorldPosition()));
-    rigBody->AddImpulse(Vector3::ZERO, delta * 100000.0f);
+    rigBody->AddWorldForce(netForce, rigBody->GetNode()->WorldToLocal(pickSource->GetWorldPosition()));
+    //rigBody->AddImpulse(Vector3::ZERO, delta * 100000.0f);
 
 }

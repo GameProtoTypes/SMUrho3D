@@ -60,23 +60,17 @@ public:
 	/// Return how many Updates have occured.
 	long long GetUpdateCount() const { return updateTick_; }
 
+
+    float GetUpdateTimeGoalMs() const { return updateTimeGoalUs_ * 1000.0f; }
+
+    float GetRenderTimeGoalMs() const { return renderTimeGoalUs_ * 1000.0f; }
+
 	/// Return the duration in milliseconds of the last render frame.
-	float GetLastRenderTimeMs() const { return float(lastRenderTimeUs_); }
+	float GetLastRenderTimeMs() const { return lastRenderTimeUs_ * 1000.0f; }
 
 	/// Return the duration in milliseconds of the last update frame.
-	float GetLastUpdateTimeMs() const { return float(lastUpdateTimeUs_); }
+	float GetLastUpdateTimeMs() const { return lastUpdateTimeUs_ * 1000.0f; }
 
-	/// Return the average duration in milliseconds of the previous render frames.
-	float GetAverageRenderTimeMs();
-
-	/// Return the average duration in milliseconds of the previous update frames.
-	float GetAverageUpdateTimeMs();
-
-	/// Returns true if the update duration is consistently below the goal update rate. Else returns false. Average Update Time is used to determine this.
-	bool GetUpdateIsLimited();
-
-	/// Returns true if the render duration is consistently below the goal render rate. Else returns false. Average Update Time is used to determine this.
-	bool GetRenderIsLimited();
 
 
 
@@ -88,10 +82,7 @@ public:
 	void SetUpdateFpsGoal(unsigned fps);
 	/// Set the time interval for Update events
 	void SetUpdateTimeGoalUs(unsigned updateTimeUs);
-	/// Set the time interval in mircoseconds for update averaging metrics
-	void SetUpdateAveragingTimeUs(unsigned averagingTimeUs);
-	/// Set the time interval in mircoseconds for render averaging metrics
-	void SetRenderAveragingTimeUs(unsigned averagingTimeUs);
+
 
     /// Set whether to pause update events and audio when minimized.
     void SetPauseMinimized(bool enable);
@@ -160,23 +151,12 @@ private:
 	HiresTimer updateTimer_;
 	HiresTimer renderGoalTimer_;
 
-	int renderTimeGoalUs_{ 5000 };  //200 Hz   
-	int updateTimeGoalUs_{ 16666 }; //60 Hz
+	float renderTimeGoalUs_{ 5000.0f };  //200 Hz   
+    float updateTimeGoalUs_{ 16666.0f }; //60 Hz
 
-	int avgRenderTimeUs_{ 5000 };
-	int avgUpdateTimeUs_{ 16666 };
-	int renderAveragingTimeWindowUs_{ 1000000 };
-	int updateAveragingTimeWindowUs_{ 1000000 };
+    float lastRenderTimeUs_{ 0 };
+    float lastUpdateTimeUs_{ 0 };
 
-
-	int lastRenderTimeUs_{ 0 };
-	int lastUpdateTimeUs_{ 0 };
-
-	PODVector<int> renderTimeUsBuffer_;
-	PODVector<int> updateTimeUsBuffer_;
-
-	int renderTimeAvgIdx_{ 0 };
-	int updateTimeAvgIdx_{ 0 };
 
     /// Pause when minimized flag.
     bool pauseMinimized_;

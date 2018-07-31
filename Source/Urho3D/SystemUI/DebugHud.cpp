@@ -218,21 +218,12 @@ void DebugHud::RenderUi(VariantMap& eventData)
 
             ui::SetCursorPos({posStats_.x_, posStats_.y_});
 
-			String updateFpsString;
-			if (!GSS<Engine>()->GetUpdateIsLimited())
-				updateFpsString = "Update Hz %f";
-			else
-				updateFpsString = "Update Hz (Limited) %f";
-
-			String renderFpsString;
-			if (!GSS<Engine>()->GetRenderIsLimited())
-				renderFpsString = "Render Hz %f";
-			else
-				renderFpsString = "Render Hz (Limited) %f";
+			String updateFpsString = "Update Hz %f";
+			String renderFpsString = "Render Hz %f";
 
 
-            ui::Text(updateFpsString.CString(), (1000.0f / GSS<Engine>()->GetAverageUpdateTimeMs()));
-			ui::Text(renderFpsString.CString(), (1000.0f / GSS<Engine>()->GetAverageRenderTimeMs()));
+            ui::Text(updateFpsString.CString(), (1000000000.0f / GSS<Engine>()->GetLastUpdateTimeMs()));
+			ui::Text(renderFpsString.CString(), (1000000000.0f / GSS<Engine>()->GetLastRenderTimeMs()));
             ui::Text("Triangles %u", primitives);
             ui::Text("Batches %u", batches);
             ui::Text("Views %u", renderer->GetNumViews());

@@ -399,7 +399,9 @@ namespace Urho3D {
     void NewtonRigidBody::AddImpulse(const Vector3& localPosition, const Vector3& targetVelocity)
     {
         if(newtonBody_)
-            NewtonBodyAddImpulse(newtonBody_, &UrhoToNewton(targetVelocity)[0], &UrhoToNewton(node_->LocalToWorld(localPosition))[0], GSS<Engine>()->GetLastUpdateTimeMs());
+            NewtonBodyAddImpulse(newtonBody_, &UrhoToNewton(targetVelocity)[0], &UrhoToNewton(node_->LocalToWorld(localPosition))[0], GSS<Engine>()->GetUpdateTimeGoalMs());
+
+        
     }
 
     Vector3 NewtonRigidBody::GetNetForce()
