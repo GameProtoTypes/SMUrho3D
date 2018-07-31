@@ -148,7 +148,7 @@ void Physics::CreateScene()
     }
 
 
-    CreatePyramids();
+    //CreatePyramids();
 
 
     //create scale test
@@ -257,28 +257,28 @@ void Physics::MoveCamera(float timeStep)
 
         int rando = Random(5);
 
-        if (rando == 0)
-        {
-            URHO3D_LOGINFO("Spawning Static Triangle Mesh");
-            SpawnTrimeshObject();
-        }
-        else if (rando == 1)
-        {
-            URHO3D_LOGINFO("Spawning Cube Hierarchy..");
-            SpawnObject();
+        //if (rando == 0)
+        //{
+        //    URHO3D_LOGINFO("Spawning Static Triangle Mesh");
+        //    SpawnTrimeshObject();
+        //}
+        //else if (rando == 1)
+        //{
+        //    URHO3D_LOGINFO("Spawning Cube Hierarchy..");
+        //    SpawnObject();
 
-        }
-        else if (rando == 2)
-        {
-            URHO3D_LOGINFO("Spawning Convex Hull");
-            SpawnConvexHull();
-        }
-        else if (rando == 3)
-        {
-            URHO3D_LOGINFO("Spawning Compound");
-            SpawnCompound();
-        }
-        else if (rando == 4)
+        //}
+        //else if (rando == 2)
+        //{
+        //    URHO3D_LOGINFO("Spawning Convex Hull");
+        //    SpawnConvexHull();
+        //}
+        //else if (rando == 3)
+        //{
+        //    URHO3D_LOGINFO("Spawning Compound");
+        //    SpawnCompound();
+        //}
+        /*else*/ if (rando == 4)
         {
             URHO3D_LOGINFO("Spawning Joint Gismo 1");
             SpawnJointedObject();
@@ -592,7 +592,7 @@ void Physics::SpawnJointedObject()
         constraint->SetOtherBody(sphere2->GetComponent<NewtonRigidBody>());
 
 
-
+        //sphere1->RemoveComponent<NewtonFixedDistanceConstraint>();
 
 
 }

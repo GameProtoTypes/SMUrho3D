@@ -233,7 +233,7 @@ namespace Urho3D {
 
 
     void NewtonCollisionShape::updateReferenceToRigidBody()
-{
+    {
         rigidBody_ = node_->GetComponent<NewtonRigidBody>();
     }
 

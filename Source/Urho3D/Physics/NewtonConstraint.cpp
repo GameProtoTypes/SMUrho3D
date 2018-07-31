@@ -6,6 +6,7 @@
 #include "Graphics/DebugRenderer.h"
 
 #include "Scene/Scene.h"
+#include "dCustomFixDistance.h"
 namespace Urho3D {
     NewtonConstraint::NewtonConstraint(Context* context) : Component(context)
     {
@@ -14,7 +15,6 @@ namespace Urho3D {
 
     NewtonConstraint::~NewtonConstraint()
     {
-
     }
 
     void NewtonConstraint::RegisterObject(Context* context)
@@ -64,9 +64,17 @@ namespace Urho3D {
 
     void NewtonConstraint::buildConstraint()
     {
-
+        /// ovverride in derived classes.
     }
 
+
+    void NewtonConstraint::freeConstraint()
+    {
+        if (newtonJoint_ != nullptr) {
+            delete newtonJoint_;
+            newtonJoint_ = nullptr;
+        }
+    }
 
     bool NewtonConstraint::preRebuildCheckAndClean()
     {
@@ -76,12 +84,7 @@ namespace Urho3D {
         if (!ownBody_->GetNewtonBody() || !ownBody_->GetNewtonBody())
             return false;
 
-        if (newtonJoint_) {
-            //destroy old joint if needed
-            //NewtonWorld* newtonWorld = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetNewtonWorld();
-            delete newtonJoint_;
-            newtonJoint_ = nullptr;
-        }
+        freeConstraint();
         
         return true;
     }
@@ -93,16 +96,13 @@ namespace Urho3D {
             NewtonRigidBody* rigBody = node->GetComponent<NewtonRigidBody>();
             if (rigBody) {
                 ownBody_ = rigBody;
-                
+                reEvalConstraint();
             }
         }
         else
         {
             ownBody_ = nullptr;
-
-
+            freeConstraint();
         }
-        reEvalConstraint();
     }
-
 }
