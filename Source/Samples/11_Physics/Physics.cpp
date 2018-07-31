@@ -96,7 +96,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
+    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,0,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -151,6 +151,7 @@ void Physics::CreateScene()
     CreatePyramids();
 
     SpawnLinearJointedObject(Vector3(10,0,0));
+    
 
     SpawnNSquaredJointedObject(Vector3(-10, 10, 0));
 
@@ -618,15 +619,15 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
 void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
 {
     //lets joint spheres together with a distance limiting joint.
-    const float dist = 1.0f;
+    const float dist = 0.25f;
 
-    const int numSpheres = 50;
+    const int numSpheres = 25;
 
     PODVector<Node*> nodes;
     //make lots of spheres
     for (int i = 0; i < numSpheres; i++)
     {
-        nodes += SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,i*dist,0));
+        nodes += SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,i*dist,0), dist);
 
         if (i > 0) {
             NewtonFixedDistanceConstraint* constraint = nodes[i - 1]->CreateComponent<NewtonFixedDistanceConstraint>();
@@ -797,7 +798,7 @@ void Physics::UpdatePickPull()
 
     Vector3 delta = (pickTarget->GetWorldPosition() - pickSource->GetWorldPosition());
 
-    float forceFactor = delta.Length()*100.0f;
+    float forceFactor = delta.Length()*100.0f*rigBody->GetEffectiveMass();
     float cuttoff = 10.0f;
 
 

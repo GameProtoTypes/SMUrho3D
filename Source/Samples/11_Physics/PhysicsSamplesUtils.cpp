@@ -1,7 +1,7 @@
 #include "PhysicsSamplesUtils.h"
 
 
-Node* SpawnSamplePhysicsSphere(Scene* scene, const Vector3& worldPosition)
+Node* SpawnSamplePhysicsSphere(Scene* scene, const Vector3& worldPosition, float radius)
 {
         Node* sphere1 = scene->CreateChild();
 
@@ -19,12 +19,14 @@ Node* SpawnSamplePhysicsSphere(Scene* scene, const Vector3& worldPosition)
 
         NewtonCollisionShape* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape>();
 
-        s1ColShape->SetSphere(1.0f);
+        s1ColShape->SetSphere(radius);
 
         sphere1->SetWorldPosition(worldPosition);
 
         s1RigBody->SetMassScale(1.0f);
 
+
+        sphere1->SetScale(radius);
 
         return sphere1;
 }
