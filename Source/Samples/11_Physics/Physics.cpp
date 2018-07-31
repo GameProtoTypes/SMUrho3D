@@ -148,7 +148,7 @@ void Physics::CreateScene()
     }
 
 
-    //CreatePyramids();
+    CreatePyramids();
 
 
     //create scale test

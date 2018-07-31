@@ -16,6 +16,9 @@ namespace Urho3D {
 
 
     public:
+
+        friend class UrhoNewtonPhysicsWorld;
+
         /// Construct.
         NewtonConstraint(Context* context);
         /// Destruct. Free the rigid body and geometries.
@@ -61,6 +64,7 @@ namespace Urho3D {
         Vector3 otherPosition_;
         /// Constraint position.
         Vector3 position_;
+
 
         /// Upper level re-evaulation.
         void reEvalConstraint();

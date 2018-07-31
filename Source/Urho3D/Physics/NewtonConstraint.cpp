@@ -93,16 +93,25 @@ namespace Urho3D {
     {
         if (node)
         {
+            //auto create physics world similar to rigid body.
+            physicsWorld_ = node->GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>();
+
             NewtonRigidBody* rigBody = node->GetComponent<NewtonRigidBody>();
             if (rigBody) {
                 ownBody_ = rigBody;
                 reEvalConstraint();
             }
+           
+            if(physicsWorld_)
+                physicsWorld_->addConstraint(this);
+
         }
         else
         {
             ownBody_ = nullptr;
-            freeConstraint();
+            if (physicsWorld_)
+                physicsWorld_->removeConstraint(this);
+
         }
     }
 }

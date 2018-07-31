@@ -145,8 +145,26 @@ namespace Urho3D {
         rigidBodyComponentList.Remove(WeakPtr<NewtonRigidBody>(body));
     }
 
+    void UrhoNewtonPhysicsWorld::addConstraint(NewtonConstraint* constraint)
+    {
+        constraintList.Insert(0, WeakPtr<NewtonConstraint>(constraint));
+    }
+
+    void UrhoNewtonPhysicsWorld::removeConstraint(NewtonConstraint* constraint)
+    {
+        constraintList.Remove(WeakPtr<NewtonConstraint>(constraint));
+    }
+
     void UrhoNewtonPhysicsWorld::freeWorld()
     {
+
+        //free any joints
+        for (NewtonConstraint* constraint : constraintList)
+        {
+            constraint->freeConstraint();
+        }
+        constraintList.Clear();
+
         //free any collision shapes currently in the list
         for (NewtonCollisionShape* col : collisionComponentList)
         {

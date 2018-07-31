@@ -12,6 +12,7 @@ namespace Urho3D
     class Component;
     class NewtonCollisionShape;
     class NewtonRigidBody;
+    class NewtonConstraint;
     class Sphere;
     class BoundingBox;
     class NewtonMeshObject;
@@ -28,6 +29,7 @@ namespace Urho3D
 
         friend class NewtonCollisionShape;
         friend class NewtonRigidBody;
+        friend class NewtonConstraint;
 
         /// Construct.
         UrhoNewtonPhysicsWorld(Context* context);
@@ -79,12 +81,15 @@ namespace Urho3D
         void addRigidBody(NewtonRigidBody* body);
         void removeRigidBody(NewtonRigidBody* body);
 
+        void addConstraint(NewtonConstraint* constraint);
+        void removeConstraint(NewtonConstraint* constraint);
 
         void freeWorld();
 
 
         Vector<WeakPtr<NewtonCollisionShape>> collisionComponentList;
         Vector<WeakPtr<NewtonRigidBody>> rigidBodyComponentList;
+        Vector<WeakPtr<NewtonConstraint>> constraintList;
 
 
         /// Step the simulation forward.
