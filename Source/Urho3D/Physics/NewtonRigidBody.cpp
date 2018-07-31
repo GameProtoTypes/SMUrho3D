@@ -11,6 +11,7 @@
 #include "UrhoNewtonConversions.h"
 #include "dgQuaternion.h"
 #include "Scene/SceneEvents.h"
+#include "Engine/Engine.h"
 
 
 namespace Urho3D {
@@ -363,7 +364,7 @@ namespace Urho3D {
     void NewtonRigidBody::AddWorldForce(const Vector3& force, const Vector3& localPosition)
     {
         netForce_ += force;
-        netTorque_ += localPosition.CrossProduct(force);
+        netTorque_ += localPosition.CrossProduct(node_->WorldToLocal(force));
         bakeForceAndTorque();
     }
 
@@ -393,6 +394,12 @@ namespace Urho3D {
         netForce_ = Vector3(0, 0, 0);
         netTorque_ = Vector3(0, 0, 0);
         bakeForceAndTorque();
+    }
+
+    void NewtonRigidBody::AddImpulse(const Vector3& localPosition, const Vector3& targetVelocity)
+    {
+        if(newtonBody_)
+            NewtonBodyAddImpulse(newtonBody_, &UrhoToNewton(targetVelocity)[0], &UrhoToNewton(node_->LocalToWorld(localPosition))[0], GSS<Engine>()->GetLastUpdateTimeMs());
     }
 
     Vector3 NewtonRigidBody::GetNetForce()

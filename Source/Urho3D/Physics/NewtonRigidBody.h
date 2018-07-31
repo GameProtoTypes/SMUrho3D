@@ -55,6 +55,12 @@ namespace Urho3D
         /// Reset accumulated forces.
         void ResetForces();
 
+        /// apply an impulse to the body at the localPosition to aquire the target velocity next physics update.
+        void AddImpulse(const Vector3& localPosition, const Vector3& targetVelocity);
+
+
+
+
         /// Return the net force acting on the body.
         Vector3 GetNetForce();
 

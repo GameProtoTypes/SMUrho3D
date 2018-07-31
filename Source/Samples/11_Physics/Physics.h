@@ -103,8 +103,8 @@ private:
     void SpawnTrimeshObject();
     void SpawnConvexHull();
     void SpawnCompound();
-    void SpawnJointedObject();
-
+    void SpawnNSquaredJointedObject(Vector3 worldPosition);
+    void SpawnLinearJointedObject(Vector3 worldPosition);
 
 
 

@@ -150,6 +150,9 @@ void Physics::CreateScene()
 
     CreatePyramids();
 
+    SpawnLinearJointedObject(Vector3(10,0,0));
+
+    SpawnNSquaredJointedObject(Vector3(-10, 10, 0));
 
     //create scale test
     createScaleTest();
@@ -255,7 +258,7 @@ void Physics::MoveCamera(float timeStep)
 
     if (input->GetKeyPress(KEY_R)) {
 
-        int rando = Random(5);
+        int rando = Random(6);
 
         //if (rando == 0)
         //{
@@ -281,7 +284,12 @@ void Physics::MoveCamera(float timeStep)
         /*else*/ if (rando == 4)
         {
             URHO3D_LOGINFO("Spawning Joint Gismo 1");
-            SpawnJointedObject();
+            SpawnNSquaredJointedObject(cameraNode_->GetWorldPosition());
+        }
+        else if (rando == 5)
+        {
+            URHO3D_LOGINFO("Spawning Joint Gismo 2");
+            SpawnLinearJointedObject(cameraNode_->GetWorldPosition());
         }
     }
 
@@ -577,18 +585,18 @@ void Physics::SpawnCompound()
 
 
 
-void Physics::SpawnJointedObject()
+void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
 {
     //lets joint spheres together with a distance limiting joint.
-    const float dist = 10.0f;
+    const float dist = 5.0f;
 
-    const int numSpheres = 20;
+    const int numSpheres = 10;
 
     PODVector<Node*> nodes;
     //make lots of spheres
     for (int i = 0; i < numSpheres; i++)
     {
-        nodes += SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition() - Vector3(Random(), Random(), Random())*dist);
+        nodes += SpawnSamplePhysicsSphere(scene_, worldPosition - Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f) * (Vector3::FORWARD*dist));
     }
 
 
@@ -604,10 +612,30 @@ void Physics::SpawnJointedObject()
             constraint->SetOtherBody(node2->GetComponent<NewtonRigidBody>());
         }
     }
-
-
-
 }
+
+
+void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
+{
+    //lets joint spheres together with a distance limiting joint.
+    const float dist = 1.0f;
+
+    const int numSpheres = 50;
+
+    PODVector<Node*> nodes;
+    //make lots of spheres
+    for (int i = 0; i < numSpheres; i++)
+    {
+        nodes += SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,i*dist,0));
+
+        if (i > 0) {
+            NewtonFixedDistanceConstraint* constraint = nodes[i - 1]->CreateComponent<NewtonFixedDistanceConstraint>();
+            constraint->SetOtherBody(nodes[i]->GetComponent<NewtonRigidBody>());
+        }
+    }
+}
+
+
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
@@ -779,6 +807,7 @@ void Physics::UpdatePickPull()
     netForce -= scene_->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity();
 
     rigBody->ResetForces();
-    rigBody->AddWorldForce(netForce);
+    //rigBody->AddWorldForce(netForce, rigBody->GetNode()->WorldToLocal(pickSource->GetWorldPosition()));
+    rigBody->AddImpulse(Vector3::ZERO, delta * 100000.0f);
 
 }
