@@ -26,6 +26,8 @@ namespace Urho3D
 
         ///Set a scaler on the mass of the rigid body - (scale is applied after collision shape densities)
         void SetMassScale(float massDensityScale);
+        ///Get the mass scale of the rigid body
+        float GetMassScale() const { return massScale_; }
 
         /// get the mass of the rigid body 
         float GetEffectiveMass() { return mass_; }

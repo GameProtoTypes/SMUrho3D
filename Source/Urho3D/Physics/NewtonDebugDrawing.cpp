@@ -34,22 +34,30 @@ namespace Urho3D {
     {
             dMatrix matrix;
             dVector com(0.0f);
+            dVector p0(0.0f);
+            dVector p1(0.0f);
 
+
+            NewtonCollision* const collision = NewtonBodyGetCollision(body);
             NewtonBodyGetCentreOfMass(body, &com[0]);
             NewtonBodyGetMatrix(body, &matrix[0][0]);
+            NewtonCollisionCalculateAABB(collision, &matrix[0][0], &p0[0], &p1[0]);
+
+            Vector3 aabbMin = NewtonToUrhoVec3(p0);
+            Vector3 aabbMax = NewtonToUrhoVec3(p1);
+            float aabbSize = (aabbMax - aabbMin).Length()*0.1f;
 
             dVector o(matrix.TransformVector(com));
 
-            dVector x(o + matrix.RotateVector(dVector(1.0f, 0.0f, 0.0f, 0.0f)));
-
+            dVector x(o + matrix.RotateVector(dVector(1.0f, 0.0f, 0.0f, 0.0f))*aabbSize);
             debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((x.m_x), (x.m_y), (x.m_z)), Color::RED, depthTest);
 
 
-            dVector y(o + matrix.RotateVector(dVector(0.0f, 1.0f, 0.0f, 0.0f)));
+            dVector y(o + matrix.RotateVector(dVector(0.0f, 1.0f, 0.0f, 0.0f))*aabbSize);
             debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((y.m_x), (y.m_y), (y.m_z)), Color::GREEN, depthTest);
 
 
-            dVector z(o + matrix.RotateVector(dVector(0.0f, 0.0f, 1.0f, 0.0f)));
+            dVector z(o + matrix.RotateVector(dVector(0.0f, 0.0f, 1.0f, 0.0f))*aabbSize);
             debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((z.m_x), (z.m_y), (z.m_z)), Color::BLUE, depthTest);
     }
 
