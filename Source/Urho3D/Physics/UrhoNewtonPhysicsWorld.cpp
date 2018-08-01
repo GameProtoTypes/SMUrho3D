@@ -196,9 +196,16 @@ namespace Urho3D {
 
 
 
-    //gets called every 16 ms.
+
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
+        //rebuild rigid bodies if they need rebuilt (dirty)
+        for (NewtonRigidBody* rigBody : rigidBodyComponentList)
+        {
+            if (rigBody->needsRebuilt_)
+                rigBody->reBuildBodyParent();
+        }
+
         //use target time step to give newton constant time steps. timeStep = 0.01666666 in seconds.
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 
@@ -316,6 +323,9 @@ namespace Urho3D {
     {
         UrhoNewtonPhysicsWorld::RegisterObject(context);
         NewtonCollisionShape::RegisterObject(context);
+        NewtonCollisionShape_Box::RegisterObject(context);
+        NewtonCollisionShape_Sphere::RegisterObject(context);
+
         NewtonRigidBody::RegisterObject(context);
         NewtonMeshObject::RegisterObject(context);
         NewtonConstraint::RegisterObject(context);

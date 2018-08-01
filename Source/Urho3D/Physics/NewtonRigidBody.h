@@ -94,8 +94,16 @@ namespace Urho3D
         /// Draw Debug geometry
         void DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB = true, bool showCollisionMesh = true, bool showCenterOfMass = true, bool showContactForces = true);
 
+        /// mark the rigid body as dirty causing it to be rebuilt by the physics world
+        void MarkDirty(bool dirty);
+
+        bool GetDirty() const { return needsRebuilt_; }
+
         /// rebuilds the internal body
-        void reEvaluateBody();
+        void reBuildBody();
+
+        /// rebuild the internal body away of the scene herarchy (forms compound collision)
+        void reBuildBodyParent();
     protected:
 
 
@@ -127,6 +135,8 @@ namespace Urho3D
         ///mass scale
         float massScale_ = 1.0f;
 
+        ///dirty flag
+        bool needsRebuilt_ = true;
 
         void freeBody();
 

@@ -55,166 +55,173 @@ namespace Urho3D {
 
     }
 
-    void NewtonCollisionShape::SetBox(const Vector3& size, const Vector3& position, const Quaternion& rotation)
-    {
-        shapeType_ = SHAPE_BOX;
-        size_ = size;
-        position_ = position;
-        rotation_ = rotation;
+    //void NewtonCollisionShape::SetBox(const Vector3& size, const Vector3& position, const Quaternion& rotation)
+    //{
+    //    shapeType_ = SHAPE_BOX;
+    //    size_ = size;
+    //    position_ = position;
+    //    rotation_ = rotation;
 
-        reEvaluateCollision();
-        notifyRigidBody();
-    }
-
-
-    void NewtonCollisionShape::SetSphere(float diameter, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
-    {
-        shapeType_ = SHAPE_SPHERE;
-        size_ = Vector3(diameter, 0, 0);
-        position_ = position;
-        rotation_ = rotation;
-
-        reEvaluateCollision();
-        notifyRigidBody();
-    }
-
-    void NewtonCollisionShape::SetCylinder(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
-    {
-        shapeType_ = SHAPE_CYLINDER;
-        size_ = Vector3(diameter, height, 0);
-        position_ = position;
-        rotation_ = rotation;
-
-        reEvaluateCollision();
-        notifyRigidBody();
-    }
-
-    void NewtonCollisionShape::SetCapsule(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
-    {
-        shapeType_ = SHAPE_CAPSULE;
-        size_ = Vector3(diameter, height, 0);
-        position_ = position;
-        rotation_ = rotation;
-
-        reEvaluateCollision();
-        notifyRigidBody();
-    }
-
-    void NewtonCollisionShape::SetCone(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
-    {
-        shapeType_ = SHAPE_CONE;
-        size_ = Vector3(diameter, height, 0);
-        position_ = position;
-        rotation_ = rotation;
-
-        reEvaluateCollision();
-        notifyRigidBody();
-    }
-
-    void NewtonCollisionShape::SetTriangleMesh(Model* model, unsigned lodLevel /*= 0*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
-    {
-        if (!model)
-            return;
-
-        shapeType_ = SHAPE_TRIANGLEMESH;
-        size_ = scale;
-        position_ = position;
-        rotation_ = rotation;
-        model_ = model;
-        modelLodLevel_ = lodLevel;
+    //    reEvaluateCollision();
+    //    notifyRigidBody();
+    //}
 
 
+    //void NewtonCollisionShape::SetSphere(float diameter, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    //{
+    //    shapeType_ = SHAPE_SPHERE;
+    //    size_ = Vector3(diameter, 0, 0);
+    //    position_ = position;
+    //    rotation_ = rotation;
 
-        reEvaluateCollision();
-        notifyRigidBody();
+    //    reEvaluateCollision();
+    //    notifyRigidBody();
+    //}
+
+    //void NewtonCollisionShape::SetCylinder(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    //{
+    //    shapeType_ = SHAPE_CYLINDER;
+    //    size_ = Vector3(diameter, height, 0);
+    //    position_ = position;
+    //    rotation_ = rotation;
+
+    //    reEvaluateCollision();
+    //    notifyRigidBody();
+    //}
+
+    //void NewtonCollisionShape::SetCapsule(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    //{
+    //    shapeType_ = SHAPE_CAPSULE;
+    //    size_ = Vector3(diameter, height, 0);
+    //    position_ = position;
+    //    rotation_ = rotation;
+
+    //    reEvaluateCollision();
+    //    notifyRigidBody();
+    //}
+
+    //void NewtonCollisionShape::SetCone(float diameter, float height, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    //{
+    //    shapeType_ = SHAPE_CONE;
+    //    size_ = Vector3(diameter, height, 0);
+    //    position_ = position;
+    //    rotation_ = rotation;
+
+    //    reEvaluateCollision();
+    //    notifyRigidBody();
+    //}
+
+    //void NewtonCollisionShape::SetTriangleMesh(Model* model, unsigned lodLevel /*= 0*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    //{
+    //    if (!model)
+    //        return;
+
+    //    shapeType_ = SHAPE_TRIANGLEMESH;
+    //    size_ = scale;
+    //    position_ = position;
+    //    rotation_ = rotation;
+    //    model_ = model;
+    //    modelLodLevel_ = lodLevel;
 
 
-    }
 
-    void NewtonCollisionShape::SetConvexHull(Model* model, unsigned lodLevel /*= 0*/, float tolerance /*= 0.0f*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
-    {
-        if (!model)
-            return;
-
-        shapeType_ = SHAPE_CONVEXHULL;
-        size_ = scale;
-        position_ = position;
-        rotation_ = rotation;
-        model_ = model;
-        modelLodLevel_ = lodLevel;
-        hullTolerance_ = tolerance;
+    //    reEvaluateCollision();
+    //    notifyRigidBody();
 
 
-        reEvaluateCollision();
-        notifyRigidBody();
+    //}
 
-    }
+    //void NewtonCollisionShape::SetConvexHull(Model* model, unsigned lodLevel /*= 0*/, float tolerance /*= 0.0f*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    //{
+    //    if (!model)
+    //        return;
 
-    void NewtonCollisionShape::SetCompound(Model* model, unsigned lodLevel /*= 0*/, float tolerance /*= 0.0f*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
-    {
-        if (!model)
-            return;
-
-        shapeType_ = SHAPE_COMPOUND;
-        size_ = scale;
-        position_ = position;
-        rotation_ = rotation;
-        model_ = model;
-        modelLodLevel_ = lodLevel;
-        hullTolerance_ = tolerance;
+    //    shapeType_ = SHAPE_CONVEXHULL;
+    //    size_ = scale;
+    //    position_ = position;
+    //    rotation_ = rotation;
+    //    model_ = model;
+    //    modelLodLevel_ = lodLevel;
+    //    hullTolerance_ = tolerance;
 
 
-        reEvaluateCollision();
-        notifyRigidBody();
-    }
+    //    reEvaluateCollision();
+    //    notifyRigidBody();
+
+    //}
+
+    //void NewtonCollisionShape::SetCompound(Model* model, unsigned lodLevel /*= 0*/, float tolerance /*= 0.0f*/, const Vector3& scale /*= Vector3::ONE*/, const Vector3& position /*= Vector3::ZERO*/, const Quaternion& rotation /*= Quaternion::IDENTITY*/)
+    //{
+    //    if (!model)
+    //        return;
+
+    //    shapeType_ = SHAPE_COMPOUND;
+    //    size_ = scale;
+    //    position_ = position;
+    //    rotation_ = rotation;
+    //    model_ = model;
+    //    modelLodLevel_ = lodLevel;
+    //    hullTolerance_ = tolerance;
+
+
+    //    reEvaluateCollision();
+    //    notifyRigidBody();
+    //}
 
     void NewtonCollisionShape::reEvaluateCollision()
-{
+    {
+        if (!shapeNeedsRebuilt_)
+            return;
+
+
         // first free any reference to an existing collision.
         freeInternalCollision();
 
-        NewtonWorld * world = physicsWorld_->GetNewtonWorld();
+        //if (shapeType_ == SHAPE_BOX) {
 
+        //    // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
+        //    newtonCollision_ = NewtonCreateBox(world, size_.x_,
+        //        size_.y_,
+        //        size_.z_, 0, nullptr);
 
+        //}
+        //else if (shapeType_ == SHAPE_SPHERE) {
+        //    newtonCollision_ = NewtonCreateSphere(world, size_.x_*0.5f, 0, nullptr);
+        //}
+        //else if (shapeType_ == SHAPE_CONE) {
+        //    newtonCollision_ = NewtonCreateCone(world, size_.x_*0.5f, size_.z_, 0, nullptr);
+        //}
+        //else if (shapeType_ == SHAPE_CYLINDER) {
+        //    newtonCollision_ == NewtonCreateCylinder(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
+        //}
+        //else if (shapeType_ == SHAPE_CAPSULE) {
+        //    newtonCollision_ == NewtonCreateCapsule(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
+        //}
+        //else if (shapeType_ == SHAPE_CHAMFERCYLINDER) {
+        //    newtonCollision_ == NewtonCreateChamferCylinder(world, size_.x_*0.5f, size_.z_, 0, nullptr);
+        //}
+        //else if (shapeType_ == SHAPE_CONVEXHULL) {
+        //    formConvexHullCollision();
+        //}
+        //else if (shapeType_ == SHAPE_COMPOUND) {
+        //    formCompoundCollision();
+        //}
+        /////.....
+        //else if (shapeType_ == SHAPE_TRIANGLEMESH)
+        //{
+        //    formTriangleMeshCollision();
+        //}
 
-
-        if (shapeType_ == SHAPE_BOX) {
-
-            // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
-            newtonCollision_ = NewtonCreateBox(world, size_.x_,
-                size_.y_,
-                size_.z_, 0, nullptr);
-
-        }
-        else if (shapeType_ == SHAPE_SPHERE) {
-            newtonCollision_ = NewtonCreateSphere(world, size_.x_*0.5f, 0, nullptr);
-        }
-        else if (shapeType_ == SHAPE_CONE) {
-            newtonCollision_ = NewtonCreateCone(world, size_.x_*0.5f, size_.z_, 0, nullptr);
-        }
-        else if (shapeType_ == SHAPE_CYLINDER) {
-            newtonCollision_ == NewtonCreateCylinder(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
-        }
-        else if (shapeType_ == SHAPE_CAPSULE) {
-            newtonCollision_ == NewtonCreateCapsule(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
-        }
-        else if (shapeType_ == SHAPE_CHAMFERCYLINDER) {
-            newtonCollision_ == NewtonCreateChamferCylinder(world, size_.x_*0.5f, size_.z_, 0, nullptr);
-        }
-        else if (shapeType_ == SHAPE_CONVEXHULL) {
-            formConvexHullCollision();
-        }
-        else if (shapeType_ == SHAPE_COMPOUND) {
-            formCompoundCollision();
-        }
-        ///.....
-        else if (shapeType_ == SHAPE_TRIANGLEMESH)
-        {
-            formTriangleMeshCollision();
-        }
-
+        createNewtonCollision();
         
         updateVolume();
+
+        shapeNeedsRebuilt_ = false;
+    }
+
+    void NewtonCollisionShape::createNewtonCollision()
+    {
+
     }
 
     void NewtonCollisionShape::freeInternalCollision()
@@ -231,8 +238,15 @@ namespace Urho3D {
             rigidBody_ = node_->GetComponent<NewtonRigidBody>();
 
         if (rigidBody_) {
-            rigidBody_->reEvaluateBody();
+            rigidBody_->reBuildBody();
         }
+    }
+
+    void NewtonCollisionShape::MarkDirty(bool dirty /*= true*/)
+    {
+        shapeNeedsRebuilt_ = dirty;
+        if (rigidBody_)
+            rigidBody_->MarkDirty(true);
     }
 
     NewtonCollision* NewtonCollisionShape::GetNewtonCollision()
@@ -269,66 +283,66 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::formTriangleMeshCollision()
-    {
-        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
-
-        if (formTriangleMesh()) {
-            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, 0.0f, 0, 0);//not working yet..
-        }
-        else
-        {
-            URHO3D_LOGWARNING("Unable To Create Triangle Mesh For Model.");
-        }
-    }
-
-    bool NewtonCollisionShape::formConvexHullCollision()
-{
-        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
-
-        const unsigned char* vertexData;
-        const unsigned char* indexData;
-        unsigned elementSize, indexSize;
-        const PODVector<VertexElement>* elements;
-        Geometry* geo = model_->GetGeometry(modelGeomIndx_, modelLodLevel_);
-        geo->GetRawData(vertexData, elementSize, indexData, indexSize, elements);
-
-        bool hasPosition = VertexBuffer::HasElement(*elements, TYPE_VECTOR3, SEM_POSITION);
-
-        if (vertexData && indexData && hasPosition) {
-
-            unsigned vertexStart = geo->GetVertexStart();
-            unsigned vertexCount = geo->GetVertexCount();
-            unsigned indexStart = geo->GetIndexStart();
-            unsigned indexCount = geo->GetIndexCount();
-
-            unsigned positionOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_POSITION);
-
-            newtonCollision_ = NewtonCreateConvexHull(world, vertexCount, (float*)vertexData, elementSize, hullTolerance_, 0, nullptr);
-            return true;
-        }
-        else
-        {
-            URHO3D_LOGWARNING("Unable To Create Convex Hull For Model: " + model_->GetName());
-            return false;
-        }
-    }
-
-    bool NewtonCollisionShape::formCompoundCollision()
-{
-        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
-
-        if (formTriangleMesh())
-        {
-            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0, 0);
-            return true;
-        }
-        return false;
-    }
-
-
-
-
+//    void NewtonCollisionShape::formTriangleMeshCollision()
+//    {
+//        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
+//
+//        if (formTriangleMesh()) {
+//            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, 0.0f, 0, 0);//not working yet..
+//        }
+//        else
+//        {
+//            URHO3D_LOGWARNING("Unable To Create Triangle Mesh For Model.");
+//        }
+//    }
+//
+//    bool NewtonCollisionShape::formConvexHullCollision()
+//{
+//        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
+//
+//        const unsigned char* vertexData;
+//        const unsigned char* indexData;
+//        unsigned elementSize, indexSize;
+//        const PODVector<VertexElement>* elements;
+//        Geometry* geo = model_->GetGeometry(modelGeomIndx_, modelLodLevel_);
+//        geo->GetRawData(vertexData, elementSize, indexData, indexSize, elements);
+//
+//        bool hasPosition = VertexBuffer::HasElement(*elements, TYPE_VECTOR3, SEM_POSITION);
+//
+//        if (vertexData && indexData && hasPosition) {
+//
+//            unsigned vertexStart = geo->GetVertexStart();
+//            unsigned vertexCount = geo->GetVertexCount();
+//            unsigned indexStart = geo->GetIndexStart();
+//            unsigned indexCount = geo->GetIndexCount();
+//
+//            unsigned positionOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_POSITION);
+//
+//            newtonCollision_ = NewtonCreateConvexHull(world, vertexCount, (float*)vertexData, elementSize, hullTolerance_, 0, nullptr);
+//            return true;
+//        }
+//        else
+//        {
+//            URHO3D_LOGWARNING("Unable To Create Convex Hull For Model: " + model_->GetName());
+//            return false;
+//        }
+//    }
+//
+//    bool NewtonCollisionShape::formCompoundCollision()
+//{
+//        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
+//
+//        if (formTriangleMesh())
+//        {
+//            newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0, 0);
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//
+//
+//
     bool NewtonCollisionShape::formTriangleMesh()
 {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
@@ -414,32 +428,101 @@ namespace Urho3D {
 
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
 
-            reEvaluateCollision();
-
-
+            //reEvaluateCollision();
             physicsWorld_->addCollisionShape(this);
 
         }
         else
         {
             freeInternalCollision();
-
             if (physicsWorld_)
                 physicsWorld_->removeCollisionShape(this);
-
         }
 
 
     }
 
-    void NewtonCollisionShape::OnSceneSet(Scene* scene)
+
+
+
+
+    NewtonCollisionShape_Box::NewtonCollisionShape_Box(Context* context) : NewtonCollisionShape(context)
     {
-       
+
     }
 
-    void NewtonCollisionShape::OnMarkedDirty(Node* node)
+    NewtonCollisionShape_Box::~NewtonCollisionShape_Box()
     {
-       // throw std::logic_error("The method or operation is not implemented.");
+
+    }
+
+    void NewtonCollisionShape_Box::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_Box>(DEF_PHYSICS_CATEGORY.CString());
+
+
+    }
+
+    void NewtonCollisionShape_Box::createNewtonCollision()
+    {
+        // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
+        newtonCollision_ = NewtonCreateBox(physicsWorld_->GetNewtonWorld(), size_.x_,
+            size_.y_,
+            size_.z_, 0, nullptr);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    NewtonCollisionShape_Sphere::NewtonCollisionShape_Sphere(Context* context) : NewtonCollisionShape(context)
+    {
+
+    }
+
+    NewtonCollisionShape_Sphere::~NewtonCollisionShape_Sphere()
+    {
+
+    }
+
+    void NewtonCollisionShape_Sphere::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_Sphere>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void NewtonCollisionShape_Sphere::createNewtonCollision()
+    {
+        // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
+        newtonCollision_ = NewtonCreateSphere(physicsWorld_->GetNewtonWorld(), radius_, 0, nullptr);
+    }
+
+
+
+    NewtonCollisionShape_ConvexHullCompound::NewtonCollisionShape_ConvexHullCompound(Context* context) : NewtonCollisionShape(context)
+    {
+
+    }
+
+    NewtonCollisionShape_ConvexHullCompound::~NewtonCollisionShape_ConvexHullCompound()
+    {
+
+    }
+
+    void NewtonCollisionShape_ConvexHullCompound::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_Sphere>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void NewtonCollisionShape_ConvexHullCompound::createNewtonCollision()
+    {
+
     }
 
 }

@@ -17,9 +17,9 @@ Node* SpawnSamplePhysicsSphere(Scene* scene, const Vector3& worldPosition, float
 
         NewtonRigidBody* s1RigBody = sphere1->CreateComponent<NewtonRigidBody>();
 
-        NewtonCollisionShape* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape>();
+        NewtonCollisionShape_Sphere* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape_Sphere>();
 
-        s1ColShape->SetSphere(radius);
+
 
         sphere1->SetWorldPosition(worldPosition);
 
@@ -48,9 +48,9 @@ Node* SpawnSamplePhysicsBox(Scene* scene, const Vector3& worldPosition)
 
     NewtonRigidBody* s1RigBody = box->CreateComponent<NewtonRigidBody>();
 
-    NewtonCollisionShape* s1ColShape = box->CreateComponent<NewtonCollisionShape>();
+    NewtonCollisionShape_Box* s1ColShape = box->CreateComponent<NewtonCollisionShape_Box>();
 
-    s1ColShape->SetBox(Vector3::ONE);
+    s1ColShape->SetSize(Vector3::ONE);
 
     box->SetWorldPosition(worldPosition);
 

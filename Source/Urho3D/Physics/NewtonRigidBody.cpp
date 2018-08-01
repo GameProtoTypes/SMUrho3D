@@ -75,7 +75,7 @@ namespace Urho3D {
     void NewtonRigidBody::SetMassScale(float massDensityScale)
     {
         massScale_ = massDensityScale;
-        reEvaluateBody();
+        MarkDirty(true);
     }
 
     void NewtonRigidBody::SetFriction(float friction)
@@ -106,6 +106,11 @@ namespace Urho3D {
     }
 
 
+    void NewtonRigidBody::MarkDirty(bool dirty)
+    {
+        needsRebuilt_ = dirty;
+    }
+
     void NewtonRigidBody::freeBody()
     {
         if (newtonBody_ != nullptr) {
@@ -120,12 +125,9 @@ namespace Urho3D {
             compoundCollision_ = nullptr;
         }
     }
-
-
-
-    void NewtonRigidBody::reEvaluateBody()
+    void NewtonRigidBody::reBuildBodyParent()
     {
-        //determine if there is a parent rigid body and if there is we do not want to create a new body - we want to form a compound collision on the parent
+        //determine if there is a parent rigid body and if there is we do not want to create a new body on this - we want to form a compound collision on the parent
         Node* curNode = node_;
         Node* parentNodeWithRigidBody = nullptr;
         while (curNode != nullptr) {
@@ -138,16 +140,25 @@ namespace Urho3D {
         if (parentNodeWithRigidBody != nullptr)
         {
             freeBody();
-            parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reEvaluateBody();
+            parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reBuildBody();
             return;
         }
 
+        reBuildBody();
+    }
 
+
+    void NewtonRigidBody::reBuildBody()
+    {
+        if (!GetDirty())
+            return;
+
+        URHO3D_LOGINFO("NewtonRigidBody::reBuildBody");
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<Node*> nodesWithCollision;
-        node_->GetChildrenWithComponent<NewtonCollisionShape>(nodesWithCollision, true);
+        node_->GetDerivedComponents(nodesWithCollision, true, true);
 
-        if(node_->HasComponent<NewtonCollisionShape>())
+        if(node_->GetDerivedComponent<NewtonCollisionShape>())
             nodesWithCollision += node_;
 
 
@@ -168,7 +179,11 @@ namespace Urho3D {
             float accumMass = 0.0f;
             for (Node* curNode : nodesWithCollision)
             {
-                NewtonCollisionShape* colComp = curNode->GetComponent<NewtonCollisionShape>();
+                NewtonCollisionShape* colComp = curNode->GetDerivedComponent<NewtonCollisionShape>();
+
+                if (colComp->shapeNeedsRebuilt_)
+                    colComp->reEvaluateCollision();
+
                 NewtonCollision* curNewtCollision = colComp->GetNewtonCollision();
                 NewtonCollision* usedCollision = nullptr;
 
@@ -236,7 +251,10 @@ namespace Urho3D {
             bakeForceAndTorque();
         }
 
+        MarkDirty(false);
     }
+
+
 
 
 
@@ -265,7 +283,7 @@ namespace Urho3D {
             physicsWorld_->addRigidBody(this);
 
 
-            reEvaluateBody();
+            //reBuildBody();
             if (colShape_)
                 colShape_->updateReferenceToRigidBody();
 
@@ -307,7 +325,7 @@ namespace Urho3D {
         {
             if (node->HasComponent<NewtonRigidBody>())
             {
-                node->GetComponent<NewtonRigidBody>()->reEvaluateBody();
+                node->GetComponent<NewtonRigidBody>()->reBuildBody();
             }
             if (oldNodeParent_)
             {
@@ -316,7 +334,7 @@ namespace Urho3D {
                     oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
 
                 if (oldParentRigidBody)
-                    oldParentRigidBody->reEvaluateBody();
+                    oldParentRigidBody->reBuildBody();
             }
             oldNodeParent_ = nullptr;
         }
@@ -350,7 +368,7 @@ namespace Urho3D {
         {
             //handle case where node is child of other rigid body (part of compound).
             if (parentRigidBody) {
-                parentRigidBody->reEvaluateBody();
+                parentRigidBody->reBuildBody();
             }
 
         }
