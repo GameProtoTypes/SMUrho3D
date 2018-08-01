@@ -323,11 +323,17 @@ namespace Urho3D {
     void RegisterPhysicsLibrary(Context* context)
     {
         UrhoNewtonPhysicsWorld::RegisterObject(context);
+
         NewtonCollisionShape::RegisterObject(context);
         NewtonCollisionShape_Box::RegisterObject(context);
         NewtonCollisionShape_Sphere::RegisterObject(context);
+        NewtonCollisionShape_Cylinder::RegisterObject(context);
+        NewtonCollisionShape_Capsule::RegisterObject(context);
+        NewtonCollisionShape_Cone::RegisterObject(context);
         NewtonCollisionShape_Geometry::RegisterObject(context);
+        NewtonCollisionShape_ConvexHull::RegisterObject(context);
         NewtonCollisionShape_ConvexHullCompound::RegisterObject(context);
+
 
         NewtonRigidBody::RegisterObject(context);
         NewtonMeshObject::RegisterObject(context);

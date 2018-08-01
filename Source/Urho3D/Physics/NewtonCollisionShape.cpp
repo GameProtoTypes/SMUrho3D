@@ -175,47 +175,15 @@ namespace Urho3D {
             return;
 
 
-        // first free any reference to an existing collision.
-        freeInternalCollision();
+            // first free any reference to an existing collision.
+            freeInternalCollision();
 
-        //if (shapeType_ == SHAPE_BOX) {
+            //call the derived class createNewtonCollision function.
+            createNewtonCollision();
 
-        //    // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily unique)
-        //    newtonCollision_ = NewtonCreateBox(world, size_.x_,
-        //        size_.y_,
-        //        size_.z_, 0, nullptr);
+            //compute volume.
+            updateVolume();
 
-        //}
-        //else if (shapeType_ == SHAPE_SPHERE) {
-        //    newtonCollision_ = NewtonCreateSphere(world, size_.x_*0.5f, 0, nullptr);
-        //}
-        //else if (shapeType_ == SHAPE_CONE) {
-        //    newtonCollision_ = NewtonCreateCone(world, size_.x_*0.5f, size_.z_, 0, nullptr);
-        //}
-        //else if (shapeType_ == SHAPE_CYLINDER) {
-        //    newtonCollision_ == NewtonCreateCylinder(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
-        //}
-        //else if (shapeType_ == SHAPE_CAPSULE) {
-        //    newtonCollision_ == NewtonCreateCapsule(world, size_.x_*0.5f, size_.y_*0.5f, size_.z_, 0, nullptr);
-        //}
-        //else if (shapeType_ == SHAPE_CHAMFERCYLINDER) {
-        //    newtonCollision_ == NewtonCreateChamferCylinder(world, size_.x_*0.5f, size_.z_, 0, nullptr);
-        //}
-        //else if (shapeType_ == SHAPE_CONVEXHULL) {
-        //    formConvexHullCollision();
-        //}
-        //else if (shapeType_ == SHAPE_COMPOUND) {
-        //    formCompoundCollision();
-        //}
-        /////.....
-        //else if (shapeType_ == SHAPE_TRIANGLEMESH)
-        //{
-        //    formTriangleMeshCollision();
-        //}
-
-        createNewtonCollision();
-        
-        updateVolume();
 
         shapeNeedsRebuilt_ = false;
     }
@@ -404,11 +372,6 @@ namespace Urho3D {
 
 
 
-
-
-
-
-
     NewtonCollisionShape_Sphere::NewtonCollisionShape_Sphere(Context* context) : NewtonCollisionShape(context)
     {
 
@@ -456,13 +419,14 @@ namespace Urho3D {
         context->RegisterFactory<NewtonCollisionShape_Geometry>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    bool NewtonCollisionShape_Geometry::formTriangleMesh()
-    {
+    bool NewtonCollisionShape_Geometry::resolveOrCreateTriangleMesh()
+{
         if (!model_)
             return false;
 
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
+        /// if the newton mesh is in cache already - return that.
         StringHash meshKey = UrhoNewtonPhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, hullTolerance_);
         NewtonMeshObject* cachedMesh = physicsWorld_->GetNewtonMesh(meshKey);
         if (cachedMesh)
@@ -588,7 +552,7 @@ namespace Urho3D {
     {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
-        formTriangleMesh();
+        resolveOrCreateTriangleMesh();
         newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0, 0);
     }
 
@@ -596,5 +560,90 @@ namespace Urho3D {
 
 
 
+
+    NewtonCollisionShape_ConvexHull::NewtonCollisionShape_ConvexHull(Context* context) : NewtonCollisionShape_Geometry(context)
+    {
+
+    }
+
+    NewtonCollisionShape_ConvexHull::~NewtonCollisionShape_ConvexHull()
+    {
+
+    }
+
+    void NewtonCollisionShape_ConvexHull::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_ConvexHull>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void NewtonCollisionShape_ConvexHull::createNewtonCollision()
+    {
+        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
+
+        resolveOrCreateTriangleMesh();
+        newtonCollision_ = NewtonCreateConvexHullFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0);
+    }
+
+
+
+
+
+
+    NewtonCollisionShape_Cylinder::NewtonCollisionShape_Cylinder(Context* context) : NewtonCollisionShape(context)
+    {
+
+    }
+
+    NewtonCollisionShape_Cylinder::~NewtonCollisionShape_Cylinder()
+    {
+
+    }
+
+    void NewtonCollisionShape_Cylinder::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_Cylinder>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void NewtonCollisionShape_Cylinder::createNewtonCollision()
+    {
+        // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
+        newtonCollision_ = NewtonCreateCylinder(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
+    }
+
+    NewtonCollisionShape_Capsule::NewtonCollisionShape_Capsule(Context* context) : NewtonCollisionShape(context)
+    {
+    }
+
+    NewtonCollisionShape_Capsule::~NewtonCollisionShape_Capsule()
+    {
+    }
+
+    void NewtonCollisionShape_Capsule::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_Cylinder>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void NewtonCollisionShape_Capsule::createNewtonCollision()
+    {
+        newtonCollision_ = NewtonCreateCapsule(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
+    }
+
+    NewtonCollisionShape_Cone::NewtonCollisionShape_Cone(Context* context) : NewtonCollisionShape(context)
+    {
+    }
+
+    NewtonCollisionShape_Cone::~NewtonCollisionShape_Cone()
+    {
+    }
+
+    void NewtonCollisionShape_Cone::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_Cone>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void NewtonCollisionShape_Cone::createNewtonCollision()
+    {
+        newtonCollision_ = NewtonCreateCone(physicsWorld_->GetNewtonWorld(), radius_, length_, 0, nullptr);
+    }
 
 }

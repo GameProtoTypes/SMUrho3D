@@ -100,8 +100,7 @@ private:
 
     /// Spawn a physics object from the camera position.
     void SpawnObject();
-    void SpawnTrimeshObject();
-    void SpawnConvexHull();
+    void SpawnConvexHull(const Vector3& worldPos);
     void SpawnCompound(const Vector3& worldPos);
     void SpawnNSquaredJointedObject(Vector3 worldPosition);
     void SpawnLinearJointedObject(Vector3 worldPosition);
