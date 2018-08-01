@@ -2,6 +2,7 @@
 #include "../Physics/NewtonCollisionShape.h"
 #include "../Physics/NewtonRigidBody.h"
 #include "../Core/Context.h"
+#include "../Graphics/Model.h"
 #include "IO/Log.h"
 #include "Scene/Scene.h"
 #include "Scene/Node.h"

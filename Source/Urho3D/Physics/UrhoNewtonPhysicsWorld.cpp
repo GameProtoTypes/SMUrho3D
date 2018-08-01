@@ -10,6 +10,7 @@
 #include "Scene/Component.h"
 #include "Scene/Scene.h"
 #include "Scene/Node.h"
+#include "../Graphics/Model.h"
 #include "Math/Sphere.h"
 #include "Container/Vector.h"
 
@@ -325,6 +326,8 @@ namespace Urho3D {
         NewtonCollisionShape::RegisterObject(context);
         NewtonCollisionShape_Box::RegisterObject(context);
         NewtonCollisionShape_Sphere::RegisterObject(context);
+        NewtonCollisionShape_Geometry::RegisterObject(context);
+        NewtonCollisionShape_ConvexHullCompound::RegisterObject(context);
 
         NewtonRigidBody::RegisterObject(context);
         NewtonMeshObject::RegisterObject(context);

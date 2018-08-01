@@ -150,6 +150,8 @@ void Physics::CreateScene()
 
     CreatePyramids();
 
+    SpawnCompound(Vector3(20,1,0));
+
     //SpawnLinearJointedObject(Vector3(10,0,0));
     
 
@@ -282,16 +284,16 @@ void Physics::MoveCamera(float timeStep)
         //    URHO3D_LOGINFO("Spawning Compound");
         //    SpawnCompound();
         //}
-        /*else*/ if (rando == 4)
-        {
-            URHO3D_LOGINFO("Spawning Joint Gismo 1");
-            SpawnNSquaredJointedObject(cameraNode_->GetWorldPosition());
-        }
-        else if (rando == 5)
-        {
-            URHO3D_LOGINFO("Spawning Joint Gismo 2");
-            SpawnLinearJointedObject(cameraNode_->GetWorldPosition());
-        }
+        //else if (rando == 4)
+        //{
+        //    URHO3D_LOGINFO("Spawning Joint Gismo 1");
+        //    SpawnNSquaredJointedObject(cameraNode_->GetWorldPosition());
+        //}
+        //else if (rando == 5)
+        //{
+        //    URHO3D_LOGINFO("Spawning Joint Gismo 2");
+        //    SpawnLinearJointedObject(cameraNode_->GetWorldPosition());
+        //}
     }
 
 
@@ -541,43 +543,32 @@ void Physics::SpawnConvexHull()
 
 
 
-void Physics::SpawnCompound()
+void Physics::SpawnCompound(const Vector3& worldPos)
 {
-    //auto* cache = GetSubsystem<ResourceCache>();
+    auto* cache = GetSubsystem<ResourceCache>();
 
-    //// Create a smaller box at camera position
-    //Node* boxNode = scene_->CreateChild();
+    // Create a smaller box at camera position
+    Node* boxNode = scene_->CreateChild();
 
-    //const float range = 3.0f;
+    boxNode->SetWorldPosition(worldPos);
+    boxNode->SetScale(1.0f);
 
-
-    //boxNode->SetWorldPosition(cameraNode_->GetWorldPosition() + Vector3(Random(-1.0f, 1.0f) * range, Random(-1.0f, 1.0f) * range, Random(-1.0f, 1.0f) * range));
-    //boxNode->SetRotation(cameraNode_->GetRotation());
-    //boxNode->SetScale(1.0f);
-
-    //auto* boxObject = boxNode->CreateComponent<StaticModel>();
-    //boxObject->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
-    //boxObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
-    //boxObject->SetCastShadows(true);
+    auto* boxObject = boxNode->CreateComponent<StaticModel>();
+    boxObject->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
+    boxObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+    boxObject->SetCastShadows(true);
 
 
-    //// Create physics components, use a smaller mass also
-    //auto* body = boxNode->CreateComponent<NewtonRigidBody>();
-    //body->SetMassScale(1.0f);
-    //body->SetFriction(0.75f);
+    // Create physics components, use a smaller mass also
+    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    body->SetMassScale(1.0f);
+    body->SetFriction(0.75f);
 
 
-    ////body->SetContinuousCollision(true);
-    //auto* shape = boxNode->CreateComponent<NewtonCollisionShape>();
-    //shape->SetCompound(boxObject->GetModel(), 0);
+    //body->SetContinuousCollision(true);
+    auto* shape = boxNode->CreateComponent<NewtonCollisionShape_ConvexHullCompound>();
 
-    //const float OBJECT_VELOCITY = 20.0f;
-
-    //// Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
-    //// to overcome gravity better
-    //// body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
-
-
+    const float OBJECT_VELOCITY = 20.0f;
 }
 
 

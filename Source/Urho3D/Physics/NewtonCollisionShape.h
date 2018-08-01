@@ -14,6 +14,7 @@ namespace Urho3D
     class NewtonRigidBody;
     class NewtonMeshObject;
     class Component;
+    class Model;
 
     /// base class for newton collision shapes
     class URHO3D_API NewtonCollisionShape : public Component
@@ -95,14 +96,7 @@ namespace Urho3D
 
 
 
-        /// optional Model reference
-        WeakPtr<Model> model_;
-        /// lod level
-        unsigned modelLodLevel_ = 0;
-        /// model geometry index to sue
-        unsigned modelGeomIndx_ = 0;
-        /// Hulling tolerance
-        unsigned hullTolerance_ = 0.0f;
+
 
 
 
@@ -127,8 +121,7 @@ namespace Urho3D
         //bool formConvexHullCollision();
         //bool formCompoundCollision();
 
-        ///forms newtonMesh_ from model geometry for later use.
-        bool formTriangleMesh();
+
 
 
         virtual void OnNodeSet(Node* node) override;
@@ -186,9 +179,45 @@ namespace Urho3D
 
     };
 
-    class URHO3D_API NewtonCollisionShape_ConvexHullCompound : public NewtonCollisionShape {
+    class URHO3D_API NewtonCollisionShape_Geometry : public NewtonCollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_ConvexHullCompound, NewtonCollisionShape);
+        URHO3D_OBJECT(NewtonCollisionShape_Geometry, NewtonCollisionShape);
+
+    public:
+        NewtonCollisionShape_Geometry(Context* context);
+        virtual ~NewtonCollisionShape_Geometry();
+
+        static void RegisterObject(Context* context);
+
+        /// Set model to create geometry from
+        void SetModel(Model* model) { model_ = model; MarkDirty(); }
+
+        Model* GetModel() const { return model_; }
+
+    protected:
+        /// optional Model reference
+        WeakPtr<Model> model_;
+        /// lod level
+        unsigned modelLodLevel_ = 0;
+        /// model geometry index to sue
+        unsigned modelGeomIndx_ = 0;
+        /// Hulling tolerance
+        unsigned hullTolerance_ = 0.0f;
+
+        virtual void createNewtonCollision() override;
+
+        void autoSetModel();
+
+        ///forms newtonMesh_ from model geometry for later use.
+        bool formTriangleMesh();
+
+        virtual void OnNodeSet(Node* node) override;
+
+    };
+
+    class URHO3D_API NewtonCollisionShape_ConvexHullCompound : public NewtonCollisionShape_Geometry {
+
+        URHO3D_OBJECT(NewtonCollisionShape_ConvexHullCompound, NewtonCollisionShape_Geometry);
 
     public:
         NewtonCollisionShape_ConvexHullCompound(Context* context);

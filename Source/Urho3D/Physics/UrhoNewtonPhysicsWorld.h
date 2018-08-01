@@ -28,6 +28,7 @@ namespace Urho3D
     public:
 
         friend class NewtonCollisionShape;
+        friend class NewtonCollisionShape_Geometry;
         friend class NewtonRigidBody;
         friend class NewtonConstraint;
 
