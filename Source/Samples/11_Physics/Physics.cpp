@@ -154,12 +154,12 @@ void Physics::CreateScene()
     //SpawnConvexHull(Vector3(21, 1, 0));
 
 
-    SpawnLinearJointedObject(Vector3(10,1,0));
+    //SpawnLinearJointedObject(Vector3(10,1,10));
     
-    //SpawnNSquaredJointedObject(Vector3(-10, 10, 0));
+    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 1, 0));
+    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 
