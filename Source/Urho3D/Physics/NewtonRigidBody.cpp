@@ -140,19 +140,17 @@ namespace Urho3D {
         }
         if (parentNodeWithRigidBody != nullptr)
         {
-            MarkDirty(false);
+            MarkDirty(false);//mark as clean because we know a rigid body on a higher level is going to be the real one.
             parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reBuildBodyParent();
             return;
         }
-
         reBuildBody();
+        MarkDirty(false);//restore our dirtyness
     }
 
 
     void NewtonRigidBody::reBuildBody()
     {
-        if (!GetDirty())
-            return;
 
         freeBody();
 
@@ -260,7 +258,6 @@ namespace Urho3D {
             bakeForceAndTorque();
         }
 
-        MarkDirty(false);
     }
 
 
@@ -290,9 +287,8 @@ namespace Urho3D {
             //Auto-create a physics world on the scene if it does not yet exist.
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
             physicsWorld_->addRigidBody(this);
+            MarkDirty(true);
 
-
-            //reBuildBody();
             if (colShape_)
                 colShape_->updateReferenceToRigidBody();
 
@@ -315,15 +311,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::OnSceneSet(Scene* scene)
     {
-        if (scene)
-        {
 
-        }
-        else
-        {
-
-
-        }
     }
 
 
