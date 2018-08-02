@@ -119,7 +119,7 @@ namespace Urho3D {
             newtonBody_ = nullptr;
         }
 
-        //also free the compound collision
+        //also free the compound collision if there is one
         if (compoundCollision_)
         {
             NewtonDestroyCollision(compoundCollision_);
