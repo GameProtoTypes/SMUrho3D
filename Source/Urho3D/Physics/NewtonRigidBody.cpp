@@ -131,7 +131,6 @@ namespace Urho3D {
         //determine if there is a parent rigid body and if there is we do not want to create a new body on this - we want to form a compound collision on the parent
         Node* curNode = node_;
         Node* parentNodeWithRigidBody = nullptr;
-        URHO3D_LOGINFO("rebuildBodyParent");
         while (curNode != nullptr) {
             curNode = curNode->GetParent();
             if (curNode && curNode->GetComponent<NewtonRigidBody>()) {

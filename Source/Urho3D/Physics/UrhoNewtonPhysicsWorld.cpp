@@ -207,6 +207,17 @@ namespace Urho3D {
                 rigBody->reBuildBodyParent();
         }
 
+        //rebuild contraints if they need rebuilt (dirty)
+        for (NewtonConstraint* constraint : constraintList)
+        {
+            if (constraint->needsRebuilt_)
+                constraint->reEvalConstraint();
+        }
+
+
+
+
+
         //use target time step to give newton constant time steps. timeStep = 0.01666666 in seconds.
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 

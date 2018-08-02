@@ -59,7 +59,10 @@ namespace Urho3D {
     void NewtonConstraint::reEvalConstraint()
     {
         if (preRebuildCheckAndClean())
+        {
             buildConstraint();
+            MarkDirty(false);
+        }
     }
 
     void NewtonConstraint::buildConstraint()
@@ -99,7 +102,6 @@ namespace Urho3D {
             NewtonRigidBody* rigBody = node->GetComponent<NewtonRigidBody>();
             if (rigBody) {
                 ownBody_ = rigBody;
-                reEvalConstraint();
             }
            
             if(physicsWorld_)

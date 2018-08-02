@@ -29,6 +29,7 @@ namespace Urho3D {
         /// Visualize the component as debug geometry.
         void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
+        void MarkDirty(bool dirty = true) { needsRebuilt_ = dirty; }
 
         /// Set whether to disable collisions between connected bodies.
         void SetDisableCollision(bool disable);
@@ -65,6 +66,8 @@ namespace Urho3D {
         /// Constraint position.
         Vector3 position_;
 
+        ///dirty flag.
+        bool needsRebuilt_ = true;
 
         /// Upper level re-evaulation.
         void reEvalConstraint();

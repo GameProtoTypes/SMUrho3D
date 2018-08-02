@@ -154,7 +154,7 @@ void Physics::CreateScene()
     //SpawnConvexHull(Vector3(21, 1, 0));
 
 
-    //SpawnLinearJointedObject(Vector3(10,1,0));
+    SpawnLinearJointedObject(Vector3(10,1,0));
     
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 0));
 
@@ -342,14 +342,24 @@ void Physics::MoveCamera(float timeStep)
         drawDebug_ = !drawDebug_;
 }
 
+
+
 void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
 {
     Node* root = scene_->CreateChild();
     root->SetPosition(worldPos);
     const int levelCount = 5;
+    const int breadth = 2;
     Node* curNode = root;
+
+
+
+
+
     for (int i = 0; i < levelCount; i++)
     {
+
+
         curNode = curNode->CreateChild();
         curNode->SetName("SpawnSceneCompoundTest:" + String(i));
         curNode->AddTag("scaleTestCube");
@@ -357,7 +367,6 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
         curNode->SetScale(1.0f);
         curNode->Translate(Vector3(0, 1.5f, 0));
-
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
@@ -369,9 +378,6 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Box>();
 
     }
-
-
-
 }
 
 
