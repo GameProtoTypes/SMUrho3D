@@ -95,7 +95,7 @@ namespace Urho3D
         void DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB = true, bool showCollisionMesh = true, bool showCenterOfMass = true, bool showContactForces = true);
 
         /// mark the rigid body as dirty causing it to be rebuilt by the physics world
-        void MarkDirty(bool dirty);
+        void MarkDirty(bool dirty = true);
 
         bool GetDirty() const { return needsRebuilt_; }
 

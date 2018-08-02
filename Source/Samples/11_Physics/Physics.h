@@ -76,7 +76,7 @@ private:
     /// Construct the scene content.
     void CreateScene();
 
-    void createScaleTest();
+    void SpawnSceneCompoundTest(const Vector3& worldPos);
     void CreatePyramids();
 
 

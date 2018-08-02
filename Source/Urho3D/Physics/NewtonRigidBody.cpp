@@ -131,6 +131,7 @@ namespace Urho3D {
         //determine if there is a parent rigid body and if there is we do not want to create a new body on this - we want to form a compound collision on the parent
         Node* curNode = node_;
         Node* parentNodeWithRigidBody = nullptr;
+        URHO3D_LOGINFO("rebuildBodyParent");
         while (curNode != nullptr) {
             curNode = curNode->GetParent();
             if (curNode && curNode->GetComponent<NewtonRigidBody>()) {
@@ -140,8 +141,8 @@ namespace Urho3D {
         }
         if (parentNodeWithRigidBody != nullptr)
         {
-            freeBody();
-            parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reBuildBody();
+            MarkDirty(false);
+            parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reBuildBodyParent();
             return;
         }
 
@@ -154,13 +155,20 @@ namespace Urho3D {
         if (!GetDirty())
             return;
 
-        URHO3D_LOGINFO("NewtonRigidBody::reBuildBody");
+        freeBody();
+
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<Node*> nodesWithCollision;
-        node_->GetDerivedComponents(nodesWithCollision, true, true);
+        PODVector<NewtonCollisionShape*> childCollisionShapes;
+        node_->GetDerivedComponents<NewtonCollisionShape>(childCollisionShapes, true, true);
+
+        for (NewtonCollisionShape* shp : childCollisionShapes)
+            nodesWithCollision += shp->GetNode();
 
         if(node_->GetDerivedComponent<NewtonCollisionShape>())
             nodesWithCollision += node_;
+
+
 
 
         if (nodesWithCollision.Size())
@@ -182,6 +190,7 @@ namespace Urho3D {
             {
                 NewtonCollisionShape* colComp = curNode->GetDerivedComponent<NewtonCollisionShape>();
 
+                //make sure the collision is built with latest.
                 if (colComp->shapeNeedsRebuilt_)
                     colComp->reEvaluateCollision();
 
@@ -322,20 +331,25 @@ namespace Urho3D {
     void NewtonRigidBody::HandleNodeAdded(StringHash event, VariantMap& eventData)
     {
         Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
+
+        //if the node has been added to a parent.
         if (node == node_)
         {
+            //markt the rigid body dirty
             if (node->HasComponent<NewtonRigidBody>())
             {
-                node->GetComponent<NewtonRigidBody>()->reBuildBody();
+                node->GetComponent<NewtonRigidBody>()->MarkDirty();
             }
+
+            //mark its old parent dirty as well.
             if (oldNodeParent_)
             {
                 NewtonRigidBody* oldParentRigidBody = oldNodeParent_->GetComponent<NewtonRigidBody>();
-                if(!oldParentRigidBody)
+                if (!oldParentRigidBody)
                     oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
 
                 if (oldParentRigidBody)
-                    oldParentRigidBody->reBuildBody();
+                    oldParentRigidBody->MarkDirty();
             }
             oldNodeParent_ = nullptr;
         }
@@ -362,14 +376,12 @@ namespace Urho3D {
                 Vector3::ONE);
 
             NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
-
-
         }
         else
         {
             //handle case where node is child of other rigid body (part of compound).
             if (parentRigidBody) {
-                parentRigidBody->reBuildBody();
+                parentRigidBody->MarkDirty();
             }
 
         }

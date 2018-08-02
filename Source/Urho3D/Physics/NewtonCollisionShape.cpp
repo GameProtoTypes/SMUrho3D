@@ -206,9 +206,6 @@ namespace Urho3D {
         if(!rigidBody_)
             rigidBody_ = node_->GetComponent<NewtonRigidBody>();
 
-        if (rigidBody_) {
-            rigidBody_->reBuildBody();
-        }
     }
 
     void NewtonCollisionShape::MarkDirty(bool dirty /*= true*/)
@@ -226,8 +223,6 @@ namespace Urho3D {
         }
         return newtonCollision_;
     }
-
-
 
 
     void NewtonCollisionShape::updateReferenceToRigidBody()

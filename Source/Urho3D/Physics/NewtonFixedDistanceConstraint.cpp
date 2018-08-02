@@ -40,8 +40,7 @@ namespace Urho3D {
         dVector pivot1(matrix1.m_posit + UrhoToNewton(otherPosition_));
 
         newtonJoint_ = new dCustomFixDistance(pivot1, pivot0, otherBody_->GetNewtonBody(), ownBody_->GetNewtonBody());
-        //delete newtonJoint_;
-        //newtonJoint_ = new dCustomFixDistance(pivot1, pivot0, otherBody_->GetNewtonBody(), ownBody_->GetNewtonBody());
+
     }
 
 }

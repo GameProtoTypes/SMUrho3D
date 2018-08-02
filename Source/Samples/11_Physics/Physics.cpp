@@ -148,17 +148,18 @@ void Physics::CreateScene()
     }
 
 
-    CreatePyramids();
+    //CreatePyramids();
 
-    SpawnCompound(Vector3(20,1,0));
-    SpawnConvexHull(Vector3(21, 1, 0));
-    //SpawnLinearJointedObject(Vector3(10,0,0));
+    //SpawnCompound(Vector3(20,1,0));
+    //SpawnConvexHull(Vector3(21, 1, 0));
+
+
+    //SpawnLinearJointedObject(Vector3(10,1,0));
     
-
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 0));
 
     //create scale test
-    //createScaleTest();
+    SpawnSceneCompoundTest(Vector3(-20, 1, 0));
 
 
 
@@ -341,15 +342,16 @@ void Physics::MoveCamera(float timeStep)
         drawDebug_ = !drawDebug_;
 }
 
-void Physics::createScaleTest()
+void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
 {
     Node* root = scene_->CreateChild();
-    root->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    const int levelCount = 10;
+    root->SetPosition(worldPos);
+    const int levelCount = 5;
     Node* curNode = root;
     for (int i = 0; i < levelCount; i++)
     {
         curNode = curNode->CreateChild();
+        curNode->SetName("SpawnSceneCompoundTest:" + String(i));
         curNode->AddTag("scaleTestCube");
         float rotDelta = Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
@@ -596,10 +598,10 @@ void Physics::DecomposePhysicsTree()
 
         GSS<VisualDebugger>()->AddOrb(res[1].node_->GetWorldPosition(), 1.0f, Color::RED);
 
-        for (auto* child : children) {
-            GSS<VisualDebugger>()->AddOrb(child->GetWorldPosition(), 1.0f, Color(Random(), Random(), Random()));
-            child->SetParent(scene_);
-        }
+        //for (auto* child : children) {
+        //    GSS<VisualDebugger>()->AddOrb(child->GetWorldPosition(), 1.0f, Color(Random(), Random(), Random()));
+        //    child->SetParent(scene_);
+        //}
 
 
         res[1].node_->SetParent(scene_);
