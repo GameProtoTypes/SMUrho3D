@@ -38,7 +38,7 @@ namespace Urho3D
         /// Set linear velocity.
         void SetLinearVelocity(const Vector3& velocity);
 
-        /// Set Whether the collision size should be effected by the node scale.
+        /// Set whether the collision size should be effected by the node scale.
         void SetInheritNodeScale(bool enable = true);
 
         bool GetInheritNodeScale() {

@@ -81,6 +81,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::SetFriction(float friction)
     {
+
     }
 
     void NewtonRigidBody::SetLinearVelocity(const Vector3& velocity)
@@ -97,7 +98,7 @@ namespace Urho3D {
     void NewtonRigidBody::SetContinuousCollision(bool sweptCollision)
     {
         continuousCollision_ = sweptCollision;
-
+        MarkDirty();
     }
 
     void NewtonRigidBody::DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB /*= true*/, bool showCollisionMesh /*= true*/, bool showCenterOfMass /*= true*/, bool showContactForces /*= true*/)
