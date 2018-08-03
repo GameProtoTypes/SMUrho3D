@@ -31,11 +31,11 @@ Node* SpawnSamplePhysicsSphere(Scene* scene, const Vector3& worldPosition, float
         return sphere1;
 }
 
-Node* SpawnSamplePhysicsBox(Scene* scene, const Vector3& worldPosition)
+Node* SpawnSamplePhysicsBox(Scene* scene, const Vector3& worldPosition, const Vector3& size)
 {
 
     Node* box = scene->CreateChild();
-
+    box->SetScale(size);
 
     Model* sphereMdl = scene->GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
     Material* sphereMat = scene->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
@@ -50,7 +50,7 @@ Node* SpawnSamplePhysicsBox(Scene* scene, const Vector3& worldPosition)
 
     NewtonCollisionShape_Box* s1ColShape = box->CreateComponent<NewtonCollisionShape_Box>();
 
-    s1ColShape->SetSize(Vector3::ONE);
+    s1ColShape->SetSize(size);
 
     box->SetWorldPosition(worldPosition);
 

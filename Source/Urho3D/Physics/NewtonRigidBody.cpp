@@ -89,6 +89,11 @@ namespace Urho3D {
             NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(velocity)[0]);
     }
 
+    void NewtonRigidBody::SetInheritNodeScale(bool enable /*= true*/)
+    {
+        inheritNodeScale_ = enable; MarkDirty();
+    }
+
     void NewtonRigidBody::SetContinuousCollision(bool sweptCollision)
     {
         continuousCollision_ = sweptCollision;
@@ -217,8 +222,9 @@ namespace Urho3D {
                 dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(uMat));
 
     
-                
-                NewtonCollisionSetScale(usedCollision, curNode->GetScale().x_, curNode->GetScale().y_, curNode->GetScale().z_);
+                if(inheritNodeScale_)
+                    NewtonCollisionSetScale(usedCollision, curNode->GetScale().x_, curNode->GetScale().y_, curNode->GetScale().z_);
+
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
                 accumMass += colComp->GetVolume()*1.0f;
 

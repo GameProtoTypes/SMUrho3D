@@ -33,7 +33,7 @@ namespace Urho3D {
     void NewtonConstraint::SetDisableCollision(bool disable)
     {
         enableBodyCollision_ = !disable;
-        
+        MarkDirty();
     }
 
     void NewtonConstraint::SetOtherBody(NewtonRigidBody* body)

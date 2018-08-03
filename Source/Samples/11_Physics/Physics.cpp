@@ -548,7 +548,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
 void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
 {
     //lets joint spheres together with a distance limiting joint.
-    const float dist = 0.25f;
+    const float dist = 0.5f;
 
     const int numSpheres = 50;
 
@@ -556,7 +556,7 @@ void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
     //make lots of spheres
     for (int i = 0; i < numSpheres; i++)
     {
-        nodes += SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,i*dist,0), dist+0.2f);
+        nodes += SpawnSamplePhysicsBox(scene_, worldPosition + Vector3(0,i*dist,0), Vector3(dist, dist, dist)*0.5f);
 
         if (i > 0) {
             NewtonFixedDistanceConstraint* constraint = nodes[i - 1]->CreateComponent<NewtonFixedDistanceConstraint>();

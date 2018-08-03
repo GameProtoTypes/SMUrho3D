@@ -38,6 +38,12 @@ namespace Urho3D
         /// Set linear velocity.
         void SetLinearVelocity(const Vector3& velocity);
 
+        /// Set Whether the collision size should be effected by the node scale.
+        void SetInheritNodeScale(bool enable = true);
+
+        bool GetInheritNodeScale() {
+            return inheritNodeScale_;
+        }
 
         /// Set continuous collision so that the body will not pass through walls.
         void SetContinuousCollision(bool sweptCollision);
@@ -128,6 +134,8 @@ namespace Urho3D
 
         ///Continuous Collision
         bool continuousCollision_ = false;
+        /// flag indicating collision shape should be additionally sized based on node scale.
+        bool inheritNodeScale_ = true;
 
         ///Net Force in local cordinates
         Vector3 netForce_;
