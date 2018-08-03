@@ -215,20 +215,24 @@ namespace Urho3D {
         }
 
 
-
-
-
         //use target time step to give newton constant time steps. timeStep = 0.01666666 in seconds.
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 
         NewtonUpdate(newtonWorld_, timeStep);
         NewtonWaitForUpdateToFinish(newtonWorld_);
-        
+
+        int applyCount = 0;
         //apply the transform of all rigid body components to their respective nodes.
         for (NewtonRigidBody* rigBody : rigidBodyComponentList)
         {
-            rigBody->ApplyTransform();
+            if (rigBody->GetInternalTransformDirty()) {
+                rigBody->ApplyTransform();
+                rigBody->MarkInternalTransformDirty(false);
+                applyCount++;
+            }
         }
+
+        URHO3D_LOGINFO(String(applyCount));
     }
 
 
@@ -313,6 +317,8 @@ namespace Urho3D {
 
     void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
     {
+        NewtonRigidBody* rigBody = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
+        rigBody->MarkInternalTransformDirty();
     }
 
 

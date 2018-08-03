@@ -112,6 +112,16 @@ namespace Urho3D {
         needsRebuilt_ = dirty;
     }
 
+    void NewtonRigidBody::MarkInternalTransformDirty(bool dirty)
+    {
+        transformDirty_ = dirty;
+    }
+
+    bool NewtonRigidBody::GetInternalTransformDirty()
+    {
+        return transformDirty_;
+    }
+
     void NewtonRigidBody::freeBody()
     {
         if (newtonBody_ != nullptr) {
@@ -252,7 +262,7 @@ namespace Urho3D {
 
             //assign callbacks
             NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
-            //NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback); //not really needed since we pole for the transform at a specific time.
+            NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback); 
             NewtonBodySetDestructorCallback(newtonBody_, Newton_DestroyBodyCallback);
 
             bakeForceAndTorque();

@@ -94,10 +94,17 @@ namespace Urho3D
         /// Draw Debug geometry
         void DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB = true, bool showCollisionMesh = true, bool showCenterOfMass = true, bool showContactForces = true);
 
-        /// mark the rigid body as dirty causing it to be rebuilt by the physics world
+        /// mark the rigid body as dirty causing the newton rigid body to be rebuilt by the physics world
         void MarkDirty(bool dirty = true);
 
         bool GetDirty() const { return needsRebuilt_; }
+
+
+        /// mark the internal newton transform as dirty indicating the transform needs to be copied to the node.
+        void MarkInternalTransformDirty(bool dirty = true);
+
+        bool GetInternalTransformDirty();
+
 
         /// rebuilds the internal body
         void reBuildBody();
@@ -137,6 +144,8 @@ namespace Urho3D
 
         ///dirty flag
         bool needsRebuilt_ = true;
+        /// flag indicating the newton body has changed transforms and needs to update the node.
+        bool transformDirty_ = true;
 
         void freeBody();
 
