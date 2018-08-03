@@ -61,6 +61,8 @@ namespace Urho3D {
         WeakPtr<NewtonRigidBody> otherBody_;
         /// Internal newtonJoint.
         dCustomJoint* newtonJoint_ = nullptr;
+        /// Flag indicating the two bodies should collide with each other.
+        bool enableBodyCollision_ = false;
         /// Constraint other body position.
         Vector3 otherPosition_;
         /// Constraint position.

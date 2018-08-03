@@ -221,18 +221,15 @@ namespace Urho3D {
         NewtonUpdate(newtonWorld_, timeStep);
         NewtonWaitForUpdateToFinish(newtonWorld_);
 
-        int applyCount = 0;
+
         //apply the transform of all rigid body components to their respective nodes.
         for (NewtonRigidBody* rigBody : rigidBodyComponentList)
         {
             if (rigBody->GetInternalTransformDirty()) {
                 rigBody->ApplyTransform();
                 rigBody->MarkInternalTransformDirty(false);
-                applyCount++;
             }
         }
-
-        URHO3D_LOGINFO(String(applyCount));
     }
 
 

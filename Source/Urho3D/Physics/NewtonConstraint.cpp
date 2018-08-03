@@ -32,27 +32,28 @@ namespace Urho3D {
 
     void NewtonConstraint::SetDisableCollision(bool disable)
     {
-        //#todo
+        enableBodyCollision_ = !disable;
+        
     }
 
     void NewtonConstraint::SetOtherBody(NewtonRigidBody* body)
     {
         otherBody_ = body;
-        reEvalConstraint();
+        MarkDirty();
     }
 
 
     void NewtonConstraint::SetPosition(const Vector3& position)
     {
         position_ = position;
-        reEvalConstraint();
+        MarkDirty();
     }
 
 
     void NewtonConstraint::SetOtherPosition(const Vector3& position)
     {
         otherPosition_ = position_;
-        reEvalConstraint();
+        MarkDirty();
     }
 
 
@@ -61,6 +62,7 @@ namespace Urho3D {
         if (preRebuildCheckAndClean())
         {
             buildConstraint();
+            NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
             MarkDirty(false);
         }
     }
