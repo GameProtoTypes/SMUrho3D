@@ -118,6 +118,13 @@ extern "C" {
 	typedef struct NewtonFracturedCompoundMeshPart{} NewtonFracturedCompoundMeshPart;
 #endif
 
+	typedef struct NewtonCollisionMaterial
+	{
+		void* m_userData;
+		int m_userId;
+		int m_userFlags;
+		dFloat m_userParam[4];
+	} NewtonCollisionMaterial;
 
 	typedef struct NewtonBoxParam
 	{
@@ -210,9 +217,8 @@ extern "C" {
 	typedef struct NewtonCollisionInfoRecord
 	{
 		dFloat m_offsetMatrix[4][4];
+		NewtonCollisionMaterial m_collisionMaterial;
 		int m_collisionType;				// tag id to identify the collision primitive
-		int m_collisionUserID;				
-		
 		union {
 			NewtonBoxParam m_box;									
 			NewtonConeParam m_cone;
@@ -401,7 +407,8 @@ extern "C" {
 	typedef int (*NewtonOnAABBOverlap) (const NewtonJoint* const contact, dFloat timestep, int threadIndex);
 	typedef void (*NewtonContactsProcess) (const NewtonJoint* const contact, dFloat timestep, int threadIndex);
 //	typedef int  (*NewtonOnAABBOverlap) (const NewtonMaterial* const material, const NewtonBody* const body0, const NewtonBody* const body1, int threadIndex);
-	typedef int  (*NewtonOnCompoundSubCollisionAABBOverlap) (const NewtonMaterial* const material, const NewtonBody* const body0, const void* const collisionNode0, const NewtonBody* const body1, const void* const collisionNode1, int threadIndex);
+//	typedef int  (*NewtonOnCompoundSubCollisionAABBOverlap) (const NewtonMaterial* const material, const NewtonBody* const body0, const void* const collisionNode0, const NewtonBody* const body1, const void* const collisionNode1, int threadIndex);
+	typedef int (*NewtonOnCompoundSubCollisionAABBOverlap) (const NewtonJoint* const contact, dFloat timestep, const NewtonBody* const body0, const void* const collisionNode0, const NewtonBody* const body1, const void* const collisionNode1, int threadIndex);
 	typedef int  (*NewtonOnContactGeneration) (const NewtonMaterial* const material, const NewtonBody* const body0, const NewtonCollision* const collision0, const NewtonBody* const body1, const NewtonCollision* const collision1, NewtonUserContactPoint* const contactBuffer, int maxCount, int threadIndex);
 
 	typedef int (*NewtonBodyIterator) (const NewtonBody* const body, void* const userData);
@@ -444,6 +451,7 @@ extern "C" {
 
 	NEWTON_API void* NewtonCurrentPlugin(const NewtonWorld* const newtonWorld);
 	NEWTON_API void* NewtonGetFirstPlugin(const NewtonWorld* const newtonWorld);
+	NEWTON_API void* NewtonGetPreferedPlugin(const NewtonWorld* const newtonWorld);
 	NEWTON_API void* NewtonGetNextPlugin(const NewtonWorld* const newtonWorld, const void* const plugin);
 	NEWTON_API const char* NewtonGetPluginString(const NewtonWorld* const newtonWorld, const void* const plugin);
 	NEWTON_API void NewtonSelectPlugin(const NewtonWorld* const newtonWorld, const void* const plugin);
@@ -779,6 +787,9 @@ extern "C" {
 	
 	NEWTON_API void NewtonCollisionSetUserID (const NewtonCollision* const collision, unsigned id);
 	NEWTON_API unsigned NewtonCollisionGetUserID (const NewtonCollision* const collision);
+
+	NEWTON_API void NewtonCollisionGetMaterial (const NewtonCollision* const collision, NewtonCollisionMaterial* const userData);
+	NEWTON_API void NewtonCollisionSetMaterial (const NewtonCollision* const collision, const NewtonCollisionMaterial* const userData);
 
 	NEWTON_API void* NewtonCollisionGetSubCollisionHandle (const NewtonCollision* const collision);
 	NEWTON_API NewtonCollision* NewtonCollisionGetParentInstance (const NewtonCollision* const collision);

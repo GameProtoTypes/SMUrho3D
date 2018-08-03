@@ -20,12 +20,22 @@
 */
 
 #include "dgNewtonPluginStdafx.h"
-#include "dgWorldBase.h"
 
 
-// This is an example of an exported function.
-dgWorldPlugin* GetPlugin(dgWorld* const world, dgMemoryAllocator* const allocator)
+BOOL APIENTRY DllMain( HMODULE hModule,
+                       DWORD  ul_reason_for_call,
+                       LPVOID lpReserved
+					 )
 {
+	switch (ul_reason_for_call)
+	{
+		case DLL_PROCESS_ATTACH:
+		case DLL_THREAD_ATTACH:
+		case DLL_THREAD_DETACH:
+		case DLL_PROCESS_DETACH:
+			break;
+	}
+
 	union cpuInfo
 	{
 		int m_data[4];
@@ -38,37 +48,8 @@ dgWorldPlugin* GetPlugin(dgWorld* const world, dgMemoryAllocator* const allocato
 		};
 	} info;
 
-	// check for instruction set support (avx is bit 28 in reg ecx)
+	// check for instruction set support (sse4.2 and fmad3)
 	__cpuid(info.m_data, 1);
-	if (!(info.m_ecx & (1 << 28))) {
-		return NULL;
-	}
-	
-	//cpu support avx
-	static dgWorldBase module(world, allocator);
-	return &module;
+	return ((info.m_ecx & (1 << 12)) && (info.m_ecx & (1 << 20))) ? TRUE : FALSE;
 }
 
-dgWorldBase::dgWorldBase(dgWorld* const world, dgMemoryAllocator* const allocator)
-	:dgWorldPlugin(world, allocator)
-	,dgSolver(world, allocator)
-{
-}
-
-dgWorldBase::~dgWorldBase()
-{
-}
-
-const char* dgWorldBase::GetId() const
-{
-#ifdef _DEBUG
-	return "newtonAVX_d";
-#else
-	return "newtonAVX";
-#endif
-}
-
-void dgWorldBase::CalculateJointForces(const dgBodyCluster& cluster, dgBodyInfo* const bodyArray, dgJointInfo* const jointArray, dgFloat32 timestep)
-{
-	dgSolver::CalculateJointForces(cluster, bodyArray, jointArray, timestep);
-}

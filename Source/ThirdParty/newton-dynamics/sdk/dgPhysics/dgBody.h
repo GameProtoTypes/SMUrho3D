@@ -132,8 +132,6 @@ class dgBody
 	bool GetAutoSleep () const;
 	void SetAutoSleep (bool state);
 
-	dgInt32* GetLock();
-
 	dgCollisionInstance* GetCollision () const;
 	dgBodyMasterList::dgListNode* GetMasterList() const;
 
@@ -263,6 +261,7 @@ class dgBody
 
 	void* m_userData;
 	dgWorld* m_world;
+	dgBody* m_disjointParent;
 	dgCollisionInstance* m_collision;
 	dgBroadPhaseBodyNode* m_broadPhaseNode;
 	dgBodyMasterList::dgListNode* m_masterNode;
@@ -276,6 +275,7 @@ class dgBody
 	dgInt32 m_rtti;
 	dgInt32 m_type;
 	dgInt32 m_serializedEnum;
+	dgInt32 m_disjointSetRank;
 	dgUnsigned32 m_dynamicsLru;
 	dgUnsigned32 m_genericLRUMark;
 
@@ -607,11 +607,6 @@ DG_INLINE dgSkeletonContainer* dgBody::GetSkeleton() const
 DG_INLINE dgInt32 dgBody::GetSerializedID() const
 {
 	return m_serializedEnum;
-}
-
-DG_INLINE dgInt32* dgBody::GetLock()
-{
-	return &m_criticalSectionLock;
 }
 
 #endif 

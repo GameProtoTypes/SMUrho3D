@@ -196,7 +196,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,dgInverseDynamicsList(allocator)
 	,dgActiveContacts(allocator) 
 	,dgWorldDynamicUpdate(allocator)
-	,dgMutexThread("newtonSyncThread", 0)
+	,dgMutexThread("newtonMainThread", 0)
 	,dgWorldThreadPool(allocator)
 	,dgDeadBodies(allocator)
 	,dgDeadJoints(allocator)
@@ -218,8 +218,8 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,m_clusterMemory (allocator, 64)
 	,m_concurrentUpdate(false)
 {
-	dgMutexThread* const mutexThread = this;
-	SetParentThread (mutexThread);
+	dgMutexThread* const myThread = this;
+	SetParentThread (myThread);
 
 	// avoid small memory fragmentations on initialization
 	m_bodiesMemory.Resize(1024 * 32);
@@ -548,7 +548,7 @@ void dgWorld::DestroyConstraint(dgConstraint* const constraint)
 
 void dgWorld::ExecuteUserJob (dgWorkerThreadTaskCallback userJobKernel, void* const userJobKernelContext)
 {
-	QueueJob (userJobKernel, this, userJobKernelContext);
+	QueueJob (userJobKernel, this, userJobKernelContext, __FUNCTION__);
 }
 
 
@@ -886,6 +886,7 @@ void dgWorld::StepDynamics (dgFloat32 timestep)
 
 	m_inUpdate ++;
 
+	DG_TRACKTIME(__FUNCTION__);
 	UpdateSkeletons();
 	UpdateBroadphase(timestep);
 	UpdateDynamics (timestep);
@@ -950,6 +951,17 @@ void dgWorld::UpdateTransforms(void* const context, void* const nodePtr, dgInt32
 
 void dgWorld::RunStep ()
 {
+	static int zzzz;
+	if (zzzz == 500) {
+		DG_START_RECORDING("../../../../sdk/dProfiler/xxxx.tt");
+	}
+	if (zzzz == 1500) {
+		DG_STOP_RECORDING();
+	}
+	zzzz++;
+
+
+	DG_TRACKTIME(__FUNCTION__);
 	dgUnsigned64 timeAcc = dgGetTimeInMicrosenconds();
 	dgFloat32 step = m_savetimestep / m_numberOfSubsteps;
 	for (dgUnsigned32 i = 0; i < m_numberOfSubsteps; i ++) {
@@ -968,7 +980,7 @@ void dgWorld::RunStep ()
 	dgBodyMasterList::dgListNode* node = masterList->GetFirst();
 	const dgInt32 threadsCount = GetThreadCount();
 	for (dgInt32 i = 0; i < threadsCount; i++) {
-		QueueJob(UpdateTransforms, this, node);
+		QueueJob(UpdateTransforms, this, node, "dgWorld::UpdateTransforms");
 		node = node ? node->GetNext() : NULL;
 	}
 	SynchronizationBarrier();
@@ -1231,6 +1243,7 @@ dgInt32 dgWorld::CompareJointByInvMass(const dgBilateralConstraint* const jointA
 
 void dgWorld::UpdateSkeletons()
 {
+	DG_TRACKTIME(__FUNCTION__);
 	dgSkeletonList& skelManager = *this;
 	if (skelManager.m_skelListIsDirty) {
 		skelManager.m_skelListIsDirty = false;

@@ -22,51 +22,56 @@
 #include "dgStdafx.h"
 #include "dgTypes.h"
 #include "dgMemory.h"
+#include "dgProfiler.h"
 #include "dgThreadHive.h"
 
 
-dgThreadHive::dgThreadBee::dgThreadBee()
+dgThreadHive::dgWorkerThread::dgWorkerThread()
 	:dgThread()
-	,m_isBusy(0)
-	,m_myMutex()
 	,m_hive(NULL)
 	,m_allocator(NULL)
+	,m_isBusy(0)
+	,m_jobsCount(0)
+	,m_workerSemaphore()
 {
 }
 
-dgThreadHive::dgThreadBee::~dgThreadBee()
+dgThreadHive::dgWorkerThread::~dgWorkerThread()
 {
 	while (IsBusy());
 
 	dgInterlockedExchange(&m_terminate, 1);
-	m_myMutex.Release();
+	m_workerSemaphore.Release();
 	Close();
 }
 
-void dgThreadHive::dgThreadBee::SetUp(dgMemoryAllocator* const allocator, const char* const name, dgInt32 id, dgThreadHive* const hive)
+void dgThreadHive::dgWorkerThread::SetUp(dgMemoryAllocator* const allocator, const char* const name, dgInt32 id, dgThreadHive* const hive)
 {
-	m_allocator = allocator;
 	m_hive = hive;
+	m_allocator = allocator;
 	Init (name, id);
+
+#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
+	SetThreadPriority(m_handle.native_handle(), THREAD_PRIORITY_ABOVE_NORMAL);
+#endif
 }
 
-bool dgThreadHive::dgThreadBee::IsBusy() const
+bool dgThreadHive::dgWorkerThread::IsBusy() const
 {
 	return m_isBusy ? true : false;
 }
 
-
-void dgThreadHive::dgThreadBee::Execute (dgInt32 threadId)
+void dgThreadHive::dgWorkerThread::Execute (dgInt32 threadId)
 {
 	m_hive->OnBeginWorkerThread (threadId);
 
 	while (!m_terminate) {
 		dgInterlockedExchange(&m_isBusy, 0);
-		SuspendExecution(m_myMutex);
+		SuspendExecution(m_workerSemaphore);
 		dgInterlockedExchange(&m_isBusy, 1);
 		if (!m_terminate) {
 			RunNextJobInQueue(threadId);
-			m_hive->m_myMutex[threadId].Release();
+			m_hive->m_semaphore[threadId].Release();
 		}
 	}
 
@@ -75,39 +80,31 @@ void dgThreadHive::dgThreadBee::Execute (dgInt32 threadId)
 	m_hive->OnEndWorkerThread (threadId);
 }
 
-
-void dgThreadHive::dgThreadBee::RunNextJobInQueue(dgInt32 threadId)
+dgInt32 dgThreadHive::dgWorkerThread::PushJob(const dgThreadJob& job)
 {
-	bool isEmpty = false;
-	do {
-		dgThreadJob job;
-		dgAssert (threadId == m_id);
-		//m_hive->m_jobsCriticalSection.Lock();
-		dgSpinLock(&m_hive->m_jobsCriticalSection);
-		isEmpty = m_hive->m_jobsPool.IsEmpty();
-		if (!isEmpty) {
-			job = m_hive->m_jobsPool.GetHead();
-			m_hive->m_jobsPool.Pop();
-		}
-		//m_hive->m_jobsCriticalSection.Unlock();
-		dgSpinUnlock(&m_hive->m_jobsCriticalSection);
-
-		if (!isEmpty) {
-			job.m_callback (job.m_context0, job.m_context1, m_id);
-		}
-	} while (!isEmpty);
+	dgAssert (m_jobsCount < sizeof (m_jobPool)/ sizeof (m_jobPool[0]));
+	m_jobPool[m_jobsCount] = job;
+	m_jobsCount ++;
+	return m_jobsCount;
 }
 
+void dgThreadHive::dgWorkerThread::RunNextJobInQueue(dgInt32 threadId)
+{
+	for (dgInt32 i = 0; i < m_jobsCount; i ++) {
+		const dgThreadJob& job = m_jobPool[i];
+		DG_TRACKTIME_NAMED(job.m_jobName);
+		job.m_callback (job.m_context0, job.m_context1, m_id);
+	}
+	m_jobsCount = 0;
+}
 
 dgThreadHive::dgThreadHive(dgMemoryAllocator* const allocator)
-	:m_workerBees(NULL)
-	,m_parentThread(NULL)
+	:m_parentThread(NULL)
+	,m_workerThreads(NULL)
 	,m_allocator(allocator)
-	,m_beesCount(0)
-	,m_currentIdleBee(0)
-	,m_jobsCriticalSection(0)
+	,m_jobsCount(0)
+	,m_workerThreadsCount(0)
 	,m_globalCriticalSection(0)
-    ,m_jobsPool(allocator)
 {
 }
 
@@ -123,10 +120,10 @@ void dgThreadHive::SetParentThread (dgThread* const parentThread)
 
 void dgThreadHive::DestroyThreads()
 {
-	if (m_beesCount) {
-		delete[] m_workerBees;
-		m_workerBees = NULL;
-		m_beesCount = 0;
+	if (m_workerThreadsCount) {
+		delete[] m_workerThreads;
+		m_workerThreads = NULL;
+		m_workerThreadsCount = 0;
 	}
 }
 
@@ -134,40 +131,43 @@ void dgThreadHive::SetThreadsCount (dgInt32 threads)
 {
 	DestroyThreads();
 
-	m_beesCount = dgMin (threads, DG_MAX_THREADS_HIVE_COUNT);
-	if (m_beesCount == 1) {
-		m_beesCount = 0;
+	m_workerThreadsCount = dgMin (threads, DG_MAX_THREADS_HIVE_COUNT);
+	if (m_workerThreadsCount == 1) {
+		m_workerThreadsCount = 0;
 	}
 
-	if (m_beesCount) {
-		m_workerBees = new (m_allocator) dgThreadBee[dgUnsigned32 (m_beesCount)];
+	if (m_workerThreadsCount) {
+		m_workerThreads = new (m_allocator) dgWorkerThread[dgUnsigned32 (m_workerThreadsCount)];
 
-		for (dgInt32 i = 0; i < m_beesCount; i ++) {
+		for (dgInt32 i = 0; i < m_workerThreadsCount; i ++) {
 			char name[256];
-			sprintf (name, "dgThreadBee%d", i);
-			m_workerBees[i].SetUp(m_allocator, name, i, this);
+			sprintf (name, "dgWorkerThread%d", i);
+			m_workerThreads[i].SetUp(m_allocator, name, i, this);
 		}
 	}
 }
 
-
-void dgThreadHive::QueueJob (dgWorkerThreadTaskCallback callback, void* const context0, void* const context1)
+void dgThreadHive::QueueJob (dgWorkerThreadTaskCallback callback, void* const context0, void* const context1, const char* const functionName)
 {
-	if (!m_beesCount) {
+	if (!m_workerThreadsCount) {
+		DG_TRACKTIME(functionName);
 		callback (context0, context1, 0);
 	} else {
+		dgInt32 workerTreadEntry = m_jobsCount % m_workerThreadsCount;
 		#ifdef DG_USE_THREAD_EMULATION
-			callback (context0, context1, 0);
+			DG_TRACKTIME(functionName);
+			callback (context0, context1, workerTreadEntry);
 		#else 
-			dgThreadJob job (context0, context1, callback);
-			m_jobsPool.Push(job);
-			if (m_jobsPool.IsFull()) {
+			dgInt32 index = m_workerThreads[workerTreadEntry].PushJob(dgThreadJob(context0, context1, callback, functionName));
+			if (index >= DG_THREAD_POOL_JOB_SIZE) {
+				dgAssert (0);
 				SynchronizationBarrier ();
 			}
 		#endif
 	}
-}
 
+	m_jobsCount ++;
+}
 
 void dgThreadHive::OnBeginWorkerThread (dgInt32 threadId)
 {
@@ -177,17 +177,15 @@ void dgThreadHive::OnEndWorkerThread (dgInt32 threadId)
 {
 }
 
-
 void dgThreadHive::SynchronizationBarrier ()
 {
-	if (m_beesCount) {
-		for (dgInt32 i = 0; i < m_beesCount; i ++) {
-			m_workerBees[i].m_myMutex.Release();
+	if (m_workerThreadsCount) {
+		DG_TRACKTIME(__FUNCTION__);
+		for (dgInt32 i = 0; i < m_workerThreadsCount; i ++) {
+			m_workerThreads[i].m_workerSemaphore.Release();
 		}
-
-		m_parentThread->SuspendExecution(m_beesCount, m_myMutex);
-		dgAssert (m_jobsPool.IsEmpty());
+		m_parentThread->SuspendExecution(m_workerThreadsCount, m_semaphore);
 	}
+	m_jobsCount = 0;
 }
-
 

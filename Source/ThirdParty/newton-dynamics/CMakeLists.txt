@@ -47,7 +47,8 @@ target_include_directories(newton-dynamics
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dgPhysics>  
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dgNewtonCpu> 
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dMath>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dNewton>  
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dNewton>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dProfiler/dTimeTracker>  
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dScene>  
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/thirdParty/tinyxml>  
         $<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk>

@@ -186,6 +186,8 @@
 #endif
 
 
+#include <dTimeTracker.h>
+
 //************************************************************
 #ifdef DG_DISABLE_ASSERT
 	#define dgAssert(x)
@@ -328,7 +330,8 @@ class dgVector;
 //		#define dgCheckFloat(x) 1
 #endif
 
-
+// adding frame capture profiler macros
+#include "dgProfiler.h"
 
 typedef void (dgApi *dgDeserialize) (void* const userData, void* buffer, dgInt32 size);
 typedef void (dgApi *dgSerialize) (void* const userData, const void* const buffer, dgInt32 size);
@@ -565,6 +568,7 @@ void dgRadixSort (T* const array, T* const tmpArray, dgInt32 elements, dgInt32 r
 template <class T> 
 void dgSort (T* const array, dgInt32 elements, dgInt32 (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
 {
+	DG_TRACKTIME_NAMED("dgSort");
 	dgInt32 stride = 8;
 	dgInt32 stack[1024][2];
 
@@ -830,18 +834,43 @@ DG_INLINE dgInt32 dgInterlockedExchange(dgInt32* const ptr, dgInt32 value)
 	#endif
 }
 
-DG_INLINE void dgThreadYield()
+DG_INLINE dgInt32 dgInterlockedTest(dgInt32* const ptr, dgInt32 value)
 {
-	#ifndef DG_USE_THREAD_EMULATION
-		std::this_thread::yield(); 
-	#endif
+#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
+	return _InterlockedCompareExchange((long*)ptr, value, value);
+#endif
+
+#if (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
+	return InterlockedCompareExchange((long*)ptr, value, value);
+#endif
+
+#if (defined (_POSIX_VER) || defined (_POSIX_VER_64) ||defined (_MACOSX_VER))
+	//__sync_synchronize();
+	return __sync_lock_test_and_set((int32_t*)ptr, value);
+#endif
 }
 
+DG_INLINE void dgThreadYield()
+{
+#ifndef DG_USE_THREAD_EMULATION
+	std::this_thread::yield();
+#endif
+}
+
+DG_INLINE void dgThreadPause()
+{
+#ifndef DG_USE_THREAD_EMULATION
+	#if defined (_WIN_32_VER) || defined (_WIN_64_VER)
+		_mm_pause();
+	#endif
+#endif
+}
 
 DG_INLINE void dgSpinLock(dgInt32* const ptr)
 {
 #ifndef DG_USE_THREAD_EMULATION 
 	while (dgInterlockedExchange(ptr, 1)) {
+		DG_TRACKTIME_NAMED("lock");
 		dgThreadYield();
 		//_mm_pause();
 	}

@@ -41,10 +41,14 @@ class dgCollisionInstance;
 class dgActiveContacts: public dgList<dgContact*>
 {
 	public:
-	dgActiveContacts (dgMemoryAllocator* const allocator)
+	dgActiveContacts(dgMemoryAllocator* const allocator)
 		:dgList<dgContact*>(allocator)
+		,m_deadContactsCount(0)
 	{
 	}
+
+	dgInt32 m_deadContactsCount;
+	dgActiveContacts::dgListNode* m_deadContacts[128];
 };
 
 
@@ -132,8 +136,9 @@ class dgContactMaterial: public dgContactPoint
 
 	typedef bool (dgApi *OnAABBOverlap) (dgContact& contactJoint, dgFloat32 timestep, dgInt32 threadIndex);
 	typedef void (dgApi *OnContactCallback) (dgContact& contactJoint, dgFloat32 timestep, dgInt32 threadIndex);
+	typedef bool (dgApi *OnCompoundCollisionPrefilter) (dgContact& contactJoint, dgFloat32 timestep, const dgBody* bodyA, const void* collisionNodeA, const dgBody* bodyB, const void* collisionNodeB, dgInt32 threadIndex);
 //	typedef bool (dgApi *OnAABBOverlap) (const dgContactMaterial& material, const dgBody& body0, const dgBody& body1, dgInt32 threadIndex);
-	typedef bool (dgApi *OnCompoundCollisionPrefilter) (const dgContactMaterial& material, const dgBody* bodyA, const void* collisionNodeA, const dgBody* bodyB, const void* collisionNodeB, dgInt32 threadIndex);
+//	typedef bool (dgApi *OnCompoundCollisionPrefilter) (const dgContactMaterial& material, const dgBody* bodyA, const void* collisionNodeA, const dgBody* bodyB, const void* collisionNodeB, dgInt32 threadIndex);
 	typedef bool (dgApi *OnContactGeneration) (const dgContactMaterial& material, const dgBody& body0, const dgCollisionInstance* collisionIntance0, const dgBody& body1, const dgCollisionInstance* collisionIntance1, dgUserContactPoint* const contacts, dgInt32 maxCount, dgInt32 threadIndex);
 
 	dgContactMaterial();

@@ -497,8 +497,9 @@ dgInt32 dgBroadPhasePersistent::Collide(dgCollisionInstance* const shape, const 
 	return totalCount;
 }
 
-void dgBroadPhasePersistent::FindCollidingPairsForward (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const nodePtr, dgInt32 threadID)
+void dgBroadPhasePersistent::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const nodePtr, dgInt32 threadID)
 {
+	DG_TRACKTIME(__FUNCTION__);
 	const dgFloat32 timestep = descriptor->m_timestep;
 
 	dgList<dgBroadPhaseNode*>::dgListNode* node = nodePtr;
@@ -522,7 +523,6 @@ void dgBroadPhasePersistent::FindCollidingPairsForward (dgBroadphaseSyncDescript
 		}
 
 		for (dgInt32 i = 0; i < threadCount; i++) {
-			//node = (node && node->GetInfo()->GetBody() && (node->GetInfo()->GetBody()->GetInvMass().m_w != dgFloat32(0.0f))) ? node->GetNext() : NULL;
 			dgBroadPhaseNode* const info = node ? node->GetInfo() : NULL;
 			node = (info && ((info->GetBody() && (info->GetBody()->GetInvMass().m_w != dgFloat32(0.0f))) || info->IsAggregate())) ? node->GetNext() : NULL;
 		}

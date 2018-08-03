@@ -372,9 +372,10 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
         stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
         stMdl->SetCastShadows(true);
-        NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
-        rigBody->SetMassScale(1.0f);
-
+        if (i == 0) {
+            NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
+            rigBody->SetMassScale(1.0f);
+        }
         NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Box>();
 
     }

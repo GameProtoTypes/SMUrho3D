@@ -26,7 +26,7 @@
 #include "dgPhysicsStdafx.h"
 
 
-#define DG_AVX_WORD_GROUP_SIZE	8 
+#define DG_SOA_WORD_GROUP_SIZE	8 
 
 
 DG_MSC_AVX_ALIGMENT
@@ -59,14 +59,14 @@ class dgSoaFloat
 
 	DG_INLINE float& operator[] (dgInt32 i)
 	{
-		dgAssert(i < DG_AVX_WORD_GROUP_SIZE);
+		dgAssert(i < DG_SOA_WORD_GROUP_SIZE);
 		dgAssert(i >= 0);
 		return m_f[i];
 	}
 
 	DG_INLINE const float& operator[] (dgInt32 i) const
 	{
-		dgAssert(i < DG_AVX_WORD_GROUP_SIZE);
+		dgAssert(i < DG_SOA_WORD_GROUP_SIZE);
 		dgAssert(i >= 0);
 		return m_f[i];
 	}
@@ -84,6 +84,16 @@ class dgSoaFloat
 	DG_INLINE dgSoaFloat operator* (const dgSoaFloat& A) const
 	{
 		return _mm256_mul_ps(m_type, A.m_type);
+	}
+
+	DG_INLINE dgSoaFloat MulAdd(const dgSoaFloat& A, const dgSoaFloat& B) const
+	{
+		return *this + A * B;
+	}
+
+	DG_INLINE dgSoaFloat NegMulAdd(const dgSoaFloat& A, const dgSoaFloat& B) const
+	{
+		return *this - A * B;
 	}
 
 	DG_INLINE dgSoaFloat operator> (const dgSoaFloat& A) const
@@ -116,6 +126,14 @@ class dgSoaFloat
 		return _mm256_max_ps (m_type, A.m_type);
 	}
 
+	DG_INLINE float AddHorizontal() const
+	{
+		__m256 tmp0(_mm256_add_ps(m_type, _mm256_permute2f128_ps(m_type, m_type, 1)));
+		__m256 tmp1(_mm256_hadd_ps(tmp0, tmp0));
+		dgSoaFloat sum(_mm256_hadd_ps(tmp1, tmp1));
+		return  sum[0];
+	}
+/*
 	DG_INLINE float GetMax() const
 	{
 		__m256 tmp0 (_mm256_add_ps(m_type, _mm256_permute2f128_ps (m_type, m_type, 1)));
@@ -123,12 +141,12 @@ class dgSoaFloat
 		dgSoaFloat sum (_mm256_hadd_ps (tmp1, tmp1));
 		return  sum[0];
 	}
-
+*/
 	union
 	{
 		__m256 m_type;
-		int m_i[DG_AVX_WORD_GROUP_SIZE];
-		float m_f[DG_AVX_WORD_GROUP_SIZE];
+		int m_i[DG_SOA_WORD_GROUP_SIZE];
+		float m_f[DG_SOA_WORD_GROUP_SIZE];
 	};
 } DG_GCC_AVX_ALIGMENT;
 
@@ -195,8 +213,8 @@ class dgSolver: public dgParallelBodySolver
 	void CalculateJointsAcceleration();
 	void CalculateBodiesAcceleration();
 	
-	void InitWeights(dgInt32 threadID);
 	void InitBodyArray(dgInt32 threadID);
+	void InitInternalForces(dgInt32 threadID);
 	void InitJacobianMatrix(dgInt32 threadID);
 	void CalculateBodyForce(dgInt32 threadID);
 	void UpdateForceFeedback(dgInt32 threadID);
@@ -208,8 +226,8 @@ class dgSolver: public dgParallelBodySolver
 	void CalculateJointsAcceleration(dgInt32 threadID);
 	void CalculateBodiesAcceleration(dgInt32 threadID);
 
-	static void InitWeightKernel(void* const context, void* const, dgInt32 threadID);
 	static void InitBodyArrayKernel(void* const context, void* const, dgInt32 threadID);
+	static void InitInternalForcesKernel(void* const context, void* const, dgInt32 threadID);
 	static void InitJacobianMatrixKernel(void* const context, void* const, dgInt32 threadID);
 	static void CalculateBodyForceKernel(void* const context, void* const, dgInt32 threadID);
 	static void UpdateForceFeedbackKernel(void* const context, void* const, dgInt32 threadID);
@@ -220,17 +238,22 @@ class dgSolver: public dgParallelBodySolver
 	static void UpdateKinematicFeedbackKernel(void* const context, void* const, dgInt32 threadID);
 	static void CalculateBodiesAccelerationKernel(void* const context, void* const, dgInt32 threadID);
 	static void CalculateJointsAccelerationKernel(void* const context, void* const, dgInt32 threadID);
+	
 	static dgInt32 CompareJointInfos(const dgJointInfo* const infoA, const dgJointInfo* const infoB, void* notUsed);
+	static dgInt32 CompareBodyJointsPairs(const dgBodyJacobianPair* const pairA, const dgBodyJacobianPair* const pairB, void* notUsed);
 
-	void TransposeRow (dgSoaMatrixElement* const row, const dgJointInfo* const jointInfoArray, dgInt32 index);
-	void BuildJacobianMatrix(dgJointInfo* const jointInfo, dgLeftHandSide* const leftHandSide, dgRightHandSide* const righHandSide, dgJacobian* const internalForces);
-	float CalculateJointForce(const dgJointInfo* const jointInfo, dgSoaMatrixElement* const massMatrix, const dgJacobian* const internalForces) const;
+	DG_INLINE void SortWorkGroup(dgInt32 base) const;
+	DG_INLINE void TransposeRow (dgSoaMatrixElement* const row, const dgJointInfo* const jointInfoArray, dgInt32 index);
+	DG_INLINE void BuildJacobianMatrix(dgJointInfo* const jointInfo, dgLeftHandSide* const leftHandSide, dgRightHandSide* const righHandSide);
+	DG_INLINE float CalculateJointForce(const dgJointInfo* const jointInfo, dgSoaMatrixElement* const massMatrix, const dgSoaFloat* const internalForces) const;
+
+	void ParallelSolver(dgInt32 threadID);
+	static void ParallelSolverKernel(void* const context, void* const, dgInt32 threadID);
 
 	dgSoaFloat m_soaOne;
 	dgSoaFloat m_soaZero;
 	dgVector m_zero;
 	dgVector m_negOne;
-
 	dgArray<dgSoaMatrixElement> m_massMatrix;
 } DG_GCC_AVX_ALIGMENT;
 

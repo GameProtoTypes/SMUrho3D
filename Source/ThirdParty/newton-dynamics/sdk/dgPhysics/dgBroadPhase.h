@@ -61,6 +61,7 @@ class dgBroadPhaseNode
 		,m_maxBox(dgFloat32(1.0e15f))
 		,m_parent(parent)
 		,m_surfaceArea(dgFloat32(1.0e20f))
+		,m_criticalSectionLock(0)
 	{
 	}
 
@@ -121,6 +122,7 @@ class dgBroadPhaseNode
 	dgVector m_maxBox;
 	dgBroadPhaseNode* m_parent;
 	dgFloat32 m_surfaceArea;
+	dgInt32 m_criticalSectionLock;
 
 	static dgVector m_broadPhaseScale;
 	static dgVector m_broadInvPhaseScale;
@@ -217,10 +219,158 @@ class dgBroadPhaseTreeNode: public dgBroadPhaseNode
 	dgList<dgBroadPhaseTreeNode*>::dgListNode* m_fitnessNode;
 } DG_GCC_VECTOR_ALIGMENT;
 
+#define DG_CONTACT_CACHE_LINE_SIZE 4
 
 class dgBroadPhase
 {
 	protected:
+
+	class CacheEntryTag
+	{
+		public:
+		DG_INLINE CacheEntryTag() {}
+		DG_INLINE CacheEntryTag(dgUnsigned32 tag0, dgUnsigned32 tag1)
+			:m_tagLow(dgMin(tag0, tag1))
+			,m_tagHigh(dgMax(tag0, tag1))
+		{
+		}
+
+		DG_INLINE dgUnsigned32 GetHash() const
+		{
+			return m_tagHigh * 31415821u + m_tagLow;
+		}
+	
+		union
+		{
+			dgUnsigned64 m_tag;
+			struct 
+			{
+				dgUnsigned32 m_tagLow;
+				dgUnsigned32 m_tagHigh;
+			};
+		};
+	};
+
+	class dgContactCacheLine
+	{
+		public:
+		DG_INLINE dgContactCacheLine()
+		{
+		}
+
+		dgInt32 m_count;
+		dgUnsigned32 m_key;
+		dgContact* m_contact[DG_CONTACT_CACHE_LINE_SIZE];
+		dgInt32 m_hashKey[DG_CONTACT_CACHE_LINE_SIZE];
+		CacheEntryTag m_tags[DG_CONTACT_CACHE_LINE_SIZE];
+	};
+
+	class dgContactCache: public dgArray<dgContactCacheLine>
+	{
+		public:
+		dgContactCache (dgMemoryAllocator* const allocator)
+			:dgArray<dgContactCacheLine>(allocator)
+			,m_count(1<<10)
+		{
+			ResizeIfNecessary(m_count);
+			dgContactCacheLine* const cache = &(*this)[0];
+			memset(cache, 0, m_count * sizeof(dgContactCacheLine));
+		}
+
+		DG_INLINE dgContact* FindContactJoint(const dgBody* const body0, const dgBody* const body1) const
+		{
+			CacheEntryTag tag(body0->m_uniqueID, body1->m_uniqueID);
+			dgUnsigned32 hash = tag.GetHash();
+
+			dgInt32 entry = hash & (m_count - 1);
+
+			const dgContactCacheLine& cacheLine = (*this)[entry];
+			for (dgInt32 i = 0; i < cacheLine.m_count; i++) {
+				if (cacheLine.m_tags[i].m_tag == tag.m_tag) {
+					return cacheLine.m_contact[i];
+				}
+			}
+			return NULL;
+		}
+
+		DG_INLINE void AddContactJoint(dgContact* const joint)
+		{
+			CacheEntryTag tag(joint->GetBody0()->m_uniqueID, joint->GetBody1()->m_uniqueID);
+			dgUnsigned32 hash = tag.GetHash();
+
+			dgInt32 entry = hash & (m_count - 1);
+			dgContactCacheLine* cacheLine = &(*this)[entry];
+			while (cacheLine->m_count == 4) {
+				Rehash();
+				entry = hash & (m_count - 1);
+				cacheLine = &(*this)[entry];
+			}
+			if (cacheLine->m_count == 0) {
+				cacheLine->m_key = hash;
+			}
+
+			const dgInt32 index = cacheLine->m_count;
+			cacheLine->m_count++;
+			cacheLine->m_tags[index] = tag;
+			cacheLine->m_hashKey[index] = hash;
+			cacheLine->m_contact[index] = joint;
+		}
+
+		DG_INLINE void RemoveContactJoint(dgContact* const joint)
+		{
+			CacheEntryTag tag(joint->GetBody0()->m_uniqueID, joint->GetBody1()->m_uniqueID);
+			dgUnsigned32 hash = tag.GetHash();
+
+			dgInt32 entry = hash & (m_count - 1);
+			dgContactCacheLine* const cacheLine = &(*this)[entry];
+			for (dgInt32 i = cacheLine->m_count - 1; i >= 0 ; i--) {
+				if (cacheLine->m_tags[i].m_tag == tag.m_tag) {
+					cacheLine->m_count--;
+					const dgInt32 index = cacheLine->m_count;
+					cacheLine->m_tags[i] = cacheLine->m_tags[index];
+					cacheLine->m_hashKey[i] = cacheLine->m_hashKey[index];
+					cacheLine->m_contact[i] = cacheLine->m_contact[index];
+					break;
+				}
+			}
+		}
+
+		private:
+		void Rehash()
+		{
+			const dgInt32 newCount = m_count * 2;
+			ResizeIfNecessary(newCount);
+			dgContactCacheLine* const cache0 = &(*this)[0];
+			dgContactCacheLine* const cache1 = &cache0[m_count];
+	
+			const dgInt32 mask = newCount - 1;
+			for (dgInt32 i = 0; i < m_count; i++) {
+				dgContactCacheLine* const src = &cache0[i];
+				dgContactCacheLine* const dst = &cache1[i];
+				dst->m_count = 0;
+				for (dgInt32 j = src->m_count - 1; j >= 0; j--) {
+					dgInt32 entry = src->m_hashKey[j] & mask;
+					if (entry >= m_count) {
+						const dgInt32 dstIndex = dst->m_count;
+						dst->m_count++;
+						dst->m_tags[dstIndex] = src->m_tags[j];
+						dst->m_hashKey[dstIndex] = src->m_hashKey[j];
+						dst->m_contact[dstIndex] = src->m_contact[j];
+
+						src->m_count--;
+						const dgInt32 srcIndex = src->m_count;
+						src->m_tags[j] = src->m_tags[srcIndex];
+						src->m_hashKey[j] = src->m_hashKey[srcIndex];
+						src->m_contact[j] = src->m_contact[srcIndex];
+					}
+				}
+			}
+			m_count = newCount;
+		}
+
+		dgInt32 m_count;
+	};
+
 	class dgSpliteInfo;
 	class dgBroadphaseSyncDescriptor
 	{
@@ -244,6 +394,8 @@ class dgBroadPhase
 		public:
 		dgFitnessList(dgMemoryAllocator* const allocator)
 			:dgList <dgBroadPhaseTreeNode*>(allocator)
+			,m_index(0)
+			,m_prevCost(dgFloat32 (0.0f))
 		{
 		}
 
@@ -256,6 +408,9 @@ class dgBroadPhase
 			}
 			return cost;
 		}
+
+		dgInt32 m_index;
+		dgFloat64 m_prevCost;
 	};
 
 	public:
@@ -311,10 +466,10 @@ class dgBroadPhase
 	virtual void RayCast (const dgVector& p0, const dgVector& p1, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData) const = 0;
 	virtual dgInt32 Collide(dgCollisionInstance* const shape, const dgMatrix& matrix, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const = 0;
 	virtual dgInt32 ConvexCast (dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, dgFloat32* const param, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const = 0;
-	virtual void FindCollidingPairsForward (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const node, dgInt32 threadID) = 0;
+	virtual void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const node, dgInt32 threadID) = 0;
 
-	void ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints);
-
+	void RemoveOldContacts();
+	void AttachNewContacts(dgActiveContacts::dgListNode* const lastNode);
 	void UpdateBody(dgBody* const body, dgInt32 threadIndex);
 	void AddInternallyGeneratedBody(dgBody* const body)
 	{
@@ -341,8 +496,10 @@ class dgBroadPhase
 
 	void CalculatePairContacts (dgPair* const pair, dgInt32 threadID);
 	bool ValidateContactCache(dgContact* const contact, dgFloat32 timestep) const;
-    void AddPair (dgContact* const contact, dgFloat32 timestep, dgInt32 threadIndex);
+	void AddPair (dgContact* const contact, dgFloat32 timestep, dgInt32 threadIndex);
 	void AddPair (dgBody* const body0, dgBody* const body1, dgFloat32 timestep, dgInt32 threadID);	
+
+	bool TestOverlaping(const dgBody* const body0, const dgBody* const body1, dgFloat32 timestep) const;
 
 	void ForEachBodyInAABB (const dgBroadPhaseNode** stackPool, dgInt32 stack, const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const;
 	void RayCast (const dgBroadPhaseNode** stackPool, dgFloat32* const distance, dgInt32 stack, const dgVector& l0, const dgVector& l1, dgFastRayTest& ray, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData) const;
@@ -367,15 +524,20 @@ class dgBroadPhase
 	void UpdateSoftBodyContacts(dgBroadphaseSyncDescriptor* const descriptor, dgFloat32 timeStep, dgInt32 threadID);
 	void UpdateRigidBodyContacts (dgBroadphaseSyncDescriptor* const descriptor, dgActiveContacts::dgListNode* const node, dgFloat32 timeStep, dgInt32 threadID);
 	void SubmitPairs (dgBroadPhaseNode* const body, dgBroadPhaseNode* const node, dgFloat32 timestep, dgInt32 threaCount, dgInt32 threadID);
+	void AddNewContacts(dgBroadphaseSyncDescriptor* const descriptor, dgActiveContacts::dgListNode* const nodeConstactNode, dgInt32 threadID);
 		
 	static void SleepingStateKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void ForceAndToqueKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void CollidingPairsKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
+	static void AddNewContactsKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void UpdateAggregateEntropyKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void AddGeneratedBodiesContactsKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void UpdateRigidBodyContactKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void UpdateSoftBodyContactKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static dgInt32 CompareNodes(const dgBroadPhaseNode* const nodeA, const dgBroadPhaseNode* const nodeB, void* const notUsed);
+
+	static void UpdateParallelKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
+	void UpdateParallel(dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID);
 
 	class dgPendingCollisionSofBodies
 	{
@@ -390,10 +552,12 @@ class dgBroadPhase
 	dgList<dgBroadPhaseNode*> m_updateList;
 	dgList<dgBroadPhaseAggregate*> m_aggregateList;
 	dgUnsigned32 m_lru;
+	dgContactCache m_contactCache;
 	dgArray<dgPendingCollisionSofBodies> m_pendingSoftBodyCollisions;
 	dgInt32 m_pendingSoftBodyPairsCount;
 	dgInt32 m_contacJointLock;
 	dgInt32 m_criticalSectionLock;
+	dThreadHiveSync m_threadSync;
 
 	static dgVector m_velocTol;
 	static dgVector m_linearContactError2;

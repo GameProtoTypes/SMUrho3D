@@ -331,6 +331,8 @@ namespace Urho3D {
             //mark its old parent dirty as well.
             if (oldNodeParent_)
             {
+
+                //go up until rigid body is found.
                 NewtonRigidBody* oldParentRigidBody = oldNodeParent_->GetComponent<NewtonRigidBody>();
                 if (!oldParentRigidBody)
                     oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
