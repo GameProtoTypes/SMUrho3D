@@ -152,7 +152,19 @@ set (THIRD_PARTY_DEPENDENCIES
     Recast 
     Box2D 
     WebP 
-    newton-dynamics 
+    
+    dAnimation
+    dContainers
+    dCustomJoints
+    dgCore
+    dgNewtonAvx
+    dgPhysics
+    dNewton
+    dMath
+    newton
+    dScene
+    dTimeTracker
+
     tracy-lib 
     imgui 
     LibCpuId 

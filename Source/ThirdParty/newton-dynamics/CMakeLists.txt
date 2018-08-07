@@ -1,61 +1,89 @@
+# Copyright (c) <2014-2017> <Newton Game Dynamics>
 #
-# Copyright (c) 2008-2018 the Urho3D project.
+# This software is provided 'as-is', without any express or implied
+# warranty. In no event will the authors be held liable for any damages
+# arising from the use of this software.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely.
+
+cmake_minimum_required(VERSION 3.12.0)
+
+option("NEWTON_GENERATE_DLL" "build dll libraries" OFF)
+option("NEWTON_BUILD_SANDBOX_DEMOS" "generates demos projects" ON)
+option("NEWTON_DOUBLE_PRECISION" "Generate double precision" OFF)
+option("NEWTON_STATIC_RUNTIME_LIBRARIES" "use windows static libraries" ON)
+option("NEWTON_WITH_AVX_PLUGIN" "adding avx parallel solver" ON)
+option("NEWTON_WITH_AVX2_PLUGIN" "adding avx parallel solver" OFF)
+option("NEWTON_WITH_SSE4_PLUGIN" "adding avx parallel solver" OFF)
+
+set(CMAKE_CONFIGURATION_TYPES Debug Release)
+set(CMAKE_DEBUG_POSTFIX "_d")
+
+project(NewtonSDK)
+
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+if (NEWTON_DOUBLE_PRECISION)
+	add_definitions(-D_NEWTON_USE_DOUBLE)
+endif ()
+
+if (MSVC)
+	message ("build visual studio projects")
+
+	if(CMAKE_CL_64)
+		message ("build 64 bit")
+		add_definitions(-D_WIN_64_VER)
+	else()
+		message ("build 32 bit")
+		add_definitions(-D_WIN_32_VER)
+	endif()
+
+	if(NEWTON_STATIC_RUNTIME_LIBRARIES)
+		message ("link to static runtime libraries")
+		set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
+		set(CMAKE_CXX_FLAGS_RELEASE "/MT")
+		set(CMAKE_C_FLAGS_DEBUG "/MTd")
+		set(CMAKE_C_FLAGS_RELEASE "/MT")
+	else()
+		message ("link to dynamic runtime libraries")
+		set(CMAKE_C_FLAGS_DEBUG "/MDd")
+		set(CMAKE_C_FLAGS_RELEASE "/MD")
+		set(CMAKE_CXX_FLAGS_DEBUG "/MDd")
+		set(CMAKE_CXX_FLAGS_RELEASE "/MD")
+	endif()
+
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /fp:fast")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Oi /Ot /Ob2 /fp:fast")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /fp:fast")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Oi /Ot /Ob2 /fp:fast")
+
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -W4")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -W4")
+
+	set(CMAKE_C_FLAGS_DEBUG  "${CMAKE_C_FLAGS_DEBUG} -Zi")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Zi")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Zi")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Zi")
+
+	message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
+	message("CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}")
+endif()
+
+set (dllPath "${PROJECT_BINARY_DIR}/build/bin")
+set (libraryPath "${PROJECT_BINARY_DIR}/build/lib")
+set (includePath "${PROJECT_BINARY_DIR}/build/include")
+
+
+add_subdirectory(sdk)
+
+
+add_dependencies (dgPhysics dgCore)
+add_dependencies (dContainers dMath dTimeTracker)
+add_dependencies (newton dgCore dgPhysics dTimeTracker)
+add_dependencies (dAnimation dMath dContainers dTimeTracker)
+add_dependencies (dCustomJoints dMath dContainers dTimeTracker)
+add_dependencies (dNewton newton dMath dContainers dCustomJoints dTimeTracker)
 
 
 
-# Define source files
-file (GLOB_RECURSE SOURCE_FILES *.h *.cpp)
-set (SOURCE_FILES ${SOURCE_FILES})
-set (LIB_TYPE STATIC)
-
-
-add_library (newton-dynamics ${LIB_TYPE} ${SOURCE_FILES})
-
-
-target_compile_definitions(newton-dynamics PUBLIC _CNEWTON_STATIC_LIB _CUSTOM_JOINTS_STATIC_LIB _NEWTON_STATIC_LIB)
-
-
-target_include_directories(newton-dynamics
-    PUBLIC 
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dAnimation>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dContainers>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dCustomJoints>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dgCore>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dgMeshUtil>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dgNewton>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dgPhysics>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dgNewtonCpu> 
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dMath>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dNewton>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dProfiler/dTimeTracker>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/dScene>  
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/thirdParty/tinyxml>  
-        $<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk>
-)
-
-
-
-
-install (TARGETS newton-dynamics EXPORT Urho3D ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR})
-install(DIRECTORY newton-dynamics DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR} FILES_MATCHING PATTERN *.h)
