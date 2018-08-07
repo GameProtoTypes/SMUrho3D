@@ -159,7 +159,7 @@ public:
     const HashMap<StringHash, SharedPtr<ObjectFactory> >& GetObjectFactories() const { return factories_; }
 
     /// Return all object categories.
-    const HashMap<String, Vector<StringHash> >& GetObjectCategories() const { return objectCategories_; }
+    const HashMap<String, PODVector<StringHash> >& GetObjectCategories() const { return objectCategories_; }
 
     /// Return active event sender. Null outside event handling.
     Object* GetEventSender() const;
@@ -333,7 +333,7 @@ private:
     /// Active event handler. Not stored in a stack for performance reasons; is needed only in esoteric cases.
     EventHandler* eventHandler_;
     /// Object categories.
-    HashMap<String, Vector<StringHash> > objectCategories_;
+    HashMap<String, PODVector<StringHash> > objectCategories_;
     /// Variant map for global variables that can persist throughout application execution.
     VariantMap globalVars_;
 
