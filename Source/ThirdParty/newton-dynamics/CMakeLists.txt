@@ -14,10 +14,10 @@ cmake_minimum_required(VERSION 3.12.0)
 #Urho3D Overrides
 if(URHO3D_THIRDPARTY_SHARED_LIBS)
 	set(NEWTON_GENERATE_DLL ON CACHE BOOL "build dll libraries")
-	set(NEWTON_STATIC_RUNTIME_LIBRARIES OFF CACHE BOOL "use windows static libraries")
+	set(NEWTON_STATIC_RUNTIME_LIBRARIES OFF CACHE BOOL "use windows system static libraries")
 else ()
 	set(NEWTON_GENERATE_DLL OFF CACHE BOOL "build dll libraries")
-	set(NEWTON_STATIC_RUNTIME_LIBRARIES ON CACHE BOOL "use windows static libraries")
+	set(NEWTON_STATIC_RUNTIME_LIBRARIES ON CACHE BOOL "use windows system static libraries")
 endif ()
 
 
@@ -26,13 +26,15 @@ endif ()
 option("NEWTON_GENERATE_DLL" "build dll libraries" ON)
 option("NEWTON_BUILD_SANDBOX_DEMOS" "generates demos projects" OFF)
 option("NEWTON_DOUBLE_PRECISION" "Generate double precision" OFF)
-option("NEWTON_STATIC_RUNTIME_LIBRARIES" "use windows static libraries" OFF)
+option("NEWTON_STATIC_RUNTIME_LIBRARIES" "use windows system static libraries" OFF)
 option("NEWTON_WITH_AVX_PLUGIN" "adding avx parallel solver" ON)
 option("NEWTON_WITH_AVX2_PLUGIN" "adding avx parallel solver" ON)
 option("NEWTON_WITH_SSE4_PLUGIN" "adding avx parallel solver" ON)
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
-set(CMAKE_DEBUG_POSTFIX "_d")
+
+#Urho Doesnt Do "_d"'s
+#set(CMAKE_DEBUG_POSTFIX "_d")
 
 
 
