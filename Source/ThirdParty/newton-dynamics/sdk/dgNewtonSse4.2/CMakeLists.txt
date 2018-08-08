@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 3.12.0)
 
 set (projectName "dgNewtonSse4.2")
-message (${projectName})
+#message (${projectName})
 
 # low level core
 file(GLOB source *.cpp *.h)
@@ -30,8 +30,14 @@ if (MSVC)
 endif(MSVC)
 
 
+target_include_directories(${projectName} PUBLIC 
+$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+$<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk> 
+)
+
 #install(TARGETS ${projectName} RUNTIME DESTINATION ${dllPath})
-#install(TARGETS ${projectName} ARCHIVE DESTINATION ${libraryPath})
+install(TARGETS ${projectName} EXPORT Urho3D ARCHIVE DESTINATION ${libraryPath})
+install(DIRECTORY ${projectName} DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR} FILES_MATCHING PATTERN *.h) 
 
 add_custom_command(
 	TARGET ${projectName} POST_BUILD

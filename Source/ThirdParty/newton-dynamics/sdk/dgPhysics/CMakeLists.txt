@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 3.12.0)
 
 set (projectName "dgPhysics")
-message (${projectName})
+#message (${projectName})
 
 
  # low level core
@@ -31,5 +31,8 @@ $<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk>
 )
 
 if (NOT NEWTON_GENERATE_DLL)
-	install(TARGETS ${projectName} EXPORT Urho3D ARCHIVE DESTINATION ${libraryPath})
+
 endif()
+
+install(TARGETS ${projectName} EXPORT Urho3D ARCHIVE DESTINATION ${libraryPath})
+install(DIRECTORY ${projectName} DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR} FILES_MATCHING PATTERN *.h) 

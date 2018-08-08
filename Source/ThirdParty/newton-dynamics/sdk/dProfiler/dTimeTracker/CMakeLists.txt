@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 3.12.0)
 
 set (projectName "dTimeTracker")
-message (${projectName})
+#message (${projectName})
 
 # low level core
 file(GLOB source *.cpp *.h)

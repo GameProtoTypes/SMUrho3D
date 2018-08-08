@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 3.12.0)
 
 set (projectName "dScene")
-message (${projectName})
+#message (${projectName})
 
  # low level core
 file(GLOB source *.cpp *.h)
@@ -41,7 +41,8 @@ if (MSVC)
 	set_source_files_properties(dSceneStdafx.cpp PROPERTIES COMPILE_FLAGS "/YcdSceneStdafx.h")
 endif(MSVC)
 
-file(GLOB includes *.h)
-install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
+#file(GLOB includes *.h)
+#install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
 
 install(TARGETS ${projectName} EXPORT Urho3D ARCHIVE DESTINATION ${libraryPath})
+install(DIRECTORY ${projectName} DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR} FILES_MATCHING PATTERN *.h) 

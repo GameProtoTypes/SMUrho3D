@@ -158,12 +158,15 @@ set (THIRD_PARTY_DEPENDENCIES
     dCustomJoints
     dgCore
     dgNewtonAvx
+    dgNewtonAvx2
+    dgNewtonSse4.2
     dgPhysics
     dNewton
     dMath
     newton
     dScene
     dTimeTracker
+    tinyxml
 
     tracy-lib 
     imgui 

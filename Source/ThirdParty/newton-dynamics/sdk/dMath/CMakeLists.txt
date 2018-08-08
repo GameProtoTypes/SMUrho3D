@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 3.12.0)
 
 set (projectName "dMath")
-message (${projectName})
+#message (${projectName})
 
 
  # low level core
@@ -30,7 +30,8 @@ $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 $<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk> 
 )
 
-file(GLOB includes *.h)
-install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
+#file(GLOB includes *.h)
+#install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
 
 install(TARGETS ${projectName} EXPORT Urho3D ARCHIVE DESTINATION ${libraryPath})
+install(DIRECTORY ${projectName} DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR} FILES_MATCHING PATTERN *.h) 

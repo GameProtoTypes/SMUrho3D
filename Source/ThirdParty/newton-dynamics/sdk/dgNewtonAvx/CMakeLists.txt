@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 3.12.0)
 
 set (projectName "dgNewtonAvx")
-message (${projectName})
+#message (${projectName})
 
 # low level core
 file(GLOB source *.cpp *.h)
@@ -36,6 +36,7 @@ $<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk>
 
 #install(TARGETS ${projectName} RUNTIME DESTINATION ${dllPath})
 install(TARGETS ${projectName} EXPORT Urho3D ARCHIVE DESTINATION ${libraryPath})
+install(DIRECTORY ${projectName} DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR} FILES_MATCHING PATTERN *.h) 
 
 add_custom_command(
 	TARGET ${projectName} POST_BUILD

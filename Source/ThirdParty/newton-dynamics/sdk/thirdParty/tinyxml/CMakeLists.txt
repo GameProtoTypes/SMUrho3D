@@ -19,6 +19,8 @@ file(GLOB source *.cpp *.h)
 
 add_library(${projectName} STATIC ${source})
 
-file(GLOB includes *.h)
-install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
-install(TARGETS ${projectName} ARCHIVE DESTINATION ${libraryPath})
+#file(GLOB includes *.h)
+#install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
+
+install(TARGETS ${projectName} EXPORT Urho3D ARCHIVE DESTINATION ${libraryPath})
+install(DIRECTORY ${projectName} DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR} FILES_MATCHING PATTERN *.h) 
