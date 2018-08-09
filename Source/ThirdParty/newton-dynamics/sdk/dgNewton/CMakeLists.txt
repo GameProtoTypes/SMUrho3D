@@ -43,11 +43,6 @@ $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 $<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk> 
 )
 
-#file(GLOB includes *.h)
-#install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
-
-#install(TARGETS ${projectName} EXPORT Urho3D ARCHIVE DESTINATION ${libraryPath})
-#install(DIRECTORY ${projectName} DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR} FILES_MATCHING PATTERN *.h) 
 
 install (TARGETS ${projectName} EXPORT Urho3D
     LIBRARY DESTINATION ${DEST_LIBRARY_DIR}

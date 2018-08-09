@@ -37,10 +37,6 @@ set(CMAKE_CONFIGURATION_TYPES Debug Release)
 #set(CMAKE_DEBUG_POSTFIX "_d")
 
 
-
-
-
-
 project(NewtonSDK)
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
