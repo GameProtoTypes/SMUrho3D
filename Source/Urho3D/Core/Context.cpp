@@ -219,7 +219,7 @@ void Context::RemoveFactories(const char* category)
 {
     if (objectCategories_.Contains(category))
     {
-        Vector<StringHash> typesInCategory = objectCategories_[category];
+        PODVector<StringHash> typesInCategory = objectCategories_[category];
         for (StringHash type : typesInCategory) {
             RemoveFactory(type);
         }

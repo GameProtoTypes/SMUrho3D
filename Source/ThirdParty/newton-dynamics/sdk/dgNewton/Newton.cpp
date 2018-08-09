@@ -4750,8 +4750,8 @@ void  NewtonBodySetMassProperties (const NewtonBody* const bodyPtr, dFloat mass,
   @param *bodyPtr pointer to the body.
   @param *mass pointer to a variable that will hold the mass value of the body.
   @param *Ixx pointer to a variable that will hold the moment of inertia of the first principal axis of inertia of the body.
-  @param *Iyy pointer to a variable that will hold the moment of inertia of the second principal axis of inertia of the body.
-  @param *Izz pointer to a variable that will hold the moment of inertia of the third principal axis of inertia of the body.
+  @param *Iyy pointer to a variable that will hold the moment of inertia of the first principal axis of inertia of the body.
+  @param *Izz pointer to a variable that will hold the moment of inertia of the first principal axis of inertia of the body.
 
   @return Nothing.
 
