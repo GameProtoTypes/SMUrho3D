@@ -155,7 +155,6 @@ dgBroadPhase::dgBroadPhase(dgWorld* const world)
 	,m_pendingSoftBodyPairsCount(0)
 	,m_contacJointLock(0)
 	,m_criticalSectionLock(0)
-	,m_threadSync()
 {
 }
 
@@ -284,11 +283,7 @@ void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descrip
 	const dgInt32 threadCount = m_world->GetThreadCount();
 	while (node) {
 		dgBody* const body = node->GetInfo().GetBody();
-		body->m_index = -1;
 		body->m_resting = 1;
-		body->m_disjointSetRank = 0;
-		body->m_disjointParent = body;
-
 		if (DoNeedUpdate(node)) {
 			if (body->IsRTTIType(dgBody::m_dynamicBodyRTTI)) {
 				dgDynamicBody* const dynamicBody = (dgDynamicBody*)body;
@@ -1496,7 +1491,6 @@ void dgBroadPhase::UpdateRigidBodyContacts(dgBroadphaseSyncDescriptor* const des
 	DG_TRACKTIME(__FUNCTION__);
 	dgContactsList::dgListNode* node = nodePtr;
 	dgContactsList* const contactList = m_world;
-	dgBodyMasterList* const masterList = m_world;
 	const dgFloat32 timestep = descriptor->m_timestep;
 	const dgInt32 threadCount = m_world->GetThreadCount();
 	const dgUnsigned32 lru = m_lru - DG_CONTACT_DELAY_FRAMES;
@@ -1504,7 +1498,6 @@ void dgBroadPhase::UpdateRigidBodyContacts(dgBroadphaseSyncDescriptor* const des
 	while (node) {
 		dgContact* const contact = node->GetInfo();
 
-		bool stateChange = contact->m_maxDOF ? true : false;
 		const dgBody* const body0 = contact->GetBody0();
 		const dgBody* const body1 = contact->GetBody1();
 		if (!(body0->m_equilibrium & body1->m_equilibrium)) {
@@ -1558,11 +1551,6 @@ void dgBroadPhase::UpdateRigidBodyContacts(dgBroadphaseSyncDescriptor* const des
 			}
 		} else {
 			contact->m_broadphaseLru = m_lru;
-		}
-
-		stateChange = stateChange ^ (contact->m_maxDOF ? true : false);
-		if (stateChange) {
-			masterList->OrderContactJoint(contact);
 		}
 
 		for (dgInt32 i = 0; i < threadCount; i++) {
@@ -1647,11 +1635,9 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	}
 
 	dgContactsList* const contactList = m_world;
-	//contactList->m_activeContacts = 0;
 	contactList->m_deadContactsCount = 0;
 	dgContactsList::dgListNode* const lastNode = contactList->GetFirst();
 
-#if 0
 	node = masterList->GetLast();
 	for (dgInt32 i = 0; i < threadsCount; i++) {
 		m_world->QueueJob(SleepingStateKernel, &syncPoints, node, "dgBroadPhase::SleepingState");
@@ -1659,7 +1645,7 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	}
 	m_world->SynchronizationBarrier();
 
-	dgActiveContacts::dgListNode* contactListNode = contactList->GetFirst();
+	dgContactsList::dgListNode* contactListNode = contactList->GetFirst();
 	for (dgInt32 i = 0; i < threadsCount; i++) {
 		m_world->QueueJob(UpdateRigidBodyContactKernel, &syncPoints, contactListNode, "dgBroadPhase::UpdateRigidBodyContact");
 		contactListNode = contactListNode ? contactListNode->GetNext() : NULL;
@@ -1680,7 +1666,7 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	}
 	m_world->SynchronizationBarrier();
 
-	dgActiveContacts::dgListNode* newContact = lastNode ? lastNode->GetPrev() : contactList->GetLast();
+	dgContactsList::dgListNode* newContact = lastNode ? lastNode->GetPrev() : contactList->GetLast();
 	for (dgInt32 i = 0; i < threadsCount; i++) {
 		m_world->QueueJob(AddNewContactsKernel, &syncPoints, newContact, "dgBroadPhase::AddNewContacts");
 		newContact = newContact ? newContact->GetPrev() : NULL;
@@ -1714,93 +1700,9 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	}
 	m_world->SynchronizationBarrier();
 
-#else
-	m_threadSync.Reset(threadsCount);
-	for (dgInt32 i = 0; i < threadsCount; i++) {
-		m_world->QueueJob(UpdateParallelKernel, &syncPoints, m_world, "dgBroadPhase::UpdateParallelKernel");
-	}
-	m_world->SynchronizationBarrier();
-
-	//m_recursiveChunks = false;
-	if (m_generatedBodies.GetCount()) {
-		dgAssert(0);
-		//syncPoints.m_newBodiesNodes = m_generatedBodies.GetFirst();
-		//for (dgInt32 i = 0; i < threadsCount; i++) {
-		//	m_world->QueueJob(AddGeneratedBodiesContactsKernel, &syncPoints, m_world);
-		//}
-		//m_world->SynchronizationBarrier();
-		//
-		//for (dgInt32 i = 0; i < threadsCount; i++) {
-		//	m_world->QueueJob(UpdateContactsKernel, &syncPoints, m_world);
-		//}
-		//m_world->SynchronizationBarrier();
-		//
-		//m_generatedBodies.RemoveAll();
-	}
-#endif
-
 	AttachNewContacts(lastNode);
 	RemoveOldContacts();
 
 	UpdateFitness();
 }
 
-void dgBroadPhase::UpdateParallelKernel(void* const context, void* const node, dgInt32 threadID)
-{
-	dgBroadphaseSyncDescriptor* const descriptor = (dgBroadphaseSyncDescriptor*)context;
-	dgWorld* const world = descriptor->m_world;
-	dgBroadPhase* const broadPhase = world->GetBroadPhase();
-	broadPhase->UpdateParallel(descriptor, threadID);
-}
-
-void dgBroadPhase::UpdateParallel(dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID)
-{
-	// do the sleeping 
-	const dgBodyMasterList* const masterList = m_world;
-	dgBodyMasterList::dgListNode* node = masterList->GetLast();
-	for (dgInt32 i = 0; i < threadID; i++) {
-		node = node ? node->GetPrev() : NULL;
-	}
-	SleepingState(descriptor, node, threadID);
-	m_threadSync.Sync0();
-
-	dgContactsList* const contactList = m_world;
-	dgContactsList::dgListNode* contactListNode = contactList->GetFirst();
-	for (dgInt32 i = 0; i < threadID; i++) {
-		contactListNode = contactListNode ? contactListNode->GetNext() : NULL;
-	}
-	UpdateRigidBodyContacts(descriptor, contactListNode, descriptor->m_timestep, threadID);
-	m_threadSync.Sync1();
-
-	if (m_pendingSoftBodyPairsCount) {
-		m_threadSync.Sync0();
-		dgAssert (0);
-//		for (dgInt32 i = 0; i < threadsCount; i++) {
-//			m_world->QueueJob(UpdateSoftBodyContactKernel, &syncPoints, contactListNode, "dgBroadPhase::UpdateSoftBodyContact");
-//		}
-//		m_world->SynchronizationBarrier();
-		m_threadSync.Sync1();
-	}
-	
-	dgContactsList::dgListNode* const lastNode = contactList->GetFirst();
-	dgList<dgBroadPhaseNode*>::dgListNode* broadPhaseNode = m_updateList.GetFirst();
-	for (dgInt32 i = 0; i < threadID; i++) {
-		broadPhaseNode = broadPhaseNode ? broadPhaseNode->GetNext() : NULL;
-	}
-	FindCollidingPairs(descriptor, broadPhaseNode, threadID);
-	m_threadSync.Sync0();
-
-	dgContactsList::dgListNode* newContact = lastNode ? lastNode->GetPrev() : contactList->GetLast();
-	for (dgInt32 i = 0; i < threadID; i++) {
-		newContact = newContact ? newContact->GetPrev() : NULL;
-	}
-	AddNewContacts(descriptor, newContact, threadID);
-	m_threadSync.Sync1();
-
-	// this will move to an asynchronous thread 
-	dgList<dgBroadPhaseAggregate*>::dgListNode* aggregateNode = m_aggregateList.GetFirst();
-	for (dgInt32 i = 0; i < threadID; i++) {
-		aggregateNode = aggregateNode ? aggregateNode->GetNext() : NULL;
-	}
-	UpdateAggregateEntropy(descriptor, aggregateNode, threadID);
-}
