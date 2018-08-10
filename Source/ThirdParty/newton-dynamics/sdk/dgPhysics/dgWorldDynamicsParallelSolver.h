@@ -293,7 +293,7 @@ class dgParallelBodySolver
 	dgInt32 m_solverPasses;
 	dgInt32 m_threadCounts;
 	dgInt32 m_soaRowsCount;
-	dThreadHiveSync m_threadSync;
+	dgThreadHiveSync m_threadSync;
 	dgInt32* m_soaRowStart;
 	dgInt32* m_bodyRowStart;
 

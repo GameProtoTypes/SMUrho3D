@@ -452,6 +452,9 @@ namespace Urho3D {
 
             newtonMesh_ = physicsWorld_->GetCreateNewtonMesh(meshKey);
             NewtonMeshBeginBuild(newtonMesh_->mesh);
+            URHO3D_LOGINFO(String(indexCount));
+
+
 
             for (unsigned curIdx = indexStart; curIdx < indexStart + indexCount; curIdx += 3)
             {
@@ -479,6 +482,9 @@ namespace Urho3D {
                 NewtonMeshAddPoint(newtonMesh_->mesh, v1.x_, v1.y_, v1.z_);
                 NewtonMeshAddPoint(newtonMesh_->mesh, v2.x_, v2.y_, v2.z_);
                 NewtonMeshAddPoint(newtonMesh_->mesh, v3.x_, v3.y_, v3.z_);
+
+                URHO3D_LOGINFO("Face: (" + String(v1) + ") | (" + String(v2) + ") | (" + String(v3) + ")");
+
                 NewtonMeshEndFace(newtonMesh_->mesh);
             }
 

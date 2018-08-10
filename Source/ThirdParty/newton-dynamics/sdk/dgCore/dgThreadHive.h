@@ -31,50 +31,128 @@
 #define DG_THREAD_POOL_JOB_SIZE (256)
 typedef void (*dgWorkerThreadTaskCallback) (void* const context0, void* const context1, dgInt32 threadID);
 
-class dThreadHiveSync
+class dgThreadHiveSync
 {
-	public:
-	dThreadHiveSync()
-		:m_sync0(0)
-		,m_sync1(0)
-		,m_syncIndex(0)
-		,m_threadCounts(1)
+	class dgSync
 	{
-	}
+		public:
+		dgSync()
+			:m_sync(0)
+		{
+		}
 
-	void Reset(dgInt32 threadCount)
-	{
-		m_sync0 = 0;
-		m_sync1 = 0;
-		m_syncIndex = 0;
-		m_threadCounts = threadCount;
-	}
+		~dgSync()
+		{
+		}
 
-	void Sync()
-	{
-		if (m_threadCounts > 1) {
-			//DG_TRACKTIME(__FUNCTION__);
-			dgInt32* const ptr = (dgAtomicExchangeAndAdd(&m_syncIndex, 1) / m_threadCounts) & 1 ? &m_sync1 : &m_sync0;
-			dgAtomicExchangeAndAdd(ptr, 1);
+		void Reset()
+		{
+			m_sync = 0;
+		}
+
+		void Wait(dgInt32 threadsCount)
+		{
+			dgAtomicExchangeAndAdd(&m_sync, 1);
 			dgInt32 count = 0;
-			while (*ptr % m_threadCounts) {
+			while (m_sync % threadsCount) {
 				count++;
 				dgThreadPause();
 				if (count >= 1024 * 64) {
+					DG_TRACKTIME(__FUNCTION__);
 					count = 0;
 					dgThreadYield();
 				}
 			}
 		}
+
+		dgInt32 m_sync;
+	};
+
+	public:
+	dgThreadHiveSync()
+		:m_syn0()
+		,m_syn1()
+		,m_mod(0)
+		,m_threadsCount(1)
+	{
+	}
+
+	virtual ~dgThreadHiveSync()
+	{
+	}
+
+	void Reset(dgInt32 threadCount)
+	{
+		dgAssert (threadCount >= 1);
+
+		m_mod = 0;
+		m_threadsCount = threadCount;
+		m_syn0.Reset();
+		m_syn1.Reset();
+	}
+
+#if 0
+	virtual void Wait0()
+	{
+		m_syn0.Wait(m_threadsCount);
+	}
+
+	virtual void Wait1()
+	{
+		m_syn1.Wait(m_threadsCount);
+	}
+
+	void Sync0()
+	{
+		if (m_threadsCount > 1) {
+			Wait0();
+		}
+	}
+
+	void Sync1()
+	{
+		if (m_threadsCount > 1) {
+			Wait1();
+		}
+	}
+#else
+	void Sync()
+	{
+		if (m_threadsCount > 1) {
+			Wait();
+		}
+	}
+
+	void Sync0()
+	{
+		Sync();
+	}
+
+	void Sync1()
+	{
+		Sync();
 	}
 
 	private:
-	dgInt32 m_sync0;
-	dgInt32 m_sync1;
-	dgInt32 m_syncIndex;
-	dgInt32 m_threadCounts;
-};
+	virtual void Wait()
+	{
+		dgInt32 index = dgAtomicExchangeAndAdd(&m_mod, 1) / m_threadsCount;
+		if (index & 1) {
+			m_syn1.Wait(m_threadsCount);
+		}
+		else {
+			m_syn0.Wait(m_threadsCount);
+		}
+	}
 
+#endif
+
+	private: 
+	dgSync m_syn0;
+	dgSync m_syn1;
+	dgInt32 m_mod;
+	dgInt32 m_threadsCount;
+};
 
 class dgThreadHive  
 {

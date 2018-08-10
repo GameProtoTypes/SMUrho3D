@@ -43,12 +43,12 @@ class dgContactsList: public dgList<dgContact*>
 	public:
 	dgContactsList(dgMemoryAllocator* const allocator)
 		:dgList<dgContact*>(allocator)
-		,m_activeContacts(0)
+//		,m_activeContacts(0)
 		,m_deadContactsCount(0)
 	{
 	}
 
-	dgInt32 m_activeContacts;
+//	dgInt32 m_activeContacts;
 	dgInt32 m_deadContactsCount;
 	dgContactsList::dgListNode* m_deadContacts[128];
 };
@@ -240,10 +240,12 @@ class dgContact: public dgConstraint, public dgList<dgContactMaterial>
 	friend class dgCollisionScene;
 	friend class dgCollisionConvex;
 	friend class dgCollisionCompound;
+	friend class dgBodyMasterListRow;
 	friend class dgWorldDynamicUpdate;
 	friend class dgSolverWorlkerThreads;
 	friend class dgCollisionConvexPolygon;
 	friend class dgCollidingPairCollector;
+	
 }DG_GCC_VECTOR_ALIGMENT;
 
 DG_INLINE void dgContactMaterial::SetCollisionCallback (OnAABBOverlap aabbOverlap, OnContactCallback contact) 

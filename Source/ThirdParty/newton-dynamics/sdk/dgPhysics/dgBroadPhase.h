@@ -557,7 +557,7 @@ class dgBroadPhase
 	dgInt32 m_pendingSoftBodyPairsCount;
 	dgInt32 m_contacJointLock;
 	dgInt32 m_criticalSectionLock;
-	dThreadHiveSync m_threadSync;
+	dgThreadHiveSync m_threadSync;
 
 	static dgVector m_velocTol;
 	static dgVector m_linearContactError2;
