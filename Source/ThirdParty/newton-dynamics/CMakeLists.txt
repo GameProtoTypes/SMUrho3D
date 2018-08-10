@@ -31,7 +31,7 @@ option("NEWTON_WITH_AVX_PLUGIN" "adding avx parallel solver" ON)
 option("NEWTON_WITH_AVX2_PLUGIN" "adding avx parallel solver" ON)
 option("NEWTON_WITH_SSE4_PLUGIN" "adding avx parallel solver" ON)
 
-set(CMAKE_CONFIGURATION_TYPES Debug Release)
+set(CMAKE_CONFIGURATION_TYPES Debug Release RelWithDebInfo)
 
 #Urho Doesnt Do "_d"'s
 #set(CMAKE_DEBUG_POSTFIX "_d")
@@ -82,8 +82,14 @@ if (MSVC)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Zi")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Zi")
 
+	#use debug configuration for relwithdebinfo
+	#set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_DEBUG}")
+	#set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_DEBUG}")
+
 	#message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
 	#message("CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}")
+
+
 endif()
 
 set (dllPath "${PROJECT_BINARY_DIR}/build/bin")
