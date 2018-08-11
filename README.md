@@ -15,6 +15,7 @@ This repository is unofficial/personal fork of [urho3d.github.io](http://urho3d.
 - Update rates are seperated from render update rates. There are no "Frame" events.  
   Rendering is viewed as a sampling of the current update state.  Transform Tweening is planned.
 - Tweeks Subsystem.
+- Node internal source has been simplified
 - Other smaller changes as well as fixes.
 
 ## Future Goals
