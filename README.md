@@ -1,6 +1,6 @@
 ![Urho3D logo](https://raw.githubusercontent.com/urho3d/Urho3D/master/bin/Data/Textures/LogoLarge.png)
 
-# Urho3D (aka rebelfork)
+# Urho3D Newton (forked from rebelfork)
 
 [![Build Status](https://travis-ci.org/rokups/Urho3D.svg?branch=master)](https://travis-ci.org/rokups/Urho3D) [![Build status](https://ci.appveyor.com/api/projects/status/9b57do8manc0bfsq/branch/master?svg=true)](https://ci.appveyor.com/project/rokups/urho3d/branch/master) [![Join the chat at https://gitter.im/urho3d/Urho3D](https://badges.gitter.im/urho3d/Urho3D.svg)](https://gitter.im/urho3d/Urho3D?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -10,16 +10,15 @@ This repository is unofficial/personal fork of [urho3d.github.io](http://urho3d.
 
 ## Differences
 - This fork routinely merges from https://github.com/rokups/Urho3D.
+- Newton Game Dynamics Integration (primary focus ongoing)
 - Update rates are fixed and a prioritized as having constant timing.  If you want to you can ignore using P_TIMESTEP in your update logic.
 - Update rates are seperated from render update rates. There are no "Frame" events.  
   Rendering is viewed as a sampling of the current update state.  Transform Tweening is planned.
 - Tweeks Subsystem.
 - Other smaller changes as well as fixes.
 
-## Further Goals
-- Newton Game Dynamics Integration
-
-
+## Future Goals
+- Seperate Engine Update and Rendering into 2 seperate threads as part of architecture.
 
 ## License
 
