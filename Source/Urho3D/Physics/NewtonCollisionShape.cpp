@@ -478,6 +478,8 @@ namespace Urho3D {
 
 
                 NewtonMeshBeginFace(newtonMesh_->mesh);
+
+
                 NewtonMeshAddPoint(newtonMesh_->mesh, v1.x_, v1.y_, v1.z_);
                 NewtonMeshAddPoint(newtonMesh_->mesh, v2.x_, v2.y_, v2.z_);
                 NewtonMeshAddPoint(newtonMesh_->mesh, v3.x_, v3.y_, v3.z_);

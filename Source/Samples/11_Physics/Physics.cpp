@@ -96,7 +96,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,0,0));
+    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -448,7 +448,7 @@ void Physics::CreatePyramids()
             {
                 for (int x = -y; x <= y; ++x)
                 {
-                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x*2.0f, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
                 }
             }
         }
