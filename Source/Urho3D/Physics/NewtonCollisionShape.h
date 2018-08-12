@@ -258,6 +258,7 @@ namespace Urho3D
         /// Set the tolerancing for hull creation.
         void SetHullTolerance(float tolerance = 0.0f) { hullTolerance_ = 0.0f; MarkDirty(); }
 
+
     protected:
         /// optional Model reference
         WeakPtr<Model> model_;
@@ -265,6 +266,7 @@ namespace Urho3D
         unsigned modelLodLevel_ = 0;
         /// model geometry index to use
         unsigned modelGeomIndx_ = 0;
+
         /// Hulling tolerance
         unsigned hullTolerance_ = 0.0f;
 
@@ -288,10 +290,14 @@ namespace Urho3D
         virtual ~NewtonCollisionShape_ConvexHullCompound();
 
         static void RegisterObject(Context* context);
+        /// Set the tolerancing for hull creation.
+        void SetHullTolerance(float tolerance = 0.0f) { hullTolerance_ = 0.0f; MarkDirty(); }
 
     protected:
 
         virtual void createNewtonCollision() override;
+        /// Hulling tolerance
+        unsigned hullTolerance_ = 0.0f;
 
     };
 
@@ -305,8 +311,22 @@ namespace Urho3D
 
         static void RegisterObject(Context* context);
 
+        ///Set the maximum number of compounds to create for the compound. more will closer match the model while less will be more performant.
+        void SetMaxCompounds(int maxCompounds) { maxCompounds_ = maxCompounds; MarkDirty(true); }
+
+        void SetMaxConcavity(float maxConcavity) { maxConcavity_ = maxConcavity; MarkDirty(true); }
+
+        void SetBackFaceDistanceFactor(float backFaceDistanceFactor) { backFaceDistanceFactor_ = backFaceDistanceFactor; MarkDirty(true); }
+
+        void SetMaxVertexPerHull(float maxVertexPerHull) { maxVertexPerHull_ = maxVertexPerHull; MarkDirty(true); }
+
     protected:
         NewtonMeshObject* meshDecomposition_ = nullptr;
+        float maxConcavity_ = 0.01f;
+        float backFaceDistanceFactor_ = 0.2f;
+        int maxCompounds_ = 256;
+        int maxVertexPerHull_ = 100;
+
         virtual void createNewtonCollision() override;
 
     };
@@ -320,6 +340,7 @@ namespace Urho3D
         virtual ~NewtonCollisionShape_ConvexHull();
 
         static void RegisterObject(Context* context);
+
 
     protected:
 

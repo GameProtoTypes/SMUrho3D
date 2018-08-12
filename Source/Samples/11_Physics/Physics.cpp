@@ -96,7 +96,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81,0));
+    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -152,17 +152,20 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
     //CreatePyramids();
-
-    //SpawnCompound(Vector3(0,1,0));
-    //SpawnConvexHull(Vector3(21, 1, 0));
-    SpawnDecompCompound(Vector3(0, 1, 0));
+    int numVertical = 1;
+    for (int i = 0; i < numVertical; i++)
+        SpawnCompound(Vector3(-2,1*i,i));
+    for (int i = 0; i < numVertical; i++)
+        SpawnConvexHull(Vector3(0, 1*i, i));
+    for(int i = 0; i < numVertical; i++)
+        SpawnDecompCompound(Vector3(2, 1*i, i));
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 
@@ -441,7 +444,8 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids()
 {
-    int size = 16;
+    int size = 32;
+    float horizontalSeperation = 2.0f;
     //create pyramids
     const int numIslands = 0;
     for (int x2 = -numIslands; x2 <= numIslands; x2++)
@@ -451,7 +455,7 @@ void Physics::CreatePyramids()
             {
                 for (int x = -y; x <= y; ++x)
                 {
-                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x*1.1f, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
                 }
             }
         }

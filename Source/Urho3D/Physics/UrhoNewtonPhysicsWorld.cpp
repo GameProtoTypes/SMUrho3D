@@ -260,9 +260,9 @@ namespace Urho3D {
         }
     }
 
-    Urho3D::StringHash UrhoNewtonPhysicsWorld::NewtonMeshKey(String modelResourceName, int modelLodLevel, float hullTolerance)
+    Urho3D::StringHash UrhoNewtonPhysicsWorld::NewtonMeshKey(String modelResourceName, int modelLodLevel, String otherData)
     {
-        return modelResourceName + String(modelLodLevel) + String(hullTolerance);
+        return modelResourceName + String(modelLodLevel) + otherData;
     }
 
     NewtonMeshObject* UrhoNewtonPhysicsWorld::GetCreateNewtonMesh(StringHash urhoNewtonMeshKey)

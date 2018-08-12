@@ -29,6 +29,7 @@ namespace Urho3D
 
         friend class NewtonCollisionShape;
         friend class NewtonCollisionShape_Geometry;
+        friend class NewtonCollisionShape_ConvexDecompositionCompound;
         friend class NewtonRigidBody;
         friend class NewtonConstraint;
 
@@ -111,7 +112,7 @@ namespace Urho3D
         HashMap<StringHash, SharedPtr<NewtonMeshObject>> newtonMeshCache_;
 
         ///returns a unique key for looking up an exising NewtonMesh from the cache.
-        static StringHash NewtonMeshKey(String modelResourceName, int modelLodLevel, float hullTolerance);
+        static StringHash NewtonMeshKey(String modelResourceName, int modelLodLevel, String otherData);
         NewtonMeshObject* GetCreateNewtonMesh(StringHash urhoNewtonMeshKey);
         NewtonMeshObject* GetNewtonMesh(StringHash urhoNewtonMeshKey);
         
