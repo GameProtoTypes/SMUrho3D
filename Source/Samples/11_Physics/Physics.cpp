@@ -150,7 +150,7 @@ void Physics::CreateScene()
 
     //CreatePyramids();
 
-    SpawnCompound(Vector3(0,1,0));
+    //SpawnCompound(Vector3(0,1,0));
     //SpawnConvexHull(Vector3(21, 1, 0));
 
 
@@ -159,7 +159,7 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 

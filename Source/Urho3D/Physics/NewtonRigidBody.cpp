@@ -178,11 +178,6 @@ namespace Urho3D {
         for (NewtonCollisionShape* shp : childCollisionShapes)
             nodesWithCollision += shp->GetNode();
 
-        if(node_->GetDerivedComponent<NewtonCollisionShape>())
-            nodesWithCollision += node_;
-
-
-
 
         if (nodesWithCollision.Size())
         {
@@ -237,7 +232,6 @@ namespace Urho3D {
                 else
                     resolvedCollision = usedCollision;
 
-                
             }
 
             if (compoundNeeded) {
