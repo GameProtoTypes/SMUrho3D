@@ -140,7 +140,6 @@ set (THIRD_PARTY_DEPENDENCIES
     PugiXml 
     rapidjson 
     SDL 
-    StanHull 
     STB 
     IconFontCppHeaders 
     Civetweb 

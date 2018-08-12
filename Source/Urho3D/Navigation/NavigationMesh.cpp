@@ -43,7 +43,7 @@
 #include "../Navigation/Obstacle.h"
 #include "../Navigation/OffMeshConnection.h"
 #ifdef URHO3D_PHYSICS
-#include "../Physics/CollisionShape.h"
+#include "../Physics/NewtonCollisionShape.h"
 #endif
 #include "../Scene/Scene.h"
 
@@ -1018,6 +1018,7 @@ void NavigationMesh::CollectGeometries(Vector<NavigationGeometryInfo>& geometryL
 
     Matrix3x4 inverse = node_->GetWorldTransform().Inverse();
 
+#if 0 //#todo make compatable with newton changes.
 #ifdef URHO3D_PHYSICS
     // Prefer compatible physics collision shapes (triangle mesh, convex hull, box) if found.
     // Then fallback to visible geometry
@@ -1047,6 +1048,8 @@ void NavigationMesh::CollectGeometries(Vector<NavigationGeometryInfo>& geometryL
     }
     if (!collisionShapeFound)
 #endif
+#endif
+
     {
         PODVector<Drawable*> drawables;
         node->GetDerivedComponents<Drawable>(drawables);
@@ -1116,7 +1119,7 @@ void NavigationMesh::GetTileGeometry(NavBuildData* build, Vector<NavigationGeome
                 build->navAreas_.Push(stub);
                 continue;
             }
-
+#if 0 //#todo make compatable with newton changes.
 #ifdef URHO3D_PHYSICS
             auto* shape = dynamic_cast<CollisionShape*>(geometryList[i].component_);
             if (shape)
@@ -1182,6 +1185,7 @@ void NavigationMesh::GetTileGeometry(NavBuildData* build, Vector<NavigationGeome
 
                 continue;
             }
+#endif
 #endif
             auto* drawable = dynamic_cast<Drawable*>(geometryList[i].component_);
             if (drawable)

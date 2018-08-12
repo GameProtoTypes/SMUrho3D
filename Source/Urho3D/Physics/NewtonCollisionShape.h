@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Physics/CollisionShape.h"
 #include "../Scene/Component.h"
 
 class NewtonCollision;
