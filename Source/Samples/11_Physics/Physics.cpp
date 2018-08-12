@@ -155,7 +155,7 @@ void Physics::CreateScene()
 
     //SpawnCompound(Vector3(0,1,0));
     //SpawnConvexHull(Vector3(21, 1, 0));
-
+    SpawnDecompCompound(Vector3(0, 1, 0));
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     
@@ -515,6 +515,30 @@ void Physics::SpawnCompound(const Vector3& worldPos)
 
 
 
+
+void Physics::SpawnDecompCompound(const Vector3& worldPos)
+{
+    auto* cache = GetSubsystem<ResourceCache>();
+
+    // Create a smaller box at camera position
+    Node* boxNode = scene_->CreateChild();
+
+    boxNode->SetWorldPosition(worldPos);
+    boxNode->SetScale(1.0f);
+
+    auto* boxObject = boxNode->CreateComponent<StaticModel>();
+    boxObject->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
+    boxObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+    boxObject->SetCastShadows(true);
+
+
+    // Create physics components, use a smaller mass also
+    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    body->SetMassScale(1.0f);
+    body->SetFriction(0.75f);
+
+    auto* shape = boxNode->CreateComponent<NewtonCollisionShape_ConvexDecompositionCompound>();
+}
 
 void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
 {

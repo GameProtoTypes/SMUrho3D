@@ -611,7 +611,37 @@ namespace Urho3D {
 
 
 
+    NewtonCollisionShape_ConvexDecompositionCompound::NewtonCollisionShape_ConvexDecompositionCompound(Context* context) : NewtonCollisionShape_Geometry(context)
+    {
 
+    }
+
+
+
+    NewtonCollisionShape_ConvexDecompositionCompound::~NewtonCollisionShape_ConvexDecompositionCompound()
+    {
+
+    }
+
+
+
+
+    void NewtonCollisionShape_ConvexDecompositionCompound::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_ConvexDecompositionCompound>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void NewtonCollisionShape_ConvexDecompositionCompound::createNewtonCollision()
+    {
+        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
+
+        resolveOrCreateTriangleMesh();
+
+        //decompose
+        newtonMesh_->mesh = NewtonMeshApproximateConvexDecomposition(newtonMesh_->mesh, 0.01f, 0.2f, 256, 100, nullptr, nullptr);
+
+        newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0, 0);
+    }
 
     NewtonCollisionShape_ConvexHull::NewtonCollisionShape_ConvexHull(Context* context) : NewtonCollisionShape_Geometry(context)
     {
@@ -697,5 +727,6 @@ namespace Urho3D {
     {
         newtonCollision_ = NewtonCreateCone(physicsWorld_->GetNewtonWorld(), radius_, length_, 0, nullptr);
     }
+
 
 }

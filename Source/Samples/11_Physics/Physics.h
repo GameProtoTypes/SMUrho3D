@@ -102,6 +102,7 @@ private:
     void SpawnObject();
     void SpawnConvexHull(const Vector3& worldPos);
     void SpawnCompound(const Vector3& worldPos);
+    void SpawnDecompCompound(const Vector3& worldPos);
     void SpawnNSquaredJointedObject(Vector3 worldPosition);
     void SpawnLinearJointedObject(Vector3 worldPosition);
 

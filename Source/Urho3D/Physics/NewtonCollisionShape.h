@@ -295,6 +295,22 @@ namespace Urho3D
 
     };
 
+    class URHO3D_API NewtonCollisionShape_ConvexDecompositionCompound : public NewtonCollisionShape_Geometry {
+
+        URHO3D_OBJECT(NewtonCollisionShape_ConvexDecompositionCompound, NewtonCollisionShape_Geometry);
+
+    public:
+        NewtonCollisionShape_ConvexDecompositionCompound(Context* context);
+        virtual ~NewtonCollisionShape_ConvexDecompositionCompound();
+
+        static void RegisterObject(Context* context);
+
+    protected:
+        NewtonMeshObject* meshDecomposition_ = nullptr;
+        virtual void createNewtonCollision() override;
+
+    };
+
     class URHO3D_API NewtonCollisionShape_ConvexHull : public NewtonCollisionShape_Geometry {
 
         URHO3D_OBJECT(NewtonCollisionShape_ConvexHull, NewtonCollisionShape_Geometry);
