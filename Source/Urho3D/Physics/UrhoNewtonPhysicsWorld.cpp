@@ -200,6 +200,9 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
+
+
+
         //rebuild rigid bodies if they need rebuilt (dirty)
         for (NewtonRigidBody* rigBody : rigidBodyComponentList)
         {
@@ -217,10 +220,8 @@ namespace Urho3D {
 
         //use target time step to give newton constant time steps. 
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
-
         NewtonUpdate(newtonWorld_, timeStep);
         NewtonWaitForUpdateToFinish(newtonWorld_);
-
 
         //apply the transform of all rigid body components to their respective nodes.
         for (NewtonRigidBody* rigBody : rigidBodyComponentList)
@@ -230,6 +231,8 @@ namespace Urho3D {
                 rigBody->MarkInternalTransformDirty(false);
             }
         }
+
+
     }
 
 

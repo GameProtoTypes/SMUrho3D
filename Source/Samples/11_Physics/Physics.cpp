@@ -151,14 +151,15 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
-    //CreatePyramids();
+    CreatePyramids();
+
     int numVertical = 1;
     for (int i = 0; i < numVertical; i++)
-        SpawnCompound(Vector3(-2,1*i,i));
+        SpawnCompound(Vector3(-2,1*i,i + 10));
     for (int i = 0; i < numVertical; i++)
-        SpawnConvexHull(Vector3(0, 1*i, i));
+        SpawnConvexHull(Vector3(0, 1*i, i + 10));
     for(int i = 0; i < numVertical; i++)
-        SpawnDecompCompound(Vector3(2, 1*i, i));
+        SpawnDecompCompound(Vector3(2, 1*i, i + 10));
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     
