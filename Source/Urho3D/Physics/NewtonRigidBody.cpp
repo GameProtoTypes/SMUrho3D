@@ -24,6 +24,7 @@ namespace Urho3D {
 
     NewtonRigidBody::NewtonRigidBody(Context* context) : Component(context)
     {
+        //#todo could we subcribe to the node itself?
         SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeAdded));
         SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeRemoved));
 

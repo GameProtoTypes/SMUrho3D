@@ -71,6 +71,7 @@ namespace Urho3D
         /// Offset rotation.
         Quaternion rotation_;
 
+        Node* oldNodeParent_ = nullptr;
 
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
         void reEvaluateCollision();
@@ -91,6 +92,11 @@ namespace Urho3D
 
 
         virtual void OnNodeSet(Node* node) override;
+
+
+
+        void HandleNodeAdded(StringHash event, VariantMap& eventData);
+        void HandleNodeRemoved(StringHash event, VariantMap& eventData);
     };
 
 

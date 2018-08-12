@@ -21,6 +21,7 @@
 #include "Graphics/IndexBuffer.h"
 #include "Graphics/VisualDebugger.h"
 #include "Graphics/StaticModel.h"
+#include "Scene/SceneEvents.h"
 
 
 namespace Urho3D {
@@ -29,6 +30,8 @@ namespace Urho3D {
 
     NewtonCollisionShape::NewtonCollisionShape(Context* context) : Component(context)
     {
+        SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeAdded));
+        SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeRemoved));
     }
 
     NewtonCollisionShape::~NewtonCollisionShape()
@@ -313,8 +316,9 @@ namespace Urho3D {
 
         if (node)
         {
-            if (GetScene() == node_)
-                URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
+
+            SubscribeToEvent(node, E_NODEADDED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeAdded));
+
 
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
 
@@ -329,8 +333,55 @@ namespace Urho3D {
                 physicsWorld_->removeCollisionShape(this);
         }
 
-
     }
+
+
+
+    void NewtonCollisionShape::HandleNodeAdded(StringHash event, VariantMap& eventData)
+    {
+        Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
+
+        //if the node has been added to a parent.
+        if (node == node_)
+        {
+            //markt the rigid body dirty
+            if (node->HasComponent<NewtonRigidBody>())
+            {
+                node->GetComponent<NewtonRigidBody>()->MarkDirty();
+            }
+
+            //mark its old parent dirty as well.
+            if (oldNodeParent_)
+            {
+
+                //go up until rigid body is found.
+                NewtonRigidBody* oldParentRigidBody = oldNodeParent_->GetComponent<NewtonRigidBody>();
+                if (!oldParentRigidBody)
+                    oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
+
+                if (oldParentRigidBody)
+                    oldParentRigidBody->MarkDirty();
+            }
+            oldNodeParent_ = nullptr;
+        }
+    }
+
+    void NewtonCollisionShape::HandleNodeRemoved(StringHash event, VariantMap& eventData)
+    {
+        Node* node = static_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
+        if (node == node_)
+        {
+            Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
+            oldNodeParent_ = oldParent;
+        }
+    }
+
+
+
+
+
+
+
 
 
 

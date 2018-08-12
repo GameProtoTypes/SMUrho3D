@@ -151,7 +151,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
-    CreatePyramids();
+    //CreatePyramids();
 
     //SpawnCompound(Vector3(0,1,0));
     //SpawnConvexHull(Vector3(21, 1, 0));
@@ -159,10 +159,10 @@ void Physics::CreateScene()
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     
-    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 
@@ -375,10 +375,10 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
         stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
         stMdl->SetCastShadows(true);
-        if (i == 0) {
+        //if (i == 0) {
             NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
             rigBody->SetMassScale(1.0f);
-        }
+        //}
         NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Box>();
 
     }
