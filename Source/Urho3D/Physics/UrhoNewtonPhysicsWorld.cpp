@@ -119,7 +119,7 @@ namespace Urho3D {
             //create the newton world
             if (newtonWorld_ == nullptr) {
                 newtonWorld_ = NewtonCreate();
-                NewtonSetSolverModel(newtonWorld_, 4);
+                NewtonSetSolverModel(newtonWorld_, 8);
                 NewtonSetThreadsCount(newtonWorld_,4);
                 //NewtonSetNumberOfSubsteps(newtonWorld_, 8);
             }
@@ -215,7 +215,7 @@ namespace Urho3D {
         }
 
 
-        //use target time step to give newton constant time steps. timeStep = 0.01666666 in seconds.
+        //use target time step to give newton constant time steps. 
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 
         NewtonUpdate(newtonWorld_, timeStep);
@@ -292,23 +292,17 @@ namespace Urho3D {
 
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
     {
-        static dFloat Ixx;
-        static dFloat Iyy;
-        static dFloat Izz;
-        static dFloat mass;
-        static dVector netForce;
-        static dVector netTorque;
 
+        dVector netForce;
+        dVector netTorque;
+        NewtonRigidBody* rigidBodyComp = nullptr;
 
-        //NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
-
-        NewtonRigidBody* rigidBodyComp = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
+        rigidBodyComp = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
 
         rigidBodyComp->GetBakedForceAndTorque(netForce, netTorque);
 
         NewtonBodySetForce(body, &netForce[0]);
         NewtonBodySetTorque(body, &netTorque[0]);
-        
     }
 
 

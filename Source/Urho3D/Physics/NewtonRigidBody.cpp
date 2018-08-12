@@ -157,6 +157,7 @@ namespace Urho3D {
         if (parentNodeWithRigidBody != nullptr)
         {
             MarkDirty(false);//mark as clean because we know a rigid body on a higher level is going to be the real one.
+            freeBody();//free the body because we know we want to use a parent one instead.
             parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reBuildBodyParent();
             return;
         }
@@ -247,15 +248,15 @@ namespace Urho3D {
             transform.SetRotation(node_->GetWorldRotation().RotationMatrix());
             dMatrix mat = UrhoToNewton(transform);
 
-            if (!newtonBody_)
-                newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
+            
+            newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
 
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
             mass_ = accumMass * massScale_;
             NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
-            
+
             NewtonBodySetUserData(newtonBody_, (void*)this);
 
             NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
@@ -285,6 +286,11 @@ namespace Urho3D {
 
         netForceNewton_ = UrhoToNewton((gravityForce + netForce_));
         netTorqueNewton_ = UrhoToNewton(netTorque_);
+
+        //if (netForceNewton_.m_x != 0)
+        //{
+        //    URHO3D_LOGINFO("Force Added To This: " + String((unsigned)(void*)this));
+        //}
     }
 
     void NewtonRigidBody::OnNodeSet(Node* node)
@@ -498,6 +504,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::GetBakedForceAndTorque(dVector& force, dVector& torque)
     {
+        
         force = netForceNewton_;
         torque = netTorqueNewton_;
     }

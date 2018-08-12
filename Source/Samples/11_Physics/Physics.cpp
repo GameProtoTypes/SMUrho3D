@@ -96,7 +96,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
+    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -148,7 +148,10 @@ void Physics::CreateScene()
     }
 
 
-    //CreatePyramids();
+    //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
+    //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
+
+    CreatePyramids();
 
     //SpawnCompound(Vector3(0,1,0));
     //SpawnConvexHull(Vector3(21, 1, 0));
@@ -156,10 +159,10 @@ void Physics::CreateScene()
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     
-    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 
@@ -438,7 +441,7 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids()
 {
-    int size = 8;
+    int size = 16;
     //create pyramids
     const int numIslands = 0;
     for (int x2 = -numIslands; x2 <= numIslands; x2++)
@@ -448,7 +451,7 @@ void Physics::CreatePyramids()
             {
                 for (int x = -y; x <= y; ++x)
                 {
-                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x*2.0f, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x*1.1f, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
                 }
             }
         }
@@ -518,7 +521,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
     //lets joint spheres together with a distance limiting joint.
     const float dist = 5.0f;
 
-    const int numSpheres = 10;
+    const int numSpheres = 25;
 
     PODVector<Node*> nodes;
     //make lots of spheres
@@ -548,7 +551,7 @@ void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
     //lets joint spheres together with a distance limiting joint.
     const float dist = 0.5f;
 
-    const int numSpheres = 50;
+    const int numSpheres = 25;
 
     PODVector<Node*> nodes;
     //make lots of spheres
@@ -733,6 +736,8 @@ void Physics::UpdatePickPull()
     Vector3 netForce;
     netForce = delta * forceFactor;
     netForce -= scene_->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity();
+
+    //URHO3D_LOGINFO("picker" + String((unsigned)(void*)rigBody->GetNewtonBody()));
 
     rigBody->ResetForces();
     rigBody->AddWorldForce(netForce);
