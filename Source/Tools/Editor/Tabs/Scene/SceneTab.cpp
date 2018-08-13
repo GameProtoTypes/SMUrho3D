@@ -287,6 +287,15 @@ void SceneTab::Select(Node* node)
     }
 }
 
+void SceneTab::Select(PODVector<Node*> nodes)
+{
+    if (gizmo_.Select(nodes))
+    {
+        using namespace EditorSelectionChanged;
+        SendEvent(E_EDITORSELECTIONCHANGED, P_SCENE, GetScene());
+    }
+}
+
 void SceneTab::Unselect(Node* node)
 {
     if (gizmo_.Unselect(node))
@@ -677,11 +686,15 @@ void SceneTab::RenderNodeContextMenu()
 
         if (ui::MenuItem(alternative ? "Create Child (Local)" : "Create Child"))
         {
+            PODVector<Node*> newNodes;
             for (auto& selectedNode : GetSelection())
             {
                 if (!selectedNode.Expired())
-                    Select(selectedNode->CreateChild(String::EMPTY, alternative ? LOCAL : REPLICATED));
+                    newNodes.Push(selectedNode->CreateChild(String::EMPTY, alternative ? LOCAL : REPLICATED));
             }
+
+            UnselectAll();
+            Select(newNodes);
         }
 		if (ui::MenuItem(alternative ? "Load Child (Local)" : "Load Child"))
 		{

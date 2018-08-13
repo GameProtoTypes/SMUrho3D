@@ -165,12 +165,8 @@ void Editor::Start()
                 break;
         }
 
-        String loadProject = GetCache()->GetResourceFileName("Etc/DefaultEditorProject.project");
         if (i < arguments.Size())
-            loadProject = arguments[i];
-
-        // Load default project on start
-        OpenProject(loadProject);
+            OpenProject(arguments[i]);
     }
 
     // Plugin loading
@@ -184,6 +180,7 @@ void Editor::Start()
 
 void Editor::Stop()
 {
+    CloseProject();
     ui::ShutdownDock();
 }
 
