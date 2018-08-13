@@ -49,6 +49,7 @@ dgVector dgBroadPhase::m_linearContactError2(DG_CONTACT_TRANSLATION_ERROR * DG_C
 dgVector dgBroadPhaseNode::m_broadPhaseScale (DG_BROADPHASE_AABB_SCALE, DG_BROADPHASE_AABB_SCALE, DG_BROADPHASE_AABB_SCALE, dgFloat32 (0.0f));
 dgVector dgBroadPhaseNode::m_broadInvPhaseScale (DG_BROADPHASE_AABB_INV_SCALE, DG_BROADPHASE_AABB_INV_SCALE, DG_BROADPHASE_AABB_INV_SCALE, dgFloat32 (0.0f));
 
+//int xxxxxx;
 
 class dgBroadPhase::dgSpliteInfo
 {
@@ -288,6 +289,21 @@ void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descrip
 			if (body->IsRTTIType(dgBody::m_dynamicBodyRTTI)) {
 				dgDynamicBody* const dynamicBody = (dgDynamicBody*)body;
 				dynamicBody->ApplyExtenalForces(timestep, threadID);
+/*
+//if (dynamicBody->m_externalForce.m_x != 0) {
+//space = true;
+//dgTrace (("frame(%d) body(%d) %x %f %f %f\n", xxxxxx, dynamicBody->m_uniqueID, dynamicBody->m_userData, dynamicBody->m_externalForce.m_x, dynamicBody->m_externalForce.m_y, dynamicBody->m_externalForce.m_z));
+//}
+				//frame(1142) body(33) 38a548a8 0.000000 4.673497 -0.000000
+				if ((xxxxxx >= 2000) && (xxxxxx < 2100)) {
+					if (dynamicBody->m_uniqueID == 33) {
+						dynamicBody->m_externalForce = dgVector (0.000000f, 4.673497f, -100.000000f, 0.0f);
+					}
+					if (dynamicBody->m_veloc.DotProduct3(dynamicBody->m_veloc) > 0.5f) {
+						dgTrace (("body(%d)\n", dynamicBody->m_uniqueID));
+					}
+				}
+*/
 			}
 		}
 
@@ -306,6 +322,10 @@ void dgBroadPhase::SleepingState(dgBroadphaseSyncDescriptor* const descriptor, d
 	while (node) {
 		if (DoNeedUpdate(node)) {
 			dgBody* const body = node->GetInfo().GetBody();
+
+//if ((xxxxxx >= 2000) && (xxxxxx < 2100) && body->m_uniqueID == 815) {
+//xxxxxx *=1;
+//}
 
 			if (body->IsRTTIType(dgBody::m_dynamicBodyRTTI)) {
 				dgDynamicBody* const dynamicBody = (dgDynamicBody*)body;
@@ -701,7 +721,7 @@ void dgBroadPhase::UpdateBody(dgBody* const body, dgInt32 threadIndex)
 		
 		if (body1->GetBroadPhaseAggregate()) {
 			dgBroadPhaseAggregate* const aggregate = body1->GetBroadPhaseAggregate();
-			dgScopeSpinLock lock(&aggregate->m_criticalSectionLock);
+			dgScopeSpinPause lock(&aggregate->m_criticalSectionLock);
 			aggregate->m_isInEquilibrium = body1->m_equilibrium;
 		}
 		
@@ -709,7 +729,7 @@ void dgBroadPhase::UpdateBody(dgBody* const body, dgInt32 threadIndex)
 			dgAssert(!node->IsAggregate());
 			node->SetAABB(body1->m_minAABB, body1->m_maxAABB);
 			for (dgBroadPhaseNode* parent = node->m_parent; parent != root; parent = parent->m_parent) {
-				dgScopeSpinLock lock(&parent->m_criticalSectionLock);
+				dgScopeSpinPause lock(&parent->m_criticalSectionLock);
 				if (!parent->IsAggregate()) {
 					dgVector minBox;
 					dgVector maxBox;
@@ -1202,7 +1222,7 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 							m_pendingSoftBodyCollisions[m_pendingSoftBodyPairsCount].m_body1 = body1;
 							m_pendingSoftBodyPairsCount++;
 						} else {
-							dgScopeSpinLock lock(&m_contacJointLock);
+							dgScopeSpinPause lock(&m_contacJointLock);
 							contact = new (m_world->m_allocator) dgContact(m_world, material);
 							contact->AppendToContactList();
 							dgAssert(contact);
@@ -1404,8 +1424,7 @@ void dgBroadPhase::KinematicBodyActivation (dgContact* const contatJoint) const
 					dgVector relOmega (body0->m_omega - body1->m_omega);
 					dgVector mask2 ((relVeloc.DotProduct4(relVeloc) < dgDynamicBody::m_equilibriumError2) & (relOmega.DotProduct4(relOmega) < dgDynamicBody::m_equilibriumError2));
 
-					//dgThreadHiveScopeLock lock (m_world, &body1->m_criticalSectionLock);
-					dgScopeSpinLock lock(&body1->m_criticalSectionLock);
+					dgScopeSpinPause lock(&body1->m_criticalSectionLock);
 					body1->m_sleeping = false;
 					body1->m_equilibrium = mask2.GetSignMask() ? true : false;
 				}
@@ -1417,8 +1436,7 @@ void dgBroadPhase::KinematicBodyActivation (dgContact* const contatJoint) const
 					dgVector relOmega (body0->m_omega - body1->m_omega);
 					dgVector mask2 ((relVeloc.DotProduct4(relVeloc) < dgDynamicBody::m_equilibriumError2) & (relOmega.DotProduct4(relOmega) < dgDynamicBody::m_equilibriumError2));
 
-					//dgThreadHiveScopeLock lock (m_world, &body0->m_criticalSectionLock);
-					dgScopeSpinLock lock(&body1->m_criticalSectionLock);
+					dgScopeSpinPause lock(&body1->m_criticalSectionLock);
 					body0->m_sleeping = false;
 					body0->m_equilibrium = mask2.GetSignMask() ? true : false;
 				}
@@ -1498,9 +1516,10 @@ void dgBroadPhase::UpdateRigidBodyContacts(dgBroadphaseSyncDescriptor* const des
 	while (node) {
 		dgContact* const contact = node->GetInfo();
 
-		const dgBody* const body0 = contact->GetBody0();
-		const dgBody* const body1 = contact->GetBody1();
+		dgBody* const body0 = contact->GetBody0();
+		dgBody* const body1 = contact->GetBody1();
 		if (!(body0->m_equilibrium & body1->m_equilibrium)) {
+			bool contactActive = contact->m_contactActive;
 			if (ValidateContactCache(contact, timestep)) {
 				contact->m_broadphaseLru = m_lru;
 				contact->m_timeOfImpact = dgFloat32(1.0e10f);
@@ -1549,6 +1568,15 @@ void dgBroadPhase::UpdateRigidBodyContacts(dgBroadphaseSyncDescriptor* const des
 					}
 				}
 			}
+			if (contactActive ^ contact->m_contactActive) {
+				if (body0->GetInvMass().m_w) {
+					body0->m_equilibrium = false;
+				}
+				if (body1->GetInvMass().m_w) {
+					body1->m_equilibrium = false;
+				}
+			}
+
 		} else {
 			contact->m_broadphaseLru = m_lru;
 		}
@@ -1613,6 +1641,11 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	DG_TRACKTIME(__FUNCTION__);
     m_lru = m_lru + 1;
 	m_pendingSoftBodyPairsCount = 0;
+
+//xxxxxx ++;
+//if (space)
+//dgTrace (("\n"));
+//space = false;
 
 	const dgInt32 threadsCount = m_world->GetThreadCount();
 
