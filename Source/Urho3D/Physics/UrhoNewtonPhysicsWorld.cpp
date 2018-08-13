@@ -51,6 +51,12 @@ namespace Urho3D {
 
 
     
+    String UrhoNewtonPhysicsWorld::GetSolverPluginName()
+    {
+        void* plugin = NewtonCurrentPlugin(newtonWorld_);
+        return String(NewtonGetPluginString(newtonWorld_, plugin));
+    }
+
     void UrhoNewtonPhysicsWorld::GetRigidBodies(PODVector<NewtonRigidBody*>& result, const Sphere& sphere, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
     {
 

@@ -45,7 +45,8 @@ namespace Urho3D
         /// Saves the NewtonWorld to a serializable newton file.
         void SerializeNewtonWorld(String fileName);
 
-
+        /// Return a name for the currently used speed plugin (SSE, AVX, AVX2)
+        String GetSolverPluginName();
 
 
         /// Return rigid bodies by a sphere query.

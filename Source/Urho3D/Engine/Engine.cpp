@@ -675,6 +675,13 @@ unsigned Engine::FreeUpdate()
 
 	updateAudioPausing();
 
+    // if we have not rendered in a long time - we are overloaded so just render once every second to indicate the program is still alive.
+    if (renderGoalTimer_.GetUSec(false) > 100000)
+    {
+        renderGoalTimer_.Reset();
+        Render();
+        return 0;
+    }
 
 	if (updateTimer_.IsTimedOut()) {
 		updateTimer_.Reset();
@@ -688,7 +695,9 @@ unsigned Engine::FreeUpdate()
 		Render();
 		return 0;
 	}
-	
+
+
+
 	//lets compute approximate time we have until next update or render
 	{
 		long long updateTimeLeft = ( updateTimer_.GetTimeoutDuration() - updateTimer_.GetUSec(false));

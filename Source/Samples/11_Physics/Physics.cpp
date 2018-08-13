@@ -154,12 +154,12 @@ void Physics::CreateScene()
     CreatePyramids();
 
     int numVertical = 1;
-    for (int i = 0; i < numVertical; i++)
-        SpawnCompound(Vector3(-2,1*i,i + 10));
-    for (int i = 0; i < numVertical; i++)
-        SpawnConvexHull(Vector3(0, 1*i, i + 10));
-    for(int i = 0; i < numVertical; i++)
-        SpawnDecompCompound(Vector3(2, 1*i, i + 10));
+    //for (int i = 0; i < numVertical; i++)
+    //    SpawnCompound(Vector3(-2,1*i,i + 10));
+    //for (int i = 0; i < numVertical; i++)
+    //    SpawnConvexHull(Vector3(0, 1*i, i + 10));
+    //for(int i = 0; i < numVertical; i++)
+    //    SpawnDecompCompound(Vector3(2, 1*i, i + 10));
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     
@@ -456,7 +456,8 @@ void Physics::CreatePyramids()
             {
                 for (int x = -y; x <= y; ++x)
                 {
-                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    //SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    SpawnSamplePhysicsBox(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f, Vector3::ONE);
                 }
             }
         }
