@@ -208,37 +208,44 @@ namespace Urho3D {
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
         URHO3D_PROFILE("PhysicsUpdate");
-        //rebuild rigid bodies if they need rebuilt (dirty)
-        for (NewtonRigidBody* rigBody : rigidBodyComponentList)
         {
-            if (rigBody->needsRebuilt_)
-                rigBody->reBuildBodyParent();
+            URHO3D_PROFILE("rebuildDirtyPhysicsComponents");
+            //rebuild rigid bodies if they need rebuilt (dirty)
+            for (NewtonRigidBody* rigBody : rigidBodyComponentList)
+            {
+                if (rigBody->needsRebuilt_)
+                    rigBody->reBuildBodyParent();
+            }
+
+            //rebuild contraints if they need rebuilt (dirty)
+            for (NewtonConstraint* constraint : constraintList)
+            {
+                if (constraint->needsRebuilt_)
+                    constraint->reEvalConstraint();
+            }
+        }
+        {
+            URHO3D_PROFILE("NewtonUpdate");
+            //use target time step to give newton constant time steps. 
+            float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
+            NewtonUpdate(newtonWorld_, timeStep);
+            NewtonWaitForUpdateToFinish(newtonWorld_);
         }
 
-        //rebuild contraints if they need rebuilt (dirty)
-        for (NewtonConstraint* constraint : constraintList)
         {
-            if (constraint->needsRebuilt_)
-                constraint->reEvalConstraint();
-        }
-
-
-        //use target time step to give newton constant time steps. 
-        float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
-        NewtonUpdate(newtonWorld_, timeStep);
-        NewtonWaitForUpdateToFinish(newtonWorld_);
-
-        //apply the transform of all rigid body components to their respective nodes.
-        for (NewtonRigidBody* rigBody : rigidBodyComponentList)
-        {
-            if (rigBody->GetInternalTransformDirty()) {
-                rigBody->ApplyTransform();
-                rigBody->MarkInternalTransformDirty(false);
+            URHO3D_PROFILE("Apply Node Transforms");
+            //apply the transform of all rigid body components to their respective nodes.
+            for (NewtonRigidBody* rigBody : rigidBodyComponentList)
+            {
+                if (rigBody->GetInternalTransformDirty()) {
+                    rigBody->ApplyTransform();
+                    rigBody->MarkInternalTransformDirty(false);
+                }
             }
         }
 
-
     }
+
 
 
     int UrhoNewtonPhysicsWorld::DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape)

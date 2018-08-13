@@ -677,42 +677,38 @@ unsigned Engine::FreeUpdate()
 	updateAudioPausing();
 
 
-    // if we have not rendered in a long time - we are overloaded so just render once every second to indicate the program is still alive.
+    //if we have not rendered in a long time - we are overloaded so just render once every second to indicate the program is still alive.
     if (renderGoalTimer_.GetUSec(false) > 100000)
     {
         renderGoalTimer_.Reset();
         Render();
-        return 0;
-    }
 
-	if (updateTimer_.IsTimedOut()) {
+    }
+	else if (updateTimer_.IsTimedOut()) {
 		updateTimer_.Reset();
         URHO3D_PROFILE_FRAME();//sync profiling frames on the start of updates.
 		Update();
-		return 0;
 	}
 	else if (renderGoalTimer_.IsTimedOut())
 	{
 		//Render
 		renderGoalTimer_.Reset();
 		Render();
-
-		return 0;
 	}
 
 
+    {
 
-	//lets compute approximate time we have until next update or render
-	{
-		long long updateTimeLeft = ( updateTimer_.GetTimeoutDuration() - updateTimer_.GetUSec(false));
+        //lets compute approximate time we have until next update or render
+        long long updateTimeLeft = (updateTimer_.GetTimeoutDuration() - updateTimer_.GetUSec(false));
         long long renderTimeLeft = (renderGoalTimer_.GetTimeoutDuration() - renderGoalTimer_.GetUSec(false));
 
         long long timeLeftUS = Urho3D::Min(updateTimeLeft, renderTimeLeft);
-		if (timeLeftUS > 0)
-			return unsigned(timeLeftUS);
-		else
-			return 0;
-	}
+        if (timeLeftUS > 0)
+            return unsigned(timeLeftUS);
+        else
+            return 0;
+    }
 
 
 	return 0;

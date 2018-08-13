@@ -360,12 +360,8 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
     Node* curNode = root;
 
 
-
-
-
     for (int i = 0; i < levelCount; i++)
     {
-
 
         curNode = curNode->CreateChild();
         curNode->SetName("SpawnSceneCompoundTest:" + String(i));
@@ -445,7 +441,7 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids()
 {
-    int size = 8;
+    int size = 32;
     float horizontalSeperation = 2.0f;
     //create pyramids
     const int numIslands = 0;

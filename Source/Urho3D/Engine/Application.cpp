@@ -92,8 +92,9 @@ int Application::Run()
 		while (!engine_->IsExiting())
 		{
 			unsigned freeTimeUsApprox = engine_->FreeUpdate();
-			if(freeTimeUsApprox >= 1000)
-				GSS<Time>()->Sleep(freeTimeUsApprox/1000);
+            const unsigned leadinBufferTime = 500;
+			if(freeTimeUsApprox >= leadinBufferTime)
+				GSS<Time>()->Sleep((freeTimeUsApprox- leadinBufferTime)/1000);
 			
 		}
 

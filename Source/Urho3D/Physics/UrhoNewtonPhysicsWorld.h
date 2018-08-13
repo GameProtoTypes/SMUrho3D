@@ -95,9 +95,12 @@ namespace Urho3D
         Vector<WeakPtr<NewtonConstraint>> constraintList;
 
 
+        
+
+
         /// Step the simulation forward.
         void HandleUpdate(StringHash eventType, VariantMap& eventData);
-
+        void rebuildDirtyPhysicsComponents();
 
 
         /// Internal newton world
