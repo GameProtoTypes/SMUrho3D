@@ -106,7 +106,7 @@ private:
     void SpawnNSquaredJointedObject(Vector3 worldPosition);
     void SpawnLinearJointedObject(Vector3 worldPosition);
 
-
+    void FireSmallBall();
 
 
 

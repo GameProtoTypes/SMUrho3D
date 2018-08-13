@@ -84,8 +84,8 @@ namespace Urho3D {
 
     void NewtonRigidBody::SetLinearVelocity(const Vector3& velocity)
     {
-        if(newtonBody_)
-            NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(velocity)[0]);
+        nextLinearVelocity_ = velocity;
+        nextLinearVelocityNeeded_ = true;
     }
 
     void NewtonRigidBody::SetInheritNodeScale(bool enable /*= true*/)
@@ -143,30 +143,26 @@ namespace Urho3D {
     void NewtonRigidBody::reBuildBodyParent()
     {
         //determine if there is a parent rigid body and if there is we do not want to create a new body on this - we want to form a compound collision on the parent
-        Node* curNode = node_;
         Node* parentNodeWithRigidBody = nullptr;
-        while (curNode != nullptr) {
-            curNode = curNode->GetParent();
-            if (curNode && curNode->GetComponent<NewtonRigidBody>()) {
-                parentNodeWithRigidBody = curNode;
-                break;
-            }
-        }
+        NewtonRigidBody* nearestParentRigidBody = node_->GetParentComponent<NewtonRigidBody>(true);
+        if(nearestParentRigidBody)
+            parentNodeWithRigidBody = nearestParentRigidBody->node_;
+
         if (parentNodeWithRigidBody != nullptr)
         {
-            MarkDirty(false);//mark as clean because we know a rigid body on a higher level is going to be the real one.
-            freeBody();//free the body because we know we want to use a parent one instead.
+            MarkDirty(false);
             parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reBuildBodyParent();
+            
             return;
         }
+
         reBuildBody();
-        MarkDirty(false);//restore our dirtyness
+
     }
 
 
     void NewtonRigidBody::reBuildBody()
     {
-
         freeBody();
 
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
@@ -270,6 +266,7 @@ namespace Urho3D {
             bakeForceAndTorque();
         }
 
+        MarkDirty(false);
     }
 
 
@@ -309,10 +306,12 @@ namespace Urho3D {
 
 
             physicsWorld_->addRigidBody(this);
-            MarkDirty(true);
 
-            if (colShape_)
-                colShape_->updateReferenceToRigidBody();
+            reBuildBodyParent();
+
+
+            //if (colShape_)
+            //    colShape_->updateReferenceToRigidBody();
 
 
             SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(NewtonRigidBody, HandleNodeTransformChange));
@@ -323,8 +322,8 @@ namespace Urho3D {
                 physicsWorld_->removeRigidBody(this);
 
             freeBody();
-            if (colShape_)
-                colShape_->updateReferenceToRigidBody();
+            //if (colShape_)
+            //    colShape_->updateReferenceToRigidBody();
 
             UnsubscribeFromEvent(E_NODETRANSFORMCHANGE);
         }
@@ -362,6 +361,18 @@ namespace Urho3D {
     }
 
 
+
+    void NewtonRigidBody::applyDefferedActions()
+    {
+        if (nextLinearVelocityNeeded_)
+        {
+            if (newtonBody_)
+            {
+                NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(nextLinearVelocity_)[0]);
+            }
+            nextLinearVelocityNeeded_ = false;
+        }
+    }
 
     void NewtonRigidBody::AddWorldForce(const Vector3& force)
     {

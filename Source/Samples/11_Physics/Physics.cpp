@@ -169,8 +169,6 @@ void Physics::CreateScene()
 
 
 
-
-
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
     cameraNode_ = new Node(context_);
@@ -269,38 +267,6 @@ void Physics::MoveCamera(float timeStep)
     if (input->GetKeyPress(KEY_R)) {
 
         int rando = Random(6);
-
-        //if (rando == 0)
-        //{
-        //    URHO3D_LOGINFO("Spawning Static Triangle Mesh");
-        //    SpawnTrimeshObject();
-        //}
-        //else if (rando == 1)
-        //{
-        //    URHO3D_LOGINFO("Spawning Cube Hierarchy..");
-        //    SpawnObject();
-
-        //}
-        //else if (rando == 2)
-        //{
-        //    URHO3D_LOGINFO("Spawning Convex Hull");
-        //    SpawnConvexHull();
-        //}
-        //else if (rando == 3)
-        //{
-        //    URHO3D_LOGINFO("Spawning Compound");
-        //    SpawnCompound();
-        //}
-        //else if (rando == 4)
-        //{
-        //    URHO3D_LOGINFO("Spawning Joint Gismo 1");
-        //    SpawnNSquaredJointedObject(cameraNode_->GetWorldPosition());
-        //}
-        //else if (rando == 5)
-        //{
-        //    URHO3D_LOGINFO("Spawning Joint Gismo 2");
-        //    SpawnLinearJointedObject(cameraNode_->GetWorldPosition());
-        //}
     }
 
 
@@ -308,6 +274,11 @@ void Physics::MoveCamera(float timeStep)
 
     if (input->GetMouseButtonPress(MOUSEB_RIGHT))
         DecomposePhysicsTree();
+
+    if (input->GetMouseButtonPress(MOUSEB_MIDDLE))
+    {
+        FireSmallBall();
+    }
 
     if (input->GetKeyPress(KEY_T))
         TransportNode();
@@ -354,7 +325,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
 {
     Node* root = scene_->CreateChild();
     root->SetPosition(worldPos);
-    const int levelCount = 5;
+    const int levelCount = 10;
     const int breadth = 2;
     Node* curNode = root;
 
@@ -440,7 +411,7 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids()
 {
-    int size = 32;
+    int size = 4;
     float horizontalSeperation = 2.0f;
     //create pyramids
     const int numIslands = 0;
@@ -593,6 +564,13 @@ void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
 
 
 
+void Physics::FireSmallBall()
+{
+    Node* sphere = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition());
+    sphere->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 100.0f);
+    sphere->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
+}
+
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
     using namespace Update;
@@ -604,6 +582,30 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     MoveCamera(timeStep);
 
     UpdatePickPull();
+
+
+    //debug compound
+    //PODVector<Node*> dest;
+    //scene_->GetNodesWithTag(dest, "scaleTestCube");
+
+    //for (Node* node : dest)
+    //{
+    //    URHO3D_LOGINFO(node->GetName());
+    //    if (node->HasComponent<NewtonRigidBody>())
+    //    {
+    //        NewtonRigidBody* rigBody = node->GetComponent<NewtonRigidBody>();
+    //        URHO3D_LOGINFO("    Rigid Body: " + String((unsigned)(void*)rigBody->GetNewtonBody()));
+    //    }
+    //    PODVector<NewtonCollisionShape*> colShapes;
+    //    node->GetDerivedComponents(colShapes);
+
+    //    for (NewtonCollisionShape* col : colShapes)
+    //    {
+    //        URHO3D_LOGINFO("   Collision Shape: " + String((unsigned)(void*)col) + " Internal: " + String((unsigned)(void*)col->GetNewtonCollision()));
+
+    //    }
+    //}
+
 }
 
 void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)

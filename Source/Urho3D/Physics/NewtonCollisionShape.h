@@ -8,7 +8,7 @@ namespace Urho3D
 {
 
 
-
+    class NewtonNodePhysicsGlue;
     class UrhoNewtonPhysicsWorld;
     class NewtonRigidBody;
     class NewtonMeshObject;
@@ -54,12 +54,14 @@ namespace Urho3D
 
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
-        /// Rigid body.
-        WeakPtr<NewtonRigidBody> rigidBody_;
+
         /// Internal Newton Collision
         NewtonCollision* newtonCollision_ = nullptr;
         /// newton Mesh reference
         WeakPtr<NewtonMeshObject> newtonMesh_ = nullptr;
+
+        WeakPtr<NewtonNodePhysicsGlue> nodeGlue_;
+
         /// volume
         float volume_ = 0.0f;
         /// shape dirty flag
@@ -70,20 +72,12 @@ namespace Urho3D
         /// Offset rotation.
         Quaternion rotation_;
 
-        Node* oldNodeParent_ = nullptr;
-
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
         void reEvaluateCollision();
         /// implement this in subclasses to create the internal newton collision
         virtual void createNewtonCollision();
         /// Frees the internal collision shape and mesh;
         void freeInternalCollision();
-
-        /// notifies the sibling rigid body of updates if it exists
-        void notifyRigidBody();
-
-        /// Called when there is a change to the rigid body component;
-        void updateReferenceToRigidBody();
 
         /// Calculates the effective mass based off density and size. (could be expensive)
         float updateVolume();

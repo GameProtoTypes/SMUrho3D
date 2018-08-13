@@ -17,15 +17,14 @@ namespace Urho3D
 
         static void RegisterObject(Context* context);
 
+
+        void MarkDirty();
     protected:
 
         virtual void OnNodeSet(Node* node) override;
 
         void HandleNodeAdded(StringHash event, VariantMap& eventData);
         void HandleNodeRemoved(StringHash event, VariantMap& eventData);
-
-
-        WeakPtr<Node> oldNodeParent_;
     };
 
 }

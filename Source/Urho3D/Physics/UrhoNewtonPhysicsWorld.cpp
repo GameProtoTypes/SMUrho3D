@@ -216,6 +216,8 @@ namespace Urho3D {
             {
                 if (rigBody->needsRebuilt_)
                     rigBody->reBuildBodyParent();
+
+                rigBody->applyDefferedActions();
             }
 
             //rebuild contraints if they need rebuilt (dirty)

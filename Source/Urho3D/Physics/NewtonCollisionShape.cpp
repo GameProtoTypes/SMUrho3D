@@ -91,18 +91,10 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::notifyRigidBody()
-    {
-        if(!rigidBody_)
-            rigidBody_ = node_->GetComponent<NewtonRigidBody>();
-
-    }
-
     void NewtonCollisionShape::MarkDirty(bool dirty /*= true*/)
     {
         shapeNeedsRebuilt_ = dirty;
-        if (rigidBody_)
-            rigidBody_->MarkDirty(true);
+        nodeGlue_->MarkDirty();
     }
 
     NewtonCollision* NewtonCollisionShape::GetNewtonCollision()
@@ -115,10 +107,6 @@ namespace Urho3D {
     }
 
 
-    void NewtonCollisionShape::updateReferenceToRigidBody()
-    {
-        rigidBody_ = node_->GetComponent<NewtonRigidBody>();
-    }
 
     float NewtonCollisionShape::updateVolume()
 {

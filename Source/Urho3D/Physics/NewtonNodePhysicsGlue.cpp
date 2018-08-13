@@ -25,11 +25,23 @@ namespace Urho3D {
     }
 
 
+    void NewtonNodePhysicsGlue::MarkDirty()
+    {
+        if (node_->HasComponent<NewtonRigidBody>())
+        {
+            node_->GetComponent<NewtonRigidBody>()->MarkDirty(true);
+        }
+
+
+    }
+
     void NewtonNodePhysicsGlue::OnNodeSet(Node* node)
     {
         if (node)
         {
-            if (node->HasComponent<NewtonNodePhysicsGlue>())
+            PODVector<NewtonNodePhysicsGlue*> dest;
+            node->GetComponents<NewtonNodePhysicsGlue>(dest);
+            if (dest.Size() > 1)
             {
                 URHO3D_LOGWARNING("More than one " + NewtonNodePhysicsGlue::GetTypeNameStatic() + " component should not be added to a single node!");
             }
@@ -57,19 +69,17 @@ namespace Urho3D {
             {
                 node->GetComponent<NewtonRigidBody>()->MarkDirty();
             }
-
-            //mark its old parent dirty as well.
-            if (oldNodeParent_)
+            else
             {
                 //go up until rigid body is found.
-                NewtonRigidBody* oldParentRigidBody = oldNodeParent_->GetComponent<NewtonRigidBody>();
-                if (!oldParentRigidBody)
-                    oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
+                NewtonRigidBody* oldParentRigidBody = node->GetParentComponent<NewtonRigidBody>(true);
 
                 if (oldParentRigidBody)
                     oldParentRigidBody->MarkDirty();
+
             }
-            oldNodeParent_ = nullptr;
+
+
         }
     }
 
@@ -79,7 +89,20 @@ namespace Urho3D {
         if (node == node_)
         {
             Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
-            oldNodeParent_ = oldParent;
+
+
+            if (oldParent)
+            {
+                //go up until rigid body is found.
+                NewtonRigidBody* oldParentRigidBody = oldParent->GetParentComponent<NewtonRigidBody>(true);
+
+                if (oldParentRigidBody)
+                    oldParentRigidBody->MarkDirty();
+            }
+            else
+            {
+                URHO3D_LOGINFO("should not happen");
+            }
         }
     }
 

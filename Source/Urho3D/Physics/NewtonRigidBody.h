@@ -10,6 +10,7 @@ namespace Urho3D
     class Component;
     class UrhoNewtonPhysicsWorld;
     class NewtonCollisionShape;
+    class NewtonNodePhysicsGlue;
     class URHO3D_API NewtonRigidBody : public Component
     {
         URHO3D_OBJECT(NewtonRigidBody, Component);
@@ -128,8 +129,9 @@ namespace Urho3D
 
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
-        /// Rigid body.
-        WeakPtr<NewtonCollisionShape> colShape_;
+
+        WeakPtr<NewtonNodePhysicsGlue> nodeGlue_;
+
 
 
         ///Continuous Collision
@@ -144,7 +146,7 @@ namespace Urho3D
         ///angular dampending
         Vector3 angularDampening_;
         ///linera dampening
-        float linearDampening_ = 0.1f;
+        float linearDampening_ = 0.0f;
 
         dVector netForceNewton_;
         dVector netTorqueNewton_;
@@ -161,7 +163,6 @@ namespace Urho3D
 
         void freeBody();
 
-       
         ///precomputes force and torque for quick pass to newton callback
         void bakeForceAndTorque();
 
@@ -174,8 +175,15 @@ namespace Urho3D
 
         void HandleNodeTransformChange(StringHash event, VariantMap& eventData);
 
-        ///temp node variable used for when the node is changing parents.
-        Node* oldNodeParent_ = nullptr;
+
+        void applyDefferedActions();
+
+        //temp variable for deferered actions on the newtonbody in case it has not been created yet.
+        bool nextLinearVelocityNeeded_ = false;
+        Vector3 nextLinearVelocity_;
+
+
+
 
     };
 
