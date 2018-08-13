@@ -19,6 +19,7 @@
 #include "Core/Thread.h"
 #include "NewtonConstraint.h"
 #include "NewtonFixedDistanceConstraint.h"
+#include "Core/Profiler.h"
 
 namespace Urho3D {
 
@@ -206,9 +207,7 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
-
-
-
+        URHO3D_PROFILE("PhysicsUpdate");
         //rebuild rigid bodies if they need rebuilt (dirty)
         for (NewtonRigidBody* rigBody : rigidBodyComponentList)
         {

@@ -445,7 +445,7 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids()
 {
-    int size = 32;
+    int size = 8;
     float horizontalSeperation = 2.0f;
     //create pyramids
     const int numIslands = 0;

@@ -659,7 +659,7 @@ void Engine::DumpMemory()
 
 unsigned Engine::FreeUpdate()
 {
-	
+    URHO3D_PROFILE("FreeUpdate")
 	// If not headless, and the graphics subsystem no longer has a window open, assume we should exit
 	if (!headless_ && !GetSubsystem<Graphics>()->IsInitialized())
 		exiting_ = true;
@@ -675,6 +675,7 @@ unsigned Engine::FreeUpdate()
 
 	updateAudioPausing();
 
+
     // if we have not rendered in a long time - we are overloaded so just render once every second to indicate the program is still alive.
     if (renderGoalTimer_.GetUSec(false) > 100000)
     {
@@ -685,6 +686,7 @@ unsigned Engine::FreeUpdate()
 
 	if (updateTimer_.IsTimedOut()) {
 		updateTimer_.Reset();
+        URHO3D_PROFILE_FRAME();//sync profiling frames on the start of updates.
 		Update();
 		return 0;
 	}
@@ -693,6 +695,7 @@ unsigned Engine::FreeUpdate()
 		//Render
 		renderGoalTimer_.Reset();
 		Render();
+
 		return 0;
 	}
 
@@ -726,10 +729,7 @@ void Engine::Update()
 
 
 
-
-
     SendUpdateEvents();
-
 }
 
 void Engine::SendUpdateEvents()
@@ -740,7 +740,9 @@ void Engine::SendUpdateEvents()
         eventData[Update::P_TARGET_TIMESTEP] = float(updateTimeGoalUs_) / 1000000.0f;
         eventData[Update::P_UPDATETICK] = updateTick_;
 
+
         SendEvent(E_PREUPDATE, eventData);
+
         SendEvent(E_UPDATE, eventData);
         // Logic post-update event
         SendEvent(E_POSTUPDATE, eventData);
@@ -753,7 +755,6 @@ void Engine::Render()
         return;
 
     URHO3D_PROFILE("Render");
-
 
     // If device is lost, BeginFrame will fail and we skip rendering
     auto* graphics = GetSubsystem<Graphics>();
