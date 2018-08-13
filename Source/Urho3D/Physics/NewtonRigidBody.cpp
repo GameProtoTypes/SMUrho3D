@@ -13,6 +13,7 @@
 #include "dgQuaternion.h"
 #include "Scene/SceneEvents.h"
 #include "Engine/Engine.h"
+#include "NewtonNodePhysicsGlue.h"
 
 
 namespace Urho3D {
@@ -24,10 +25,6 @@ namespace Urho3D {
 
     NewtonRigidBody::NewtonRigidBody(Context* context) : Component(context)
     {
-        //#todo could we subcribe to the node itself?
-        SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeAdded));
-        SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeRemoved));
-
     }
 
     NewtonRigidBody::~NewtonRigidBody()
@@ -262,6 +259,8 @@ namespace Urho3D {
 
             NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
 
+            NewtonBodySetLinearDamping(newtonBody_, linearDampening_);
+            NewtonBodySetAngularDamping(newtonBody_,&UrhoToNewton(angularDampening_)[0]);
 
             //assign callbacks
             NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
@@ -304,6 +303,11 @@ namespace Urho3D {
 
             //Auto-create a physics world on the scene if it does not yet exist.
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
+
+            ///auto create node physics glue component
+            node->GetOrCreateComponent<NewtonNodePhysicsGlue>();
+
+
             physicsWorld_->addRigidBody(this);
             MarkDirty(true);
 
@@ -333,44 +337,7 @@ namespace Urho3D {
     }
 
 
-    void NewtonRigidBody::HandleNodeAdded(StringHash event, VariantMap& eventData)
-    {
-        Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
-
-        //if the node has been added to a parent.
-        if (node == node_)
-        {
-            //markt the rigid body dirty
-            if (node->HasComponent<NewtonRigidBody>())
-            {
-                node->GetComponent<NewtonRigidBody>()->MarkDirty();
-            }
-
-            //mark its old parent dirty as well.
-            if (oldNodeParent_)
-            {
-
-                //go up until rigid body is found.
-                NewtonRigidBody* oldParentRigidBody = oldNodeParent_->GetComponent<NewtonRigidBody>();
-                if (!oldParentRigidBody)
-                    oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
-
-                if (oldParentRigidBody)
-                    oldParentRigidBody->MarkDirty();
-            }
-            oldNodeParent_ = nullptr;
-        }
-    }
-
-    void NewtonRigidBody::HandleNodeRemoved(StringHash event, VariantMap& eventData)
-    {
-        Node* node = static_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
-        if (node == node_)
-        {
-            Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
-            oldNodeParent_ = oldParent;
-        }
-    }
+   
 
     void NewtonRigidBody::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
     {

@@ -22,6 +22,7 @@
 #include "Graphics/VisualDebugger.h"
 #include "Graphics/StaticModel.h"
 #include "Scene/SceneEvents.h"
+#include "NewtonNodePhysicsGlue.h"
 
 
 namespace Urho3D {
@@ -30,8 +31,6 @@ namespace Urho3D {
 
     NewtonCollisionShape::NewtonCollisionShape(Context* context) : Component(context)
     {
-        SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeAdded));
-        SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeRemoved));
     }
 
     NewtonCollisionShape::~NewtonCollisionShape()
@@ -144,11 +143,13 @@ namespace Urho3D {
 
         if (node)
         {
-
-            SubscribeToEvent(node, E_NODEADDED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeAdded));
-
-
+            ///auto create physics world
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
+
+            ///auto create node physics glue component
+            node->GetOrCreateComponent<NewtonNodePhysicsGlue>();
+
+
 
             //reEvaluateCollision();
             physicsWorld_->addCollisionShape(this);
@@ -164,45 +165,6 @@ namespace Urho3D {
     }
 
 
-
-    void NewtonCollisionShape::HandleNodeAdded(StringHash event, VariantMap& eventData)
-    {
-        Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
-
-        //if the node has been added to a parent.
-        if (node == node_)
-        {
-            //markt the rigid body dirty
-            if (node->HasComponent<NewtonRigidBody>())
-            {
-                node->GetComponent<NewtonRigidBody>()->MarkDirty();
-            }
-
-            //mark its old parent dirty as well.
-            if (oldNodeParent_)
-            {
-
-                //go up until rigid body is found.
-                NewtonRigidBody* oldParentRigidBody = oldNodeParent_->GetComponent<NewtonRigidBody>();
-                if (!oldParentRigidBody)
-                    oldParentRigidBody = oldNodeParent_->GetParentComponent<NewtonRigidBody>(true);
-
-                if (oldParentRigidBody)
-                    oldParentRigidBody->MarkDirty();
-            }
-            oldNodeParent_ = nullptr;
-        }
-    }
-
-    void NewtonCollisionShape::HandleNodeRemoved(StringHash event, VariantMap& eventData)
-    {
-        Node* node = static_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
-        if (node == node_)
-        {
-            Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
-            oldNodeParent_ = oldParent;
-        }
-    }
 
 
 
@@ -463,26 +425,26 @@ namespace Urho3D {
     {
         NewtonCollisionShape_Geometry::createNewtonCollision();
 
-        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
+        //NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
 
-        String keyData = String(maxConcavity_) + String(backFaceDistanceFactor_) + String(maxCompounds_) + String(maxVertexPerHull_);
+        //String keyData = String(maxConcavity_) + String(backFaceDistanceFactor_) + String(maxCompounds_) + String(maxVertexPerHull_);
 
-        /// if the newton mesh is in cache already - return that.
-        StringHash meshKey = UrhoNewtonPhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, keyData);
-        NewtonMeshObject* cachedMesh = physicsWorld_->GetNewtonMesh(meshKey);
-        if (cachedMesh)
-        {
-            meshDecomposition_ = cachedMesh;
-        }
-        else
-        {
-            meshDecomposition_ = physicsWorld_->GetCreateNewtonMesh(meshKey);
-            meshDecomposition_->mesh = NewtonMeshApproximateConvexDecomposition(newtonMesh_->mesh, maxConcavity_, backFaceDistanceFactor_, maxCompounds_, maxVertexPerHull_, nullptr, nullptr);
+        ///// if the newton mesh is in cache already - return that.
+        //StringHash meshKey = UrhoNewtonPhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, keyData);
+        //NewtonMeshObject* cachedMesh = physicsWorld_->GetNewtonMesh(meshKey);
+        //if (cachedMesh)
+        //{
+        //    meshDecomposition_ = cachedMesh;
+        //}
+        //else
+        //{
+        //    meshDecomposition_ = physicsWorld_->GetCreateNewtonMesh(meshKey);
+        //    meshDecomposition_->mesh = NewtonMeshApproximateConvexDecomposition(newtonMesh_->mesh, maxConcavity_, backFaceDistanceFactor_, maxCompounds_, maxVertexPerHull_, nullptr, nullptr);
 
-        }
+        //}
 
-        newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, meshDecomposition_->mesh, hullTolerance_, 0, 0);
+        //newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, meshDecomposition_->mesh, hullTolerance_, 0, 0);
     }
 
     NewtonCollisionShape_ConvexHull::NewtonCollisionShape_ConvexHull(Context* context) : NewtonCollisionShape_Geometry(context)

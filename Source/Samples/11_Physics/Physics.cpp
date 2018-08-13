@@ -92,7 +92,7 @@ void Physics::CreateScene()
     scene_ = new Scene(context_);
 
     // Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
-    // Create a physics simulation world with default parameters, which will update at 60fps. Like the Octree must
+    // Create a physics simulation world with default parameters, which will update at 60fps. the Octree must
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
@@ -126,7 +126,6 @@ void Physics::CreateScene()
     auto* skybox = skyNode->CreateComponent<Skybox>();
     skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
-
     {
         // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
         Node* floorNode = scene_->CreateChild("Floor");
@@ -151,7 +150,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
-    CreatePyramids();
+    //CreatePyramids();
 
     int numVertical = 1;
     //for (int i = 0; i < numVertical; i++)
@@ -166,7 +165,7 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 
@@ -452,8 +451,8 @@ void Physics::CreatePyramids()
             {
                 for (int x = -y; x <= y; ++x)
                 {
-                    //SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
-                    SpawnSamplePhysicsBox(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f, Vector3::ONE);
+                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    //SpawnSamplePhysicsBox(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f, Vector3::ONE);
                 }
             }
         }

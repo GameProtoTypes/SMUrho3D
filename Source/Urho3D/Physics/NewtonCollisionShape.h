@@ -91,11 +91,6 @@ namespace Urho3D
 
 
         virtual void OnNodeSet(Node* node) override;
-
-
-
-        void HandleNodeAdded(StringHash event, VariantMap& eventData);
-        void HandleNodeRemoved(StringHash event, VariantMap& eventData);
     };
 
 
@@ -310,21 +305,9 @@ namespace Urho3D
 
         static void RegisterObject(Context* context);
 
-        ///Set the maximum number of compounds to create for the compound. more will closer match the model while less will be more performant.
-        void SetMaxCompounds(int maxCompounds) { maxCompounds_ = maxCompounds; MarkDirty(true); }
-
-        void SetMaxConcavity(float maxConcavity) { maxConcavity_ = maxConcavity; MarkDirty(true); }
-
-        void SetBackFaceDistanceFactor(float backFaceDistanceFactor) { backFaceDistanceFactor_ = backFaceDistanceFactor; MarkDirty(true); }
-
-        void SetMaxVertexPerHull(float maxVertexPerHull) { maxVertexPerHull_ = maxVertexPerHull; MarkDirty(true); }
 
     protected:
         NewtonMeshObject* meshDecomposition_ = nullptr;
-        float maxConcavity_ = 0.01f;
-        float backFaceDistanceFactor_ = 0.2f;
-        int maxCompounds_ = 256;
-        int maxVertexPerHull_ = 100;
 
         virtual void createNewtonCollision() override;
 

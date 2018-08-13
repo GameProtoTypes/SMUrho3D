@@ -141,6 +141,10 @@ namespace Urho3D
         Vector3 netForce_;
         ///Net Torque in local cordinates
         Vector3 netTorque_;
+        ///angular dampending
+        Vector3 angularDampening_;
+        ///linera dampening
+        float linearDampening_ = 0.1f;
 
         dVector netForceNewton_;
         dVector netTorqueNewton_;
@@ -168,9 +172,6 @@ namespace Urho3D
         virtual void OnSceneSet(Scene* scene) override;
 
 
-
-        void HandleNodeAdded(StringHash event, VariantMap& eventData);
-        void HandleNodeRemoved(StringHash event, VariantMap& eventData);
         void HandleNodeTransformChange(StringHash event, VariantMap& eventData);
 
         ///temp node variable used for when the node is changing parents.

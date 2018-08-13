@@ -20,6 +20,7 @@
 #include "NewtonConstraint.h"
 #include "NewtonFixedDistanceConstraint.h"
 #include "Core/Profiler.h"
+#include "NewtonNodePhysicsGlue.h"
 
 namespace Urho3D {
 
@@ -128,7 +129,7 @@ namespace Urho3D {
                 newtonWorld_ = NewtonCreate();
                 NewtonSetSolverModel(newtonWorld_, 8);
                 NewtonSetThreadsCount(newtonWorld_,4);
-                //NewtonSetNumberOfSubsteps(newtonWorld_, 8);
+                NewtonSetNumberOfSubsteps(newtonWorld_, 1);
             }
         }
         else
@@ -362,6 +363,8 @@ namespace Urho3D {
         NewtonMeshObject::RegisterObject(context);
         NewtonConstraint::RegisterObject(context);
         NewtonFixedDistanceConstraint::RegisterObject(context);
+
+        NewtonNodePhysicsGlue::RegisterObject(context);
         //Constraint::RegisterObject(context);
         
         //RaycastVehicle::RegisterObject(context);
