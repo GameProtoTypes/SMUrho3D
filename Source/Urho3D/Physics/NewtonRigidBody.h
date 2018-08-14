@@ -47,6 +47,14 @@ namespace Urho3D
         /// Set Angular Damping factor (0.0 to 1.0) for angle component. default is 0 damping is in world space
         void SetAngularDamping(const Vector3& angularDamping);
 
+        /// Set the internal linear damping - this is used internally by the newton solver to bring bodies to sleep more effectively.(0.0 to 1.0) default is zero
+        void SetInternalLinearDamping(float damping);
+
+        /// Set the internal angular damping - this is used internally by the newton solver to bring bodies to sleep more effectively. (0.0 to 1.0) default is zero
+        void SetInternalAngularDamping(const Vector3& angularDamping);
+
+
+
         /// Set whether the collision size should be effected by the node scale.
         void SetInheritNodeScale(bool enable = true);
 
@@ -159,6 +167,10 @@ namespace Urho3D
         Vector3 angularDampening_;
         ///linera dampening
         float linearDampening_ = 0.0f;
+        ///angular dampending
+        Vector3 angularDampeningInternal_;
+        ///linera dampening
+        float linearDampeningInternal_ = 0.0f;
 
         dVector netForceNewton_;
         dVector netTorqueNewton_;

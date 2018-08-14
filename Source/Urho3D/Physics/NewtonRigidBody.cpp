@@ -92,13 +92,30 @@ namespace Urho3D {
     void NewtonRigidBody::SetLinearDamping(float dampingFactor)
     {
         linearDampening_ = dampingFactor;
-        //bakeForceAndTorque();
     }
 
     void NewtonRigidBody::SetAngularDamping(const Vector3& angularDamping)
     {
         angularDampening_ = angularDamping;
-        //bakeForceAndTorque();
+    }
+
+    void NewtonRigidBody::SetInternalLinearDamping(float damping)
+    {
+        linearDampeningInternal_ = damping;
+
+        if (newtonBody_)
+        {
+            NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
+        }
+    }
+
+    void NewtonRigidBody::SetInternalAngularDamping(const Vector3& angularDamping)
+    {
+        angularDampeningInternal_ = angularDamping;
+        if (newtonBody_)
+        {
+            NewtonBodySetAngularDamping(newtonBody_, &UrhoToNewton(angularDampeningInternal_)[0]);
+        }
     }
 
     void NewtonRigidBody::SetInheritNodeScale(bool enable /*= true*/)
@@ -247,9 +264,8 @@ namespace Urho3D {
 
 
             //ensure newton damping is 0 because we apply our own as a force.
-            NewtonBodySetLinearDamping(newtonBody_, 0.0f);
-            const float zero[3] = { 0,0,0 };
-            NewtonBodySetAngularDamping(newtonBody_, zero);
+            NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
+            NewtonBodySetAngularDamping(newtonBody_, &UrhoToNewton(angularDampeningInternal_)[0]);
 
 
 
