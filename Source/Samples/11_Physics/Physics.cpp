@@ -442,7 +442,11 @@ void Physics::CreatePyramids()
             {
                 for (int x = -y; x <= y; ++x)
                 {
-                    SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+
+                    Node* node = SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+
+                    //node->GetComponent<NewtonRigidBody>()->SetAngularDamping(Vector3::ONE * 0.2f);
+
                     //SpawnSamplePhysicsBox(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f, Vector3::ONE);
                 }
             }
@@ -589,17 +593,21 @@ void Physics::FireSmallBall()
     Node* sphere = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition());
     sphere->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 100.0f);
     sphere->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
-    if (Random(2) == 0)
-    {
-        sphere->AddTag("bulletball_linearDamp");
-        sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.5);
-    }
-    else
-    {
-        sphere->AddTag("bulletball_customDamp");
-        sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0);
+    sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.1f);
+    sphere->GetComponent<NewtonRigidBody>()->SetMassScale(Random(1.0f, 10.0f));
 
-    }
+
+    //if (Random(2) == 0)
+    //{
+    //    sphere->AddTag("bulletball_linearDamp");
+    //    sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.5);
+    //}
+    //else
+    //{
+    //    sphere->AddTag("bulletball_customDamp");
+    //    sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0);
+
+    //}
 
 
 

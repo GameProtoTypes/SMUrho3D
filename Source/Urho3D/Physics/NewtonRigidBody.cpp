@@ -14,6 +14,7 @@
 #include "Scene/SceneEvents.h"
 #include "Engine/Engine.h"
 #include "NewtonNodePhysicsGlue.h"
+#include "Core/Profiler.h"
 
 
 namespace Urho3D {
@@ -86,6 +87,18 @@ namespace Urho3D {
     {
         nextLinearVelocity_ = velocity;
         nextLinearVelocityNeeded_ = true;
+    }
+
+    void NewtonRigidBody::SetLinearDamping(float dampingFactor)
+    {
+        linearDampening_ = dampingFactor;
+        //bakeForceAndTorque();
+    }
+
+    void NewtonRigidBody::SetAngularDamping(const Vector3& angularDamping)
+    {
+        angularDampening_ = angularDamping;
+        //bakeForceAndTorque();
     }
 
     void NewtonRigidBody::SetInheritNodeScale(bool enable /*= true*/)
@@ -232,15 +245,20 @@ namespace Urho3D {
 
             NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
 
-            NewtonBodySetLinearDamping(newtonBody_, linearDampening_);
-            NewtonBodySetAngularDamping(newtonBody_,&UrhoToNewton(angularDampening_)[0]);
+
+            //ensure newton damping is 0 because we apply our own as a force.
+            NewtonBodySetLinearDamping(newtonBody_, 0.0f);
+            const float zero[3] = { 0,0,0 };
+            NewtonBodySetAngularDamping(newtonBody_, zero);
+
+
 
             //assign callbacks
             NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
             NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback); 
             NewtonBodySetDestructorCallback(newtonBody_, Newton_DestroyBodyCallback);
 
-            bakeForceAndTorque();
+            //bakeForceAndTorque();
         }
     }
 
@@ -250,19 +268,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::bakeForceAndTorque()
     {
-        Vector3 gravityForce = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity() * mass_;
 
-        //Quaternion worldOrientation = node_->GetWorldRotation();
-        //Vector3 netForceWrldSpc = worldOrientation * netForce_;
-        //Vector3 netTorqueWrldSpc = worldOrientation * netTorque_;
-
-        netForceNewton_ = UrhoToNewton((gravityForce + netForce_));
-        netTorqueNewton_ = UrhoToNewton(netTorque_);
-
-        //if (netForceNewton_.m_x != 0)
-        //{
-        //    URHO3D_LOGINFO("Force Added To This: " + String((unsigned)(void*)this));
-        //}
     }
 
     void NewtonRigidBody::OnNodeSet(Node* node)
@@ -426,6 +432,31 @@ namespace Urho3D {
             return Vector3::ZERO;
     }
 
+    Vector3 NewtonRigidBody::GetAngularVelocity(TransformSpace space)
+    {
+        if (newtonBody_) {
+            dVector vel;
+            NewtonBodyGetOmega(newtonBody_, &vel[0]);
+
+            if (space == TS_WORLD)
+            {
+                return NewtonToUrhoVec3(vel);
+            }
+            else if(space == TS_LOCAL)
+            {
+                return node_->WorldToLocal(NewtonToUrhoVec3(vel));
+            }
+            else if (space == TS_PARENT)
+            {
+                return node_->GetParent()->WorldToLocal(NewtonToUrhoVec3(vel));
+            }
+            return NewtonToUrhoVec3(vel);
+        }
+        else
+            return Vector3::ZERO;
+    }
+
+
     Vector3 NewtonRigidBody::GetAcceleration()
     {
         if (newtonBody_) {
@@ -472,10 +503,30 @@ namespace Urho3D {
     }
 
 
-    void NewtonRigidBody::GetBakedForceAndTorque(dVector& force, dVector& torque)
+    void NewtonRigidBody::GetForceAndTorque(dVector& force, dVector& torque)
     {
-        force = netForceNewton_;
-        torque = netTorqueNewton_;
+        URHO3D_PROFILE("GetForceAndTorque");
+
+
+        Vector3 gravityForce = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity() * mass_;
+
+
+        //basic damping forces (clamp to some reasonable values)
+        float linearDampingClamped = Urho3D::Clamp<float>(linearDampening_, 0.0f, 0.3f);
+        Vector3 angularDampingClamped = Urho3D::VectorClamp(angularDampening_, Vector3::ZERO, Vector3::ONE * 0.3f);
+
+
+        //basic velocity damping forces
+        Vector3 velocity = GetVelocity();
+        Vector3 linearDampingForce = -velocity.Normalized()*(velocity.LengthSquared())*linearDampingClamped * mass_;
+
+        //basic angular damping forces
+        Vector3 angularVelocity = GetAngularVelocity();
+        Vector3 angularDampingTorque = Vector3::ZERO;// -angularVelocity.Normalized()*(angularVelocity.LengthSquared())*angularDampingClamped * mass_;
+
+        force = UrhoToNewton((linearDampingForce + gravityForce + netForce_));
+        torque = UrhoToNewton(angularDampingTorque + netTorque_);
+
     }
 
 }

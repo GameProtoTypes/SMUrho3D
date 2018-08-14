@@ -221,13 +221,13 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
-        URHO3D_PROFILE("PhysicsUpdate");
+        URHO3D_PROFILE_FUNCTION();
 
            
         //rebuild collision shapes from child nodes to root nodes.
         rebuildDirtyPhysicsComponents();
         {
-            URHO3D_PROFILE("Newton Update");
+            URHO3D_PROFILE("NewtonUpdate");
             //use target time step to give newton constant time steps. 
             float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 
@@ -263,7 +263,7 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::rebuildDirtyPhysicsComponents()
     {
-        URHO3D_PROFILE("rebuildDirtyPhysicsComponents");
+        URHO3D_PROFILE_FUNCTION();
 
 
         //rebuild dirty collision shapes
@@ -364,6 +364,9 @@ namespace Urho3D {
 
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
     {
+        URHO3D_PROFILE_THREAD((String("Newton_Thread") + String(threadIndex)).CString());
+        URHO3D_PROFILE_FUNCTION()
+
 
         dVector netForce;
         dVector netTorque;
@@ -371,7 +374,9 @@ namespace Urho3D {
 
         rigidBodyComp = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
 
-        rigidBodyComp->GetBakedForceAndTorque(netForce, netTorque);
+
+        rigidBodyComp->GetForceAndTorque(netForce, netTorque);
+        
 
         NewtonBodySetForce(body, &netForce[0]);
         NewtonBodySetTorque(body, &netTorque[0]);

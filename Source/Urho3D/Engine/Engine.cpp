@@ -176,7 +176,7 @@ bool Engine::Initialize(const VariantMap& parameters)
     if (initialized_)
         return true;
 
-    URHO3D_PROFILE("InitEngine");
+    URHO3D_PROFILE_FUNCTION();
 
     // Set headless mode
     headless_ = GetParameter(parameters, EP_HEADLESS, false).GetBool();
@@ -660,7 +660,7 @@ void Engine::DumpMemory()
 
 unsigned Engine::FreeUpdate()
 {
-    URHO3D_PROFILE("FreeUpdate")
+    URHO3D_PROFILE_FUNCTION();
 	// If not headless, and the graphics subsystem no longer has a window open, assume we should exit
 	if (!headless_ && !GetSubsystem<Graphics>()->IsInitialized())
 		exiting_ = true;
@@ -686,7 +686,7 @@ unsigned Engine::FreeUpdate()
     }
 	else if (updateTimer_.IsTimedOut()) {
 		updateTimer_.Reset();
-        URHO3D_PROFILE_FRAME();//sync profiling frames on the start of updates.
+        URHO3D_PROFILE_FUNCTION();//sync profiling frames on the start of updates.
 		Update();
 	}
 	else if (renderGoalTimer_.IsTimedOut())
@@ -718,7 +718,7 @@ unsigned Engine::FreeUpdate()
 
 void Engine::Update()
 {
-    URHO3D_PROFILE("Update");
+    URHO3D_PROFILE_FUNCTION();
 
 	//compute times
 	updateTick_++;
@@ -751,7 +751,7 @@ void Engine::Render()
     if (headless_)
         return;
 
-    URHO3D_PROFILE("Render");
+    URHO3D_PROFILE_FUNCTION();
 
     // If device is lost, BeginFrame will fail and we skip rendering
     auto* graphics = GetSubsystem<Graphics>();

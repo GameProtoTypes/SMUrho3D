@@ -2,6 +2,7 @@
 #include "../Scene/Component.h"
 #include "Newton.h"
 #include "dVector.h"
+#include "../Scene/Node.h"
 
 class NewtonBody;
 
@@ -41,10 +42,10 @@ namespace Urho3D
         void SetLinearVelocity(const Vector3& velocity);
 
         /// Set linear damping factor (0.0 to 1.0) default is 0
-        void SetLinearDamping(float dampingFactor) { linearDampening_ = dampingFactor; }
+        void SetLinearDamping(float dampingFactor);
 
-        /// Set Angular Damping factor (0.0 to 1.0) for angle component. default is 0
-        void SetAngularDamping(const Vector3& angularDamping) { angularDampening_ = angularDamping; }
+        /// Set Angular Damping factor (0.0 to 1.0) for angle component. default is 0 damping is in world space
+        void SetAngularDamping(const Vector3& angularDamping);
 
         /// Set whether the collision size should be effected by the node scale.
         void SetInheritNodeScale(bool enable = true);
@@ -94,6 +95,8 @@ namespace Urho3D
 
         Vector3 GetVelocity();
 
+        Vector3 GetAngularVelocity(TransformSpace space = TS_WORLD);
+
         Vector3 GetAcceleration();
 
 
@@ -109,7 +112,7 @@ namespace Urho3D
         void ApplyTransform();
 
         ///Return the net force and torque for newton.
-        void GetBakedForceAndTorque(dVector& force, dVector& torque);
+        void GetForceAndTorque(dVector& force, dVector& torque);
 
         /// Draw Debug geometry
         void DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB = true, bool showCollisionMesh = true, bool showCenterOfMass = true, bool showContactForces = true);
