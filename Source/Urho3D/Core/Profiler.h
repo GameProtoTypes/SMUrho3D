@@ -37,8 +37,9 @@ void SetProfilerThreadName(const char* name);
 }
 
 #if URHO3D_PROFILING
-#   define URHO3D_PROFILE_C(name, color)          ZoneScopedNC(name, color)
-#   define URHO3D_PROFILE(name)                   ZoneScopedN(name)
+#   define URHO3D_PROFILE_FUNCTION()              ZoneScopedN(__FUNCTION__)
+#   define URHO3D_PROFILE_C(name, color)          ZoneScopedNC(name, color) 
+#   define URHO3D_PROFILE(name)                   ZoneScopedN(name)         
 #   define URHO3D_PROFILE_THREAD(name)            SetProfilerThreadName(name)
 #   define URHO3D_PROFILE_VALUE(name, value)      TracyPlot(name, value)
 #   define URHO3D_PROFILE_FRAME()                 FrameMark
