@@ -113,11 +113,7 @@ namespace Urho3D
         bool GetInternalTransformDirty();
 
 
-        /// rebuilds the internal body
-        void reBuildBody();
 
-        /// rebuild the internal body away of the scene herarchy (forms compound collision)
-        void reBuildBodyParent();
     protected:
 
 
@@ -162,6 +158,9 @@ namespace Urho3D
         bool transformDirty_ = true;
 
         void freeBody();
+
+        /// rebuilds the internal body based on the current status of collision shapes on this node and child nodes. (be sure to update the children first!)
+        void reBuildBody();
 
         ///precomputes force and torque for quick pass to newton callback
         void bakeForceAndTorque();

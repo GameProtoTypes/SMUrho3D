@@ -49,6 +49,7 @@
 #include <Urho3D/DebugNew.h>
 #include "Urho3D/Graphics/VisualDebugger.h"
 #include "Urho3D/Physics/NewtonFixedDistanceConstraint.h"
+#include "Urho3D/Physics/NewtonNodePhysicsGlue.h"
 
 
 
@@ -286,6 +287,19 @@ void Physics::MoveCamera(float timeStep)
     if (input->GetKeyPress(KEY_Y))
         RecomposePhysicsTree();
 
+    if (input->GetKeyPress(KEY_L))
+    {
+        //mark all physics things dirty
+        PODVector<Node*> nodes;
+        scene_->GetChildrenWithComponent<NewtonNodePhysicsGlue>(nodes, true);
+
+        for (Node* node : nodes)
+        {
+            node->GetComponent<NewtonNodePhysicsGlue>()->MarkDirty();
+        }
+
+    }
+
     // Check for loading/saving the scene. Save the scene to the file Data/Scenes/Physics.xml relative to the executable
     // directory
     if (input->GetKeyPress(KEY_F5))
@@ -325,7 +339,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
 {
     Node* root = scene_->CreateChild();
     root->SetPosition(worldPos);
-    const int levelCount = 10;
+    const int levelCount = 50;
     const int breadth = 2;
     Node* curNode = root;
 
@@ -595,13 +609,17 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     //    {
     //        NewtonRigidBody* rigBody = node->GetComponent<NewtonRigidBody>();
     //        URHO3D_LOGINFO("    Rigid Body: " + String((unsigned)(void*)rigBody->GetNewtonBody()));
+    //        if (rigBody->GetNewtonBody())
+    //        {
+    //            URHO3D_LOGINFO("     Collision: " + String((unsigned)(void*)NewtonBodyGetCollision(rigBody->GetNewtonBody())));
+    //        }
     //    }
     //    PODVector<NewtonCollisionShape*> colShapes;
     //    node->GetDerivedComponents(colShapes);
 
     //    for (NewtonCollisionShape* col : colShapes)
     //    {
-    //        URHO3D_LOGINFO("   Collision Shape: " + String((unsigned)(void*)col) + " Internal: " + String((unsigned)(void*)col->GetNewtonCollision()));
+    //       // URHO3D_LOGINFO("    Internal: " + String((unsigned)(void*)NewtonBodyGetCollision(rigBody->GetNewtonBody())));
 
     //    }
     //}

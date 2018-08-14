@@ -140,25 +140,7 @@ namespace Urho3D {
             compoundCollision_ = nullptr;
         }
     }
-    void NewtonRigidBody::reBuildBodyParent()
-    {
-        //determine if there is a parent rigid body and if there is we do not want to create a new body on this - we want to form a compound collision on the parent
-        Node* parentNodeWithRigidBody = nullptr;
-        NewtonRigidBody* nearestParentRigidBody = node_->GetParentComponent<NewtonRigidBody>(true);
-        if(nearestParentRigidBody)
-            parentNodeWithRigidBody = nearestParentRigidBody->node_;
 
-        if (parentNodeWithRigidBody != nullptr)
-        {
-            MarkDirty(false);
-            parentNodeWithRigidBody->GetComponent<NewtonRigidBody>()->reBuildBodyParent();
-            
-            return;
-        }
-
-        reBuildBody();
-
-    }
 
 
     void NewtonRigidBody::reBuildBody()
@@ -172,7 +154,6 @@ namespace Urho3D {
 
         for (NewtonCollisionShape* shp : childCollisionShapes)
             nodesWithCollision += shp->GetNode();
-
 
         if (nodesWithCollision.Size())
         {
@@ -192,10 +173,6 @@ namespace Urho3D {
             for (Node* curNode : nodesWithCollision)
             {
                 NewtonCollisionShape* colComp = curNode->GetDerivedComponent<NewtonCollisionShape>();
-
-                //make sure the collision is built with latest.
-                if (colComp->shapeNeedsRebuilt_)
-                    colComp->reEvaluateCollision();
 
                 NewtonCollision* curNewtCollision = colComp->GetNewtonCollision();
                 NewtonCollision* usedCollision = nullptr;
@@ -242,7 +219,7 @@ namespace Urho3D {
             transform.SetRotation(node_->GetWorldRotation().RotationMatrix());
             dMatrix mat = UrhoToNewton(transform);
 
-            
+            //#bug sometimes mat is not orthogonal!
             newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
 
 
@@ -265,8 +242,6 @@ namespace Urho3D {
 
             bakeForceAndTorque();
         }
-
-        MarkDirty(false);
     }
 
 
@@ -307,11 +282,6 @@ namespace Urho3D {
 
             physicsWorld_->addRigidBody(this);
 
-            reBuildBodyParent();
-
-
-            //if (colShape_)
-            //    colShape_->updateReferenceToRigidBody();
 
 
             SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(NewtonRigidBody, HandleNodeTransformChange));
@@ -322,9 +292,6 @@ namespace Urho3D {
                 physicsWorld_->removeRigidBody(this);
 
             freeBody();
-            //if (colShape_)
-            //    colShape_->updateReferenceToRigidBody();
-
             UnsubscribeFromEvent(E_NODETRANSFORMCHANGE);
         }
 

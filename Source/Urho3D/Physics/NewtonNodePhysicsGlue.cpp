@@ -60,26 +60,14 @@ namespace Urho3D {
     void NewtonNodePhysicsGlue::HandleNodeAdded(StringHash event, VariantMap& eventData)
     {
         Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
+        Node* newParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
 
-        //if the node has been added to a parent.
         if (node == node_)
         {
-            //markt the rigid body dirty
-            if (node->HasComponent<NewtonRigidBody>())
-            {
-                node->GetComponent<NewtonRigidBody>()->MarkDirty();
-            }
-            else
-            {
-                //go up until rigid body is found.
-                NewtonRigidBody* oldParentRigidBody = node->GetParentComponent<NewtonRigidBody>(true);
-
-                if (oldParentRigidBody)
-                    oldParentRigidBody->MarkDirty();
-
-            }
-
-
+            //trigger a rebuild on the root of the new tree.
+            NewtonRigidBody* mostRootRigBody = GetMostRootRigidBody(node);
+            if (mostRootRigBody)
+                mostRootRigBody->MarkDirty(true);
         }
     }
 
@@ -93,11 +81,12 @@ namespace Urho3D {
 
             if (oldParent)
             {
-                //go up until rigid body is found.
-                NewtonRigidBody* oldParentRigidBody = oldParent->GetParentComponent<NewtonRigidBody>(true);
+                
+                //trigger a rebuild on the root of the old parents tree.
+                NewtonRigidBody* mostRootRigBody = GetMostRootRigidBody(oldParent);
+                if(mostRootRigBody)
+                    mostRootRigBody->MarkDirty(true);
 
-                if (oldParentRigidBody)
-                    oldParentRigidBody->MarkDirty();
             }
             else
             {
@@ -106,6 +95,24 @@ namespace Urho3D {
         }
     }
 
+    Urho3D::NewtonRigidBody* GetMostRootRigidBody(Node* node)
+    {
+        NewtonRigidBody* mostRootRigidBody = node->GetComponent<NewtonRigidBody>();
+        if (!mostRootRigidBody)
+            mostRootRigidBody = node->GetParentComponent<NewtonRigidBody>(true);
+
+        while (mostRootRigidBody)//keep going up.
+        {
+            NewtonRigidBody* rig = mostRootRigidBody->GetNode()->GetParentComponent<NewtonRigidBody>(true);
+            if (rig)
+                mostRootRigidBody = rig;
+            else
+                break;
+        }
+
+
+        return mostRootRigidBody;
+    }
 
 
 }

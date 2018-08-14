@@ -209,24 +209,14 @@ namespace Urho3D {
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
         URHO3D_PROFILE("PhysicsUpdate");
-        {
-            URHO3D_PROFILE("rebuildDirtyPhysicsComponents");
-            //rebuild rigid bodies if they need rebuilt (dirty)
-            for (NewtonRigidBody* rigBody : rigidBodyComponentList)
-            {
-                if (rigBody->needsRebuilt_)
-                    rigBody->reBuildBodyParent();
 
-                rigBody->applyDefferedActions();
-            }
+            
 
-            //rebuild contraints if they need rebuilt (dirty)
-            for (NewtonConstraint* constraint : constraintList)
-            {
-                if (constraint->needsRebuilt_)
-                    constraint->reEvalConstraint();
-            }
-        }
+
+        //rebuild collision shapes from child nodes to root nodes.
+        rebuildDirtyPhysicsComponents();
+
+
         {
             URHO3D_PROFILE("NewtonUpdate");
             //use target time step to give newton constant time steps. 
@@ -250,6 +240,50 @@ namespace Urho3D {
     }
 
 
+
+    void UrhoNewtonPhysicsWorld::rebuildDirtyPhysicsComponents()
+    {
+        URHO3D_PROFILE("rebuildDirtyPhysicsComponents");
+
+
+        //rebuild dirty collision shapes
+        for (NewtonCollisionShape* colShape : collisionComponentList)
+        {
+            if (colShape->GetDirty()) {
+                colShape->reEvaluateCollision();
+                colShape->MarkDirty(false);
+            }
+        }
+
+
+        //then rebuild rigid bodies if they need rebuilt (dirty) from root nodes up.
+        for (NewtonRigidBody* rigBody : rigidBodyComponentList)
+        {
+            if (!rigBody->GetDirty())
+                continue;
+
+            NewtonRigidBody* mostRootRigBody = GetMostRootRigidBody(rigBody->GetNode());
+
+            if (mostRootRigBody->needsRebuilt_){
+                mostRootRigBody->reBuildBody();
+                mostRootRigBody->MarkDirty(false);
+            }
+        }
+
+        for (NewtonRigidBody* rigBody : rigidBodyComponentList)
+        {
+            rigBody->applyDefferedActions();
+        }
+
+
+
+        //rebuild contraints if they need rebuilt (dirty)
+        for (NewtonConstraint* constraint : constraintList)
+        {
+            if (constraint->needsRebuilt_)
+                constraint->reEvalConstraint();
+        }
+    }
 
     int UrhoNewtonPhysicsWorld::DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape)
     {

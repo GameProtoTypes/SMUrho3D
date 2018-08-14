@@ -61,10 +61,6 @@ namespace Urho3D {
 
     void NewtonCollisionShape::reEvaluateCollision()
     {
-        if (!shapeNeedsRebuilt_)
-            return;
-
-
             // first free any reference to an existing collision.
             freeInternalCollision();
 
@@ -73,9 +69,6 @@ namespace Urho3D {
 
             //compute volume.
             updateVolume();
-
-
-        shapeNeedsRebuilt_ = false;
     }
 
     void NewtonCollisionShape::createNewtonCollision()
@@ -94,7 +87,7 @@ namespace Urho3D {
     void NewtonCollisionShape::MarkDirty(bool dirty /*= true*/)
     {
         shapeNeedsRebuilt_ = dirty;
-        nodeGlue_->MarkDirty();
+        //nodeGlue_->MarkDirty();
     }
 
     NewtonCollision* NewtonCollisionShape::GetNewtonCollision()

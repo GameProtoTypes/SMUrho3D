@@ -1,9 +1,11 @@
 #pragma once
-#include "Scene/Component.h"
+#include "../Scene/Component.h"
 
 namespace Urho3D
 {
+    class Component;
     class Context;
+    class NewtonRigidBody;
     /// base class for newton collision shapes
     class URHO3D_API NewtonNodePhysicsGlue : public Component
     {
@@ -17,8 +19,10 @@ namespace Urho3D
 
         static void RegisterObject(Context* context);
 
-
         void MarkDirty();
+
+
+
     protected:
 
         virtual void OnNodeSet(Node* node) override;
@@ -27,4 +31,5 @@ namespace Urho3D
         void HandleNodeRemoved(StringHash event, VariantMap& eventData);
     };
 
+    NewtonRigidBody* GetMostRootRigidBody(Node* node);
 }
