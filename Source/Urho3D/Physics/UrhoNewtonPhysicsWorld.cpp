@@ -21,6 +21,7 @@
 #include "NewtonFixedDistanceConstraint.h"
 #include "Core/Profiler.h"
 #include "NewtonNodePhysicsGlue.h"
+#include "PhysicsEvents.h"
 
 namespace Urho3D {
 
@@ -104,6 +105,13 @@ namespace Urho3D {
         return gravity_;
     }
 
+    void UrhoNewtonPhysicsWorld::SetTotalIterations(int numIterations /*= 8*/)
+    {
+        totalIterationCount_ = numIterations;
+        applyNewtonWorldSettings();
+    }
+
+
     void UrhoNewtonPhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         if (debug)
@@ -127,9 +135,8 @@ namespace Urho3D {
             //create the newton world
             if (newtonWorld_ == nullptr) {
                 newtonWorld_ = NewtonCreate();
-                NewtonSetSolverModel(newtonWorld_, 8);
-                NewtonSetThreadsCount(newtonWorld_,4);
-                NewtonSetNumberOfSubsteps(newtonWorld_, 1);
+
+                applyNewtonWorldSettings();
             }
         }
         else
@@ -206,23 +213,36 @@ namespace Urho3D {
 
 
 
+    void UrhoNewtonPhysicsWorld::applyNewtonWorldSettings()
+    {
+        NewtonSetSolverModel(newtonWorld_, totalIterationCount_);
+        NewtonSetThreadsCount(newtonWorld_, newtonThreadCount_);
+    }
+
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
         URHO3D_PROFILE("PhysicsUpdate");
 
-            
-
-
+           
         //rebuild collision shapes from child nodes to root nodes.
         rebuildDirtyPhysicsComponents();
-
-
         {
-            URHO3D_PROFILE("NewtonUpdate");
+            URHO3D_PROFILE("Newton Update");
             //use target time step to give newton constant time steps. 
             float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
+
+            //send prestep physics event
+            VariantMap eventData;
+            eventData[PhysicsPreStep::P_WORLD] = this;
+            eventData[PhysicsPreStep::P_TIMESTEP] = timeStep;
+            SendEvent(E_PHYSICSPRESTEP, eventData);
+
+
             NewtonUpdate(newtonWorld_, timeStep);
             NewtonWaitForUpdateToFinish(newtonWorld_);
+
+            //send post physics event.
+            SendEvent(E_PHYSICSPOSTSTEP, eventData);
         }
 
         {

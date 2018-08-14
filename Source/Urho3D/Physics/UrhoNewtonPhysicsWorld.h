@@ -57,14 +57,15 @@ namespace Urho3D
         void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const NewtonRigidBody* body);
 
         
-
-
-
-
         ///set the global force acting on all rigid bodies in the world
         void SetGravity(const Vector3& force);
         ///return global force acting on all rigid bodies
         Vector3 GetGravity();
+
+        /// set how many iterations newton will run in total per update.
+        void SetTotalIterations(int numIterations = 8);
+
+
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
@@ -74,6 +75,10 @@ namespace Urho3D
         ///Global force
         Vector3 gravity_ = DEF_GRAVITY;
 
+        /// number of thread to allow newton to use (#todo draw from thread pool)
+        int newtonThreadCount_ = 4;
+        /// number of iterations newton will internally use.
+        int totalIterationCount_ = 8;
 
 
         virtual void OnSceneSet(Scene* scene) override;
@@ -95,7 +100,7 @@ namespace Urho3D
         Vector<WeakPtr<NewtonConstraint>> constraintList;
 
 
-        
+        void applyNewtonWorldSettings();
 
 
         /// Step the simulation forward.

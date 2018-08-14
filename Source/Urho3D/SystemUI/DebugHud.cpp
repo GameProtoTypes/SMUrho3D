@@ -222,8 +222,8 @@ void DebugHud::RenderUi(VariantMap& eventData)
 			String renderFpsString = "Render Hz %f";
 
 
-            ui::Text(updateFpsString.CString(), (1000000000.0f / GSS<Engine>()->GetLastUpdateTimeMs()));
-			ui::Text(renderFpsString.CString(), (1000000000.0f / GSS<Engine>()->GetLastRenderTimeMs()));
+            ui::Text(updateFpsString.CString(), (1000.0f / GSS<Engine>()->GetLastUpdateTimeMs()));
+			ui::Text(renderFpsString.CString(), (1000.0f / GSS<Engine>()->GetLastRenderTimeMs()));
             ui::Text("Triangles %u", primitives);
             ui::Text("Batches %u", batches);
             ui::Text("Views %u", renderer->GetNumViews());

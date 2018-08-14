@@ -61,15 +61,15 @@ public:
 	long long GetUpdateCount() const { return updateTick_; }
 
 
-    float GetUpdateTimeGoalMs() const { return updateTimeGoalUs_ * 1000.0f; }
+    float GetUpdateTimeGoalMs() const { return updateTimeGoalUs_ / 1000.0f; }
 
-    float GetRenderTimeGoalMs() const { return renderTimeGoalUs_ * 1000.0f; }
+    float GetRenderTimeGoalMs() const { return renderTimeGoalUs_ / 1000.0f; }
 
 	/// Return the duration in milliseconds of the last render frame.
-	float GetLastRenderTimeMs() const { return lastRenderTimeUs_ * 1000.0f; }
+	float GetLastRenderTimeMs() const { return lastRenderTimeUs_ / 1000.0f; }
 
 	/// Return the duration in milliseconds of the last update frame.
-	float GetLastUpdateTimeMs() const { return lastUpdateTimeUs_ * 1000.0f; }
+	float GetLastUpdateTimeMs() const { return lastUpdateTimeUs_ / 1000.0f; }
 
 
 
@@ -152,7 +152,7 @@ private:
 	HiresTimer renderGoalTimer_;
 
 	float renderTimeGoalUs_{ 5000.0f };  //200 Hz   
-    float updateTimeGoalUs_{ 16666.0f*0.25f }; //60 Hz
+    float updateTimeGoalUs_{ 16666.0f}; //60 Hz
 
     float lastRenderTimeUs_{ 0 };
     float lastUpdateTimeUs_{ 0 };

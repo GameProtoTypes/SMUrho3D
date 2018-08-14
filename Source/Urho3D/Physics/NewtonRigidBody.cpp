@@ -219,7 +219,7 @@ namespace Urho3D {
             transform.SetRotation(node_->GetWorldRotation().RotationMatrix());
             dMatrix mat = UrhoToNewton(transform);
 
-            //#bug sometimes mat is not orthogonal!
+            //#newtonurhobug sometimes mat is not orthogonal!
             newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
 
 
@@ -335,7 +335,9 @@ namespace Urho3D {
         {
             if (newtonBody_)
             {
-                NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(nextLinearVelocity_)[0]);
+                //AddImpulse()
+                AddImpulse(Vector3::ZERO, nextLinearVelocity_);
+                //NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(nextLinearVelocity_)[0]);
             }
             nextLinearVelocityNeeded_ = false;
         }
@@ -384,7 +386,7 @@ namespace Urho3D {
     void NewtonRigidBody::AddImpulse(const Vector3& localPosition, const Vector3& targetVelocity)
     {
         if(newtonBody_)
-            NewtonBodyAddImpulse(newtonBody_, &UrhoToNewton(targetVelocity)[0], &UrhoToNewton(node_->LocalToWorld(localPosition))[0], GSS<Engine>()->GetUpdateTimeGoalMs());
+            NewtonBodyAddImpulse(newtonBody_, &UrhoToNewton(targetVelocity)[0], &UrhoToNewton(node_->LocalToWorld(localPosition))[0], GSS<Engine>()->GetUpdateTimeGoalMs()*0.001f);
 
         
     }
@@ -411,6 +413,28 @@ namespace Urho3D {
             }
             return nullptr;
         }
+    }
+
+    Vector3 NewtonRigidBody::GetVelocity()
+    {
+        if (newtonBody_) {
+            dVector vel;
+            NewtonBodyGetVelocity(newtonBody_, &vel[0]);
+            return NewtonToUrhoVec3(vel);
+        }
+        else
+            return Vector3::ZERO;
+    }
+
+    Vector3 NewtonRigidBody::GetAcceleration()
+    {
+        if (newtonBody_) {
+            dVector vel;
+            NewtonBodyGetAcceleration(newtonBody_, &vel[0]);
+            return NewtonToUrhoVec3(vel);
+        }
+        else
+            return Vector3::ZERO;
     }
 
     Vector3 NewtonRigidBody::GetCenterOfMassPosition()
@@ -450,7 +474,6 @@ namespace Urho3D {
 
     void NewtonRigidBody::GetBakedForceAndTorque(dVector& force, dVector& torque)
     {
-        
         force = netForceNewton_;
         torque = netTorqueNewton_;
     }

@@ -27,6 +27,7 @@ namespace Urho3D
 
         ///Set a scaler on the mass of the rigid body - (scale is applied after collision shape densities)
         void SetMassScale(float massDensityScale);
+
         ///Get the mass scale of the rigid body
         float GetMassScale() const { return massScale_; }
 
@@ -39,8 +40,15 @@ namespace Urho3D
         /// Set linear velocity.
         void SetLinearVelocity(const Vector3& velocity);
 
+        /// Set linear damping factor (0.0 to 1.0) default is 0
+        void SetLinearDamping(float dampingFactor) { linearDampening_ = dampingFactor; }
+
+        /// Set Angular Damping factor (0.0 to 1.0) for angle component. default is 0
+        void SetAngularDamping(const Vector3& angularDamping) { angularDampening_ = angularDamping; }
+
         /// Set whether the collision size should be effected by the node scale.
         void SetInheritNodeScale(bool enable = true);
+
 
         bool GetInheritNodeScale() {
             return inheritNodeScale_;
@@ -48,7 +56,6 @@ namespace Urho3D
 
         /// Set continuous collision so that the body will not pass through walls.
         void SetContinuousCollision(bool sweptCollision);
-
 
         /// Add a force to the body in world cordinates on the body's center of mass.
         void AddWorldForce(const Vector3& force);
@@ -83,6 +90,12 @@ namespace Urho3D
         NewtonBody* GetNewtonBody() { return newtonBody_; }
         /// Return the currently used newton collision
         NewtonCollision* GetEffectiveNewtonCollision();
+
+
+        Vector3 GetVelocity();
+
+        Vector3 GetAcceleration();
+
 
 
         /// Return the world position of the center of mass.
@@ -177,10 +190,9 @@ namespace Urho3D
 
         void applyDefferedActions();
 
-        //temp variable for deferered actions on the newtonbody in case it has not been created yet.
+        //variable for deferered actions on the newtonbody in case it has not been created yet.
         bool nextLinearVelocityNeeded_ = false;
         Vector3 nextLinearVelocity_;
-
 
 
 

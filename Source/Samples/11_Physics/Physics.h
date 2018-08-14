@@ -135,4 +135,8 @@ private:
     void UpdatePickPull();
     RayQueryResult GetCameraPickNode();
 
+    //temp variable to tracking world position across updates.
+    PODVector<float> worldPosHistory_;
+    PODVector<float> worldPosHistory2_;
+
 };

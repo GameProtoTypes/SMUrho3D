@@ -97,7 +97,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
+    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -151,7 +151,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
-    //CreatePyramids();
+    CreatePyramids();
 
     int numVertical = 1;
     //for (int i = 0; i < numVertical; i++)
@@ -166,7 +166,7 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 
@@ -270,7 +270,13 @@ void Physics::MoveCamera(float timeStep)
         int rando = Random(6);
     }
 
-
+    if (input->GetKeyPress(KEY_TAB))
+    {
+        input->SetMouseMode(MM_ABSOLUTE);
+        GetSubsystem<Input>()->SetMouseVisible(!GetSubsystem<Input>()->IsMouseVisible());
+        GetSubsystem<Input>()->SetMouseGrabbed(!GetSubsystem<Input>()->IsMouseGrabbed());
+       
+    }
 
 
     if (input->GetMouseButtonPress(MOUSEB_RIGHT))
@@ -425,7 +431,7 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids()
 {
-    int size = 4;
+    int size = 8;
     float horizontalSeperation = 2.0f;
     //create pyramids
     const int numIslands = 0;
@@ -583,6 +589,23 @@ void Physics::FireSmallBall()
     Node* sphere = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition());
     sphere->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 100.0f);
     sphere->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
+    if (Random(2) == 0)
+    {
+        sphere->AddTag("bulletball_linearDamp");
+        sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.5);
+    }
+    else
+    {
+        sphere->AddTag("bulletball_customDamp");
+        sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0);
+
+    }
+
+
+
+
+
+
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -596,6 +619,46 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     MoveCamera(timeStep);
 
     UpdatePickPull();
+
+
+    //debug bulletball_linearDamp ball
+    PODVector<Node*> bulletBalls;
+    scene_->GetNodesWithTag(bulletBalls, "bulletball_linearDamp");
+    if (bulletBalls.Size()) {
+        Node* bulletBall = bulletBalls[0];
+
+        float sampleCountFactor = ((1000.0 / 60.0)/(GSS<Engine>()->GetUpdateTimeGoalMs()));
+
+        if(worldPosHistory_.Size() < 128*sampleCountFactor)
+            worldPosHistory_.Push((bulletBall->GetWorldPosition() - cameraNode_->GetWorldPosition()).Length());
+
+
+        ui::PlotLines("bulletball_linearDamp", &worldPosHistory_[0], worldPosHistory_.Size(), 0, nullptr, FLT_MAX, FLT_MAX, ImVec2(400,200));
+    }
+
+    //debug bulletball_linearDamp ball
+   // PODVector<Node*> bulletBalls;
+    scene_->GetNodesWithTag(bulletBalls, "bulletball_customDamp");
+    if (bulletBalls.Size()) {
+        Node* bulletBall = bulletBalls[0];
+
+        Vector3 vel = bulletBall->GetComponent<NewtonRigidBody>()->GetVelocity();
+
+            Vector3 dragForce = -vel.Normalized()*(vel.LengthSquared())*0.005f;
+
+
+            bulletBall->GetComponent<NewtonRigidBody>()->ResetForces();
+            bulletBall->GetComponent<NewtonRigidBody>()->AddWorldForce(dragForce);
+
+
+        float sampleCountFactor = ((1000.0 / 60.0) / (GSS<Engine>()->GetUpdateTimeGoalMs()));
+
+        if (worldPosHistory2_.Size() < 128 * sampleCountFactor)
+            worldPosHistory2_.Push((bulletBall->GetWorldPosition() - cameraNode_->GetWorldPosition()).Length());
+
+
+        ui::PlotLines("bulletball_customDamp", &worldPosHistory2_[0], worldPosHistory2_.Size(), 0, nullptr, FLT_MAX, FLT_MAX, ImVec2(400, 200));
+    }
 
 
     //debug compound
