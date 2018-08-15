@@ -200,6 +200,8 @@ namespace Urho3D
         virtual void OnSceneSet(Scene* scene) override;
 
 
+        void HandleNodeAdded(StringHash event, VariantMap& eventData);
+        void HandleNodeRemoved(StringHash event, VariantMap& eventData);
         void HandleNodeTransformChange(StringHash event, VariantMap& eventData);
 
 

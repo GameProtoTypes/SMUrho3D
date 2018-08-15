@@ -49,7 +49,6 @@
 #include <Urho3D/DebugNew.h>
 #include "Urho3D/Graphics/VisualDebugger.h"
 #include "Urho3D/Physics/NewtonFixedDistanceConstraint.h"
-#include "Urho3D/Physics/NewtonNodePhysicsGlue.h"
 
 
 
@@ -297,13 +296,19 @@ void Physics::MoveCamera(float timeStep)
     {
         //mark all physics things dirty
         PODVector<Node*> nodes;
-        scene_->GetChildrenWithComponent<NewtonNodePhysicsGlue>(nodes, true);
+        scene_->GetChildrenWithComponent<NewtonRigidBody>(nodes, true);
 
         for (Node* node : nodes)
         {
-            node->GetComponent<NewtonNodePhysicsGlue>()->MarkDirty();
+            node->GetComponent<NewtonRigidBody>()->MarkDirty();
         }
+        nodes.Clear();
+        scene_->GetChildrenWithDerivedComponent<NewtonCollisionShape>(nodes, true);
 
+        for (Node* node : nodes)
+        {
+            node->GetDerivedComponent<NewtonCollisionShape>()->MarkDirty();
+        }
     }
 
     // Check for loading/saving the scene. Save the scene to the file Data/Scenes/Physics.xml relative to the executable

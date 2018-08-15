@@ -22,8 +22,6 @@
 #include "Graphics/VisualDebugger.h"
 #include "Graphics/StaticModel.h"
 #include "Scene/SceneEvents.h"
-#include "NewtonNodePhysicsGlue.h"
-
 
 namespace Urho3D {
 
@@ -127,9 +125,6 @@ namespace Urho3D {
         {
             ///auto create physics world
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
-
-            ///auto create node physics glue component
-            node->GetOrCreateComponent<NewtonNodePhysicsGlue>();
 
 
 

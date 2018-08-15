@@ -42,6 +42,7 @@ namespace Urho3D
 
         /// Return the internal Newton world.
         NewtonWorld* GetNewtonWorld() { return newtonWorld_; }
+
         /// Saves the NewtonWorld to a serializable newton file.
         void SerializeNewtonWorld(String fileName);
 
@@ -61,10 +62,8 @@ namespace Urho3D
         void SetGravity(const Vector3& force);
         ///return global force acting on all rigid bodies
         Vector3 GetGravity();
-
         /// set how many iterations newton will run in total per update.
         void SetTotalIterations(int numIterations = 8);
-
 
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
@@ -136,7 +135,7 @@ namespace Urho3D
 
 
 
-
+    NewtonRigidBody* GetMostRootRigidBody(Node* node);
 
 
     /// Register Physics library objects.

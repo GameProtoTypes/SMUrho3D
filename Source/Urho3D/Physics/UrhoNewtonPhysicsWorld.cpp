@@ -20,7 +20,6 @@
 #include "NewtonConstraint.h"
 #include "NewtonFixedDistanceConstraint.h"
 #include "Core/Profiler.h"
-#include "NewtonNodePhysicsGlue.h"
 #include "PhysicsEvents.h"
 #include "Graphics/VisualDebugger.h"
 
@@ -32,6 +31,7 @@ namespace Urho3D {
     UrhoNewtonPhysicsWorld::UrhoNewtonPhysicsWorld(Context* context) : Component(context)
     {
         SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(UrhoNewtonPhysicsWorld, HandleUpdate));
+
     }
 
     UrhoNewtonPhysicsWorld::~UrhoNewtonPhysicsWorld()
@@ -218,6 +218,7 @@ namespace Urho3D {
     {
         NewtonSetSolverModel(newtonWorld_, totalIterationCount_);
         NewtonSetThreadsCount(newtonWorld_, newtonThreadCount_);
+        NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
     }
 
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -405,7 +406,24 @@ namespace Urho3D {
     }
 
 
+    Urho3D::NewtonRigidBody* GetMostRootRigidBody(Node* node)
+    {
+        NewtonRigidBody* mostRootRigidBody = node->GetComponent<NewtonRigidBody>();
+        if (!mostRootRigidBody)
+            mostRootRigidBody = node->GetParentComponent<NewtonRigidBody>(true);
 
+        while (mostRootRigidBody)//keep going up.
+        {
+            NewtonRigidBody* rig = mostRootRigidBody->GetNode()->GetParentComponent<NewtonRigidBody>(true);
+            if (rig)
+                mostRootRigidBody = rig;
+            else
+                break;
+        }
+
+
+        return mostRootRigidBody;
+    }
 
 
     void RegisterPhysicsLibrary(Context* context)
@@ -427,8 +445,6 @@ namespace Urho3D {
         NewtonMeshObject::RegisterObject(context);
         NewtonConstraint::RegisterObject(context);
         NewtonFixedDistanceConstraint::RegisterObject(context);
-
-        NewtonNodePhysicsGlue::RegisterObject(context);
         //Constraint::RegisterObject(context);
         
         //RaycastVehicle::RegisterObject(context);

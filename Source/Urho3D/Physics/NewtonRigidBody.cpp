@@ -13,9 +13,9 @@
 #include "dgQuaternion.h"
 #include "Scene/SceneEvents.h"
 #include "Engine/Engine.h"
-#include "NewtonNodePhysicsGlue.h"
 #include "Core/Profiler.h"
 #include "Graphics/VisualDebugger.h"
+#include "Core/Object.h"
 
 
 namespace Urho3D {
@@ -27,6 +27,8 @@ namespace Urho3D {
 
     NewtonRigidBody::NewtonRigidBody(Context* context) : Component(context)
     {
+        SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeAdded));
+        SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonRigidBody, HandleNodeRemoved));
     }
 
     NewtonRigidBody::~NewtonRigidBody()
@@ -213,12 +215,9 @@ namespace Urho3D {
                 else
                     usedCollision = curNewtCollision;
 
-                //Matrix4 uMat = node_->WorldToLocal(curNode->GetWorldTransform());
+
                 Matrix3x4 uMat = curNode->LocalToWorld(colComp->GetOffsetMatrix());
-                
-                //uMat.SetTranslation(curNode->GetWorldPosition());
-                //uMat.SetRotation(curNode->GetWorldRotation().RotationMatrix());
-                //uMat.SetScale(1.0f);
+             
                 dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(uMat));
 
     
@@ -275,8 +274,6 @@ namespace Urho3D {
             NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
             NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback); 
             NewtonBodySetDestructorCallback(newtonBody_, Newton_DestroyBodyCallback);
-
-            //bakeForceAndTorque();
         }
     }
 
@@ -300,10 +297,6 @@ namespace Urho3D {
             //Auto-create a physics world on the scene if it does not yet exist.
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
 
-            ///auto create node physics glue component
-            node->GetOrCreateComponent<NewtonNodePhysicsGlue>();
-
-
             physicsWorld_->addRigidBody(this);
 
 
@@ -324,6 +317,43 @@ namespace Urho3D {
     void NewtonRigidBody::OnSceneSet(Scene* scene)
     {
 
+    }
+    void NewtonRigidBody::HandleNodeAdded(StringHash event, VariantMap& eventData)
+    {
+        Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
+        Node* newParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
+
+        if (node == node_)
+        {
+            //trigger a rebuild on the root of the new tree.
+            NewtonRigidBody* mostRootRigBody = GetMostRootRigidBody(node);
+            if (mostRootRigBody)
+                mostRootRigBody->MarkDirty(true);
+        }
+    }
+
+    void NewtonRigidBody::HandleNodeRemoved(StringHash event, VariantMap& eventData)
+    {
+        Node* node = static_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
+        if (node == node_)
+        {
+            Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
+
+
+            if (oldParent)
+            {
+
+                //trigger a rebuild on the root of the old parents tree.
+                NewtonRigidBody* mostRootRigBody = GetMostRootRigidBody(oldParent);
+                if (mostRootRigBody)
+                    mostRootRigBody->MarkDirty(true);
+
+            }
+            else
+            {
+                URHO3D_LOGINFO("should not happen");
+            }
+        }
     }
 
 
