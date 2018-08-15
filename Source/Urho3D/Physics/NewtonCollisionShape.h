@@ -36,6 +36,17 @@ namespace Urho3D
         /// Set the rotational offset of the shape in local space to the node.
         void SetRotationOffset(Quaternion rotation) { rotation_ = rotation; MarkDirty(true); }
 
+        /// Get the positional offset of the shape in local space to the node.
+        Vector3 GetPositionOffset() { return position_;}
+
+        /// Get the rotational offset of the shape in local space to the node.
+        Quaternion GetRotationOffset() { return rotation_; }
+
+        /// get local offset matrix.
+        Matrix3x4 GetOffsetMatrix()
+        {
+            return Matrix3x4(position_, rotation_, 1.0f);
+        }
 
 
         /// Returns the volume of the collision shape (convex only);

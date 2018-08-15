@@ -15,6 +15,7 @@
 #include "Engine/Engine.h"
 #include "NewtonNodePhysicsGlue.h"
 #include "Core/Profiler.h"
+#include "Graphics/VisualDebugger.h"
 
 
 namespace Urho3D {
@@ -176,7 +177,7 @@ namespace Urho3D {
     void NewtonRigidBody::reBuildBody()
     {
         freeBody();
-
+        GSS<VisualDebugger>()->AddOrb(GetNode()->GetWorldPosition(), 0.5f, Color::RED);
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<Node*> nodesWithCollision;
         PODVector<NewtonCollisionShape*> childCollisionShapes;
@@ -213,7 +214,8 @@ namespace Urho3D {
                     usedCollision = curNewtCollision;
 
                 //Matrix4 uMat = node_->WorldToLocal(curNode->GetWorldTransform());
-                Matrix3x4 uMat = curNode->GetWorldTransform();
+                Matrix3x4 uMat = curNode->LocalToWorld(colComp->GetOffsetMatrix());
+                
                 //uMat.SetTranslation(curNode->GetWorldPosition());
                 //uMat.SetRotation(curNode->GetWorldRotation().RotationMatrix());
                 //uMat.SetScale(1.0f);

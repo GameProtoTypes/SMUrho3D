@@ -345,7 +345,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
 {
     Node* root = scene_->CreateChild();
     root->SetPosition(worldPos);
-    const int levelCount = 50;
+    const int levelCount = 10;
     const int breadth = 2;
     Node* curNode = root;
 
@@ -356,20 +356,21 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         curNode = curNode->CreateChild();
         curNode->SetName("SpawnSceneCompoundTest:" + String(i));
         curNode->AddTag("scaleTestCube");
-        float rotDelta = Random(-20.0f, 20.0f);
+        float rotDelta = 0;// Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
         curNode->SetScale(1.0f);
         curNode->Translate(Vector3(0, 1.5f, 0));
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
-        stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl"));
-        stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cone.mdl"));
+        stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml"));
         stMdl->SetCastShadows(true);
         //if (i == 0) {
             NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
             rigBody->SetMassScale(1.0f);
         //}
-        NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Box>();
+        NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Cone>();
+        colShape->SetRotationOffset(Quaternion(0, 0, 90));
 
     }
 }
@@ -715,7 +716,7 @@ void Physics::DecomposePhysicsTree()
         PODVector<Node*> children;
         res[1].node_->GetChildren(children, true);
 
-        GSS<VisualDebugger>()->AddOrb(res[1].node_->GetWorldPosition(), 1.0f, Color::RED);
+        //GSS<VisualDebugger>()->AddOrb(res[1].node_->GetWorldPosition(), 1.0f, Color::RED);
 
         //for (auto* child : children) {
         //    GSS<VisualDebugger>()->AddOrb(child->GetWorldPosition(), 1.0f, Color(Random(), Random(), Random()));

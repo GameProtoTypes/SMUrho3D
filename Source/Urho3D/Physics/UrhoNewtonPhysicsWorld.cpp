@@ -22,6 +22,7 @@
 #include "Core/Profiler.h"
 #include "NewtonNodePhysicsGlue.h"
 #include "PhysicsEvents.h"
+#include "Graphics/VisualDebugger.h"
 
 namespace Urho3D {
 
@@ -271,6 +272,7 @@ namespace Urho3D {
         {
             if (colShape->GetDirty()) {
                 colShape->reEvaluateCollision();
+                GSS<VisualDebugger>()->AddOrb(colShape->GetNode()->GetWorldPosition(), 1.0f, Color::GREEN);
                 colShape->MarkDirty(false);
             }
         }
@@ -286,6 +288,7 @@ namespace Urho3D {
 
             if (mostRootRigBody->needsRebuilt_){
                 mostRootRigBody->reBuildBody();
+                GSS<VisualDebugger>()->AddOrb(mostRootRigBody->GetNode()->GetWorldPosition(), 1.0f, Color::BLUE);
                 mostRootRigBody->MarkDirty(false);
             }
         }
