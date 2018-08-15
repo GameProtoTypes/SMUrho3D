@@ -444,6 +444,40 @@ void SceneTab::RenderNodeTree(Node* node)
     ui::SameLine();
     ui::PushID((void*)node);
     auto opened = ui::TreeNodeEx(name.CString(), flags);
+    auto it = openHierarchyNodes_.Find(node);
+    if (it != openHierarchyNodes_.End())
+    {
+        if (!opened)
+        {
+            ui::OpenTreeNode(ui::GetCurrentWindow()->GetID(name.CString()));
+            opened = true;
+        }
+        openHierarchyNodes_.Erase(it);
+    }
+
+    if (ui::BeginDragDropSource())
+    {
+        ui::SetDragDropVariant("ptr", node);
+        ui::Text("%s", name.CString());
+        ui::EndDragDropSource();
+    }
+
+    if (ui::BeginDragDropTarget())
+    {
+        const Variant& payload = ui::AcceptDragDropVariant("ptr");
+        if (!payload.IsEmpty())
+        {
+            SharedPtr<Node> child(dynamic_cast<Node*>(payload.GetPtr()));
+            if (child.NotNull() && child != node)
+            {
+                node->AddChild(child);
+                if (!opened)
+                    openHierarchyNodes_.Push(node);
+            }
+        }
+        ui::EndDragDropTarget();
+    }
+
     if (!opened)
     {
         // If TreeNode above is opened, it pushes it's label as an ID to the stack. However if it is not open then no
@@ -507,7 +541,7 @@ void SceneTab::RenderNodeTree(Node* node)
 
                 if (ui::BeginPopup("Component context menu"))
                 {
-                    if (ui::MenuItem("Remove"))
+                    if (ui::MenuItem("Delete", "Del"))
                         component->Remove();
                     ui::EndPopup();
                 }
@@ -568,21 +602,19 @@ void SceneTab::OnSaveProject(JSONValue& tab)
 
 void SceneTab::OnActiveUpdate()
 {
-    if (ui::IsAnyItemActive() || scenePlaying_)
-        return;
-
-    Input* input = GetSubsystem<Input>();
-
-    if (input->GetKeyDown(KEY_CTRL))
+    // Scene viewport hotkeys
+    if (!ui::IsAnyItemActive() && !scenePlaying_)
     {
-        if (input->GetKeyPress(KEY_Y) || (input->GetKeyDown(KEY_SHIFT) && input->GetKeyPress(KEY_Z)))
-            undo_.Redo();
-        else if (input->GetKeyPress(KEY_Z))
-            undo_.Undo();
-    }
+        Input* input = GetSubsystem<Input>();
 
-    if (input->GetKeyPress(KEY_DELETE))
-        RemoveSelection();
+        if (input->GetKeyDown(KEY_CTRL))
+        {
+            if (input->GetKeyPress(KEY_Y) || (input->GetKeyDown(KEY_SHIFT) && input->GetKeyPress(KEY_Z)))
+                undo_.Redo();
+            else if (input->GetKeyPress(KEY_Z))
+                undo_.Undo();
+        }
+    }
 }
 
 void SceneTab::RemoveSelection()
@@ -617,6 +649,13 @@ void SceneTab::OnUpdate(VariantMap& args)
     {
         if (mouseHoversViewport_)
             component->Update(timeStep);
+    }
+
+    if (!ui::IsAnyItemActive() && !scenePlaying_)
+    {
+        // Global view hotkeys
+        if (GetInput()->GetKeyDown(KEY_DELETE))
+            RemoveSelection();
     }
 }
 
@@ -690,7 +729,10 @@ void SceneTab::RenderNodeContextMenu()
             for (auto& selectedNode : GetSelection())
             {
                 if (!selectedNode.Expired())
+                {
                     newNodes.Push(selectedNode->CreateChild(String::EMPTY, alternative ? LOCAL : REPLICATED));
+                    openHierarchyNodes_.Push(selectedNode);
+                }
             }
 
             UnselectAll();
@@ -791,8 +833,11 @@ void SceneTab::RenderNodeContextMenu()
                             for (auto& selectedNode : GetSelection())
                             {
                                 if (!selectedNode.Expired())
-                                    selectedNode->CreateComponent(StringHash(component),
-                                        alternative ? LOCAL : REPLICATED);
+                                {
+                                    if (selectedNode->CreateComponent(StringHash(component),
+                                        alternative ? LOCAL : REPLICATED))
+                                        openHierarchyNodes_.Push(selectedNode);
+                                }
                             }
                         }
                     }

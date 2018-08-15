@@ -51,24 +51,26 @@ SystemUI::SystemUI(Urho3D::Context* context)
 	, vertexBuffer_(context)
 	, indexBuffer_(context)
 {
-	ImGuiIO& io = ImGui::GetIO();
-	io.KeyMap[ImGuiKey_Tab] = SCANCODE_TAB;
-	io.KeyMap[ImGuiKey_LeftArrow] = SCANCODE_LEFT;
-	io.KeyMap[ImGuiKey_RightArrow] = SCANCODE_RIGHT;
-	io.KeyMap[ImGuiKey_UpArrow] = SCANCODE_UP;
-	io.KeyMap[ImGuiKey_DownArrow] = SCANCODE_DOWN;
-	io.KeyMap[ImGuiKey_Home] = SCANCODE_HOME;
-	io.KeyMap[ImGuiKey_End] = SCANCODE_END;
-	io.KeyMap[ImGuiKey_Delete] = SCANCODE_DELETE;
-	io.KeyMap[ImGuiKey_Backspace] = SCANCODE_BACKSPACE;
-	io.KeyMap[ImGuiKey_Enter] = SCANCODE_RETURN;
-	io.KeyMap[ImGuiKey_Escape] = SCANCODE_ESCAPE;
-	io.KeyMap[ImGuiKey_A] = SCANCODE_A;
-	io.KeyMap[ImGuiKey_C] = SCANCODE_C;
-	io.KeyMap[ImGuiKey_V] = SCANCODE_V;
-	io.KeyMap[ImGuiKey_X] = SCANCODE_X;
-	io.KeyMap[ImGuiKey_Y] = SCANCODE_Y;
-	io.KeyMap[ImGuiKey_Z] = SCANCODE_Z;
+    ImGuiIO& io = ImGui::GetIO();
+    io.KeyMap[ImGuiKey_Tab] = SCANCODE_TAB;
+    io.KeyMap[ImGuiKey_LeftArrow] = SCANCODE_LEFT;
+    io.KeyMap[ImGuiKey_RightArrow] = SCANCODE_RIGHT;
+    io.KeyMap[ImGuiKey_UpArrow] = SCANCODE_UP;
+    io.KeyMap[ImGuiKey_DownArrow] = SCANCODE_DOWN;
+    io.KeyMap[ImGuiKey_Home] = SCANCODE_HOME;
+    io.KeyMap[ImGuiKey_End] = SCANCODE_END;
+    io.KeyMap[ImGuiKey_Delete] = SCANCODE_DELETE;
+    io.KeyMap[ImGuiKey_Backspace] = SCANCODE_BACKSPACE;
+    io.KeyMap[ImGuiKey_Enter] = SCANCODE_RETURN;
+    io.KeyMap[ImGuiKey_Escape] = SCANCODE_ESCAPE;
+    io.KeyMap[ImGuiKey_A] = SCANCODE_A;
+    io.KeyMap[ImGuiKey_C] = SCANCODE_C;
+    io.KeyMap[ImGuiKey_V] = SCANCODE_V;
+    io.KeyMap[ImGuiKey_X] = SCANCODE_X;
+    io.KeyMap[ImGuiKey_Y] = SCANCODE_Y;
+    io.KeyMap[ImGuiKey_Z] = SCANCODE_Z;
+    io.KeyMap[ImGuiKey_PageUp] = SCANCODE_PAGEUP;
+    io.KeyMap[ImGuiKey_PageDown] = SCANCODE_DOWN;
 
 	io.RenderDrawListsFn = [](ImDrawData* data) { ((SystemUI*)ImGui::GetIO().UserData)->OnRenderDrawLists(data); };
 	io.SetClipboardTextFn = [](void* userData, const char* text) { SDL_SetClipboardText(text); };
