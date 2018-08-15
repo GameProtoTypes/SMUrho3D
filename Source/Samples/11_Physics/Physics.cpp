@@ -151,7 +151,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
-    CreatePyramids();
+    //CreatePyramids();
 
     int numVertical = 1;
     //for (int i = 0; i < numVertical; i++)
@@ -166,7 +166,7 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 
@@ -442,12 +442,7 @@ void Physics::CreatePyramids()
             {
                 for (int x = -y; x <= y; ++x)
                 {
-
                     Node* node = SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
-
-                    //node->GetComponent<NewtonRigidBody>()->SetAngularDamping(Vector3::ONE * 0.2f);
-
-                    //SpawnSamplePhysicsBox(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f, Vector3::ONE);
                 }
             }
         }
