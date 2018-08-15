@@ -1281,7 +1281,7 @@ void Node::GetChildren(PODVector<Node*>& dest, bool recursive) const
 
     if (!recursive)
     {
-        for (Vector<SharedPtr<Node> >::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
+        for (PODVector<SharedPtr<Node>>::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
             dest.Push(*i);
     }
     else
@@ -1310,6 +1310,23 @@ void Node::GetChildrenWithComponent(PODVector<Node*>& dest, StringHash type, boo
     else
         GetChildrenWithComponentRecursive(dest, type);
 }
+void Node::GetChildrenWithDerivedComponent(PODVector<Node*>& dest, StringHash type, bool recursive) const
+{
+    dest.Clear();
+
+    if (!recursive)
+    {
+        for (Vector<SharedPtr<Node> >::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
+        {
+            if ((*i)->GetDerivedComponent(type))
+                dest.Push(*i);
+        }
+    }
+    else
+        GetChildrenWithDerivedComponentRecursive(dest, type);
+}
+
+
 
 PODVector<Node*> Node::GetChildrenWithComponent(StringHash type, bool recursive) const
 {
@@ -1453,6 +1470,27 @@ Component* Node::GetComponent(StringHash type, bool recursive) const
         for (Vector<SharedPtr<Node> >::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
         {
             Component* component = (*i)->GetComponent(type, true);
+            if (component)
+                return component;
+        }
+    }
+
+    return nullptr;
+}
+
+Component* Node::GetDerivedComponent(StringHash type, bool recursive) const
+{
+    for (Vector<SharedPtr<Component> >::ConstIterator i = components_.Begin(); i != components_.End(); ++i)
+    {
+        if ((*i)->GetType() == type)
+            return *i;
+    }
+
+    if (recursive)
+    {
+        for (Vector<SharedPtr<Node> >::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
+        {
+            Component* component = (*i)->GetDerivedComponent(type, true);
             if (component)
                 return component;
         }
@@ -2192,7 +2230,7 @@ void Node::GetChildrenRecursive(PODVector<Node*>& dest) const
 
 void Node::GetChildrenWithComponentRecursive(PODVector<Node*>& dest, StringHash type) const
 {
-    for (Vector<SharedPtr<Node> >::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
+    for (PODVector<SharedPtr<Node> >::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
     {
         Node* node = *i;
         if (node->HasComponent(type))
@@ -2201,6 +2239,18 @@ void Node::GetChildrenWithComponentRecursive(PODVector<Node*>& dest, StringHash 
             node->GetChildrenWithComponentRecursive(dest, type);
     }
 }
+void Node::GetChildrenWithDerivedComponentRecursive(PODVector<Node*>& dest, StringHash type) const
+{
+    for (PODVector<SharedPtr<Node> >::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
+    {
+        Node* node = *i;
+        if (node->GetDerivedComponent(type))
+            dest.Push(node);
+        if (!node->children_.Empty())
+            node->GetChildrenWithDerivedComponentRecursive(dest, type);
+    }
+}
+
 
 void Node::GetComponentsRecursive(PODVector<Component*>& dest, StringHash type) const
 {

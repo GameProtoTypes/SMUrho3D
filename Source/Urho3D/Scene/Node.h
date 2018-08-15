@@ -535,6 +535,8 @@ public:
     /// Return child scene nodes with a specific component.
     void GetChildrenWithComponent(PODVector<Node*>& dest, StringHash type, bool recursive = false) const;
     /// Return child scene nodes with a specific component.
+    void GetChildrenWithDerivedComponent(PODVector<Node*>& dest, StringHash type, bool recursive = false) const;
+    /// Return child scene nodes with a specific component.
     PODVector<Node*> GetChildrenWithComponent(StringHash type, bool recursive = false) const;
     /// Return child scene nodes with a specific tag.
     void GetChildrenWithTag(PODVector<Node*>& dest, const String& tag, bool recursive = false) const;
@@ -550,6 +552,16 @@ public:
     /// Return child scene node by name hash.
     Node* GetChild(StringHash nameHash, bool recursive = false) const;
 
+    /// Return listener components.
+    const Vector<WeakPtr<Component> > GetListeners() const { return listeners_; }
+
+    /// Return a user variable.
+    const Variant& GetVar(StringHash key) const;
+
+    /// Return all user variables.
+    const VariantMap& GetVars() const { return vars_; }
+
+
     /// Return number of components.
     unsigned GetNumComponents() const { return components_.Size(); }
 
@@ -563,18 +575,12 @@ public:
     void GetComponents(PODVector<Component*>& dest, StringHash type, bool recursive = false) const;
     /// Return component by type. If there are several, returns the first.
     Component* GetComponent(StringHash type, bool recursive = false) const;
+    /// Return derived component by type. If there are several, returns the first.
+    Component* GetDerivedComponent(StringHash type, bool recursive = false) const;
     /// Return component in parent node. If there are several, returns the first. May optional traverse up to the root node.
     Component* GetParentComponent(StringHash type, bool fullTraversal = false) const;
     /// Return whether has a specific component.
     bool HasComponent(StringHash type) const;
-    /// Return listener components.
-    const Vector<WeakPtr<Component> > GetListeners() const { return listeners_; }
-
-    /// Return a user variable.
-    const Variant& GetVar(StringHash key) const;
-
-    /// Return all user variables.
-    const VariantMap& GetVars() const { return vars_; }
 
     /// Return first component derived from class.
     template <class T> T* GetDerivedComponent(bool recursive = false) const;
@@ -584,6 +590,8 @@ public:
     template <class T> void GetDerivedComponents(PODVector<T*>& dest, bool recursive = false, bool clearVector = true) const;
     /// Template version of returning child nodes with a specific component.
     template <class T> void GetChildrenWithComponent(PODVector<Node*>& dest, bool recursive = false) const;
+    /// Template version of returning child nodes with a specific derived component.
+    template <class T> void GetChildrenWithDerivedComponent(PODVector<Node*>& dest, bool recursive = false) const;
     /// Template version of returning a component by type.
     template <class T> T* GetComponent(bool recursive = false) const;
     /// Template version of returning a parent's component by type.
@@ -674,6 +682,8 @@ private:
     void GetChildrenRecursive(PODVector<Node*>& dest) const;
     /// Return child nodes with a specific component recursively.
     void GetChildrenWithComponentRecursive(PODVector<Node*>& dest, StringHash type) const;
+    /// Return child nodes with a specific component recursively.
+    void GetChildrenWithDerivedComponentRecursive(PODVector<Node*>& dest, StringHash type) const;
     /// Return child nodes with a specific tag recursively.
     void GetChildrenWithTagRecursive(PODVector<Node*>& dest, const String& tag) const;
     /// Return specific components recursively.
@@ -746,6 +756,10 @@ template <class T> void Node::RemoveComponents() { RemoveComponents(T::GetTypeSt
 template <class T> void Node::GetChildrenWithComponent(PODVector<Node*>& dest, bool recursive) const
 {
     GetChildrenWithComponent(dest, T::GetTypeStatic(), recursive);
+}
+template <class T> void Node::GetChildrenWithDerivedComponent(PODVector<Node*>& dest, bool recursive) const
+{
+    GetChildrenWithDerivedComponent(dest, T::GetTypeStatic(), recursive);
 }
 
 template <class T> T* Node::GetComponent(bool recursive) const { return static_cast<T*>(GetComponent(T::GetTypeStatic(), recursive)); }
