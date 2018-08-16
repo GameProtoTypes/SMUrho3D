@@ -36,6 +36,7 @@
 #include <Urho3D/IO/File.h>
 #include <Urho3D/IO/FileSystem.h>
 #include <Urho3D/Physics/NewtonCollisionShape.h>
+#include <Urho3D/Physics/NewtonCollisionShapesDerived.h>
 #include "Urho3D/Physics/UrhoNewtonPhysicsWorld.h"
 #include <Urho3D/Physics/NewtonRigidBody.h>
 #include <Urho3D/Resource/ResourceCache.h>

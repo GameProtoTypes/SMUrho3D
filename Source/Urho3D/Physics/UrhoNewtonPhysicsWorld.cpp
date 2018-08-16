@@ -1,6 +1,7 @@
 #include "UrhoNewtonPhysicsWorld.h"
 #include "IO/Log.h"
 #include "NewtonCollisionShape.h"
+#include "NewtonCollisionShapesDerived.h"
 #include "NewtonRigidBody.h"
 #include "dMatrix.h"
 #include "Core/Context.h"

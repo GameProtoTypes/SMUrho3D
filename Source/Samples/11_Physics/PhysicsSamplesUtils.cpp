@@ -1,5 +1,5 @@
 #include "PhysicsSamplesUtils.h"
-
+#include "Urho3D/Physics/NewtonCollisionShapesDerived.h"
 
 Node* SpawnSamplePhysicsSphere(Scene* scene, const Vector3& worldPosition, float radius)
 {
