@@ -62,6 +62,8 @@ namespace Urho3D {
     {
         physicsMaterial_ = material;
 
+        //add the physics material to the newton world 
+        physicsWorld_->addPhysicsMaterial(material);
     }
 
     void NewtonCollisionShape::reEvaluateCollision()
@@ -96,8 +98,8 @@ namespace Urho3D {
     {
         if (physicsMaterial_)
         {
-            NewtonCollisionMaterial* newtMat = physicsMaterial_->GetNewtonCollisionMaterial();
-            NewtonCollisionSetMaterial(newtonCollision_, newtMat);
+            //NewtonCollisionMaterial* newtMat = physicsMaterial_->GetNewtonCollisionMaterial();
+            //NewtonCollisionSetMaterial(newtonCollision_, newtMat);
         }
 
     }

@@ -13,6 +13,8 @@ namespace Urho3D
     class NewtonCollisionShape;
     class NewtonRigidBody;
     class NewtonConstraint;
+    class NewtonPhysicsMaterial;
+    class NewtonPhysicsMaterialContactPair;
     class Sphere;
     class BoundingBox;
     class NewtonMeshObject;
@@ -91,13 +93,17 @@ namespace Urho3D
         void addConstraint(NewtonConstraint* constraint);
         void removeConstraint(NewtonConstraint* constraint);
 
+        void addPhysicsMaterial(NewtonPhysicsMaterial* material);
+        void computeMaterialPairs();
+
         void freeWorld();
 
 
         Vector<WeakPtr<NewtonCollisionShape>> collisionComponentList;
         Vector<WeakPtr<NewtonRigidBody>> rigidBodyComponentList;
         Vector<WeakPtr<NewtonConstraint>> constraintList;
-
+        Vector<SharedPtr<NewtonPhysicsMaterial>> physMaterialList;
+        Vector<SharedPtr<NewtonPhysicsMaterialContactPair>> physMaterialPairList;
 
         void applyNewtonWorldSettings();
 
@@ -124,6 +130,9 @@ namespace Urho3D
         NewtonMeshObject* GetCreateNewtonMesh(StringHash urhoNewtonMeshKey);
         NewtonMeshObject* GetNewtonMesh(StringHash urhoNewtonMeshKey);
         
+
+
+
 
     };
     String NewtonThreadProfilerString(int threadIndex);

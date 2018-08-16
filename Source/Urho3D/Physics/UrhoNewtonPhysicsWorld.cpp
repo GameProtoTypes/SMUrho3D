@@ -22,6 +22,7 @@
 #include "Core/Profiler.h"
 #include "PhysicsEvents.h"
 #include "Graphics/VisualDebugger.h"
+#include "NewtonPhysicsMaterial.h"
 
 namespace Urho3D {
 
@@ -174,6 +175,30 @@ namespace Urho3D {
     void UrhoNewtonPhysicsWorld::removeConstraint(NewtonConstraint* constraint)
     {
         constraintList.Remove(WeakPtr<NewtonConstraint>(constraint));
+    }
+
+    void UrhoNewtonPhysicsWorld::addPhysicsMaterial(NewtonPhysicsMaterial* material)
+    {
+        if (physMaterialList.Contains(SharedPtr<NewtonPhysicsMaterial>(material)))
+            return;
+        else
+        {
+            physMaterialList.Insert(0, SharedPtr<NewtonPhysicsMaterial>(material));
+
+            computeMaterialPairs();
+        }
+    }
+
+    void UrhoNewtonPhysicsWorld::computeMaterialPairs()
+    {
+        physMaterialPairList.Clear();
+        for (NewtonPhysicsMaterial* mat1 : physMaterialList) {
+            for (NewtonPhysicsMaterial* mat2 : physMaterialList) {
+                SharedPtr<NewtonPhysicsMaterialContactPair> newPair = context_->CreateObject<NewtonPhysicsMaterialContactPair>();
+                newPair->SetMaterials(mat1, mat2);//compute.
+                physMaterialPairList.Insert(0, newPair);
+            }
+        }
     }
 
     void UrhoNewtonPhysicsWorld::freeWorld()
