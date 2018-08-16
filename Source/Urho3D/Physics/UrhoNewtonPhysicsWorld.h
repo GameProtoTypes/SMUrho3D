@@ -126,14 +126,17 @@ namespace Urho3D
         
 
     };
+    String NewtonThreadProfilerString(int threadIndex);
 
-    /// netwon callbacks
+    /// netwon body callbacks
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex);
     void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex);
     void Newton_DestroyBodyCallback(const NewtonBody* body);
     unsigned Newton_WorldRayPrefilterCallback(const NewtonBody* const body, const NewtonCollision* const collision, void* const userData);
 
-
+    /// newton material callbacks
+    void Newton_ProcessContactsCallback(const NewtonJoint* contactJoint, dFloat timestep, int threadIndex);
+    int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex);
 
     NewtonRigidBody* GetMostRootRigidBody(Node* node);
 

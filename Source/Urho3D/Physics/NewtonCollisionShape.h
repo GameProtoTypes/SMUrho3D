@@ -12,6 +12,7 @@ namespace Urho3D
     class UrhoNewtonPhysicsWorld;
     class NewtonRigidBody;
     class NewtonMeshObject;
+    class NewtonPhysicsMaterial;
     class Component;
     class Model;
 
@@ -29,6 +30,10 @@ namespace Urho3D
         virtual ~NewtonCollisionShape();
 
         static void RegisterObject(Context* context);
+
+
+        void SetPhysicsMaterial(NewtonPhysicsMaterial* material);
+
 
         /// Set the positional offset of the shape in local space to the node.
         void SetPositionOffset(Vector3 position) { position_ = position; MarkDirty(true); }
@@ -71,7 +76,8 @@ namespace Urho3D
         /// newton Mesh reference
         WeakPtr<NewtonMeshObject> newtonMesh_ = nullptr;
 
-        WeakPtr<NewtonNodePhysicsGlue> nodeGlue_;
+        ///reference to physics material resource;
+        WeakPtr<NewtonPhysicsMaterial> physicsMaterial_ = nullptr;
 
         /// volume
         float volume_ = 0.0f;
@@ -89,7 +95,7 @@ namespace Urho3D
         virtual void createNewtonCollision();
         /// Frees the internal collision shape and mesh;
         void freeInternalCollision();
-
+        void applyMaterial();
         /// Calculates the effective mass based off density and size. (could be expensive)
         float updateVolume();
 

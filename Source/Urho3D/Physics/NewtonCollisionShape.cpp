@@ -3,6 +3,7 @@
 #include "UrhoNewtonPhysicsWorld.h"
 #include "NewtonRigidBody.h"
 #include "NewtonMeshObject.h"
+#include "NewtonPhysicsMaterial.h"
 
 #include "../Core/Context.h"
 #include "../Scene/Component.h"
@@ -57,6 +58,12 @@ namespace Urho3D {
     }
 
 
+    void NewtonCollisionShape::SetPhysicsMaterial(NewtonPhysicsMaterial* material)
+    {
+        physicsMaterial_ = material;
+
+    }
+
     void NewtonCollisionShape::reEvaluateCollision()
     {
             // first free any reference to an existing collision.
@@ -65,6 +72,8 @@ namespace Urho3D {
             //call the derived class createNewtonCollision function.
             createNewtonCollision();
 
+            //apply material
+            applyMaterial();
 
             //compute volume.
             updateVolume();
@@ -81,6 +90,16 @@ namespace Urho3D {
             NewtonDestroyCollision(newtonCollision_);//decrement the reference count of the collision.
             newtonCollision_ = nullptr;
         }
+    }
+
+    void NewtonCollisionShape::applyMaterial()
+    {
+        if (physicsMaterial_)
+        {
+            NewtonCollisionMaterial* newtMat = physicsMaterial_->GetNewtonCollisionMaterial();
+            NewtonCollisionSetMaterial(newtonCollision_, newtMat);
+        }
+
     }
 
     void NewtonCollisionShape::MarkDirty(bool dirty /*= true*/)

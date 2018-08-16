@@ -366,9 +366,14 @@ namespace Urho3D {
 
  
 
+    String NewtonThreadProfilerString(int threadIndex)
+    {
+        return (String("Newton_Thread") + String(threadIndex));
+    }
+
     void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
     {
-        URHO3D_PROFILE_THREAD((String("Newton_Thread") + String(threadIndex)).CString());
+        URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
         URHO3D_PROFILE_FUNCTION()
 
 
@@ -405,6 +410,35 @@ namespace Urho3D {
         return 1;///?
     }
 
+
+    void Newton_ProcessContactsCallback(const NewtonJoint* contactJoint, dFloat timestep, int threadIndex)
+    {
+        URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
+        URHO3D_PROFILE_FUNCTION();;
+
+        const NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
+        const NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
+
+
+
+        for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
+            NewtonMaterial* const material = NewtonContactGetMaterial(contact);
+            float frictionValue = 0.2;
+            NewtonMaterialSetContactFrictionCoef(material, frictionValue + 0.1f, frictionValue, 0);
+            NewtonMaterialSetContactFrictionCoef(material, frictionValue + 0.1f, frictionValue, 1);
+        }
+
+
+
+
+    }
+
+    int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex)
+    {
+        URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
+        URHO3D_PROFILE_FUNCTION();
+        return 1;
+    }
 
     Urho3D::NewtonRigidBody* GetMostRootRigidBody(Node* node)
     {
