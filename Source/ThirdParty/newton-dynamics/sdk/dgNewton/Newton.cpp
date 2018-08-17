@@ -185,11 +185,11 @@ void NewtonDestroy(const NewtonWorld* const newtonWorld)
 	delete allocator;
 }
 
-void NewtonSetPosUpdateCallback(const NewtonWorld* const newtonWorld, NewtonPostUpdateCallback callback)
+void NewtonSetPostUpdateCallback(const NewtonWorld* const newtonWorld, NewtonPostUpdateCallback callback)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
-	world->SetPosUpdateCallback(world, (dgPostUpdateCallback) callback);
+	world->SetPostUpdateCallback(world, (dgPostUpdateCallback) callback);
 }
 
 
@@ -1521,7 +1521,7 @@ void NewtonMaterialSetContactGenerationCallback (const NewtonWorld* const newton
 
   @return Nothing.
 
-  When the AABB extend of the collision geometry of two bodies overlap, Newton collision system retrieves the material
+  When the AABB extents of the collision geometry of two bodies overlap, the Newton collision system retrieves the material
   interaction that defines the behavior between the pair of bodies. The material interaction is collected from a database of materials,
   indexed by the material gruopID assigned to the bodies. If the material is tagged as non collidable,
   then no action is taken and the simulation continues.
@@ -5029,7 +5029,7 @@ void NewtonBodyGetForce(const NewtonBody* const bodyPtr, dFloat* const vectorPtr
 
 
 /*!
-  Calculate the next force that net to be applied to the body to archive the desired velocity in the current time step.
+  Calculate the next force that need to be applied to the body to archive the desired velocity in the current time step.
 
   @param *bodyPtr pointer to the body.
   @param timestep time step that the force will be applyed.
