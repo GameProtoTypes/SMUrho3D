@@ -26,6 +26,7 @@
 #include "NewtonPhysicsMaterial.h"
 #include "NewtonBallAndSocketConstraint.h"
 #include "NewtonKinematicsJoint.h"
+#include "NewtonDebugDrawing.h"
 
 namespace Urho3D {
 
@@ -121,6 +122,12 @@ namespace Urho3D {
     {
         if (debug)
         {
+            //draw scene collision
+            if(node_->HasComponent<NewtonRigidBody>())
+                GetComponent<NewtonRigidBody>()->DrawDebugGeometry(debug, depthTest);
+            //NewtonCollisionDraw(sceneCollision_, Matrix3x4(), debug, depthTest);
+
+
             //#todo draw physics world specific things. joints?
             for (NewtonConstraint* consttraint : constraintList)
             {
@@ -314,43 +321,35 @@ namespace Urho3D {
 
 
 
-
-
-        NewtonSceneCollisionBeginAddRemove(sceneCollision_);//we may need to mess with the scene.
         //rebuild dirty collision shapes
         for (NewtonCollisionShape* colShape : collisionComponentList)
         {
             if (colShape->GetDirty()) {
-                colShape->reEvaluateCollision();
+                colShape->updateBuild();
                 GSS<VisualDebugger>()->AddOrb(colShape->GetNode()->GetWorldPosition(), 1.0f, Color::GREEN);
                 colShape->MarkDirty(false);
 
 
-                //if the collision shape is on the scene. rebuild the shape into the scene geometry.
-                if (colShape->GetNode() == node_->GetScene())
-                {
-                    if (colShape->newtonSceneCollisionNode) {
-                        NewtonSceneCollisionRemoveSubCollision(sceneCollision_, colShape->newtonSceneCollisionNode);
-                    }
+                ////if the collision shape is on the scene. rebuild the shape into the scene geometry.
+                //if (colShape->GetNode() == node_->GetScene() || !GetMostRootRigidBody(colShape->GetNode()))
+                //{
+                //    if (colShape->newtonSceneCollisionNode) {
+                //        NewtonSceneCollisionRemoveSubCollision(sceneCollision_, colShape->newtonSceneCollisionNode);
+                //    }
 
-                    colShape->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(sceneCollision_, colShape->GetNewtonCollision());
-                    dMatrix matrix;
-                    
-                    //matrix.m_posit.m_y = 4.0f;
-                    //matrix.m_posit.m_x = 3.0f;
-                    //matrix.m_posit.m_z = 0.0f;
-                    NewtonSceneCollisionSetSubCollisionMatrix(sceneCollision_, colShape->newtonSceneCollisionNode, &matrix[0][0]);
+                //    colShape->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(sceneCollision_, colShape->GetNewtonCollision());
+                //    dMatrix matrix;
 
+                //    matrix = UrhoToNewton(colShape->GetNode()->LocalToWorld(colShape->GetOffsetMatrix()));
 
-                }
-
+                //    //matrix.m_posit.m_y = 4.0f;
+                //    //matrix.m_posit.m_x = 3.0f;
+                //    //matrix.m_posit.m_z = 0.0f;
+                //    NewtonSceneCollisionSetSubCollisionMatrix(sceneCollision_, colShape->newtonSceneCollisionNode, &matrix[0][0]);
+                //}
             }
         }
-        NewtonSceneCollisionEndAddRemove(sceneCollision_);
-
-
-
-
+        
 
         //then rebuild rigid bodies if they need rebuilt (dirty) from root nodes up.
         for (NewtonRigidBody* rigBody : rigidBodyComponentList)

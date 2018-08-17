@@ -66,6 +66,9 @@ namespace Urho3D
         /// Set continuous collision so that the body will not pass through walls.
         void SetContinuousCollision(bool sweptCollision);
 
+
+
+
         /// Add a force to the body in world cordinates on the body's center of mass.
         void AddWorldForce(const Vector3& force);
         /// Add a force to the body in world cordinates localPosition from the body's center of mass.
@@ -145,8 +148,6 @@ namespace Urho3D
         NewtonBody * newtonBody_ = nullptr;
         /// compound collision if needed.
         NewtonCollision* compoundCollision_ = nullptr;
-
-
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
 

@@ -66,8 +66,8 @@ namespace Urho3D {
         physicsWorld_->addPhysicsMaterial(material);
     }
 
-    void NewtonCollisionShape::reEvaluateCollision()
-    {
+    void NewtonCollisionShape::updateBuild()
+{
             // first free any reference to an existing collision.
             freeInternalCollision();
 
@@ -112,7 +112,7 @@ namespace Urho3D {
     {
         if (newtonCollision_ == nullptr)
         {
-            reEvaluateCollision();
+            updateBuild();
         }
         return newtonCollision_;
     }

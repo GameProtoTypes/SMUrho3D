@@ -77,8 +77,10 @@ namespace Urho3D {
 
     void NewtonRigidBody::SetMassScale(float massDensityScale)
     {
-        massScale_ = massDensityScale;
-        MarkDirty(true);
+        if (massScale_ != massDensityScale) {
+            massScale_ = massDensityScale;
+            MarkDirty(true);
+        }
     }
 
     void NewtonRigidBody::SetFriction(float friction)
@@ -94,12 +96,16 @@ namespace Urho3D {
 
     void NewtonRigidBody::SetLinearDamping(float dampingFactor)
     {
-        linearDampening_ = dampingFactor;
+        if (linearDampening_ != dampingFactor) {
+            linearDampening_ = dampingFactor;
+        }
     }
 
     void NewtonRigidBody::SetAngularDamping(const Vector3& angularDamping)
     {
-        angularDampening_ = angularDamping;
+        if (angularDamping != angularDamping) {
+            angularDampening_ = angularDamping;
+        }
     }
 
     void NewtonRigidBody::SetInternalLinearDamping(float damping)
@@ -131,6 +137,7 @@ namespace Urho3D {
         continuousCollision_ = sweptCollision;
         MarkDirty();
     }
+
 
     void NewtonRigidBody::DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB /*= true*/, bool showCollisionMesh /*= true*/, bool showCenterOfMass /*= true*/, bool showContactForces /*= true*/)
     {
@@ -183,14 +190,18 @@ namespace Urho3D {
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<Node*> nodesWithCollision;
         PODVector<NewtonCollisionShape*> childCollisionShapes;
-        node_->GetDerivedComponents<NewtonCollisionShape>(childCollisionShapes, true, true);
+        node_->GetDerivedComponents<NewtonCollisionShape>(childCollisionShapes, true, true);//includes this node.
 
+        
         for (NewtonCollisionShape* shp : childCollisionShapes)
             nodesWithCollision += shp->GetNode();
+        
+
 
         if (nodesWithCollision.Size())
-        {
+        {  
             NewtonCollision* resolvedCollision = nullptr;
+
             if (compoundCollision_) {
                 NewtonDestroyCollision(compoundCollision_);
                 compoundCollision_ = nullptr;
@@ -201,14 +212,16 @@ namespace Urho3D {
                 compoundCollision_ = NewtonCreateCompoundCollision(physicsWorld_->GetNewtonWorld(), 0);
                 NewtonCompoundCollisionBeginAddRemove(compoundCollision_);
             }
-
             float accumMass = 0.0f;
+
             for (Node* curNode : nodesWithCollision)
             {
                 NewtonCollisionShape* colComp = curNode->GetDerivedComponent<NewtonCollisionShape>();
-
+                
                 NewtonCollision* curNewtCollision = colComp->GetNewtonCollision();
                 NewtonCollision* usedCollision = nullptr;
+
+
 
                 if (compoundNeeded)
                     usedCollision = NewtonCollisionCreateInstance(curNewtCollision);
@@ -217,11 +230,11 @@ namespace Urho3D {
 
 
                 Matrix3x4 uMat = curNode->LocalToWorld(colComp->GetOffsetMatrix());
-             
+
                 dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(uMat));
 
-    
-                if(inheritNodeScale_)
+
+                if (inheritNodeScale_)
                     NewtonCollisionSetScale(usedCollision, curNode->GetScale().x_, curNode->GetScale().y_, curNode->GetScale().z_);
 
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
@@ -242,7 +255,7 @@ namespace Urho3D {
                 resolvedCollision = compoundCollision_;
             }
 
-
+            
 
             //create the body at node transform
             Matrix4 transform;

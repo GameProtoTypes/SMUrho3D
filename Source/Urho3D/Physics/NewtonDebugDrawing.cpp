@@ -66,8 +66,6 @@ namespace Urho3D {
         debugRenderOptions* options = static_cast<debugRenderOptions*>(userData);
 
 
-
-
         //if (mode == m_lines) {
         int index = vertexCount - 1;
         dVector p0(faceVertec[index * 3 + 0], faceVertec[index * 3 + 1], faceVertec[index * 3 + 2]);
@@ -193,6 +191,15 @@ namespace Urho3D {
         //    }
         //}
         //NewtonWorldListenerDebug(world, jointDebug);
+    }
+
+    void NewtonCollisionDraw(NewtonCollision* collision, const Matrix3x4& transform, DebugRenderer* debug, bool depthTest /*= false*/)
+    {
+        debugRenderOptions options;
+        options.debug = debug;
+        options.depthTest = depthTest;
+
+        NewtonCollisionForEachPolygonDo(collision, &UrhoToNewton(transform)[0][0], DebugShowGeometryCollision, (void*)&options);
     }
 
 }

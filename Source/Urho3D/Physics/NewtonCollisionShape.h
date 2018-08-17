@@ -94,7 +94,7 @@ namespace Urho3D
         Quaternion rotation_;
 
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
-        void reEvaluateCollision();
+        void updateBuild();
         /// implement this in subclasses to create the internal newton collision
         virtual void createNewtonCollision();
         /// Frees the internal collision shape and mesh;

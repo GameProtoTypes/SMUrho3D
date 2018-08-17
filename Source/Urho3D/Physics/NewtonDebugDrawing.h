@@ -8,6 +8,7 @@ class NewtonBody;
 namespace Urho3D
 {
     class DebugRenderer;
+    class Matrix3x4;
 
     struct debugRenderOptions {
         Color color = Color::GRAY;
@@ -24,7 +25,7 @@ namespace Urho3D
 
     void NewtonDebugShowJoints(NewtonWorld* newtonWorld, DebugRenderer* debug, bool depthTest = false);
 
-
+    void NewtonCollisionDraw(NewtonCollision* collision, const Matrix3x4& transform, DebugRenderer* debug, bool depthTest = false);
 
 
 
