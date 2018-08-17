@@ -24,7 +24,7 @@ namespace Urho3D {
     protected:
         Vector3 size_ = Vector3::ONE;
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
 
     };
 
@@ -47,7 +47,7 @@ namespace Urho3D {
     protected:
         float radius_ = 0.5f;
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
 
     };
 
@@ -74,7 +74,7 @@ namespace Urho3D {
         float radius1_ = 0.5f;
         float radius2_ = 0.5f;
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
 
     };
 
@@ -97,7 +97,7 @@ namespace Urho3D {
         float radius_ = 0.5f;
 
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
 
     };
 
@@ -133,9 +133,34 @@ namespace Urho3D {
         float radius2_ = 0.5f;
         float length_ = 1.0f;
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
 
     };
+
+
+
+    ///put this component on the scene.  should combine all collision shapes that do not have an affiliated rigid body.
+    class URHO3D_API NewtonCollisionShape_SceneCollision : public NewtonCollisionShape {
+
+        URHO3D_OBJECT(NewtonCollisionShape_SceneCollision, NewtonCollisionShape);
+
+    public:
+        NewtonCollisionShape_SceneCollision(Context* context);
+        virtual ~NewtonCollisionShape_SceneCollision();
+
+        static void RegisterObject(Context* context);
+
+
+    protected:
+
+        virtual void buildNewtonCollision() override;
+
+    };
+    
+
+
+
+
 
 
 
@@ -170,7 +195,7 @@ namespace Urho3D {
         /// Hulling tolerance
         unsigned hullTolerance_ = 0.0f;
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
 
         void autoSetModel();
 
@@ -195,7 +220,7 @@ namespace Urho3D {
 
     protected:
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
         /// Hulling tolerance
         unsigned hullTolerance_ = 0.0f;
 
@@ -215,7 +240,7 @@ namespace Urho3D {
     protected:
         NewtonMeshObject* meshDecomposition_ = nullptr;
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
 
     };
 
@@ -232,7 +257,7 @@ namespace Urho3D {
 
     protected:
 
-        virtual void createNewtonCollision() override;
+        virtual void buildNewtonCollision() override;
 
     };
 

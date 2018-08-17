@@ -72,7 +72,7 @@ namespace Urho3D {
             freeInternalCollision();
 
             //call the derived class createNewtonCollision function.
-            createNewtonCollision();
+            buildNewtonCollision();
 
             //apply material
             applyMaterial();
@@ -81,8 +81,8 @@ namespace Urho3D {
             updateVolume();
     }
 
-    void NewtonCollisionShape::createNewtonCollision()
-    {
+    void NewtonCollisionShape::buildNewtonCollision()
+{
 
     }
 

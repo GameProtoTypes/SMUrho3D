@@ -330,23 +330,7 @@ namespace Urho3D {
                 colShape->MarkDirty(false);
 
 
-                ////if the collision shape is on the scene. rebuild the shape into the scene geometry.
-                //if (colShape->GetNode() == node_->GetScene() || !GetMostRootRigidBody(colShape->GetNode()))
-                //{
-                //    if (colShape->newtonSceneCollisionNode) {
-                //        NewtonSceneCollisionRemoveSubCollision(sceneCollision_, colShape->newtonSceneCollisionNode);
-                //    }
 
-                //    colShape->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(sceneCollision_, colShape->GetNewtonCollision());
-                //    dMatrix matrix;
-
-                //    matrix = UrhoToNewton(colShape->GetNode()->LocalToWorld(colShape->GetOffsetMatrix()));
-
-                //    //matrix.m_posit.m_y = 4.0f;
-                //    //matrix.m_posit.m_x = 3.0f;
-                //    //matrix.m_posit.m_z = 0.0f;
-                //    NewtonSceneCollisionSetSubCollisionMatrix(sceneCollision_, colShape->newtonSceneCollisionNode, &matrix[0][0]);
-                //}
             }
         }
         
