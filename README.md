@@ -11,7 +11,7 @@ This repository is unofficial/personal fork of [urho3d.github.io](http://urho3d.
 ## Differences
 - This fork routinely merges from https://github.com/rokups/Urho3D.
 - Newton Game Dynamics Integration (primary focus ongoing)
-- Update rates are fixed and a prioritized as having constant timing.  If you want to you can ignore using P_TIMESTEP in your update logic.
+- Update rates are fixed and a prioritized as having constant timing.  If you want to you can ignore using P_TIMESTEP in your update logic.  But is still recommended you reference it.
 - Update rates are seperated from render update rates. There are no "Frame" events. Application Logic should hook into more specific events like Update events.
 - Tweeks Subsystem Provides Convience tools for saving and tweeking values in real time optionally via ImGui.
 - Node internal source has been simplified
@@ -33,7 +33,7 @@ Licensed under the MIT license, see [LICENSE](https://github.com/urho3d/Urho3D/b
 
 Urho3D bundles the following third-party libraries:
 - Box2D 2.3.2 WIP (http://box2d.org)
-- Bullet 2.86.1 (http://www.bulletphysics.org)
+- NewtonDynamics 3.14 (http://www.newtondynamics.com)
 - Civetweb 1.7 (https://github.com/civetweb/civetweb)
 - FreeType 2.8 (https://www.freetype.org)
 - GLEW 1.13.0 (http://glew.sourceforge.net)
