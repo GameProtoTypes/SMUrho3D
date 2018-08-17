@@ -83,12 +83,6 @@ namespace Urho3D {
 
     bool NewtonConstraint::preRebuildCheckAndClean()
     {
-        if (!ownBody_ || !otherBody_)
-            return false;
-
-        if (!ownBody_->GetNewtonBody() || !ownBody_->GetNewtonBody())
-            return false;
-
         freeConstraint();
         
         return true;

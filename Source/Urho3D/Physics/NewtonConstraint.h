@@ -27,7 +27,7 @@ namespace Urho3D {
         static void RegisterObject(Context* context);
 
         /// Visualize the component as debug geometry.
-        void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
+        virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
         void MarkDirty(bool dirty = true) { needsRebuilt_ = dirty; }
 

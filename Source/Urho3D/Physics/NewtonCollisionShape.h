@@ -79,6 +79,10 @@ namespace Urho3D
         ///reference to physics material resource;
         WeakPtr<NewtonPhysicsMaterial> physicsMaterial_ = nullptr;
 
+        ///optional scene collision node for use if the collision is part of the scene collision of the newton world.
+        void* newtonSceneCollisionNode = nullptr;
+
+
         /// volume
         float volume_ = 0.0f;
         /// shape dirty flag

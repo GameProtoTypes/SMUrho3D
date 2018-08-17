@@ -25,6 +25,7 @@
 #include "Graphics/VisualDebugger.h"
 #include "NewtonPhysicsMaterial.h"
 #include "NewtonBallAndSocketConstraint.h"
+#include "NewtonKinematicsJoint.h"
 
 namespace Urho3D {
 
@@ -141,6 +142,11 @@ namespace Urho3D {
                 newtonWorld_ = NewtonCreate();
                 NewtonWorldSetUserData(newtonWorld_, (void*)this);
                 applyNewtonWorldSettings();
+
+
+
+                //create the scene collision
+                sceneCollision_ = NewtonCreateSceneCollision(newtonWorld_, 0);
             }
         }
         else
@@ -223,6 +229,13 @@ namespace Urho3D {
         }
         collisionComponentList.Clear();
 
+
+        //free scene collision
+        if (sceneCollision_) {
+            NewtonDestroyCollision(sceneCollision_);
+            sceneCollision_ = nullptr;
+        }
+
         //free internal bodies for all rigid bodies.
         for (NewtonRigidBody* rgBody : rigidBodyComponentList)
         {
@@ -233,6 +246,8 @@ namespace Urho3D {
         //free meshes in mesh cache
         newtonMeshCache_.Clear();
 
+
+       
 
         //destroy newton world.
         if (newtonWorld_ != nullptr) {
@@ -298,6 +313,10 @@ namespace Urho3D {
         URHO3D_PROFILE_FUNCTION();
 
 
+
+
+
+        NewtonSceneCollisionBeginAddRemove(sceneCollision_);//we may need to mess with the scene.
         //rebuild dirty collision shapes
         for (NewtonCollisionShape* colShape : collisionComponentList)
         {
@@ -305,8 +324,32 @@ namespace Urho3D {
                 colShape->reEvaluateCollision();
                 GSS<VisualDebugger>()->AddOrb(colShape->GetNode()->GetWorldPosition(), 1.0f, Color::GREEN);
                 colShape->MarkDirty(false);
+
+
+                //if the collision shape is on the scene. rebuild the shape into the scene geometry.
+                if (colShape->GetNode() == node_->GetScene())
+                {
+                    if (colShape->newtonSceneCollisionNode) {
+                        NewtonSceneCollisionRemoveSubCollision(sceneCollision_, colShape->newtonSceneCollisionNode);
+                    }
+
+                    colShape->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(sceneCollision_, colShape->GetNewtonCollision());
+                    dMatrix matrix;
+                    
+                    //matrix.m_posit.m_y = 4.0f;
+                    //matrix.m_posit.m_x = 3.0f;
+                    //matrix.m_posit.m_z = 0.0f;
+                    NewtonSceneCollisionSetSubCollisionMatrix(sceneCollision_, colShape->newtonSceneCollisionNode, &matrix[0][0]);
+
+
+                }
+
             }
         }
+        NewtonSceneCollisionEndAddRemove(sceneCollision_);
+
+
+
 
 
         //then rebuild rigid bodies if they need rebuilt (dirty) from root nodes up.
@@ -512,6 +555,7 @@ namespace Urho3D {
         NewtonConstraint::RegisterObject(context);
         NewtonFixedDistanceConstraint::RegisterObject(context);
         NewtonBallAndSocketConstraint::RegisterObject(context);
+        NewtonKinematicsConstraint::RegisterObject(context);
         //Constraint::RegisterObject(context);
         
         //RaycastVehicle::RegisterObject(context);

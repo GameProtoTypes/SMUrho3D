@@ -116,6 +116,9 @@ namespace Urho3D
         /// Internal newton world
         NewtonWorld* newtonWorld_ = nullptr;
 
+        NewtonCollision* sceneCollision_ = nullptr;
+
+
         ///convex casts
         static const int convexCastRetInfoSize_ = 1000;
         NewtonWorldConvexCastReturnInfo convexCastRetInfoArray[convexCastRetInfoSize_];
