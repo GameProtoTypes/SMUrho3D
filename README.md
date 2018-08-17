@@ -12,15 +12,15 @@ This repository is unofficial/personal fork of [urho3d.github.io](http://urho3d.
 - This fork routinely merges from https://github.com/rokups/Urho3D.
 - Newton Game Dynamics Integration (primary focus ongoing)
 - Update rates are fixed and a prioritized as having constant timing.  If you want to you can ignore using P_TIMESTEP in your update logic.
-- Update rates are seperated from render update rates. There are no "Frame" events.  
-  Rendering is viewed as a sampling of the current update state.  Transform Tweening is planned.
-- Tweeks Subsystem.
+- Update rates are seperated from render update rates. There are no "Frame" events. Application Logic should hook into more specific events like Update events.
+- Tweeks Subsystem Provides Convience tools for saving and tweeking values in real time optionally via ImGui.
 - Node internal source has been simplified
 - Other smaller changes as well as fixes.
 
 ## Future Goals
 - Seperate Engine Update and Rendering into 2 seperate threads as part of architecture.
-
+- Replace Matrix3x4 with Matrix4x4 throughout the engine for simplification.
+- Support Double Precision float by doing some typedef magic.
 ## License
 
 Licensed under the MIT license, see [LICENSE](https://github.com/urho3d/Urho3D/blob/master/LICENSE) for details.
