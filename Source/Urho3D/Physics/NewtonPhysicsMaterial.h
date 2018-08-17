@@ -1,9 +1,10 @@
 #pragma once
-#include "Resource/Resource.h"
-#include "Core/Context.h"
-#include "Core/Object.h"
+#include "../Resource/Resource.h"
+#include "../Core/Context.h"
+#include "../Core/Object.h"
 #include "Newton.h"
-#include "Math/Interpolations.h"
+#include "../Math/Interpolations.h"
+#include "../Resource/XMLFile.h"
 
 namespace Urho3D {
 
@@ -21,23 +22,68 @@ namespace Urho3D {
         virtual ~NewtonPhysicsMaterial() {}
 
         static void RegisterObject(Context* context) {
-            context->RegisterFactory< NewtonPhysicsMaterial>();
+            context->RegisterFactory<NewtonPhysicsMaterial>();
         }
 
+
+
+        virtual bool BeginLoad(Deserializer& source) override
+        {
+            loadXMLFile_ = new XMLFile(context_);
+            return loadXMLFile_->Load(source);
+        }
+
+
+        virtual bool EndLoad() override
+        {
+
+            XMLElement rootElem = loadXMLFile_->GetRoot();
+            XMLElement slipperiness = rootElem.GetChild("slipperiness");
+            slipperiness_ = slipperiness.GetFloat("value");
+
+            return true;
+        }
+
+
+        virtual bool Save(Serializer& dest) const override
+        {
+            SharedPtr<XMLFile> xml(new XMLFile(context_));
+            XMLElement materialElem = xml->CreateRoot("physicsmaterial");
+            //Save(materialElem);
+            return xml->Save(dest);
+        }
+        int newtonGroupId = -1;
 
     protected:
 
         //friction, restitution, etc..
         float softness_;//
         float elasticity_;//how "rubbery the surface along the normal
-        float slipperyness_;//[0 - 1] where 1 is icy and 0 is glue.
+        float slipperiness_;//[0 - 1] where 1 is icy and 0 is glue.
 
         float staticRugosity_; //roughness used for approximating coefficients of friction. Rugosity = (Surface Area Actual)/(Surface Area Geometrical) [ 1 - 1.1 ]
         float kineticRugosity_;
 
         float normalAcceleration_;//acceleration to apply along the normal of the surface. 
         Vector2 tangentalAcceleration_; //acceleration to apply along the surface (x,y)
+
+        /// XML file used while loading.
+        SharedPtr<XMLFile> loadXMLFile_;
     };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     class URHO3D_API NewtonPhysicsMaterialContactPair : public Object
@@ -57,8 +103,8 @@ namespace Urho3D {
         ///computes the metrics of this material contact pair for the given two material definitions.
         void SetMaterials(NewtonPhysicsMaterial* material1, NewtonPhysicsMaterial* material2)
         {
-            float reverseSlipperyness1 = 1 - material1->slipperyness_;
-            float reverseSlipperyness2 = 1 - material2->slipperyness_;
+            float reverseSlipperyness1 = 1 - material1->slipperiness_;
+            float reverseSlipperyness2 = 1 - material2->slipperiness_;
 
             float maxStaticCoeff = 2.0f;
 
@@ -75,6 +121,12 @@ namespace Urho3D {
                 Vector3(maxRugosity, 1, reverseSlipperyness1),
                 Vector2(material1->staticRugosity_, material2->kineticRugosity_));
 
+
+
+            newtonGroupId0 = material1->newtonGroupId;
+            newtonGroupId1 = material2->newtonGroupId;
+
+
         }
 
     protected:
@@ -83,7 +135,8 @@ namespace Urho3D {
         float staticFrictionCoef_;
         float kineticFrictionCoef_;
 
-        int newtonMaterialPairGroupId = 0;
+        int newtonGroupId0 = -1;
+        int newtonGroupId1 = -1;
     };
 }
 

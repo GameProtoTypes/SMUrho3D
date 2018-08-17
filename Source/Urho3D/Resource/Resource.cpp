@@ -104,7 +104,7 @@ void Resource::ResetUseTimer()
     useTimer_.Reset();
 }
 
-void Resource::SetAsyncLoadState(AsyncLoadState newState)
+void Resource::SetAsyncLoadState(ResourceAsyncLoadState newState)
 {
     asyncLoadState_ = newState;
 }

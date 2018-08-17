@@ -24,6 +24,7 @@
 #include "PhysicsEvents.h"
 #include "Graphics/VisualDebugger.h"
 #include "NewtonPhysicsMaterial.h"
+#include "NewtonBallAndSocketConstraint.h"
 
 namespace Urho3D {
 
@@ -138,7 +139,7 @@ namespace Urho3D {
             //create the newton world
             if (newtonWorld_ == nullptr) {
                 newtonWorld_ = NewtonCreate();
-
+                NewtonWorldSetUserData(newtonWorld_, (void*)this);
                 applyNewtonWorldSettings();
             }
         }
@@ -185,6 +186,9 @@ namespace Urho3D {
         else
         {
             physMaterialList.Insert(0, SharedPtr<NewtonPhysicsMaterial>(material));
+            material->newtonGroupId = NewtonMaterialCreateGroupID(newtonWorld_);
+
+
 
             computeMaterialPairs();
         }
@@ -442,21 +446,23 @@ namespace Urho3D {
         URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
         URHO3D_PROFILE_FUNCTION();;
 
-        const NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
-        const NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
+
+        //#todo
+        //const NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
+        //const NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
 
 
 
-        for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
-            NewtonMaterial* const material = NewtonContactGetMaterial(contact);
-            float frictionValue = 0.2;
-            NewtonMaterialSetContactFrictionCoef(material, frictionValue + 0.1f, frictionValue, 0);
-            NewtonMaterialSetContactFrictionCoef(material, frictionValue + 0.1f, frictionValue, 1);
-        }
+        //for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
+        //    NewtonMaterial* const material = NewtonContactGetMaterial(contact);
+        //    float frictionValue = 0.2;
+
+        //    //NewtonMaterialGet
 
 
-
-
+        //    NewtonMaterialSetContactFrictionCoef(material, frictionValue + 0.1f, frictionValue, 0);
+        //    NewtonMaterialSetContactFrictionCoef(material, frictionValue + 0.1f, frictionValue, 1);
+        //}
     }
 
     int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex)
@@ -505,9 +511,13 @@ namespace Urho3D {
         NewtonMeshObject::RegisterObject(context);
         NewtonConstraint::RegisterObject(context);
         NewtonFixedDistanceConstraint::RegisterObject(context);
+        NewtonBallAndSocketConstraint::RegisterObject(context);
         //Constraint::RegisterObject(context);
         
         //RaycastVehicle::RegisterObject(context);
+
+        NewtonPhysicsMaterial::RegisterObject(context);
+        NewtonPhysicsMaterialContactPair::RegisterObject(context);
     }
 
 

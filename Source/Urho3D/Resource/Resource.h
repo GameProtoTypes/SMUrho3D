@@ -34,7 +34,7 @@ class Serializer;
 class XMLElement;
 
 /// Asynchronous loading state of a resource.
-enum AsyncLoadState
+enum ResourceAsyncLoadState
 {
     /// No async operation in progress.
     ASYNC_DONE = 0,
@@ -78,7 +78,7 @@ public:
     /// Reset last used timer.
     void ResetUseTimer();
     /// Set the asynchronous loading state. Called by ResourceCache. Resources in the middle of asynchronous loading are not normally returned to user.
-    void SetAsyncLoadState(AsyncLoadState newState);
+    void SetAsyncLoadState(ResourceAsyncLoadState newState);
 
     /// Return name.
     const String& GetName() const { return name_; }
@@ -93,7 +93,7 @@ public:
     unsigned GetUseTimer();
 
     /// Return the asynchronous loading state.
-    AsyncLoadState GetAsyncLoadState() const { return asyncLoadState_; }
+    ResourceAsyncLoadState GetAsyncLoadState() const { return asyncLoadState_; }
 
 private:
     /// Name.
@@ -105,7 +105,7 @@ private:
     /// Memory use in bytes.
     unsigned memoryUse_;
     /// Asynchronous loading state.
-    AsyncLoadState asyncLoadState_;
+    ResourceAsyncLoadState asyncLoadState_;
 };
 
 /// Base class for resources that support arbitrary metadata stored. Metadata serialization shall be implemented in derived classes.

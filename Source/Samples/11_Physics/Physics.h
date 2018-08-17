@@ -105,7 +105,8 @@ private:
     void SpawnDecompCompound(const Vector3& worldPos);
     void SpawnNSquaredJointedObject(Vector3 worldPosition);
     void SpawnLinearJointedObject(Vector3 worldPosition);
-
+    void SpawnMaterialsTest(Vector3 worldPosition);
+    void SpawnBallSocketTest(Vector3 worldPosition);
     void FireSmallBall();
 
 

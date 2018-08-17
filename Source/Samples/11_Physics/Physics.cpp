@@ -50,6 +50,8 @@
 #include <Urho3D/DebugNew.h>
 #include "Urho3D/Graphics/VisualDebugger.h"
 #include "Urho3D/Physics/NewtonFixedDistanceConstraint.h"
+#include "Urho3D/Physics/NewtonPhysicsMaterial.h"
+#include "Urho3D/Physics/NewtonBallAndSocketConstraint.h"
 
 
 
@@ -97,7 +99,7 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81,0));
+    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -151,6 +153,9 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
+    //SpawnMaterialsTest(Vector3(0,0,30));
+    SpawnBallSocketTest(Vector3(0, 10, 0));
+
     //CreatePyramids();
 
     int numVertical = 1;
@@ -166,7 +171,7 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
 
 
 
@@ -590,6 +595,50 @@ void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
 
 
 
+void Physics::SpawnMaterialsTest(Vector3 worldPosition)
+{
+
+    Node* ramp = SpawnSamplePhysicsBox(scene_, worldPosition, Vector3(100, 1, 100));
+    ramp->Rotate(Quaternion(-45.0f, 0, 0));
+    ramp->Translate(Vector3(0, 50, 0), TS_WORLD);
+    ramp->GetComponent<NewtonRigidBody>()->SetMassScale(0);
+
+
+    for (int i = 0; i < 5; i++)
+    {
+        Node* box = SpawnSamplePhysicsBox(scene_, ramp->GetWorldPosition() + Vector3(-2.5 + float(i)*1.1f, 2, 0), Vector3::ONE);
+        NewtonPhysicsMaterial* mat;
+        String physMatName = "PhysicsMaterials/Rock.xml";
+        if(i > 2)
+            physMatName = "PhysicsMaterials/Ice.xml";
+
+        mat = GSS<ResourceCache>()->GetResource<NewtonPhysicsMaterial>(physMatName);
+        NewtonCollisionShape* collisionShape = box->GetDerivedComponent<NewtonCollisionShape>();
+        collisionShape->SetPhysicsMaterial(mat);
+    }
+}
+
+
+
+void Physics::SpawnBallSocketTest(Vector3 worldPosition)
+{
+    //lets joint spheres together with a distance limiting joint.
+    const float dist = 5.0f;
+
+    const int numSpheres = 25;
+
+
+    Node* sphere1 =  SpawnSamplePhysicsSphere(scene_, worldPosition);
+    Node* sphere2 = SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,-1.0, 0));
+    sphere1->GetComponent<NewtonRigidBody>()->SetMassScale(0);
+    NewtonBallAndSocketConstraint* constraint = sphere1->CreateComponent<NewtonBallAndSocketConstraint>();
+    constraint->SetOtherBody(sphere2->GetComponent<NewtonRigidBody>());
+
+
+
+
+}
+
 void Physics::FireSmallBall()
 {
     Node* sphere = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition());
@@ -610,12 +659,6 @@ void Physics::FireSmallBall()
     //    sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0);
 
     //}
-
-
-
-
-
-
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)

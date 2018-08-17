@@ -1,13 +1,13 @@
 #include "PhysicsSamplesUtils.h"
 #include "Urho3D/Physics/NewtonCollisionShapesDerived.h"
 
-Node* SpawnSamplePhysicsSphere(Scene* scene, const Vector3& worldPosition, float radius)
+Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, float radius)
 {
-        Node* sphere1 = scene->CreateChild();
+        Node* sphere1 = parentNode->CreateChild();
 
 
-        Model* sphereMdl = scene->GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl");
-        Material* sphereMat = scene->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+        Model* sphereMdl = parentNode->GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl");
+        Material* sphereMat = parentNode->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
         
         StaticModel* sphere1StMdl = sphere1->CreateComponent<StaticModel>();
         sphere1StMdl->SetCastShadows(true);
@@ -29,14 +29,14 @@ Node* SpawnSamplePhysicsSphere(Scene* scene, const Vector3& worldPosition, float
         return sphere1;
 }
 
-Node* SpawnSamplePhysicsBox(Scene* scene, const Vector3& worldPosition, const Vector3& size)
+Node* SpawnSamplePhysicsBox(Node* parentNode, const Vector3& worldPosition, const Vector3& size)
 {
 
-    Node* box = scene->CreateChild();
+    Node* box = parentNode->CreateChild();
     box->SetScale(size);
 
-    Model* sphereMdl = scene->GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
-    Material* sphereMat = scene->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+    Model* sphereMdl = parentNode->GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
+    Material* sphereMat = parentNode->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
 
     StaticModel* sphere1StMdl = box->CreateComponent<StaticModel>();
     sphere1StMdl->SetCastShadows(true);

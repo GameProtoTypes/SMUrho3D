@@ -1114,7 +1114,7 @@ File* ResourceCache::SearchResourceDirs(const String& name)
     auto* fileSystem = GetSubsystem<FileSystem>();
     for (unsigned i = 0; i < resourceDirs_.Size(); ++i)
     {
-        if (fileSystem->FileExists(resourceDirs_[i] + name))
+        if (fileSystem->FileExists((resourceDirs_[i] + name)))
         {
             // Construct the file first with full path, then rename it to not contain the resource path,
             // so that the file's sanitatedName can be used in further GetFile() calls (for example over the network)
