@@ -100,7 +100,9 @@ void Physics::CreateScene()
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<UrhoNewtonPhysicsWorld>()->SetGravity(Vector3(0,-9.81f,0));
+    UrhoNewtonPhysicsWorld* newtonWorld = scene_->CreateComponent<UrhoNewtonPhysicsWorld>();
+    newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
+    scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -183,7 +185,7 @@ void Physics::CreateScene()
     camera->SetFarClip(500.0f);
 
     // Set an initial position for the camera scene node above the floor
-    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, -20.0f));
+    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0));
 }
 void Physics::CreateInstructions()
 {

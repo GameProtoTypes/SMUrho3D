@@ -535,8 +535,6 @@ public:
     /// Return child scene nodes with a specific component.
     void GetChildrenWithComponent(PODVector<Node*>& dest, StringHash type, bool recursive = false) const;
     /// Return child scene nodes with a specific component.
-    void GetChildrenWithDerivedComponent(PODVector<Node*>& dest, StringHash type, bool recursive = false) const;
-    /// Return child scene nodes with a specific component.
     PODVector<Node*> GetChildrenWithComponent(StringHash type, bool recursive = false) const;
     /// Return child scene nodes with a specific tag.
     void GetChildrenWithTag(PODVector<Node*>& dest, const String& tag, bool recursive = false) const;
@@ -682,8 +680,6 @@ private:
     void GetChildrenRecursive(PODVector<Node*>& dest) const;
     /// Return child nodes with a specific component recursively.
     void GetChildrenWithComponentRecursive(PODVector<Node*>& dest, StringHash type) const;
-    /// Return child nodes with a specific component recursively.
-    void GetChildrenWithDerivedComponentRecursive(PODVector<Node*>& dest, StringHash type) const;
     /// Return child nodes with a specific tag recursively.
     void GetChildrenWithTagRecursive(PODVector<Node*>& dest, const String& tag) const;
     /// Return specific components recursively.
@@ -759,7 +755,25 @@ template <class T> void Node::GetChildrenWithComponent(PODVector<Node*>& dest, b
 }
 template <class T> void Node::GetChildrenWithDerivedComponent(PODVector<Node*>& dest, bool recursive) const
 {
-    GetChildrenWithDerivedComponent(dest, T::GetTypeStatic(), recursive);
+    for (Vector<SharedPtr<Node> >::ConstIterator i = children_.Begin(); i != children_.End(); ++i)
+    {
+        Node* childNode = *i;
+        T* component = childNode->GetDerivedComponent<T>(true);
+        if (component)
+            dest += childNode;
+
+        if (recursive)
+        {
+            for (Vector<SharedPtr<Node> >::ConstIterator i2 = childNode->children_.Begin(); i2 != childNode->children_.End(); ++i2)
+            {
+                (*i2)->GetChildrenWithDerivedComponent<T>(dest, true);
+            }
+        }
+    }
+
+
+    return;
+
 }
 
 template <class T> T* Node::GetComponent(bool recursive) const { return static_cast<T*>(GetComponent(T::GetTypeStatic(), recursive)); }

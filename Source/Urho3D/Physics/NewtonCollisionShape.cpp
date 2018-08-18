@@ -145,8 +145,6 @@ namespace Urho3D {
             ///auto create physics world
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
 
-
-
             //reEvaluateCollision();
             physicsWorld_->addCollisionShape(this);
 

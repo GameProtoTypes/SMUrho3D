@@ -22,6 +22,7 @@
 #include "Graphics/VisualDebugger.h"
 #include "Graphics/StaticModel.h"
 #include "Scene/SceneEvents.h"
+#include "NewtonCollisionShape.h"
 
 
 namespace Urho3D {
@@ -415,51 +416,34 @@ namespace Urho3D {
 
     void NewtonCollisionShape_SceneCollision::RegisterObject(Context* context)
     {
-
+        context->RegisterFactory<NewtonCollisionShape_SceneCollision>(DEF_PHYSICS_CATEGORY.CString());
     }
 
     void NewtonCollisionShape_SceneCollision::buildNewtonCollision()
-{
+    {
 
-        ////parse upwards looking for collisions that should not be attached to rigid bodies.
-        //PODVector<NewtonCollisionShape*> colShapes;
-        ////GetAloneCollisionShapes(colShapes, node_);
+        //parse upwards looking for collisions that should not be attached to rigid bodies.
+        PODVector<NewtonCollisionShape*> colShapes;
+        GetAloneCollisionShapes(colShapes, node_);
 
-
-
-        //NewtonSceneCollisionBeginAddRemove(newtonCollision_);
-        //for (NewtonCollisionShape* col : colShapes)
-        //{
+        newtonCollision_ = NewtonCreateSceneCollision(physicsWorld_->GetNewtonWorld(), 0);
 
 
 
+        NewtonSceneCollisionBeginAddRemove(newtonCollision_);
+        for (NewtonCollisionShape* col : colShapes)
+        {
+            
+            static_cast<NewtonCollisionShape_SceneCollision*>(col)->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(newtonCollision_, col->GetNewtonCollision());
+            dMatrix matrix;
+
+            matrix = UrhoToNewton(col->GetNode()->LocalToWorld(col->GetOffsetMatrix()));
+            NewtonSceneCollisionSetSubCollisionMatrix(newtonCollision_, static_cast<NewtonCollisionShape_SceneCollision*>(col)->newtonSceneCollisionNode, &matrix[0][0]);
 
 
-        //}
-        //NewtonSceneCollisionEndAddRemove(newtonCollision_);
 
-
-
-
-        ////if the collision shape is on the scene. rebuild the shape into the scene geometry.
-        //if (colShape->GetNode() == node_->GetScene() || !GetMostRootRigidBody(colShape->GetNode()))
-        //{
-        //    if (colShape->newtonSceneCollisionNode) {
-        //        NewtonSceneCollisionRemoveSubCollision(sceneCollision_, colShape->newtonSceneCollisionNode);
-        //    }
-
-        //    colShape->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(sceneCollision_, colShape->GetNewtonCollision());
-        //    dMatrix matrix;
-
-        //    matrix = UrhoToNewton(colShape->GetNode()->LocalToWorld(colShape->GetOffsetMatrix()));
-
-        //    //matrix.m_posit.m_y = 4.0f;
-        //    //matrix.m_posit.m_x = 3.0f;
-        //    //matrix.m_posit.m_z = 0.0f;
-        //    NewtonSceneCollisionSetSubCollisionMatrix(sceneCollision_, colShape->newtonSceneCollisionNode, &matrix[0][0]);
-        //}
-
-
+        }
+        NewtonSceneCollisionEndAddRemove(newtonCollision_);
 
     }
 

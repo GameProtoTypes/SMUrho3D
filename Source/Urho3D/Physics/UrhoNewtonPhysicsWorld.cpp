@@ -498,7 +498,8 @@ namespace Urho3D {
         return 1;
     }
 
-    Urho3D::NewtonRigidBody* GetMostRootRigidBody(Node* node)
+    //traverses towards the scene root returning the first found rigid body.
+    NewtonRigidBody* GetMostRootRigidBody(Node* node)
     {
         NewtonRigidBody* mostRootRigidBody = node->GetComponent<NewtonRigidBody>();
         if (!mostRootRigidBody)
@@ -518,6 +519,39 @@ namespace Urho3D {
     }
 
 
+
+    //recurses up the scene tree starting a node and continuing up every branch adding collision shapes to the array until a rigid body is encountered in which case the algorithm stops traversing that branch.
+    void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_)
+    {
+        PODVector<Node*> childrenWithCollisionShapes;
+        startingNode_->GetChildrenWithDerivedComponent<NewtonCollisionShape>(childrenWithCollisionShapes, false);
+
+
+
+        PODVector<Node*> finalList;
+        //trim out the children with rigid bodies from the list
+        for (Node* node : childrenWithCollisionShapes)
+        {
+            if (!node->HasComponent<NewtonRigidBody>())
+            {
+                finalList += node;
+            }          
+        }
+        for (Node* node : finalList)
+        {
+            colShapes += node->GetDerivedComponent<NewtonCollisionShape>();
+            GetAloneCollisionShapes(colShapes, node);
+        }
+    }
+
+
+
+
+
+
+
+
+
     void RegisterPhysicsLibrary(Context* context)
     {
         UrhoNewtonPhysicsWorld::RegisterObject(context);
@@ -532,6 +566,7 @@ namespace Urho3D {
         NewtonCollisionShape_ConvexHull::RegisterObject(context);
         NewtonCollisionShape_ConvexHullCompound::RegisterObject(context);
         NewtonCollisionShape_ConvexDecompositionCompound::RegisterObject(context);
+        NewtonCollisionShape_SceneCollision::RegisterObject(context);
 
         NewtonRigidBody::RegisterObject(context);
         NewtonMeshObject::RegisterObject(context);
