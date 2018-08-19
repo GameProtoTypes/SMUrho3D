@@ -143,10 +143,10 @@ namespace Urho3D {
     {
         Component::DrawDebugGeometry(debug, depthTest);
         if (newtonBody_) {
-            if (showAABB) NewtonBodyDebugDrawAABB(newtonBody_, debug, depthTest);
-            if (showCollisionMesh) NewtonBodyDebugShowCollision(newtonBody_, debug, depthTest);
-            if (showCenterOfMass) NewtonBodyDebugDrawCenterOfMass(newtonBody_, debug, depthTest);
-            if (showContactForces)  NewtonBodyDebugContactForces(newtonBody_, 0., debug, depthTest);
+            if (showAABB) NewtonDebug_BodyDrawAABB(newtonBody_, debug, depthTest);
+            if (showCollisionMesh) NewtonDebug_BodyDrawCollision(newtonBody_, debug, depthTest);
+            if (showCenterOfMass) NewtonDebug_BodyDrawCenterOfMass(newtonBody_, debug, depthTest);
+            if (showContactForces)  NewtonDebug_BodyDrawContactForces(newtonBody_, 0., debug, depthTest);
         }
     }
 

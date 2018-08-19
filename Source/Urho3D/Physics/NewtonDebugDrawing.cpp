@@ -10,7 +10,7 @@
 namespace Urho3D {
 
 
-    void NewtonBodyDebugDrawAABB(NewtonBody* body, DebugRenderer* debug, bool depthTest /*= false*/)
+    void NewtonDebug_BodyDrawAABB(NewtonBody* body, DebugRenderer* debug, bool depthTest /*= false*/)
     {
         dMatrix matrix;
         dVector p0(0.0f);
@@ -30,7 +30,7 @@ namespace Urho3D {
 
     }
 
-    void NewtonBodyDebugDrawCenterOfMass(NewtonBody* body, DebugRenderer* debug, bool depthTest /*= false*/)
+    void NewtonDebug_BodyDrawCenterOfMass(NewtonBody* body, DebugRenderer* debug, bool depthTest /*= false*/)
     {
             dMatrix matrix;
             dVector com(0.0f);
@@ -61,7 +61,7 @@ namespace Urho3D {
             debug->AddLine(Vector3((o.m_x), (o.m_y), (o.m_z)), Vector3((z.m_x), (z.m_y), (z.m_z)), Color::BLUE, depthTest);
     }
 
-    void DebugShowGeometryCollision(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
+    void NewtonDebug_ShowGeometryCollisionCallback(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
     {
         debugRenderOptions* options = static_cast<debugRenderOptions*>(userData);
 
@@ -97,7 +97,7 @@ namespace Urho3D {
         //}
     }
 
-    void NewtonBodyDebugShowCollision(const NewtonBody* const body, DebugRenderer* debug, bool depthTest /*= false*/)
+    void NewtonDebug_BodyDrawCollision(const NewtonBody* const body, DebugRenderer* debug, bool depthTest /*= false*/)
     {
         debugRenderOptions options;
         options.debug = debug;
@@ -127,10 +127,10 @@ namespace Urho3D {
         dMatrix matrix;
         NewtonBodyGetMatrix(body, &matrix[0][0]);
 
-        NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], DebugShowGeometryCollision, (void*)&options);
+        NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
     }
 
-    void NewtonBodyDebugContactForces(const NewtonBody* const body, float scaleFactor, DebugRenderer* debug, bool depthTest /*= false*/)
+    void NewtonDebug_BodyDrawContactForces(const NewtonBody* const body, float scaleFactor, DebugRenderer* debug, bool depthTest /*= false*/)
     {
         dFloat mass;
         dFloat Ixx;
@@ -179,7 +179,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonDebugShowJoints(NewtonWorld* newtonWorld, DebugRenderer* debug, bool depthTest /*= false*/)
+    void NewtonDebug_DrawJoints(NewtonWorld* newtonWorld, DebugRenderer* debug, bool depthTest /*= false*/)
     {
         //// this will go over the joint list twice, 
         //for (NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
@@ -193,14 +193,14 @@ namespace Urho3D {
         //NewtonWorldListenerDebug(world, jointDebug);
     }
 
-    void NewtonCollisionDraw(NewtonCollision* collision, const Matrix3x4& transform, const Color& color, DebugRenderer* debug, bool depthTest /*= false*/)
+    void NewtonDebug_DrawCollision(NewtonCollision* collision, const Matrix3x4& transform, const Color& color, DebugRenderer* debug, bool depthTest /*= false*/)
     {
         debugRenderOptions options;
         options.debug = debug;
         options.color = color;
         options.depthTest = depthTest;
 
-        NewtonCollisionForEachPolygonDo(collision, &UrhoToNewton(transform)[0][0], DebugShowGeometryCollision, (void*)&options);
+        NewtonCollisionForEachPolygonDo(collision, &UrhoToNewton(transform)[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
     }
 
 }

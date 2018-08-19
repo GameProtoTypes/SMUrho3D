@@ -133,7 +133,7 @@ namespace Urho3D {
     {
         Component::DrawDebugGeometry(debug, depthTest);
         if (newtonCollision_) {
-            NewtonCollisionDraw(newtonCollision_, node_->LocalToWorld(GetOffsetMatrix()), Color::GREEN, debug, depthTest);
+            NewtonDebug_DrawCollision(newtonCollision_, node_->LocalToWorld(GetOffsetMatrix()), Color::GREEN, debug, depthTest);
         }
     }
 

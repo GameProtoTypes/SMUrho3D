@@ -18,19 +18,17 @@ namespace Urho3D
 
 
 
-    void NewtonBodyDebugDrawAABB(NewtonBody* body, DebugRenderer* debug, bool depthTest = false);
-    void NewtonBodyDebugDrawCenterOfMass(NewtonBody* body, DebugRenderer* debug, bool depthTest = false);
-    void NewtonBodyDebugShowCollision(const NewtonBody* const body, DebugRenderer* debug, bool depthTest = false);
-    void NewtonBodyDebugContactForces(const NewtonBody* const body, float scaleFactor, DebugRenderer* debug, bool depthTest = false);
-
-    void NewtonDebugShowJoints(NewtonWorld* newtonWorld, DebugRenderer* debug, bool depthTest = false);
-
-    void NewtonCollisionDraw(NewtonCollision* collision, const Matrix3x4& transform, const Color& color, DebugRenderer* debug, bool depthTest = false);
+    void NewtonDebug_BodyDrawAABB(NewtonBody* body, DebugRenderer* debug, bool depthTest = false);
+    void NewtonDebug_BodyDrawCenterOfMass(NewtonBody* body, DebugRenderer* debug, bool depthTest = false);
+    void NewtonDebug_BodyDrawCollision(const NewtonBody* const body, DebugRenderer* debug, bool depthTest = false);
+    void NewtonDebug_BodyDrawContactForces(const NewtonBody* const body, float scaleFactor, DebugRenderer* debug, bool depthTest = false);
+    void NewtonDebug_DrawJoints(NewtonWorld* newtonWorld, DebugRenderer* debug, bool depthTest = false);
+    void NewtonDebug_DrawCollision(NewtonCollision* collision, const Matrix3x4& transform, const Color& color, DebugRenderer* debug, bool depthTest = false);
 
 
 
 
-    void DebugShowGeometryCollision(void* userData, int vertexCount, const dFloat* const faceVertec, int id);
+    void NewtonDebug_ShowGeometryCollisionCallback(void* userData, int vertexCount, const dFloat* const faceVertec, int id);
 
 
 
