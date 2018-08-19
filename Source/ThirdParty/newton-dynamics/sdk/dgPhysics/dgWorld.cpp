@@ -195,6 +195,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,dgSkeletonList(allocator)
 	,dgInverseDynamicsList(allocator)
 	,dgContactList(allocator) 
+	,dgBilateralConstraintList(allocator)
 	,dgWorldDynamicUpdate(allocator)
 	,dgMutexThread("newtonMainThread", 0)
 	,dgWorldThreadPool(allocator)
@@ -223,7 +224,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 
 	// avoid small memory fragmentations on initialization
 	m_bodiesMemory.Resize(1024 * 32);
-	m_jointsMemory.Resize(1024 * 32);
+	m_jointsMemory.Resize(1024 * 2);
 	m_clusterMemory.Resize(1024 * 32);
 	m_solverJacobiansMemory.Resize(1024 * 64);
 	m_solverRightHandSideMemory.Resize(1024 * 64);
@@ -992,10 +993,6 @@ void dgWorld::RunStep ()
 	if (!m_concurrentUpdate) {
 		m_mutex.Release();
 	}
-
-//	std::atomic<int> value;
-//	value.fetch_add(5, std::memory_order_release);
-//	value.fetch_add(1, std::memory_order_relaxed);
 }
 
 void dgWorld::TickCallback (dgInt32 threadID)

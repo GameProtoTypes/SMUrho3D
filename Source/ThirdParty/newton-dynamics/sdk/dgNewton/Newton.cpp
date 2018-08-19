@@ -5029,7 +5029,7 @@ void NewtonBodyGetForce(const NewtonBody* const bodyPtr, dFloat* const vectorPtr
 
 
 /*!
-  Calculate the next force that need to be applied to the body to archive the desired velocity in the current time step.
+  Calculate the next force that net to be applied to the body to archive the desired velocity in the current time step.
 
   @param *bodyPtr pointer to the body.
   @param timestep time step that the force will be applyed.

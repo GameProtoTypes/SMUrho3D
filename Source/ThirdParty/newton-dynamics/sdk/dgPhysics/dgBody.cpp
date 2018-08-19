@@ -77,6 +77,8 @@ dgBody::dgBody()
 	m_transformIsDirty = true;
 	m_collideWithLinkedBodies = true;
 	m_invWorldInertiaMatrix[3][3] = dgFloat32 (1.0f);
+
+	InitJointSet();
 }
 
 dgBody::dgBody (dgWorld* const world, const dgTree<const dgCollision*, dgInt32>* const collisionCashe, dgDeserialize serializeCallback, void* const userData, dgInt32 revisionNumber)
@@ -145,6 +147,8 @@ dgBody::dgBody (dgWorld* const world, const dgTree<const dgCollision*, dgInt32>*
 	dgCollisionInstance* const instance = new (world->GetAllocator()) dgCollisionInstance (world, serializeCallback, userData, revisionNumber);
 	instance->m_childShape = collision;
 	m_collision = instance;
+
+	InitJointSet();
 }
 
 dgBody::~dgBody()
