@@ -24,7 +24,7 @@
 
 #include "Editor.h"
 #include "AssetConverter.h"
-#include "ImportFbx.h"
+#include "ImportAssimp.h"
 
 
 namespace Urho3D
@@ -33,8 +33,8 @@ namespace Urho3D
 AssetConverter::AssetConverter(Context* context)
     : Object(context)
 {
-    assetImporters_.Push(SharedPtr<ImportFbx>(new ImportFbx(context_)));
     SubscribeToEvent(E_POSTUPDATE, std::bind(&AssetConverter::DispatchChangedAssets, this));
+    assetImporters_.Push(SharedPtr<ImportFbx>(new ImportFbx(context_)));
     SubscribeToEvent(E_CONSOLECOMMAND, std::bind(&AssetConverter::OnConsoleCommand, this, _2));
 }
 
