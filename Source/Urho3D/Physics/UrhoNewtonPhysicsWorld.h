@@ -45,6 +45,9 @@ namespace Urho3D
         /// Return the internal Newton world.
         NewtonWorld* GetNewtonWorld() { return newtonWorld_; }
 
+        /// Return the internal newton scene collision
+        NewtonCollision* GetSceneCollision() { return sceneCollision_; }
+
         /// Saves the NewtonWorld to a serializable newton file.
         void SerializeNewtonWorld(String fileName);
 

@@ -421,29 +421,28 @@ namespace Urho3D {
 
     void NewtonCollisionShape_SceneCollision::buildNewtonCollision()
     {
+        NewtonCollision* sceneCollision = physicsWorld_->GetSceneCollision();
+        if (!sceneCollision)
+            return;
 
-        //parse upwards looking for collisions that should not be attached to rigid bodies.
+
+        //parse upwards looking for collisions that are not attached to rigid bodies.
         PODVector<NewtonCollisionShape*> colShapes;
         GetAloneCollisionShapes(colShapes, node_);
 
-        newtonCollision_ = NewtonCreateSceneCollision(physicsWorld_->GetNewtonWorld(), 0);
 
 
-
-        NewtonSceneCollisionBeginAddRemove(newtonCollision_);
+        NewtonSceneCollisionBeginAddRemove(sceneCollision);
         for (NewtonCollisionShape* col : colShapes)
         {
             
-            static_cast<NewtonCollisionShape_SceneCollision*>(col)->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(newtonCollision_, col->GetNewtonCollision());
+            static_cast<NewtonCollisionShape_SceneCollision*>(col)->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(sceneCollision, col->GetNewtonCollision());
             dMatrix matrix;
 
             matrix = UrhoToNewton(col->GetNode()->LocalToWorld(col->GetOffsetMatrix()));
-            NewtonSceneCollisionSetSubCollisionMatrix(newtonCollision_, static_cast<NewtonCollisionShape_SceneCollision*>(col)->newtonSceneCollisionNode, &matrix[0][0]);
-
-
-
+            NewtonSceneCollisionSetSubCollisionMatrix(sceneCollision, static_cast<NewtonCollisionShape_SceneCollision*>(col)->newtonSceneCollisionNode, &matrix[0][0]);
         }
-        NewtonSceneCollisionEndAddRemove(newtonCollision_);
+        NewtonSceneCollisionEndAddRemove(sceneCollision);
 
     }
 

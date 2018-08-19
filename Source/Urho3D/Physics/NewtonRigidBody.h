@@ -151,7 +151,7 @@ namespace Urho3D
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
         /// array holding currently leveraged collision shape components on child nodes.
-        PODVector<WeakPtr<NewtonCollisionShape>> childCollisionShapesCache_;
+        PODVector<NewtonCollisionShape*> childCollisionShapesCache_;
 
 
         ///Continuous Collision

@@ -259,6 +259,7 @@ namespace Urho3D {
                     resolvedCollision = usedCollision;
 
                 colComp->rigidBody_ = this;
+                childCollisionShapesCache_ += (colComp);
             }
 
             if (compoundNeeded) {
