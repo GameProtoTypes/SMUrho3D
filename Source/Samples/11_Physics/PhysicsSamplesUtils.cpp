@@ -3,7 +3,7 @@
 
 Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, float radius)
 {
-        Node* sphere1 = parentNode->CreateChild();
+        Node* sphere1 = parentNode->CreateChild("SamplePhysicsSphere");
 
 
         Model* sphereMdl = parentNode->GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl");

@@ -46,8 +46,6 @@ namespace Urho3D
         /// Return the internal Newton world.
         NewtonWorld* GetNewtonWorld() { return newtonWorld_; }
 
-        /// Return the internal newton scene collision
-        NewtonCollision* GetSceneCollision() { return sceneCollision_; }
 
         /// Saves the NewtonWorld to a serializable newton file.
         void SerializeNewtonWorld(String fileName);
@@ -120,9 +118,8 @@ namespace Urho3D
         /// Internal newton world
         NewtonWorld* newtonWorld_ = nullptr;
 
-        NewtonCollision* sceneCollision_ = nullptr;
-        NewtonBody* sceneRigidBody_ = nullptr;
-        void reBuildSceneRigidBody();
+        NewtonRigidBody* sceneBody_ = nullptr;
+
         ///convex casts
         static const int convexCastRetInfoSize_ = 1000;
         NewtonWorldConvexCastReturnInfo convexCastRetInfoArray[convexCastRetInfoSize_];
@@ -154,8 +151,10 @@ namespace Urho3D
     void Newton_ProcessContactsCallback(const NewtonJoint* contactJoint, dFloat timestep, int threadIndex);
     int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex);
 
-    NewtonRigidBody* GetMostRootRigidBody(Node* node);
+    void GetRootRigidBodies(PODVector<NewtonRigidBody*>& rigidBodies, Node* node, bool includeScene);
     void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
+
+
 
     /// Register Physics library objects.
     void URHO3D_API RegisterPhysicsLibrary(Context* context);

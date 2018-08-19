@@ -145,6 +145,14 @@ namespace Urho3D {
     }
 
 
+    void NewtonRigidBody::SetIsSceneRootBody(bool enable)
+    {
+        if (sceneRootBodyMode_ != enable) {
+            sceneRootBodyMode_ = enable;
+            MarkDirty(true);
+        }
+    }
+
     void NewtonRigidBody::DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB /*= true*/, bool showCollisionMesh /*= true*/, bool showCenterOfMass /*= true*/, bool showContactForces /*= true*/)
     {
         Component::DrawDebugGeometry(debug, depthTest);
@@ -217,7 +225,13 @@ namespace Urho3D {
             bool compoundNeeded = (nodesWithCollision.Size() > 1);
 
             if (compoundNeeded) {
-                compoundCollision_ = NewtonCreateCompoundCollision(physicsWorld_->GetNewtonWorld(), 0);
+                if (sceneRootBodyMode_)
+                    compoundCollision_ = NewtonCreateSceneCollision(physicsWorld_->GetNewtonWorld(), 0);//internally the same as a regular compond with some flags enabled..
+                else
+                    compoundCollision_ = NewtonCreateCompoundCollision(physicsWorld_->GetNewtonWorld(), 0);
+
+
+
                 NewtonCompoundCollisionBeginAddRemove(compoundCollision_);
             }
             float accumMass = 0.0f;
@@ -250,7 +264,12 @@ namespace Urho3D {
 
 
                 if (compoundNeeded) {
-                    NewtonCompoundCollisionAddSubCollision(compoundCollision_, usedCollision);
+
+                    if(sceneRootBodyMode_)
+                        NewtonSceneCollisionAddSubCollision(compoundCollision_, usedCollision);
+                    else
+                        NewtonCompoundCollisionAddSubCollision(compoundCollision_, usedCollision);
+
                     NewtonDestroyCollision(usedCollision);
                 }
                 else
@@ -259,7 +278,9 @@ namespace Urho3D {
             }
 
             if (compoundNeeded) {
+
                 NewtonCompoundCollisionEndAddRemove(compoundCollision_);
+
                 resolvedCollision = compoundCollision_;
             }
 
@@ -274,15 +295,17 @@ namespace Urho3D {
             newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
 
 
-            NewtonBodySetCollision(newtonBody_, resolvedCollision);
+            //NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
             mass_ = accumMass * massScale_;
+            if (sceneRootBodyMode_)
+                mass_ = 0;
+
             NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
 
             NewtonBodySetUserData(newtonBody_, (void*)this);
 
             NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
-
 
             //ensure newton damping is 0 because we apply our own as a force.
             NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
@@ -310,9 +333,6 @@ namespace Urho3D {
     {
         if (node)
         {
-
-            if (node == GetScene())
-                URHO3D_LOGWARNING(GetTypeName() + " should not be created to the root scene node");
 
             //Auto-create a physics world on the scene if it does not yet exist.
             physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
@@ -346,7 +366,9 @@ namespace Urho3D {
         if (node == node_)
         {
             //trigger a rebuild on the root of the new tree.
-            NewtonRigidBody* mostRootRigBody = GetMostRootRigidBody(node);
+            PODVector<NewtonRigidBody*> rigBodies;
+            GetRootRigidBodies(rigBodies, node, false);
+            NewtonRigidBody* mostRootRigBody = rigBodies.Back();
             if (mostRootRigBody)
                 mostRootRigBody->MarkDirty(true);
         }
@@ -363,8 +385,10 @@ namespace Urho3D {
             if (oldParent)
             {
 
-                //trigger a rebuild on the root of the old parents tree.
-                NewtonRigidBody* mostRootRigBody = GetMostRootRigidBody(oldParent);
+                //trigger a rebuild on the root of the new tree.
+                PODVector<NewtonRigidBody*> rigBodies;
+                GetRootRigidBodies(rigBodies, node, false);
+                NewtonRigidBody* mostRootRigBody = rigBodies.Back();
                 if (mostRootRigBody)
                     mostRootRigBody->MarkDirty(true);
 
@@ -394,7 +418,7 @@ namespace Urho3D {
         else
         {
             //handle case where node is child of other rigid body (part of compound).
-            if (parentRigidBody) {
+            if (parentRigidBody && (parentRigidBody->GetNode() != parentRigidBody->GetScene())) {
                 parentRigidBody->MarkDirty();
             }
 

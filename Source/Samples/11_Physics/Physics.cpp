@@ -102,7 +102,7 @@ void Physics::CreateScene()
     scene_->CreateComponent<Octree>();
     UrhoNewtonPhysicsWorld* newtonWorld = scene_->CreateComponent<UrhoNewtonPhysicsWorld>();
     newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
-    scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
+    //scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -819,7 +819,7 @@ void Physics::CreateScenery()
     // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
     Node* floorNode = scene_->CreateChild("Floor");
     floorNode->SetPosition(Vector3(0.0f, -0.5f, 0.0f));
-    floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+    //floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
     auto* floorObject = floorNode->CreateComponent<StaticModel>();
     floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
@@ -829,13 +829,11 @@ void Physics::CreateScenery()
     // in the physics simulation
     //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
     //body->SetMassScale(0.0f);
-    auto* shape = scene_->CreateComponent<NewtonCollisionShape_Box>();
+    auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+    //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+    //shape->SetPositionOffset(Vector3(1, 0, 0));
     // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
     // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
-
-
-
-
 
 
 }

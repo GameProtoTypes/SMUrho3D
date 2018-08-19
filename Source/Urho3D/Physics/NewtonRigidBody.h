@@ -63,7 +63,8 @@ namespace Urho3D
         /// Set continuous collision so that the body will not pass through walls.
         void SetContinuousCollision(bool sweptCollision);
 
-
+        /// Setting this to true will make the rigid body act as a root scene body with Inifite mass.
+        void SetIsSceneRootBody(bool enable);
 
 
         /// Add a force to the body in world cordinates on the body's center of mass.
@@ -148,7 +149,7 @@ namespace Urho3D
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
 
-
+        bool sceneRootBodyMode_ = false;
         ///Continuous Collision
         bool continuousCollision_ = false;
         /// flag indicating collision shape should be additionally sized based on node scale.
