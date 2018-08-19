@@ -186,6 +186,16 @@ namespace Urho3D {
     void NewtonRigidBody::reBuildBody()
     {
         freeBody();
+
+
+        //mark current child collision components as dirty. so they can be updated later
+        for (NewtonCollisionShape* col : childCollisionShapesCache_)
+        {
+            col->MarkDirty(true);
+        }
+        childCollisionShapesCache_.Clear();
+
+
         GSS<VisualDebugger>()->AddOrb(GetNode()->GetWorldPosition(), 0.5f, Color::RED);
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<Node*> nodesWithCollision;
@@ -248,6 +258,7 @@ namespace Urho3D {
                 else
                     resolvedCollision = usedCollision;
 
+                colComp->rigidBody_ = this;
             }
 
             if (compoundNeeded) {

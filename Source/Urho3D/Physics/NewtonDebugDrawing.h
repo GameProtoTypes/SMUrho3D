@@ -25,7 +25,7 @@ namespace Urho3D
 
     void NewtonDebugShowJoints(NewtonWorld* newtonWorld, DebugRenderer* debug, bool depthTest = false);
 
-    void NewtonCollisionDraw(NewtonCollision* collision, const Matrix3x4& transform, DebugRenderer* debug, bool depthTest = false);
+    void NewtonCollisionDraw(NewtonCollision* collision, const Matrix3x4& transform, const Color& color, DebugRenderer* debug, bool depthTest = false);
 
 
 

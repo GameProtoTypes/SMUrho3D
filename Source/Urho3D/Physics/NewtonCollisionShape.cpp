@@ -23,6 +23,7 @@
 #include "Graphics/VisualDebugger.h"
 #include "Graphics/StaticModel.h"
 #include "Scene/SceneEvents.h"
+#include "NewtonDebugDrawing.h"
 
 namespace Urho3D {
 
@@ -67,9 +68,13 @@ namespace Urho3D {
     }
 
     void NewtonCollisionShape::updateBuild()
-{
+    {
             // first free any reference to an existing collision.
             freeInternalCollision();
+
+            // assume there is no rigid body using this component.
+            rigidBody_ = nullptr;
+
 
             //call the derived class createNewtonCollision function.
             buildNewtonCollision();
@@ -118,6 +123,19 @@ namespace Urho3D {
     }
 
 
+
+    NewtonRigidBody* NewtonCollisionShape::GetRigidBody()
+    {
+        return rigidBody_;
+    }
+
+    void NewtonCollisionShape::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    {
+        Component::DrawDebugGeometry(debug, depthTest);
+        if (newtonCollision_) {
+            NewtonCollisionDraw(newtonCollision_, node_->LocalToWorld(GetOffsetMatrix()), Color::GREEN, debug, depthTest);
+        }
+    }
 
     float NewtonCollisionShape::updateVolume()
 {

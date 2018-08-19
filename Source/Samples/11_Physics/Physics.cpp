@@ -136,7 +136,7 @@ void Physics::CreateScene()
         // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
         Node* floorNode = scene_->CreateChild("Floor");
         floorNode->SetPosition(Vector3(0.0f, -0.5f, 0.0f));
-        floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+        //floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
         auto* floorObject = floorNode->CreateComponent<StaticModel>();
         floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
         floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));

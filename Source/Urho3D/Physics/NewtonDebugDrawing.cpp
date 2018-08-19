@@ -193,10 +193,11 @@ namespace Urho3D {
         //NewtonWorldListenerDebug(world, jointDebug);
     }
 
-    void NewtonCollisionDraw(NewtonCollision* collision, const Matrix3x4& transform, DebugRenderer* debug, bool depthTest /*= false*/)
+    void NewtonCollisionDraw(NewtonCollision* collision, const Matrix3x4& transform, const Color& color, DebugRenderer* debug, bool depthTest /*= false*/)
     {
         debugRenderOptions options;
         options.debug = debug;
+        options.color = color;
         options.depthTest = depthTest;
 
         NewtonCollisionForEachPolygonDo(collision, &UrhoToNewton(transform)[0][0], DebugShowGeometryCollision, (void*)&options);

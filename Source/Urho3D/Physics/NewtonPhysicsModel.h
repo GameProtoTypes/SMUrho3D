@@ -1,7 +1,7 @@
 #pragma once
-#include "Resource/Resource.h"
-#include "Core/Context.h"
-#include "Core/Object.h"
+#include "../Resource/Resource.h"
+#include "../Core/Context.h"
+#include "../Core/Object.h"
 
 namespace Urho3D {
 

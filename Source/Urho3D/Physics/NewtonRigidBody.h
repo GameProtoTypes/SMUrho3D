@@ -150,9 +150,8 @@ namespace Urho3D
         NewtonCollision* compoundCollision_ = nullptr;
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
-
-        WeakPtr<NewtonNodePhysicsGlue> nodeGlue_;
-
+        /// array holding currently leveraged collision shape components on child nodes.
+        PODVector<WeakPtr<NewtonCollisionShape>> childCollisionShapesCache_;
 
 
         ///Continuous Collision

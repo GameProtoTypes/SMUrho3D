@@ -138,6 +138,14 @@ namespace Urho3D {
             for (NewtonRigidBody* body : rigidBodyComponentList) {
                 body->DrawDebugGeometry(debug, depthTest);
             }
+
+            //draw debug geomtry on collision shapes
+            for (NewtonCollisionShape* col : collisionComponentList)
+            {
+                if(col->GetRigidBody() == nullptr)
+                    col->DrawDebugGeometry(debug, depthTest);
+            }
+
         }
     }
 
@@ -328,9 +336,6 @@ namespace Urho3D {
                 colShape->updateBuild();
                 GSS<VisualDebugger>()->AddOrb(colShape->GetNode()->GetWorldPosition(), 1.0f, Color::GREEN);
                 colShape->MarkDirty(false);
-
-
-
             }
         }
         
