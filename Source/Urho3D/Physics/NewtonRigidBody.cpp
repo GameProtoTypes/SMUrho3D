@@ -110,11 +110,13 @@ namespace Urho3D {
 
     void NewtonRigidBody::SetInternalLinearDamping(float damping)
     {
-        linearDampeningInternal_ = damping;
+        if (linearDampeningInternal_ != damping) {
+            linearDampeningInternal_ = damping;
 
-        if (newtonBody_)
-        {
-            NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
+            if (newtonBody_)
+            {
+                NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
+            }
         }
     }
 
@@ -129,13 +131,21 @@ namespace Urho3D {
 
     void NewtonRigidBody::SetInheritNodeScale(bool enable /*= true*/)
     {
-        inheritCollisionNodeScales_ = enable; MarkDirty();
+        if (inheritCollisionNodeScales_ != enable) {
+            inheritCollisionNodeScales_ = enable;
+            MarkDirty();//we need to rebuild for this chang.e
+        }
+
     }
 
     void NewtonRigidBody::SetContinuousCollision(bool sweptCollision)
     {
-        continuousCollision_ = sweptCollision;
-        MarkDirty();
+        if (continuousCollision_ != sweptCollision) {
+            continuousCollision_ = sweptCollision;
+            if (newtonBody_) {
+                NewtonBodySetContinuousCollisionMode(newtonBody_, sweptCollision);
+            }
+        }
     }
 
 

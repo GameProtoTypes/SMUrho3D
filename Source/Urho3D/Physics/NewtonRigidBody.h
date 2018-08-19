@@ -35,9 +35,6 @@ namespace Urho3D
         /// get the mass of the rigid body 
         float GetEffectiveMass() { return mass_; }
 
-        /// Set friction coefficient.
-        void SetFriction(float friction);
-
         /// Set linear velocity.
         void SetLinearVelocity(const Vector3& velocity);
 
