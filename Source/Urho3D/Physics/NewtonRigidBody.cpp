@@ -204,17 +204,15 @@ namespace Urho3D {
 
         GSS<VisualDebugger>()->AddOrb(GetNode()->GetWorldPosition(), 0.5f, Color::RED);
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
-        PODVector<Node*> nodesWithCollision;
         PODVector<NewtonCollisionShape*> childCollisionShapes;
         node_->GetDerivedComponents<NewtonCollisionShape>(childCollisionShapes, true, true);//includes this node.
 
         
-        for (NewtonCollisionShape* shp : childCollisionShapes)
-            nodesWithCollision += shp->GetNode();
+
         
 
 
-        if (nodesWithCollision.Size())
+        if (childCollisionShapes.Size())
         {  
             NewtonCollision* resolvedCollision = nullptr;
 
@@ -222,7 +220,7 @@ namespace Urho3D {
                 NewtonDestroyCollision(compoundCollision_);
                 compoundCollision_ = nullptr;
             }
-            bool compoundNeeded = (nodesWithCollision.Size() > 1);
+            bool compoundNeeded = (childCollisionShapes.Size() > 1);
 
             if (compoundNeeded) {
                 if (sceneRootBodyMode_)
@@ -236,10 +234,9 @@ namespace Urho3D {
             }
             float accumMass = 0.0f;
 
-            for (Node* curNode : nodesWithCollision)
+            for (NewtonCollisionShape* colComp : childCollisionShapes)
             {
-                NewtonCollisionShape* colComp = curNode->GetDerivedComponent<NewtonCollisionShape>();
-                
+
                 NewtonCollision* curNewtCollision = colComp->GetNewtonCollision();
                 NewtonCollision* usedCollision = nullptr;
 
@@ -251,13 +248,13 @@ namespace Urho3D {
                     usedCollision = curNewtCollision;
 
 
-                Matrix3x4 uMat = curNode->LocalToWorld(colComp->GetOffsetMatrix());
+                Matrix3x4 uMat = colComp->GetNode()->LocalToWorld(colComp->GetOffsetMatrix());
 
                 dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(uMat));
 
 
                 if (inheritCollisionNodeScales_)
-                    NewtonCollisionSetScale(usedCollision, curNode->GetScale().x_, curNode->GetScale().y_, curNode->GetScale().z_);
+                    NewtonCollisionSetScale(usedCollision, colComp->GetNode()->GetScale().x_, colComp->GetNode()->GetScale().y_, colComp->GetNode()->GetScale().z_);
 
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
                 accumMass += colComp->GetVolume()*1.0f;

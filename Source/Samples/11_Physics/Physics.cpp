@@ -830,8 +830,8 @@ void Physics::CreateScenery()
     //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
     //body->SetMassScale(0.0f);
     auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-    //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-    //shape->SetPositionOffset(Vector3(1, 0, 0));
+    shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+    shape->SetPositionOffset(Vector3(1, 0, 0));
     // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
     // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
