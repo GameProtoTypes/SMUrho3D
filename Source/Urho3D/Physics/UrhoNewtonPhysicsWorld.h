@@ -32,6 +32,7 @@ namespace Urho3D
         friend class NewtonCollisionShape;
         friend class NewtonCollisionShape_Geometry;
         friend class NewtonCollisionShape_ConvexDecompositionCompound;
+        friend class NewtonCollisionShape_SceneCollision;
         friend class NewtonRigidBody;
         friend class NewtonConstraint;
 
@@ -120,8 +121,8 @@ namespace Urho3D
         NewtonWorld* newtonWorld_ = nullptr;
 
         NewtonCollision* sceneCollision_ = nullptr;
-
-
+        NewtonBody* sceneRigidBody_ = nullptr;
+        void reBuildSceneRigidBody();
         ///convex casts
         static const int convexCastRetInfoSize_ = 1000;
         NewtonWorldConvexCastReturnInfo convexCastRetInfoArray[convexCastRetInfoSize_];

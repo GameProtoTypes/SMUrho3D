@@ -444,6 +444,9 @@ namespace Urho3D {
         }
         NewtonSceneCollisionEndAddRemove(sceneCollision);
 
+        //rebuild the scene body.
+        physicsWorld_->reBuildSceneRigidBody();
+
     }
 
 }

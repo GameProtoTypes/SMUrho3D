@@ -27,6 +27,7 @@
 #include "NewtonBallAndSocketConstraint.h"
 #include "NewtonKinematicsJoint.h"
 #include "NewtonDebugDrawing.h"
+#include "dgMatrix.h"
 
 namespace Urho3D {
 
@@ -139,11 +140,13 @@ namespace Urho3D {
                 body->DrawDebugGeometry(debug, depthTest);
             }
 
-            //draw debug geomtry on collision shapes
-            for (NewtonCollisionShape* col : collisionComponentList)
+            //draw debug geomtry on collision shapes that are not owned by a rigid body
+            PODVector<NewtonCollisionShape*> aloneCollisionShapes;
+            GetAloneCollisionShapes(aloneCollisionShapes, node_);
+
+            for (NewtonCollisionShape* col : aloneCollisionShapes)
             {
-                if(col->GetRigidBody() == nullptr)
-                    col->DrawDebugGeometry(debug, depthTest);
+                col->DrawDebugGeometry(debug, depthTest);
             }
 
         }
@@ -162,6 +165,9 @@ namespace Urho3D {
 
                 //create the scene collision
                 sceneCollision_ = NewtonCreateSceneCollision(newtonWorld_, 0);
+
+                reBuildSceneRigidBody();
+
             }
         }
         else
@@ -368,6 +374,20 @@ namespace Urho3D {
             if (constraint->needsRebuilt_)
                 constraint->reEvalConstraint();
         }
+    }
+
+    void UrhoNewtonPhysicsWorld::reBuildSceneRigidBody()
+    {
+        if (sceneRigidBody_)
+        {
+            NewtonDestroyBody(sceneRigidBody_);
+            sceneRigidBody_ = nullptr;
+        }
+
+        dMatrix mat = dGetIdentityMatrix() ;
+        sceneRigidBody_ = NewtonCreateDynamicBody(newtonWorld_, sceneCollision_, &mat[0][0]);
+
+
     }
 
     int UrhoNewtonPhysicsWorld::DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape)

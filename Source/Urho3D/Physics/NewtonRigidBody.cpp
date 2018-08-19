@@ -129,7 +129,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::SetInheritNodeScale(bool enable /*= true*/)
     {
-        inheritNodeScale_ = enable; MarkDirty();
+        inheritCollisionNodeScales_ = enable; MarkDirty();
     }
 
     void NewtonRigidBody::SetContinuousCollision(bool sweptCollision)
@@ -188,14 +188,6 @@ namespace Urho3D {
         freeBody();
 
 
-        //mark current child collision components as dirty. so they can be updated later
-        for (NewtonCollisionShape* col : childCollisionShapesCache_)
-        {
-            col->MarkDirty(true);
-        }
-        childCollisionShapesCache_.Clear();
-
-
         GSS<VisualDebugger>()->AddOrb(GetNode()->GetWorldPosition(), 0.5f, Color::RED);
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<Node*> nodesWithCollision;
@@ -244,7 +236,7 @@ namespace Urho3D {
                 dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(uMat));
 
 
-                if (inheritNodeScale_)
+                if (inheritCollisionNodeScales_)
                     NewtonCollisionSetScale(usedCollision, curNode->GetScale().x_, curNode->GetScale().y_, curNode->GetScale().z_);
 
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
@@ -258,8 +250,6 @@ namespace Urho3D {
                 else
                     resolvedCollision = usedCollision;
 
-                colComp->rigidBody_ = this;
-                childCollisionShapesCache_ += (colComp);
             }
 
             if (compoundNeeded) {
@@ -275,7 +265,6 @@ namespace Urho3D {
             transform.SetRotation(node_->GetWorldRotation().RotationMatrix());
             dMatrix mat = UrhoToNewton(transform);
 
-            //#newtonurhobug sometimes mat is not orthogonal!
             newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
 
 

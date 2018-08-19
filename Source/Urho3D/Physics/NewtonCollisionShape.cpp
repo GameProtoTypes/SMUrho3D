@@ -72,10 +72,6 @@ namespace Urho3D {
             // first free any reference to an existing collision.
             freeInternalCollision();
 
-            // assume there is no rigid body using this component.
-            rigidBody_ = nullptr;
-
-
             //call the derived class createNewtonCollision function.
             buildNewtonCollision();
 
@@ -122,12 +118,6 @@ namespace Urho3D {
         return newtonCollision_;
     }
 
-
-
-    NewtonRigidBody* NewtonCollisionShape::GetRigidBody()
-    {
-        return rigidBody_;
-    }
 
     void NewtonCollisionShape::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {

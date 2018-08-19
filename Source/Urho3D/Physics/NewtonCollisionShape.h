@@ -67,8 +67,6 @@ namespace Urho3D
         /// Returns the internal newton collision
         NewtonCollision* GetNewtonCollision();
 
-        ///Returns the rigid body that is using this collision shape if there is one. else return null.
-        NewtonRigidBody* GetRigidBody();
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
@@ -79,8 +77,6 @@ namespace Urho3D
 
         /// Internal Newton Collision
         NewtonCollision* newtonCollision_ = nullptr;
-
-        NewtonRigidBody* rigidBody_ = nullptr;
 
         /// newton Mesh reference
         WeakPtr<NewtonMeshObject> newtonMesh_ = nullptr;

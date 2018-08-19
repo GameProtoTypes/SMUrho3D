@@ -60,7 +60,7 @@ namespace Urho3D
 
 
         bool GetInheritNodeScale() {
-            return inheritNodeScale_;
+            return inheritCollisionNodeScales_;
         }
 
         /// Set continuous collision so that the body will not pass through walls.
@@ -150,14 +150,12 @@ namespace Urho3D
         NewtonCollision* compoundCollision_ = nullptr;
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
-        /// array holding currently leveraged collision shape components on child nodes.
-        PODVector<NewtonCollisionShape*> childCollisionShapesCache_;
 
 
         ///Continuous Collision
         bool continuousCollision_ = false;
         /// flag indicating collision shape should be additionally sized based on node scale.
-        bool inheritNodeScale_ = true;
+        bool inheritCollisionNodeScales_ = true;
 
         ///Net Force in local cordinates
         Vector3 netForce_;
