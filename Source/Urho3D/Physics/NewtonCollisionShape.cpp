@@ -111,10 +111,6 @@ namespace Urho3D {
 
     NewtonCollision* NewtonCollisionShape::GetNewtonCollision()
     {
-        if (newtonCollision_ == nullptr)
-        {
-            updateBuild();
-        }
         return newtonCollision_;
     }
 

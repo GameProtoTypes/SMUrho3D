@@ -83,10 +83,6 @@ namespace Urho3D {
         }
     }
 
-    void NewtonRigidBody::SetFriction(float friction)
-    {
-
-    }
 
     void NewtonRigidBody::SetLinearVelocity(const Vector3& velocity)
     {

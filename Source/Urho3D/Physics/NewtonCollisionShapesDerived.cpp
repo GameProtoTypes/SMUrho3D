@@ -428,15 +428,18 @@ namespace Urho3D {
 
         //parse upwards looking for collisions that are not attached to rigid bodies.
         PODVector<NewtonCollisionShape*> colShapes;
-        GetAloneCollisionShapes(colShapes, node_);
+        GetAloneCollisionShapes(colShapes, node_, true);
 
 
 
         NewtonSceneCollisionBeginAddRemove(sceneCollision);
         for (NewtonCollisionShape* col : colShapes)
         {
-            
-            static_cast<NewtonCollisionShape_SceneCollision*>(col)->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(sceneCollision, col->GetNewtonCollision());
+            NewtonCollision* newtCol = col->GetNewtonCollision();
+            if (!newtCol)
+                continue;
+
+            static_cast<NewtonCollisionShape_SceneCollision*>(col)->newtonSceneCollisionNode = NewtonSceneCollisionAddSubCollision(sceneCollision, newtCol);
             dMatrix matrix;
 
             matrix = UrhoToNewton(col->GetNode()->LocalToWorld(col->GetOffsetMatrix()));

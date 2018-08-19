@@ -142,7 +142,7 @@ namespace Urho3D {
 
             //draw debug geomtry on collision shapes that are not owned by a rigid body
             PODVector<NewtonCollisionShape*> aloneCollisionShapes;
-            GetAloneCollisionShapes(aloneCollisionShapes, node_);
+            GetAloneCollisionShapes(aloneCollisionShapes, node_, true);
 
             for (NewtonCollisionShape* col : aloneCollisionShapes)
             {
@@ -546,26 +546,43 @@ namespace Urho3D {
 
 
     //recurses up the scene tree starting a node and continuing up every branch adding collision shapes to the array until a rigid body is encountered in which case the algorithm stops traversing that branch.
-    void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_)
+    void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode, bool recurse)
     {
+        PODVector<NewtonCollisionShape*> colList;
+        if (includeStartingNode)
+        {
+
+            if (!startingNode_->HasComponent<NewtonRigidBody>() && startingNode_->GetDerivedComponent<NewtonCollisionShape>()) {
+
+                PODVector<NewtonCollisionShape*> compsOnNode;
+                startingNode_->GetDerivedComponents(compsOnNode, false, true);
+                colList += compsOnNode;
+            }
+        }
+
         PODVector<Node*> childrenWithCollisionShapes;
         startingNode_->GetChildrenWithDerivedComponent<NewtonCollisionShape>(childrenWithCollisionShapes, false);
 
 
-
-        PODVector<Node*> finalList;
         //trim out the children with rigid bodies from the list
         for (Node* node : childrenWithCollisionShapes)
         {
             if (!node->HasComponent<NewtonRigidBody>())
             {
-                finalList += node;
+                PODVector<NewtonCollisionShape*> compsOnNode;
+                startingNode_->GetDerivedComponents(compsOnNode, false, true);
+                colList += compsOnNode;
             }          
         }
-        for (Node* node : finalList)
-        {
-            colShapes += node->GetDerivedComponent<NewtonCollisionShape>();
-            GetAloneCollisionShapes(colShapes, node);
+
+        //add to final list
+        colShapes += colList;
+
+        if (recurse) {
+            for (NewtonCollisionShape* col : colList)
+            {
+                GetAloneCollisionShapes(colShapes, col->GetNode(), false);
+            }
         }
     }
 

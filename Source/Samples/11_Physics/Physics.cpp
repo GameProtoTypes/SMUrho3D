@@ -132,25 +132,11 @@ void Physics::CreateScene()
     auto* skybox = skyNode->CreateComponent<Skybox>();
     skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
-    {
-        // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
-        Node* floorNode = scene_->CreateChild("Floor");
-        floorNode->SetPosition(Vector3(0.0f, -0.5f, 0.0f));
-        floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
-        auto* floorObject = floorNode->CreateComponent<StaticModel>();
-        floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-        // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
-        // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
-        // in the physics simulation
-        //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
-        //body->SetMassScale(0.0f);
-        auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-        // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
-        // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
-    }
+
+    CreateScenery();
+
 
 
     //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
@@ -425,7 +411,6 @@ void Physics::SpawnObject()
          // Create physics components, use a smaller mass also
          auto* body = boxNode->CreateComponent<NewtonRigidBody>();
          body->SetMassScale(0.1f);
-         body->SetFriction(0.75f);
         
         
 
@@ -485,7 +470,6 @@ void Physics::SpawnConvexHull(const Vector3& worldPos)
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
     body->SetMassScale(1.0f);
-    body->SetFriction(0.75f);
 
     auto* shape = boxNode->CreateComponent<NewtonCollisionShape_ConvexHull>();
 
@@ -513,7 +497,6 @@ void Physics::SpawnCompound(const Vector3& worldPos)
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
     body->SetMassScale(1.0f);
-    body->SetFriction(0.75f);
 
     auto* shape = boxNode->CreateComponent<NewtonCollisionShape_ConvexHullCompound>();
 
@@ -541,7 +524,6 @@ void Physics::SpawnDecompCompound(const Vector3& worldPos)
     // Create physics components, use a smaller mass also
     auto* body = boxNode->CreateComponent<NewtonRigidBody>();
     body->SetMassScale(1.0f);
-    body->SetFriction(0.75f);
 
     auto* shape = boxNode->CreateComponent<NewtonCollisionShape_ConvexDecompositionCompound>();
 }
@@ -830,6 +812,33 @@ RayQueryResult Physics::GetCameraPickNode()
 }
 
 
+
+void Physics::CreateScenery()
+{
+    ResourceCache* cache = GSS<ResourceCache>();
+    // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
+    Node* floorNode = scene_->CreateChild("Floor");
+    floorNode->SetPosition(Vector3(0.0f, -0.5f, 0.0f));
+    floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+    auto* floorObject = floorNode->CreateComponent<StaticModel>();
+    floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+
+    // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
+    // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
+    // in the physics simulation
+    //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
+    //body->SetMassScale(0.0f);
+    auto* shape = scene_->CreateComponent<NewtonCollisionShape_Box>();
+    // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
+    // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
+
+
+
+
+
+
+}
 
 void Physics::CreatePickTargetNodeOnPhysics()
 {

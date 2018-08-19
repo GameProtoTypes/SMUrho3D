@@ -155,7 +155,7 @@ namespace Urho3D
     int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex);
 
     NewtonRigidBody* GetMostRootRigidBody(Node* node);
-    void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_);
+    void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
 
     /// Register Physics library objects.
     void URHO3D_API RegisterPhysicsLibrary(Context* context);
