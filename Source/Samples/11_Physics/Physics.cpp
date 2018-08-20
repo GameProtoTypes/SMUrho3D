@@ -357,7 +357,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         curNode->AddTag("scaleTestCube");
         float rotDelta = 0;// Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
-        curNode->SetScale(Random(0.8f,1.2f));
+        //curNode->SetScale(Random(0.8f,1.2f)); this will make things crash.
         curNode->Translate(Vector3(0, 1.5f, 0));
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
@@ -851,38 +851,64 @@ void Physics::CreateScenery(Vector3 worldPosition)
     // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
     // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
+
+
+     // Create heightmap terrain with collision
+    Node* terrainNode = scene_->CreateChild("Terrain");
+    terrainNode->SetPosition(worldPosition);
+    auto* terrain = terrainNode->CreateComponent<Terrain>();
+    terrain->SetPatchSize(64);
+    terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
+    terrain->SetSmoothing(true);
+    terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+    terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
+    // The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
+    // terrain patches and other objects behind it
+    terrain->SetOccluder(true);
+
+    //terrain->CreateComponent<NewtonCollisionShape_Terrain>();
+
+
+
+
+
+
+
+
+
     float range = 200;
     float objectScale = 10;
 
     for (int i = 0; i < 1000; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
-        auto* floorObject = scenePart->CreateComponent<StaticModel>();
+        auto* stMdl = scenePart->CreateComponent<StaticModel>();
 
         scenePart->SetPosition(Vector3(Random(-range, range), 0, Random(-range, range)) + worldPosition);
         scenePart->SetRotation(Quaternion(Random(-360, 0), Random(-360, 0), Random(-360, 0)));
         scenePart->SetScale(Vector3(Random(1.0f, objectScale), Random(1.0f, objectScale), Random(1.0f, objectScale)));
 
         if (i % 2) {
-            floorObject->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
-            floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+            stMdl->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
+            stMdl->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
             NewtonCollisionShape* colShape = scenePart->CreateComponent<NewtonCollisionShape_Cylinder>();
             colShape->SetRotationOffset(Quaternion(0, 0, 90));
         }
         else if (i % 3) {
-            floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-            floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+            stMdl->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+            stMdl->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
             NewtonCollisionShape* colShape = scenePart->CreateComponent<NewtonCollisionShape_Box>();
         }
         else {
-            floorObject->SetModel(cache->GetResource<Model>("Models/Sphere.mdl"));
-            floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+            stMdl->SetModel(cache->GetResource<Model>("Models/Sphere.mdl"));
+            stMdl->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
             NewtonCollisionShape* colShape = scenePart->CreateComponent<NewtonCollisionShape_Sphere>();
         }
-
-
-
     }
+
+
+
+
 
 
     //finally create a moving node for testing scene collision rebuilding.

@@ -29,7 +29,7 @@
 #include "../Graphics/Geometry.h"
 #include "../Graphics/Model.h"
 #include "../Graphics/StaticModel.h"
-#include "../Graphics/TerrainPatch.h"
+#include "../Graphics/HeightmapTerrainPatch.h"
 #include "../Graphics/VertexBuffer.h"
 #include "../IO/Log.h"
 #include "../IO/MemoryBuffer.h"
@@ -1065,7 +1065,7 @@ void NavigationMesh::CollectGeometries(Vector<NavigationGeometryInfo>& geometryL
 
             if (drawable->GetType() == StaticModel::GetTypeStatic())
                 info.lodLevel_ = static_cast<StaticModel*>(drawable)->GetOcclusionLodLevel();
-            else if (drawable->GetType() == TerrainPatch::GetTypeStatic())
+            else if (drawable->GetType() == HeightmapTerrainPatch::GetTypeStatic())
                 info.lodLevel_ = 0;
             else
                 continue;

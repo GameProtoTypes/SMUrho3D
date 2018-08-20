@@ -31,7 +31,7 @@
 #include <Urho3D/Graphics/Renderer.h>
 #include <Urho3D/Graphics/RenderSurface.h>
 #include <Urho3D/Graphics/Skybox.h>
-#include <Urho3D/Graphics/Terrain.h>
+#include <Urho3D/Graphics/HeightmapTerrain.h>
 #include <Urho3D/Graphics/Texture2D.h>
 #include <Urho3D/Graphics/Zone.h>
 #include <Urho3D/Input/Input.h>

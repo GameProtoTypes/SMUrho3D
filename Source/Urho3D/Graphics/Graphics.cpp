@@ -43,8 +43,8 @@
 #include "../Graphics/Skybox.h"
 #include "../Graphics/StaticModelGroup.h"
 #include "../Graphics/Technique.h"
-#include "../Graphics/Terrain.h"
-#include "../Graphics/TerrainPatch.h"
+#include "../Graphics/HeightmapTerrain.h"
+#include "../Graphics/HeightmapTerrainPatch.h"
 #ifdef _WIN32
 #include "../Graphics/Texture2D.h"
 #endif
@@ -454,8 +454,8 @@ void RegisterGraphicsLibrary(Context* context)
     RibbonTrail::RegisterObject(context);
     CustomGeometry::RegisterObject(context);
     DecalSet::RegisterObject(context);
-    Terrain::RegisterObject(context);
-    TerrainPatch::RegisterObject(context);
+    HeightmapTerrain::RegisterObject(context);
+    HeightmapTerrainPatch::RegisterObject(context);
     DebugRenderer::RegisterObject(context);
 	VisualDebugger::RegisterObject(context);
     Octree::RegisterObject(context);
