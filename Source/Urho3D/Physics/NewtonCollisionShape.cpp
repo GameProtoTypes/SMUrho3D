@@ -107,7 +107,11 @@ namespace Urho3D {
 
     void NewtonCollisionShape::MarkDirty(bool dirty /*= true*/)
     {
-        shapeNeedsRebuilt_ = dirty;
+        if (shapeNeedsRebuilt_ != dirty) {
+            shapeNeedsRebuilt_ = dirty;
+            if(dirty)
+                MarkRigidBodyDirty();
+        }
     }
 
     NewtonCollision* NewtonCollisionShape::GetNewtonCollision()
@@ -142,6 +146,18 @@ namespace Urho3D {
     }
 
  
+    void NewtonCollisionShape::MarkRigidBodyDirty()
+    {
+        PODVector<NewtonRigidBody*> rootRigidBodies;
+        GetRootRigidBodies(rootRigidBodies, node_, true);
+        if (rootRigidBodies.Size() > 1)
+            rootRigidBodies[rootRigidBodies.Size() - 2]->MarkDirty(true);
+        else if (rootRigidBodies.Size() == 1)
+        {
+            rootRigidBodies.Back()->MarkDirty(true);//mark scene rig body dirty
+        }
+    }
+
     void NewtonCollisionShape::OnNodeSet(Node* node)
     {
 
@@ -202,17 +218,7 @@ namespace Urho3D {
 
     void NewtonCollisionShape::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
     {
-        Matrix3x4 newTransform = eventData[NodeTransformChange::P_NEW_TRANSFORM].GetMatrix3x4();
-
-        PODVector<NewtonRigidBody*> rootRigidBodies;
-        GetRootRigidBodies(rootRigidBodies, node_, true);
-        if (rootRigidBodies.Size() > 1)
-            rootRigidBodies[rootRigidBodies.Size() - 2]->MarkDirty(true);
-        else if (rootRigidBodies.Size() == 1)
-        {
-            rootRigidBodies.Back()->MarkDirty(true);//mark scene rig body dirty
-        }
-        
+        MarkRigidBodyDirty();
     }
 
 }

@@ -108,6 +108,7 @@ namespace Urho3D
         /// Calculates the effective mass based off density and size. (could be expensive)
         float updateVolume();
 
+        void MarkRigidBodyDirty();
 
         void HandleNodeAdded(StringHash event, VariantMap& eventData);
         void HandleNodeRemoved(StringHash event, VariantMap& eventData);
