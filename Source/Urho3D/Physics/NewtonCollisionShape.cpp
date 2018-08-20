@@ -85,7 +85,7 @@ namespace Urho3D {
     }
 
     void NewtonCollisionShape::buildNewtonCollision()
-{
+    {
 
     }
 
@@ -103,7 +103,6 @@ namespace Urho3D {
         {
 
         }
-
     }
 
     void NewtonCollisionShape::MarkDirty(bool dirty /*= true*/)
@@ -154,12 +153,17 @@ namespace Urho3D {
 
             physicsWorld_->addCollisionShape(this);
 
+
+            SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeTransformChange));
+
         }
         else
         {
             freeInternalCollision();
             if (physicsWorld_)
                 physicsWorld_->removeCollisionShape(this);
+
+            UnsubscribeFromEvent(E_NODETRANSFORMCHANGE);
         }
 
     }
@@ -196,9 +200,19 @@ namespace Urho3D {
     }
 
 
+    void NewtonCollisionShape::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
+    {
+        Matrix3x4 newTransform = eventData[NodeTransformChange::P_NEW_TRANSFORM].GetMatrix3x4();
 
-
-
-
+        PODVector<NewtonRigidBody*> rootRigidBodies;
+        GetRootRigidBodies(rootRigidBodies, node_, true);
+        if (rootRigidBodies.Size() > 1)
+            rootRigidBodies[rootRigidBodies.Size() - 2]->MarkDirty(true);
+        else if (rootRigidBodies.Size() == 1)
+        {
+            rootRigidBodies.Back()->MarkDirty(true);//mark scene rig body dirty
+        }
+        
+    }
 
 }

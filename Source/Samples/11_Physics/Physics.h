@@ -140,5 +140,5 @@ private:
     PODVector<float> worldPosHistory_;
     PODVector<float> worldPosHistory2_;
 
-    void CreateScenery();
+    void CreateScenery(Vector3 worldPosition);
 };

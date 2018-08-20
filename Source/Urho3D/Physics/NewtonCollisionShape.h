@@ -111,6 +111,9 @@ namespace Urho3D
 
         void HandleNodeAdded(StringHash event, VariantMap& eventData);
         void HandleNodeRemoved(StringHash event, VariantMap& eventData);
+        void HandleNodeTransformChange(StringHash event, VariantMap& eventData);
+
+
         virtual void OnNodeSet(Node* node) override;
     };
 

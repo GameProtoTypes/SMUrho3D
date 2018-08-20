@@ -135,7 +135,7 @@ void Physics::CreateScene()
 
 
 
-    CreateScenery();
+    CreateScenery(Vector3(0,-20,0));
 
 
 
@@ -159,7 +159,7 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     ////create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
 
 
 
@@ -357,17 +357,17 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         curNode->AddTag("scaleTestCube");
         float rotDelta = 0;// Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
-        curNode->SetScale(1.0f);
+        curNode->SetScale(Random(0.8f,1.2f));
         curNode->Translate(Vector3(0, 1.5f, 0));
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cone.mdl"));
         stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml"));
         stMdl->SetCastShadows(true);
-        if (i == 0) {
+        //if (i == 0) {
             NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
             rigBody->SetMassScale(1.0f);
-        }
+       // }
         NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Cone>();
         colShape->SetRotationOffset(Quaternion(0, 0, 90));
 
@@ -430,7 +430,7 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids()
 {
-    int size = 32;
+    int size = 16;
     float horizontalSeperation = 2.0f;
     //create pyramids
     const int numIslands = 0;
@@ -625,11 +625,20 @@ void Physics::SpawnBallSocketTest(Vector3 worldPosition)
 
 void Physics::FireSmallBall()
 {
-    Node* sphere = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition());
-    sphere->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 100.0f);
-    sphere->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
-    sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.01f);
-    sphere->GetComponent<NewtonRigidBody>()->SetMassScale(Random(1.0f, 10.0f));
+    int ran = Random(3);
+    Node* node = nullptr;
+    if(ran == 0)
+        node = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition());
+    else if (ran == 1)
+         node = SpawnSamplePhysicsBox(scene_, cameraNode_->GetWorldPosition(), Vector3::ONE);
+    else
+         node = SpawnSamplePhysicsCylinder(scene_, cameraNode_->GetWorldPosition(), Sqrt(2));
+
+
+    node->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 100.0f);
+    node->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
+    node->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.01f);
+    node->GetComponent<NewtonRigidBody>()->SetMassScale(Random(1.0f, 10.0f));
 
 
     //if (Random(2) == 0)
@@ -656,6 +665,14 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     MoveCamera(timeStep);
 
     UpdatePickPull();
+
+
+
+    //move the scene node as a rebuild scene collision test.
+    Node* movingNode = scene_->GetChild("MovingSceneNode");
+    //movingNode->Translate(Vector3(0, 0.1f, 0));
+
+
 
 
     //debug bulletball_linearDamp ball
@@ -812,12 +829,12 @@ RayQueryResult Physics::GetCameraPickNode()
 
 
 
-void Physics::CreateScenery()
+void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
     // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
     Node* floorNode = scene_->CreateChild("Floor");
-    floorNode->SetPosition(Vector3(0.0f, -0.5f, 0.0f));
+    floorNode->SetPosition(worldPosition);
     floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
     auto* floorObject = floorNode->CreateComponent<StaticModel>();
     floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
@@ -834,15 +851,17 @@ void Physics::CreateScenery()
     // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
     // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
+    float range = 200;
+    float objectScale = 10;
 
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 1000; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* floorObject = scenePart->CreateComponent<StaticModel>();
 
-        scenePart->SetPosition(Vector3(Random(-200, 200), 0, Random(-200, 200)));
+        scenePart->SetPosition(Vector3(Random(-range, range), 0, Random(-range, range)) + worldPosition);
         scenePart->SetRotation(Quaternion(Random(-360, 0), Random(-360, 0), Random(-360, 0)));
-        scenePart->SetScale(Vector3(Random(1, 100), Random(1, 100), Random(1, 100)));
+        scenePart->SetScale(Vector3(Random(1.0f, objectScale), Random(1.0f, objectScale), Random(1.0f, objectScale)));
 
         if (i % 2) {
             floorObject->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
@@ -864,6 +883,21 @@ void Physics::CreateScenery()
 
 
     }
+
+
+    //finally create a moving node for testing scene collision rebuilding.
+    Node* movingSceneNode = scene_->CreateChild("MovingSceneNode");
+    auto* stmdl = movingSceneNode->CreateComponent<StaticModel>();
+    stmdl->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    stmdl->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    movingSceneNode->CreateComponent<NewtonCollisionShape_Box>();
+
+
+
+
+
+
+
 
 
 
