@@ -514,7 +514,7 @@ bool Node::SetTransform(const Vector3& position, const Quaternion& rotation, con
     Vector3 oldPosition = position_;
     Quaternion oldRotation = rotation_;
     Vector3 oldScale = scale_;
-
+    Matrix3x4 oldTransform = GetTransform();
 
     position_ = position;
     rotation_ = rotation;
@@ -526,9 +526,12 @@ bool Node::SetTransform(const Vector3& position, const Quaternion& rotation, con
         eventMap[NodeTransformChange::P_NEW_POSITION] = position;
         eventMap[NodeTransformChange::P_NEW_SCALE] = scale;
         eventMap[NodeTransformChange::P_NEW_ORIENTATION] = rotation;
+        eventMap[NodeTransformChange::P_NEW_TRANSFORM] = GetTransform();
         eventMap[NodeTransformChange::P_OLD_POSITION] = oldPosition;
         eventMap[NodeTransformChange::P_OLD_SCALE] = oldScale;
         eventMap[NodeTransformChange::P_OLD_ORIENTATION] = oldRotation;
+        eventMap[NodeTransformChange::P_OLD_TRANSFORM] = oldTransform;
+
 
         SendEvent(E_NODETRANSFORMCHANGE, eventMap);
 
