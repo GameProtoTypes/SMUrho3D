@@ -576,6 +576,30 @@ namespace Urho3D {
 
 
 
+    void OnPhysicsNodeAdded(Node* node)
+    {
+        //trigger a rebuild on the root of the new tree.
+        PODVector<NewtonRigidBody*> rigBodies;
+        GetRootRigidBodies(rigBodies, node, false);
+        if (rigBodies.Size()) {
+            NewtonRigidBody* mostRootRigBody = rigBodies.Back();
+            if (mostRootRigBody)
+                mostRootRigBody->MarkDirty(true);
+        }
+    }
+
+    void OnPhysicsNodeRemoved(Node* oldParent)
+    {
+        //trigger a rebuild on the root of the old tree.
+        PODVector<NewtonRigidBody*> rigBodies;
+        GetRootRigidBodies(rigBodies, oldParent, false);
+        if (rigBodies.Size()) {
+            NewtonRigidBody* mostRootRigBody = rigBodies.Back();
+            if (mostRootRigBody)
+                mostRootRigBody->MarkDirty(true);
+        }
+    }
+
     void RegisterPhysicsLibrary(Context* context)
     {
         UrhoNewtonPhysicsWorld::RegisterObject(context);

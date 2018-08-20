@@ -381,14 +381,7 @@ namespace Urho3D {
 
         if (node == node_)
         {
-            //trigger a rebuild on the root of the new tree.
-            PODVector<NewtonRigidBody*> rigBodies;
-            GetRootRigidBodies(rigBodies, node, false);
-            if (rigBodies.Size()) {
-                NewtonRigidBody* mostRootRigBody = rigBodies.Back();
-                if (mostRootRigBody)
-                    mostRootRigBody->MarkDirty(true);
-            }
+            OnPhysicsNodeAdded(node);
         }
     }
 
@@ -400,16 +393,10 @@ namespace Urho3D {
             Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
 
 
+
             if (oldParent)
             {
-                //trigger a rebuild on the root of the old tree.
-                PODVector<NewtonRigidBody*> rigBodies;
-                GetRootRigidBodies(rigBodies, oldParent, false);
-                if (rigBodies.Size()) {
-                    NewtonRigidBody* mostRootRigBody = rigBodies.Back();
-                    if (mostRootRigBody)
-                        mostRootRigBody->MarkDirty(true);
-                }
+                OnPhysicsNodeRemoved(oldParent);
             }
             else
             {
