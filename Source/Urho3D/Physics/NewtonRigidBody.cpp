@@ -249,7 +249,6 @@ namespace Urho3D {
 
             for (NewtonCollisionShape* colComp : childCollisionShapes)
             {
-
                 NewtonCollision* curNewtCollision = colComp->GetNewtonCollision();
                 NewtonCollision* usedCollision = nullptr;
 
@@ -260,21 +259,25 @@ namespace Urho3D {
                 else
                     usedCollision = curNewtCollision;
 
+                Vector3 savedScale = colComp->GetNode()->GetScale();
+                colComp->GetNode()->SetScale(1.0f);//temp set node scale to 1 so we can use nice functions below.
 
-                
                 Matrix3x4 uMat = colComp->GetNode()->LocalToWorld(colComp->GetOffsetMatrix());
                 Matrix3x4 localTransformNoScale = node_->WorldToLocal(uMat);
-                localTransformNoScale.SetScale(1.0f);
                 dMatrix localTransform = UrhoToNewton(localTransformNoScale);
 
+                NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
 
+                colComp->GetNode()->SetScale(savedScale);//restore node scale.
 
-                NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
                 if (inheritCollisionNodeScales_)
-                    NewtonCollisionSetScale(usedCollision, colComp->GetNode()->GetScale().x_, colComp->GetNode()->GetScale().y_, colComp->GetNode()->GetScale().z_);
-
+                {
+                    
+                    Vector3 scale = colComp->GetNode()->GetScale();
+                    scale = colComp->GetRotationOffset().Inverse()*scale;
+                    NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
+                }
                 accumMass += colComp->GetVolume()*1.0f;
-
 
                 if (compoundNeeded) {
 
@@ -381,9 +384,11 @@ namespace Urho3D {
             //trigger a rebuild on the root of the new tree.
             PODVector<NewtonRigidBody*> rigBodies;
             GetRootRigidBodies(rigBodies, node, false);
-            NewtonRigidBody* mostRootRigBody = rigBodies.Back();
-            if (mostRootRigBody)
-                mostRootRigBody->MarkDirty(true);
+            if (rigBodies.Size()) {
+                NewtonRigidBody* mostRootRigBody = rigBodies.Back();
+                if (mostRootRigBody)
+                    mostRootRigBody->MarkDirty(true);
+            }
         }
     }
 
@@ -397,14 +402,14 @@ namespace Urho3D {
 
             if (oldParent)
             {
-
-                //trigger a rebuild on the root of the new tree.
+                //trigger a rebuild on the root of the old tree.
                 PODVector<NewtonRigidBody*> rigBodies;
-                GetRootRigidBodies(rigBodies, node, false);
-                NewtonRigidBody* mostRootRigBody = rigBodies.Back();
-                if (mostRootRigBody)
-                    mostRootRigBody->MarkDirty(true);
-
+                GetRootRigidBodies(rigBodies, oldParent, false);
+                if (rigBodies.Size()) {
+                    NewtonRigidBody* mostRootRigBody = rigBodies.Back();
+                    if (mostRootRigBody)
+                        mostRootRigBody->MarkDirty(true);
+                }
             }
             else
             {

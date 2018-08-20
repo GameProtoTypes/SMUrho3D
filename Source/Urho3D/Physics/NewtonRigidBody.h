@@ -19,6 +19,7 @@ namespace Urho3D
 
         friend class NewtonCollisionShape;
         friend class UrhoNewtonPhysicsWorld;
+
         /// Construct.
         NewtonRigidBody(Context* context);
         /// Destruct. Free the rigid body and geometries.

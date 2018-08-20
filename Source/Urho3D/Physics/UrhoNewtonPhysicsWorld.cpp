@@ -325,7 +325,7 @@ namespace Urho3D {
         {
             if (colShape->GetDirty()) {
                 colShape->updateBuild();
-                GSS<VisualDebugger>()->AddOrb(colShape->GetNode()->GetWorldPosition(), 1.0f, Color::GREEN);
+                //GSS<VisualDebugger>()->AddOrb(colShape->GetNode()->GetWorldPosition(), 1.0f, Color::GREEN);
                 colShape->MarkDirty(false);
             }
         }

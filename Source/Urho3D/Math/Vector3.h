@@ -227,6 +227,8 @@ public:
     {
     }
 
+
+
     /// Construct from two-dimensional coordinates (for Urho2D).
     Vector3(float x, float y) noexcept :
         x_(x),

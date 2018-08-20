@@ -334,7 +334,6 @@ namespace Urho3D {
 
     NewtonCollisionShape_Cylinder::NewtonCollisionShape_Cylinder(Context* context) : NewtonCollisionShape(context)
     {
-
     }
 
     NewtonCollisionShape_Cylinder::~NewtonCollisionShape_Cylinder()

@@ -31,6 +31,8 @@ namespace Urho3D {
 
     NewtonCollisionShape::NewtonCollisionShape(Context* context) : Component(context)
     {
+        SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeAdded));
+        SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeRemoved));
     }
 
     NewtonCollisionShape::~NewtonCollisionShape()
@@ -164,6 +166,48 @@ namespace Urho3D {
 
 
 
+    void NewtonCollisionShape::HandleNodeAdded(StringHash event, VariantMap& eventData)
+    {
+        Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
+        Node* newParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
+
+        if (node == node_)
+        {
+            //trigger a rebuild on the root of the new tree.
+            PODVector<NewtonRigidBody*> rigBodies;
+            GetRootRigidBodies(rigBodies, node, false);
+            if (rigBodies.Size()) {
+                NewtonRigidBody* mostRootRigBody = rigBodies.Back();
+                if (mostRootRigBody)
+                    mostRootRigBody->MarkDirty(true);
+            }
+        }
+    }
+
+    void NewtonCollisionShape::HandleNodeRemoved(StringHash event, VariantMap& eventData)
+    {
+        Node* node = static_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
+        if (node == node_)
+        {
+            Node* oldParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
+
+            if (oldParent)
+            {
+                //trigger a rebuild on the root of the old tree.
+                PODVector<NewtonRigidBody*> rigBodies;
+                GetRootRigidBodies(rigBodies, oldParent, false);
+                if (rigBodies.Size()) {
+                    NewtonRigidBody* mostRootRigBody = rigBodies.Back();
+                    if (mostRootRigBody)
+                        mostRootRigBody->MarkDirty(true);
+                }
+            }
+            else
+            {
+                URHO3D_LOGINFO("should not happen");
+            }
+        }
+    }
 
 
 

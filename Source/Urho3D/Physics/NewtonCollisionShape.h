@@ -109,7 +109,8 @@ namespace Urho3D
         float updateVolume();
 
 
-
+        void HandleNodeAdded(StringHash event, VariantMap& eventData);
+        void HandleNodeRemoved(StringHash event, VariantMap& eventData);
         virtual void OnNodeSet(Node* node) override;
     };
 
