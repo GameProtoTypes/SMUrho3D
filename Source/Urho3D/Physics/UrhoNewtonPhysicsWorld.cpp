@@ -121,6 +121,7 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
+        URHO3D_PROFILE_FUNCTION();
         if (debug)
         {
             //#todo draw physics world specific things. joints?
@@ -589,7 +590,6 @@ namespace Urho3D {
         NewtonCollisionShape_ConvexHull::RegisterObject(context);
         NewtonCollisionShape_ConvexHullCompound::RegisterObject(context);
         NewtonCollisionShape_ConvexDecompositionCompound::RegisterObject(context);
-        NewtonCollisionShape_SceneCollision::RegisterObject(context);
 
         NewtonRigidBody::RegisterObject(context);
         NewtonMeshObject::RegisterObject(context);

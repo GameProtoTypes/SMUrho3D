@@ -153,7 +153,7 @@ namespace Urho3D
 
     void GetRootRigidBodies(PODVector<NewtonRigidBody*>& rigidBodies, Node* node, bool includeScene);
     void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
-
+    
 
 
     /// Register Physics library objects.

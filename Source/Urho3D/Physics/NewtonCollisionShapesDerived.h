@@ -139,30 +139,6 @@ namespace Urho3D {
 
 
 
-    ///put this component on the scene.  should combine all collision shapes that do not have an affiliated rigid body.
-    class URHO3D_API NewtonCollisionShape_SceneCollision : public NewtonCollisionShape {
-
-        URHO3D_OBJECT(NewtonCollisionShape_SceneCollision, NewtonCollisionShape);
-
-    public:
-        NewtonCollisionShape_SceneCollision(Context* context);
-        virtual ~NewtonCollisionShape_SceneCollision();
-
-        static void RegisterObject(Context* context);
-
-
-    protected:
-
-        virtual void buildNewtonCollision() override;
-
-    };
-    
-
-
-
-
-
-
 
 
     class URHO3D_API NewtonCollisionShape_Geometry : public NewtonCollisionShape {

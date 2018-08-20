@@ -101,7 +101,7 @@ void Physics::CreateScene()
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
     UrhoNewtonPhysicsWorld* newtonWorld = scene_->CreateComponent<UrhoNewtonPhysicsWorld>();
-    newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
+    newtonWorld->SetGravity(Vector3(0, 0, 0));
     //scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
@@ -160,7 +160,7 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 1, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
 
 
 
@@ -365,10 +365,10 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cone.mdl"));
         stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml"));
         stMdl->SetCastShadows(true);
-        //if (i == 0) {
+        if (i == 0) {
             NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
             rigBody->SetMassScale(1.0f);
-        //}
+        }
         NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Cone>();
         colShape->SetRotationOffset(Quaternion(0, 0, 90));
 
@@ -431,7 +431,7 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids()
 {
-    int size = 16;
+    int size = 32;
     float horizontalSeperation = 2.0f;
     //create pyramids
     const int numIslands = 0;
@@ -819,7 +819,7 @@ void Physics::CreateScenery()
     // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
     Node* floorNode = scene_->CreateChild("Floor");
     floorNode->SetPosition(Vector3(0.0f, -0.5f, 0.0f));
-    //floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+    floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
     auto* floorObject = floorNode->CreateComponent<StaticModel>();
     floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
@@ -830,8 +830,8 @@ void Physics::CreateScenery()
     //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
     //body->SetMassScale(0.0f);
     auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-    shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-    shape->SetPositionOffset(Vector3(1, 0, 0));
+    //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+   // shape->SetPositionOffset(Vector3(1, 0, 0));
     // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
     // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
@@ -865,7 +865,7 @@ void Physics::CreatePickTargetNodeOnPhysics()
 
 
         //make a kinematics joint
-        NewtonKinematicsConstraint* constraint = pickPullNode->CreateComponent<NewtonKinematicsConstraint>();
+       // NewtonKinematicsConstraint* constraint = pickPullNode->CreateComponent<NewtonKinematicsConstraint>();
 
     }
 }
@@ -900,24 +900,25 @@ void Physics::UpdatePickPull()
     if (!pickSource)
         return;
 
-    pickPullNode->GetComponent<NewtonKinematicsConstraint>()->SetTargetPosition(pickTarget->GetWorldPosition());
+    //pickPullNode->GetComponent<NewtonKinematicsConstraint>()->SetTargetPosition(pickTarget->GetWorldPosition());
+
+    NewtonRigidBody* rigBody = pickPullNode->GetComponent<NewtonRigidBody>();
+
+    Vector3 delta = (pickTarget->GetWorldPosition() - pickSource->GetWorldPosition());
+
+    float forceFactor = delta.Length()*100.0f*rigBody->GetEffectiveMass();
+    float cuttoff = 10.0f;
 
 
-    //Vector3 delta = (pickTarget->GetWorldPosition() - pickSource->GetWorldPosition());
 
-    //float forceFactor = delta.Length()*100.0f*rigBody->GetEffectiveMass();
-    //float cuttoff = 10.0f;
+    Vector3 netForce;
+    netForce = delta * forceFactor;
+    netForce -= scene_->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity();
 
+    //URHO3D_LOGINFO("picker" + String((unsigned)(void*)rigBody->GetNewtonBody()));
 
-
-    //Vector3 netForce;
-    //netForce = delta * forceFactor;
-    //netForce -= scene_->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity();
-
-    ////URHO3D_LOGINFO("picker" + String((unsigned)(void*)rigBody->GetNewtonBody()));
-
-    //rigBody->ResetForces();
-    //rigBody->AddWorldForce(netForce);
-    ////rigBody->AddImpulse(Vector3::ZERO, delta * 100000.0f);
+    rigBody->ResetForces();
+    rigBody->AddWorldForce(netForce);
+    //rigBody->AddImpulse(Vector3::ZERO, delta * 100000.0f);
 
 }

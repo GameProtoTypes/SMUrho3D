@@ -199,6 +199,7 @@ namespace Urho3D {
 
     void NewtonRigidBody::reBuildBody()
     {
+        URHO3D_PROFILE_FUNCTION();
         freeBody();
 
 
@@ -206,10 +207,22 @@ namespace Urho3D {
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<NewtonCollisionShape*> childCollisionShapes;
         node_->GetDerivedComponents<NewtonCollisionShape>(childCollisionShapes, true, true);//includes this node.
-
         
 
-        
+        if (sceneRootBodyMode_)
+        {
+            PODVector<NewtonCollisionShape*> filteredList;
+            for (NewtonCollisionShape* col : childCollisionShapes)
+            {
+                PODVector<NewtonRigidBody*> parentRigBodies;
+                GetRootRigidBodies(parentRigBodies, col->GetNode(), false);
+                if (parentRigBodies.Size() == 0)
+                    filteredList += col;
+            }
+            childCollisionShapes = filteredList;
+        }
+
+
 
 
         if (childCollisionShapes.Size())
@@ -248,15 +261,18 @@ namespace Urho3D {
                     usedCollision = curNewtCollision;
 
 
+                
                 Matrix3x4 uMat = colComp->GetNode()->LocalToWorld(colComp->GetOffsetMatrix());
+                Matrix3x4 localTransformNoScale = node_->WorldToLocal(uMat);
+                localTransformNoScale.SetScale(1.0f);
+                dMatrix localTransform = UrhoToNewton(localTransformNoScale);
 
-                dMatrix localTransform = UrhoToNewton(node_->WorldToLocal(uMat));
 
 
+                NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
                 if (inheritCollisionNodeScales_)
                     NewtonCollisionSetScale(usedCollision, colComp->GetNode()->GetScale().x_, colComp->GetNode()->GetScale().y_, colComp->GetNode()->GetScale().z_);
 
-                NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);
                 accumMass += colComp->GetVolume()*1.0f;
 
 
@@ -292,7 +308,7 @@ namespace Urho3D {
             newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
 
 
-            //NewtonBodySetCollision(newtonBody_, resolvedCollision);
+            NewtonBodySetCollision(newtonBody_, resolvedCollision);
 
             mass_ = accumMass * massScale_;
             if (sceneRootBodyMode_)
@@ -415,9 +431,9 @@ namespace Urho3D {
         else
         {
             //handle case where node is child of other rigid body (part of compound).
-            if (parentRigidBody && (parentRigidBody->GetNode() != parentRigidBody->GetScene())) {
-                parentRigidBody->MarkDirty();
-            }
+            PODVector<NewtonRigidBody*> parentRigBodies;
+            GetRootRigidBodies(parentRigBodies, node_, false);
+            parentRigBodies.Back()->MarkDirty();
 
         }
     }
