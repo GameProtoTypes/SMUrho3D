@@ -626,11 +626,12 @@ void Physics::SpawnBallSocketTest(Vector3 worldPosition)
 void Physics::FireSmallBall()
 {
     float range = 10.0f;
-    float r = Random(-range, range);
-    Vector3 posOffset = Vector3(r, r, r);
+
 
 
     for (int i = 0; i < 10; i++) {
+
+        Vector3 posOffset = Vector3(Random(-range, range), Random(-range, range), Random(-range, range));
         int ran = Random(3);
         Node* node = nullptr;
         if (ran == 0)

@@ -686,7 +686,7 @@ unsigned Engine::FreeUpdate()
     }
 	else if (updateTimer_.IsTimedOut()) {
 		updateTimer_.Reset();
-        URHO3D_PROFILE_FUNCTION();//sync profiling frames on the start of updates.
+        URHO3D_PROFILE_FRAME();//sync profiling frames on the start of updates.
 		Update();
 	}
 	else if (renderGoalTimer_.IsTimedOut())

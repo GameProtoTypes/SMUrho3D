@@ -81,7 +81,7 @@ namespace Urho3D
         /// number of thread to allow newton to use (#todo draw from thread pool)
         int newtonThreadCount_ = 4;
         /// number of iterations newton will internally use.
-        int totalIterationCount_ = 8;
+        int totalIterationCount_ = 4;
 
 
         virtual void OnSceneSet(Scene* scene) override;
