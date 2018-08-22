@@ -79,15 +79,25 @@ class dgJointInfo
 	public:
 	union 
 	{
-		dgBody* m_body;
-		dgConstraint* m_joint;
+		struct
+		{
+			dgBody* m_body;
+			dgInt32 m_bodyCount;
+			dgInt32 m_jointCount;
+			dgInt32 m_setId;
+			dgInt32 m_unUsed;
+		};
+		struct 
+		{
+			dgConstraint* m_joint;
+			dgInt32 m_m0;
+			dgInt32 m_m1;
+			dgInt32 m_pairStart;
+			dgInt32 m_pairCount;
+		};
 	};
 	dgFloat32 m_preconditioner0;
 	dgFloat32 m_preconditioner1;
-	dgInt32 m_m0;
-	dgInt32 m_m1;
-	dgInt32 m_pairStart;
-	dgInt32 m_pairCount;
 };
 
 
@@ -218,27 +228,26 @@ class dgWorldDynamicUpdate
 	virtual void CalculateNetAcceleration (dgBody* const body, const dgVector& invTimeStep, const dgVector& accNorm) const;
 
 	private:
-/*
-	static dgInt32 CompareBodyInfos(const dgBodyInfo* const infoA, const dgBodyInfo* const infoB, void* notUsed);
+//	static dgInt32 CompareBodyInfos(const dgBodyInfo* const infoA, const dgBodyInfo* const infoB, void* notUsed);
 	static dgInt32 CompareJointInfos(const dgJointInfo* const infoA, const dgJointInfo* const infoB, void* notUsed);
-*/
-	DG_INLINE dgBody* Find(dgBody* const body) const;
-	DG_INLINE dgBody* FindAndSplit(dgBody* const body) const;
+
+	DG_INLINE dgBody* FindRoot(dgBody* const body) const;
+	DG_INLINE dgBody* FindRootAndSplit(dgBody* const body) const;
 	DG_INLINE void UnionSet(const dgConstraint* const joint) const;
-	void BuildClustersExperimental(dgFloat32 timestep);
 
 	void BuildClusters(dgFloat32 timestep);
+	dgInt32 BuildClustersExperimental(dgFloat32 timestep);
+
 	dgBodyCluster MergeClusters(const dgBodyCluster* const clusterArray, dgInt32 clustersCount) const;
 	dgInt32 SortClusters(const dgBodyCluster* const cluster, dgFloat32 timestep, dgInt32 threadID) const;
 	void SpanningTree (dgDynamicBody* const body, dgDynamicBody** const queueBuffer, dgFloat32 timestep);
 	
 	static dgInt32 CompareClusters(const dgBodyCluster* const clusterA, const dgBodyCluster* const clusterB, void* notUsed);
 	static dgInt32 CompareBodyJacobianPair(const dgBodyJacobianPair* const infoA, const dgBodyJacobianPair* const infoB, void* notUsed);
-
 	static void CalculateClusterReactionForcesKernel (void* const context, void* const worldContext, dgInt32 threadID);
 
 	void BuildJacobianMatrix (dgBodyCluster* const cluster, dgInt32 threadID, dgFloat32 timestep) const;
-	void ResolveClusterForces (dgBodyCluster* const cluste, dgInt32 threadID, dgFloat32 timestep) const;
+	void ResolveClusterForces (dgBodyCluster* const cluster, dgInt32 threadID, dgFloat32 timestep) const;
 	void IntegrateReactionsForces(const dgBodyCluster* const cluster, dgInt32 threadID, dgFloat32 timestep) const;
 	void BuildJacobianMatrix (const dgBodyInfo* const bodyInfo, dgJointInfo* const jointInfo, dgJacobian* const internalForces, dgLeftHandSide* const matrixRow, dgRightHandSide* const rightHandSide, dgFloat32 forceImpulseScale) const;
 	void CalculateClusterReactionForces(const dgBodyCluster* const cluster, dgInt32 threadID, dgFloat32 timestep) const;
