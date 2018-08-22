@@ -23,6 +23,8 @@
 #include "Graphics/StaticModel.h"
 #include "Scene/SceneEvents.h"
 #include "NewtonCollisionShape.h"
+#include "Graphics/HeightmapTerrain.h"
+#include "Container/ArrayPtr.h"
 
 
 namespace Urho3D {
@@ -401,6 +403,60 @@ namespace Urho3D {
 
 
 
+
+    NewtonCollisionShape_HeightmapTerrain::NewtonCollisionShape_HeightmapTerrain(Context* context) : NewtonCollisionShape(context)
+    {
+
+    }
+
+    NewtonCollisionShape_HeightmapTerrain::~NewtonCollisionShape_HeightmapTerrain()
+    {
+
+    }
+
+    void NewtonCollisionShape_HeightmapTerrain::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<NewtonCollisionShape_HeightmapTerrain>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void NewtonCollisionShape_HeightmapTerrain::buildNewtonCollision()
+    {
+
+
+
+        //find a terrain component
+        HeightmapTerrain* terrainComponent = node_->GetComponent<HeightmapTerrain>();
+        if (terrainComponent)
+        {
+
+
+            SharedArrayPtr<float> heightData = terrainComponent->GetHeightData();
+
+            terrainComponent->GetPatchSize();
+            char* attributes = new char[1025 * 1025];
+            std::fill_n(attributes, 1025 * 1025, 0);
+
+            const void* const elevation = (void*)&heightData[0];
+
+            //#todo get the parameters right
+
+            newtonCollision_ = NewtonCreateHeightFieldCollision(physicsWorld_->GetNewtonWorld(), 1025, 1025, 1, 0, elevation, attributes, 1.0f, 1, 1, 0);
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+    }
 
 }
 

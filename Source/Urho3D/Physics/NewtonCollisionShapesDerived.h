@@ -238,5 +238,36 @@ namespace Urho3D {
     };
 
 
+
+
+
+
+    class URHO3D_API NewtonCollisionShape_HeightmapTerrain : public NewtonCollisionShape {
+
+        URHO3D_OBJECT(NewtonCollisionShape_HeightmapTerrain, NewtonCollisionShape);
+
+    public:
+        NewtonCollisionShape_HeightmapTerrain(Context* context);
+        virtual ~NewtonCollisionShape_HeightmapTerrain();
+
+        static void RegisterObject(Context* context);
+
+
+
+    protected:
+
+
+        virtual void buildNewtonCollision() override;
+
+    };
+
+
+
+
+
+
+
+
+
 }
 

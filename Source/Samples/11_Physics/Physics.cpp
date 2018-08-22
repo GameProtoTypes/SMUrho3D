@@ -159,7 +159,7 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     ////create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
 
 
 
@@ -833,30 +833,30 @@ void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
     // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
-    Node* floorNode = scene_->CreateChild("Floor");
-    floorNode->SetPosition(worldPosition);
-    floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
-    auto* floorObject = floorNode->CreateComponent<StaticModel>();
-    floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+   // Node* floorNode = scene_->CreateChild("Floor");
+   // floorNode->SetPosition(worldPosition);
+   // floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+   // auto* floorObject = floorNode->CreateComponent<StaticModel>();
+   // floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+   // floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-    // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
-    // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
-    // in the physics simulation
-    //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
-    //body->SetMassScale(0.0f);
-    auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-    //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-   // shape->SetPositionOffset(Vector3(1, 0, 0));
-    // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
-    // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
+   // // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
+   // // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
+   // // in the physics simulation
+   // //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
+   // //body->SetMassScale(0.0f);
+   // auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+   // //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+   //// shape->SetPositionOffset(Vector3(1, 0, 0));
+   // // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
+   // // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
 
 
-     // Create heightmap terrain with collision
+    //Create heightmap terrain with collision
     Node* terrainNode = scene_->CreateChild("Terrain");
     terrainNode->SetPosition(worldPosition);
-    auto* terrain = terrainNode->CreateComponent<Terrain>();
+    auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
     terrain->SetPatchSize(64);
     terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
     terrain->SetSmoothing(true);
@@ -866,7 +866,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     // terrain patches and other objects behind it
     terrain->SetOccluder(true);
 
-    //terrain->CreateComponent<NewtonCollisionShape_Terrain>();
+    terrainNode->CreateComponent<NewtonCollisionShape_HeightmapTerrain>();
 
 
 
@@ -879,7 +879,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     float range = 200;
     float objectScale = 10;
 
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 1; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* stMdl = scenePart->CreateComponent<StaticModel>();
@@ -911,12 +911,12 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
 
-    //finally create a moving node for testing scene collision rebuilding.
-    Node* movingSceneNode = scene_->CreateChild("MovingSceneNode");
-    auto* stmdl = movingSceneNode->CreateComponent<StaticModel>();
-    stmdl->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    stmdl->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
-    movingSceneNode->CreateComponent<NewtonCollisionShape_Box>();
+    ////finally create a moving node for testing scene collision rebuilding.
+    //Node* movingSceneNode = scene_->CreateChild("MovingSceneNode");
+    //auto* stmdl = movingSceneNode->CreateComponent<StaticModel>();
+    //stmdl->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    //stmdl->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    //movingSceneNode->CreateComponent<NewtonCollisionShape_Box>();
 
 
 
