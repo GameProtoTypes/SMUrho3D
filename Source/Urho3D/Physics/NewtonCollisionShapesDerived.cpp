@@ -9,6 +9,7 @@
 #include "../Scene/Node.h"
 #include "../Scene/Scene.h"
 #include "../Graphics/Model.h"
+#include "../Resource/Image.h"
 #include "../IO/Log.h"
 
 #include "Newton.h"
@@ -352,6 +353,11 @@ namespace Urho3D {
     {
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
         newtonCollision_ = NewtonCreateCylinder(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
+
+        //set the internal offset correction
+        internalRotOffset_ = Quaternion(0, 0, 90);
+
+
     }
 
     NewtonCollisionShape_Capsule::NewtonCollisionShape_Capsule(Context* context) : NewtonCollisionShape(context)
@@ -429,32 +435,24 @@ namespace Urho3D {
         if (terrainComponent)
         {
 
+            int size = terrainComponent->GetHeightMap()->GetHeight();
 
             SharedArrayPtr<float> heightData = terrainComponent->GetHeightData();
 
-            terrainComponent->GetPatchSize();
-            char* attributes = new char[1025 * 1025];
-            std::fill_n(attributes, 1025 * 1025, 0);
 
-            const void* const elevation = (void*)&heightData[0];
+            char* const attibutes = new char[size * size];
+            memset(attibutes, 0, size * size * sizeof(char));
 
-            //#todo get the parameters right
+            Vector3 spacing = terrainComponent->GetSpacing();
+            newtonCollision_ = NewtonCreateHeightFieldCollision(physicsWorld_->GetNewtonWorld(), size, size, 0, 0, heightData, attibutes, 1.0f, spacing.x_, spacing.z_, 0);
 
-            newtonCollision_ = NewtonCreateHeightFieldCollision(physicsWorld_->GetNewtonWorld(), 1025, 1025, 1, 0, elevation, attributes, 1.0f, 1, 1, 0);
+            delete[] attibutes;
+            
 
-
-
-
+            //set the internal offset correction to match where HeightmapTerrain renders
+            internalPosOffset_ = -Vector3(float(size*spacing.x_)*0.5f - spacing.x_*0.5f, 0, float(size*spacing.z_)*0.5f - spacing.z_*0.5f);
 
         }
-
-
-
-
-
-
-
-
 
     }
 

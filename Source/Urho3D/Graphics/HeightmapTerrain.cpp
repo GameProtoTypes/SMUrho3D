@@ -1424,9 +1424,19 @@ bool HeightmapTerrain::SetHeightMapInternal(Image* image, bool recreateNow)
 {
     if (image && image->IsCompressed())
     {
-        URHO3D_LOGERROR("Can not use a compressed image as a terrain heightmap");
+        URHO3D_LOGERROR("HeightmapTerrain: Can not use a compressed image as a terrain heightmap");
         return false;
     }
+
+    //check if the image size is power of two + 1
+    if (!(image->GetHeight() % 2 == 1))
+    {
+        URHO3D_LOGERROR("HeightmapTerrain: Image is not a power of two + 1! Resize the image. eg: 1025 = (1024 + 1)");
+        return false;
+    }
+
+
+
 
     // Unsubscribe from the reload event of previous image (if any), then subscribe to the new
     if (heightMap_)

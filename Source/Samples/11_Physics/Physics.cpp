@@ -625,21 +625,27 @@ void Physics::SpawnBallSocketTest(Vector3 worldPosition)
 
 void Physics::FireSmallBall()
 {
-    int ran = Random(3);
-    Node* node = nullptr;
-    if(ran == 0)
-        node = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition());
-    else if (ran == 1)
-         node = SpawnSamplePhysicsBox(scene_, cameraNode_->GetWorldPosition(), Vector3::ONE);
-    else
-         node = SpawnSamplePhysicsCylinder(scene_, cameraNode_->GetWorldPosition(), Sqrt(2));
+    float range = 10.0f;
+    float r = Random(-range, range);
+    Vector3 posOffset = Vector3(r, r, r);
 
 
-    node->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 100.0f);
-    node->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
-    node->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.01f);
-    node->GetComponent<NewtonRigidBody>()->SetMassScale(Random(1.0f, 10.0f));
+    for (int i = 0; i < 10; i++) {
+        int ran = Random(3);
+        Node* node = nullptr;
+        if (ran == 0)
+            node = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition() + posOffset);
+        else if (ran == 1)
+            node = SpawnSamplePhysicsBox(scene_, cameraNode_->GetWorldPosition() + posOffset, Vector3::ONE);
+        else
+            node = SpawnSamplePhysicsCylinder(scene_, cameraNode_->GetWorldPosition() + posOffset, Sqrt(2));
 
+
+        node->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 10.0f);
+        node->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
+        node->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.01f);
+        node->GetComponent<NewtonRigidBody>()->SetMassScale(Random(1.0f, 10.0f));
+    }
 
     //if (Random(2) == 0)
     //{
@@ -860,7 +866,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     terrain->SetPatchSize(64);
     terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
     terrain->SetSmoothing(true);
-    terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+    terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMapSmall.png"));
     terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
     // The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
     // terrain patches and other objects behind it
@@ -879,7 +885,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     float range = 200;
     float objectScale = 10;
 
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 0; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* stMdl = scenePart->CreateComponent<StaticModel>();

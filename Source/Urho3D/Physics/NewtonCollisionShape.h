@@ -98,6 +98,17 @@ namespace Urho3D
         /// Offset rotation.
         Quaternion rotation_;
 
+        /// internal offset position (for custom shape correction in derived classes)
+        Vector3 internalPosOffset_;
+        /// internal offset rotation (for custom shape correction in derived classes)
+        Quaternion internalRotOffset_;
+
+        /// get the internal offset for the derived shape.
+        Matrix3x4 getInternalOffsetMatrix()
+        {
+            return Matrix3x4(internalPosOffset_, internalRotOffset_, 1.0f);
+        }
+
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
         void updateBuild();
         /// implement this in subclasses to create the internal newton collision

@@ -262,7 +262,7 @@ namespace Urho3D {
                 Vector3 savedScale = colComp->GetNode()->GetScale();
                 colComp->GetNode()->SetScale(1.0f);//temp set node scale to 1 so we can use nice functions below.
 
-                Matrix3x4 uMat = colComp->GetNode()->LocalToWorld(colComp->GetOffsetMatrix());
+                Matrix3x4 uMat = colComp->GetNode()->LocalToWorld(colComp->getInternalOffsetMatrix()*colComp->GetOffsetMatrix());
                 Matrix3x4 localTransformNoScale = node_->WorldToLocal(uMat);
                 dMatrix localTransform = UrhoToNewton(localTransformNoScale);
 
