@@ -17,6 +17,7 @@ namespace Urho3D {
 
     dMatrix UrhoToNewton(const Matrix4& mat4)
     {
+        //#todo might be faster to just map values and copy..
         return dMatrix(mat4.Transpose().Data());
     }
     dMatrix UrhoToNewton(const Matrix3x4& mat3x4)

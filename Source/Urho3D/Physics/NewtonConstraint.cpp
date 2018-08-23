@@ -50,12 +50,24 @@ namespace Urho3D {
     }
 
 
+    void NewtonConstraint::SetRotation(const Quaternion& rotation)
+    {
+        rotation_ = rotation_;
+        MarkDirty();
+    }
+
     void NewtonConstraint::SetOtherPosition(const Vector3& position)
     {
         otherPosition_ = position_;
         MarkDirty();
     }
 
+
+    void NewtonConstraint::SetOtherRotation(const Quaternion& rotation)
+    {
+        otherRotation_ = rotation;
+        MarkDirty();
+    }
 
     void NewtonConstraint::reEvalConstraint()
     {

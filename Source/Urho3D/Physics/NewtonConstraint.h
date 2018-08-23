@@ -33,15 +33,19 @@ namespace Urho3D {
 
         /// Set whether to disable collisions between connected bodies.
         void SetDisableCollision(bool disable);
+
         /// Set other body to connect to. Set to null to connect to the static world.
         void SetOtherBody(NewtonRigidBody* body);
 
-        /// Set constraint position relative to own body.
+        /// Set constraint position in local cordinates to body.
         void SetPosition(const Vector3& position);
+        /// set the rotational frame to use on own body 
+        void SetRotation(const Quaternion& rotation);
 
-        /// Set constraint position relative to the other body. If connected to the static world, is a world space position.
+        /// Set constraint position in local cordinates relative to the other body. If connected to the static world, is a world space position.
         void SetOtherPosition(const Vector3& position);
-
+        /// set the rotational frame to use on own body 
+        void SetOtherRotation(const Quaternion& rotation);
 
         /// Return physics world.
         UrhoNewtonPhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
@@ -65,8 +69,11 @@ namespace Urho3D {
         bool enableBodyCollision_ = false;
         /// Constraint other body position.
         Vector3 otherPosition_;
+        Quaternion otherRotation_;
+
         /// Constraint position.
         Vector3 position_;
+        Quaternion rotation_;
 
         ///dirty flag.
         bool needsRebuilt_ = true;

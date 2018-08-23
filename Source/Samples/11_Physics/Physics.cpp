@@ -143,7 +143,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
     //SpawnMaterialsTest(Vector3(0,0,30));
-    //SpawnBallSocketTest(Vector3(0, 10, 0));
+    SpawnBallSocketTest(Vector3(0, 10, 0));
 
     CreatePyramids(Vector3(0,-5,0));
 
@@ -447,7 +447,6 @@ void Physics::CreatePyramids(Vector3 position)
                 for (int x = -y; x <= y; ++x)
                 {
                     Node* node = SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f + position);
-                    node->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
                 }
             }
         }
@@ -950,60 +949,72 @@ void Physics::CreatePickTargetNodeOnPhysics()
         if (!res.node_->HasComponent<NewtonRigidBody>())
             return;
 
-
-        Node* pickTarget = cameraNode_->CreateChild("PickTarget");
-        pickTarget->SetWorldPosition(res.position_);
+        //remember the node
         pickPullNode = res.node_;
 
-        if (res.node_->GetChild("PickSource"))
+        //create "PickTarget" on the hit surface, parented to the camera.
+        Node* pickTarget = cameraNode_->CreateChild("CameraPullPoint");
+        pickTarget->SetWorldPosition(res.position_);
+        
+        //create/update node that is on the surface of the node.
+        if (res.node_->GetChild("PickPullSurfaceNode"))
         {
-            res.node_->GetChild("PickSource")->SetWorldPosition(res.position_);
-
+            res.node_->GetChild("PickPullSurfaceNode")->SetWorldPosition(res.position_);
         }
         else
         {
-            res.node_->CreateChild("PickSource");
-            res.node_->GetChild("PickSource")->SetWorldPosition(res.position_);
+            res.node_->CreateChild("PickPullSurfaceNode");
+            res.node_->GetChild("PickPullSurfaceNode")->SetWorldPosition(res.position_);
         }
+
+        pickPullCameraStartOrientation = cameraNode_->GetWorldRotation();
 
 
         //make a kinematics joint
-        NewtonKinematicsConstraint* constraint = pickPullNode->CreateComponent<NewtonKinematicsConstraint>();
-
+        NewtonKinematicsControllerConstraint* constraint = pickPullNode->CreateComponent<NewtonKinematicsControllerConstraint>();
+        constraint->SetPosition(res.node_->GetChild("PickPullSurfaceNode")->GetPosition());
+        constraint->SetRotation(pickPullCameraStartOrientation.Inverse()*res.node_->GetChild("PickPullSurfaceNode")->GetRotation());
+        constraint->SetConstrainRotation(false);
     }
 }
+
+
+
 
 void Physics::ReleasePickTargetOnPhysics()
 {
     if (pickPullNode)
     {
-        pickPullNode->RemoveChild(pickPullNode->GetChild("PickSource"));
+        pickPullNode->RemoveChild(pickPullNode->GetChild("PickPullSurfaceNode"));
         NewtonRigidBody* rigBody = pickPullNode->GetComponent<NewtonRigidBody>();
         if (rigBody)
         {
             rigBody->ResetForces();
         }
-        pickPullNode->RemoveComponent<NewtonKinematicsConstraint>();
+        pickPullNode->RemoveComponent<NewtonKinematicsControllerConstraint>();
         pickPullNode = nullptr;
     }
 
-    cameraNode_->RemoveChild(cameraNode_->GetChild("PickTarget"));
+    cameraNode_->RemoveChild(cameraNode_->GetChild("CameraPullPoint"));
 }
 void Physics::UpdatePickPull()
 {
-    Node* pickTarget = cameraNode_->GetChild("PickTarget");
+    Node* pickTarget = cameraNode_->GetChild("CameraPullPoint");
     if (!pickTarget)
         return;
     if (!pickPullNode)
         return;
 
 
-    Node* pickSource = pickPullNode->GetChild("PickSource");
+    Node* pickSource = pickPullNode->GetChild("PickPullSurfaceNode");
 
     if (!pickSource)
         return;
 
-    pickPullNode->GetComponent<NewtonKinematicsConstraint>()->SetTargetPosition(pickTarget->GetWorldPosition());
+    pickPullNode->GetComponent<NewtonKinematicsControllerConstraint>()->SetTargetPosition(pickTarget->GetWorldPosition());
+    pickPullNode->GetComponent<NewtonKinematicsControllerConstraint>()->SetTargetRotation(cameraNode_->GetWorldRotation() );
+
+
 
     NewtonRigidBody* rigBody = pickPullNode->GetComponent<NewtonRigidBody>();
 

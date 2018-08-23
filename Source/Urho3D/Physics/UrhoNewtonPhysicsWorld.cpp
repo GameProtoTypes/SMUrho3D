@@ -621,7 +621,7 @@ namespace Urho3D {
         NewtonConstraint::RegisterObject(context);
         NewtonFixedDistanceConstraint::RegisterObject(context);
         NewtonBallAndSocketConstraint::RegisterObject(context);
-        NewtonKinematicsConstraint::RegisterObject(context);
+        NewtonKinematicsControllerConstraint::RegisterObject(context);
         //Constraint::RegisterObject(context);
         
         //RaycastVehicle::RegisterObject(context);

@@ -8,14 +8,14 @@ namespace Urho3D {
     class Context;
 
     ///not really working yet.
-    class URHO3D_API NewtonKinematicsConstraint : public NewtonConstraint
+    class URHO3D_API NewtonKinematicsControllerConstraint : public NewtonConstraint
     {
-        URHO3D_OBJECT(NewtonKinematicsConstraint, NewtonConstraint);
+        URHO3D_OBJECT(NewtonKinematicsControllerConstraint, NewtonConstraint);
 
     public:
 
-        NewtonKinematicsConstraint(Context* context);
-        ~NewtonKinematicsConstraint();
+        NewtonKinematicsControllerConstraint(Context* context);
+        ~NewtonKinematicsControllerConstraint();
 
         static void RegisterObject(Context* context);
 
@@ -26,12 +26,14 @@ namespace Urho3D {
 
         void SetMaxAngularFriction(float friction);
 
-
+        void SetConstrainRotation(bool enable);
 
 
         void SetTargetPosition(Vector3 worldPos);
 
         void SetTargetRotation(Quaternion worldOrientation);
+
+        
 
     protected:
 
@@ -44,7 +46,9 @@ namespace Urho3D {
         ///Target orientation the joint will torque the body towards.
         Quaternion currentTargetRotation_;
 
-        float linearFriction_ = 1000.0f;
-        float angularFriction_ = 1000.0f;
+        bool constrainRotation_ = true;
+
+        float linearFriction_ = 10000000.0f;
+        float angularFriction_ = 10000000.0f;
     };
 }

@@ -129,6 +129,7 @@ private:
 
 
     Node* pickPullNode = nullptr;
+    Quaternion pickPullCameraStartOrientation;
     Vector3 pickPullStartPositionWorld;
     Vector3 pickPullEndPositionWorld;
     void CreatePickTargetNodeOnPhysics();

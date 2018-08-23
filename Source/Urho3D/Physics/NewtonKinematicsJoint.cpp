@@ -14,22 +14,22 @@ namespace Urho3D {
 
 
 
-    NewtonKinematicsConstraint::NewtonKinematicsConstraint(Context* context) : NewtonConstraint(context)
+    NewtonKinematicsControllerConstraint::NewtonKinematicsControllerConstraint(Context* context) : NewtonConstraint(context)
     {
 
     }
 
-    NewtonKinematicsConstraint::~NewtonKinematicsConstraint()
+    NewtonKinematicsControllerConstraint::~NewtonKinematicsControllerConstraint()
     {
 
     }
 
-    void NewtonKinematicsConstraint::RegisterObject(Context* context)
+    void NewtonKinematicsControllerConstraint::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonKinematicsConstraint>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<NewtonKinematicsControllerConstraint>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonKinematicsConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    void NewtonKinematicsControllerConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         if (!ownBody_)
             return;
@@ -37,50 +37,55 @@ namespace Urho3D {
         debug->AddLine(ownBody_->GetCenterOfMassPosition(), currentTargetPos_, Color::GRAY, false);
     }
 
-    void NewtonKinematicsConstraint::SetMaxLinearFriction(float friction)
+    void NewtonKinematicsControllerConstraint::SetMaxLinearFriction(float friction)
     {
         if (linearFriction_ != friction) {
             linearFriction_ = friction;
-            static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(linearFriction_);
+            if(newtonJoint_)
+                static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(linearFriction_);
         }
     }
 
-    void NewtonKinematicsConstraint::SetMaxAngularFriction(float friction)
+    void NewtonKinematicsControllerConstraint::SetMaxAngularFriction(float friction)
     {
         if (angularFriction_ != friction) {
             angularFriction_ = friction;
-            static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(angularFriction_);
+            if (newtonJoint_)
+                static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(angularFriction_);
         }
     }
 
-    //void NewtonKinematicsConstraint::SetTargetTransform(Matrix3x4 matrix)
-    //{
-    //    currentTargetTransform_ = matrix;
-    //    updateTarget();
+    void NewtonKinematicsControllerConstraint::SetConstrainRotation(bool enable)
+    {
+        if (constrainRotation_ != enable)
+        {
+            constrainRotation_ = enable;
+            if (newtonJoint_)
+                static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(!constrainRotation_);
+        }
+    }
 
-    //}
-
-    void NewtonKinematicsConstraint::SetTargetPosition(Vector3 worldPos)
+    void NewtonKinematicsControllerConstraint::SetTargetPosition(Vector3 worldPos)
     {
         currentTargetPos_ = worldPos;
         updateTarget();
     }
 
-    void NewtonKinematicsConstraint::SetTargetRotation(Quaternion worldOrientation)
+    void NewtonKinematicsControllerConstraint::SetTargetRotation(Quaternion worldOrientation)
     {
         currentTargetRotation_ = worldOrientation;
         updateTarget();
     }
 
-    void NewtonKinematicsConstraint::buildConstraint()
+    void NewtonKinematicsControllerConstraint::buildConstraint()
     {
         //get own body transform.
         dMatrix matrix0;
         NewtonBodyGetMatrix(ownBody_->GetNewtonBody(), &matrix0[0][0]);
 
 
-        newtonJoint_ = new dCustomKinematicController(ownBody_->GetNewtonBody(), UrhoToNewton(ownBody_->GetNode()->GetWorldPosition()));
-        //static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(0);
+        newtonJoint_ = new dCustomKinematicController(ownBody_->GetNewtonBody(), UrhoToNewton(ownBody_->GetNode()->LocalToWorld(Matrix3x4(position_, rotation_, 1.0f))));
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(constrainRotation_);
         static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(linearFriction_);
         static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(angularFriction_);
 
@@ -88,7 +93,7 @@ namespace Urho3D {
         updateTarget();
     }
 
-    void NewtonKinematicsConstraint::updateTarget()
+    void NewtonKinematicsControllerConstraint::updateTarget()
     {
         if (newtonJoint_) {
 
