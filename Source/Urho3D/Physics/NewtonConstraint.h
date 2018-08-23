@@ -75,6 +75,7 @@ namespace Urho3D {
         void reEvalConstraint();
         /// build the newton constraint.
         virtual void buildConstraint();
+        
         /// frees and deletes the internal joint.
         void freeConstraint();
         /// Called right before rebuildConstraint, checks both bodies and destroys old joints.

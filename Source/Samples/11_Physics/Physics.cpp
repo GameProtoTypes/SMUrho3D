@@ -145,7 +145,7 @@ void Physics::CreateScene()
     //SpawnMaterialsTest(Vector3(0,0,30));
     //SpawnBallSocketTest(Vector3(0, 10, 0));
 
-    //CreatePyramids(Vector3(0,-5,0));
+    CreatePyramids(Vector3(0,-5,0));
 
     int numVertical = 1;
     for (int i = 0; i < numVertical; i++)
@@ -435,7 +435,7 @@ void Physics::SpawnObject()
 
 void Physics::CreatePyramids(Vector3 position)
 {
-    int size = 16;
+    int size = 8;
     float horizontalSeperation = 2.0f;
     //create pyramids
     const int numIslands = 0;
@@ -447,6 +447,7 @@ void Physics::CreatePyramids(Vector3 position)
                 for (int x = -y; x <= y; ++x)
                 {
                     Node* node = SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f + position);
+                    node->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
                 }
             }
         }

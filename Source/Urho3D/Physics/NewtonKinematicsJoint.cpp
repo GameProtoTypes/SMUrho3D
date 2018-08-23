@@ -37,6 +37,22 @@ namespace Urho3D {
         debug->AddLine(ownBody_->GetCenterOfMassPosition(), currentTargetPos_, Color::GRAY, false);
     }
 
+    void NewtonKinematicsConstraint::SetMaxLinearFriction(float friction)
+    {
+        if (linearFriction_ != friction) {
+            linearFriction_ = friction;
+            static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(linearFriction_);
+        }
+    }
+
+    void NewtonKinematicsConstraint::SetMaxAngularFriction(float friction)
+    {
+        if (angularFriction_ != friction) {
+            angularFriction_ = friction;
+            static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(angularFriction_);
+        }
+    }
+
     //void NewtonKinematicsConstraint::SetTargetTransform(Matrix3x4 matrix)
     //{
     //    currentTargetTransform_ = matrix;
@@ -50,6 +66,12 @@ namespace Urho3D {
         updateTarget();
     }
 
+    void NewtonKinematicsConstraint::SetTargetRotation(Quaternion worldOrientation)
+    {
+        currentTargetRotation_ = worldOrientation;
+        updateTarget();
+    }
+
     void NewtonKinematicsConstraint::buildConstraint()
     {
         //get own body transform.
@@ -58,9 +80,9 @@ namespace Urho3D {
 
 
         newtonJoint_ = new dCustomKinematicController(ownBody_->GetNewtonBody(), UrhoToNewton(ownBody_->GetNode()->GetWorldPosition()));
-        static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(0);
-        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(1000);
-        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(1000);
+        //static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(0);
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(linearFriction_);
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(angularFriction_);
 
 
         updateTarget();
@@ -70,11 +92,8 @@ namespace Urho3D {
     {
         if (newtonJoint_) {
 
-            dMatrix matrix0;
-            //matrix0.m_posit = UrhoToNewton(currentTargetTransform_.Translation());
-           // static_cast<dCustomKinematicController*>(newtonJoint_)->ResetAutoSleep();
             static_cast<dCustomKinematicController*>(newtonJoint_)->SetTargetPosit(UrhoToNewton(currentTargetPos_));
-
+            static_cast<dCustomKinematicController*>(newtonJoint_)->SetTargetRotation(UrhoToNewton(currentTargetRotation_));
         }
     }
 

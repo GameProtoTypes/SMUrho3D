@@ -1,13 +1,15 @@
 #include "UrhoNewtonConversions.h"
 #include "dMatrix.h"
 #include "dVector.h"
+#include "dQuaternion.h"
+
 #include "Math/Matrix4.h"
 #include "Math/Matrix3x4.h"
 #include "IO/Log.h"
-#include "dgQuaternion.h"
 #include "Newton.h"
 #include "Math/Sphere.h"
 #include "Math/BoundingBox.h"
+
 
 
 namespace Urho3D {
@@ -38,7 +40,10 @@ namespace Urho3D {
     {
         return dVector(vec2.x_, vec2.y_, 0.0f);
     }
-
+    dQuaternion UrhoToNewton(const Quaternion& quat)
+    {
+        return dQuaternion(quat.w_, quat.x_, quat.y_, quat.z_);
+    }
 
 
 
@@ -58,7 +63,7 @@ namespace Urho3D {
         return Matrix4(&mat[0][0]).Transpose();
     }
 
-    Quaternion NewtonToUrhoQuat(const dgQuaternion& quat)
+    Quaternion NewtonToUrhoQuat(const dQuaternion& quat)
     {
         return Quaternion(quat.m_q0, quat.m_q1, quat.m_q2, quat.m_q3);
     }

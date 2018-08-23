@@ -3,7 +3,8 @@
 
 class dMatrix;
 class dVector;
-class dgQuaternion;
+class dQuaternion;
+
 class NewtonCollision;
 class NewtonWorld;
 
@@ -23,13 +24,13 @@ namespace Urho3D {
     dVector UrhoToNewton(const Vector3& vec4);
     dVector UrhoToNewton(const Vector3& vec3);
     dVector UrhoToNewton(const Vector2& vec2);
-
+    dQuaternion UrhoToNewton(const Quaternion& quat);
 
     ///Conversion Function From Newton To Urho
     Vector3 NewtonToUrhoVec3(const dVector& vec);
     Vector4 NewtonToUrhoVec4(const dVector& vec);
     Matrix4 NewtonToUrhoMat4(const dMatrix& mat);
-    Quaternion NewtonToUrhoQuat(const dgQuaternion& quat);
+    Quaternion NewtonToUrhoQuat(const dQuaternion& quat);
 
 
 

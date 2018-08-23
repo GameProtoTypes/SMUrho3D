@@ -10,12 +10,12 @@
 #include "Newton.h"
 #include "NewtonDebugDrawing.h"
 #include "UrhoNewtonConversions.h"
-#include "dgQuaternion.h"
 #include "Scene/SceneEvents.h"
 #include "Engine/Engine.h"
 #include "Core/Profiler.h"
 #include "Graphics/VisualDebugger.h"
 #include "Core/Object.h"
+#include "dQuaternion.h"
 
 
 namespace Urho3D {
@@ -578,8 +578,8 @@ namespace Urho3D {
 
     Quaternion NewtonRigidBody::GetCenterOfMassRotation()
     {
-        dgQuaternion quat;
-        NewtonBodyGetRotation(newtonBody_, &quat[0]);
+        dQuaternion quat;
+        NewtonBodyGetRotation(newtonBody_, &quat.m_q0);
         return NewtonToUrhoQuat(quat);
     }
 
@@ -589,9 +589,9 @@ namespace Urho3D {
             return;
 
         dVector pos;
-        dgQuaternion quat;
+        dQuaternion quat;
         NewtonBodyGetPosition(newtonBody_, &pos[0]);
-        NewtonBodyGetRotation(newtonBody_, &quat[0]);
+        NewtonBodyGetRotation(newtonBody_, &quat.m_q0);
 
         bool enableTEvents = node_->GetEnableTransformEvents();
         if(enableTEvents)
