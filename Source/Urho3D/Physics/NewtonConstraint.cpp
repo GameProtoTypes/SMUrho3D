@@ -110,6 +110,8 @@ namespace Urho3D {
             if (physicsWorld_)
                 physicsWorld_->removeConstraint(this);
 
+            freeConstraint();
+
         }
     }
 }

@@ -145,21 +145,21 @@ void Physics::CreateScene()
     //SpawnMaterialsTest(Vector3(0,0,30));
     //SpawnBallSocketTest(Vector3(0, 10, 0));
 
-    //CreatePyramids();
+    //CreatePyramids(Vector3(0,-5,0));
 
-    //int numVertical = 1;
-    //for (int i = 0; i < numVertical; i++)
-    //    SpawnCompound(Vector3(-2, 1 * i, i + 10));
-    //for (int i = 0; i < numVertical; i++)
-    //    SpawnConvexHull(Vector3(0, 1 * i, i + 10));
+    int numVertical = 1;
+    for (int i = 0; i < numVertical; i++)
+        SpawnCompound(Vector3(-2, 1 * i, i + 10));
+    for (int i = 0; i < numVertical; i++)
+        SpawnConvexHull(Vector3(0, 1 * i, i + 10));
 
 
-    //SpawnLinearJointedObject(Vector3(10,1,10));
+    SpawnLinearJointedObject(Vector3(10,1,10));
     //
-    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     ////create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
 
 
 
@@ -240,15 +240,20 @@ void Physics::MoveCamera(float timeStep)
     // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
     cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
 
+    float speedFactor = 1.0f;
+    if (input->GetKeyDown(KEY_SHIFT))
+        speedFactor *= 0.25f;
+
+
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     if (input->GetKeyDown(KEY_W))
-        cameraNode_->Translate(Vector3::FORWARD * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::FORWARD * MOVE_SPEED * speedFactor * timeStep);
     if (input->GetKeyDown(KEY_S))
-        cameraNode_->Translate(Vector3::BACK * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::BACK * MOVE_SPEED * speedFactor *timeStep);
     if (input->GetKeyDown(KEY_A))
-        cameraNode_->Translate(Vector3::LEFT * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::LEFT * MOVE_SPEED * speedFactor * timeStep);
     if (input->GetKeyDown(KEY_D))
-        cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * speedFactor *timeStep);
 
 
 
@@ -428,7 +433,7 @@ void Physics::SpawnObject()
 }
 
 
-void Physics::CreatePyramids()
+void Physics::CreatePyramids(Vector3 position)
 {
     int size = 16;
     float horizontalSeperation = 2.0f;
@@ -441,7 +446,7 @@ void Physics::CreatePyramids()
             {
                 for (int x = -y; x <= y; ++x)
                 {
-                    Node* node = SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f);
+                    Node* node = SpawnSamplePhysicsSphere(scene_, Vector3((float)x*horizontalSeperation, -(float)y + float(size), 0.0f) + Vector3(x2, 0, y2)*50.0f + position);
                 }
             }
         }
@@ -634,12 +639,12 @@ void Physics::FireSmallBall()
         Vector3 posOffset = Vector3(Random(-range, range), Random(-range, range), Random(-range, range));
         int ran = Random(3);
         Node* node = nullptr;
-        //if (ran == 0)
-        //    node = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition() + posOffset);
-       // else if (ran == 1)
+        if (ran == 0)
+            node = SpawnSamplePhysicsSphere(scene_, cameraNode_->GetWorldPosition() + posOffset);
+        else if (ran == 1)
             node = SpawnSamplePhysicsBox(scene_, cameraNode_->GetWorldPosition() + posOffset, Vector3::ONE);
-        //else
-        //    node = SpawnSamplePhysicsCylinder(scene_, cameraNode_->GetWorldPosition() + posOffset, Sqrt(2));
+        else
+            node = SpawnSamplePhysicsCylinder(scene_, cameraNode_->GetWorldPosition() + posOffset, Sqrt(2));
 
 
         node->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 10.0f);
@@ -840,40 +845,40 @@ void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
     // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
-    Node* floorNode = scene_->CreateChild("Floor");
-    floorNode->SetPosition(worldPosition);
-    floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
-    auto* floorObject = floorNode->CreateComponent<StaticModel>();
-    floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+   // Node* floorNode = scene_->CreateChild("Floor");
+   // floorNode->SetPosition(worldPosition);
+   // floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+   // auto* floorObject = floorNode->CreateComponent<StaticModel>();
+   // floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+   // floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-    // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
-    // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
-    // in the physics simulation
-    //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
-    //body->SetMassScale(0.0f);
-    auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-    //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-   // shape->SetPositionOffset(Vector3(1, 0, 0));
-    // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
-    // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
+   // // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
+   // // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
+   // // in the physics simulation
+   // //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
+   // //body->SetMassScale(0.0f);
+   // auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+   // //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+   //// shape->SetPositionOffset(Vector3(1, 0, 0));
+   // // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
+   // // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
 
 
     //Create heightmap terrain with collision
-    //Node* terrainNode = scene_->CreateChild("Terrain");
-    //terrainNode->SetPosition(worldPosition);
-    //auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
-    //terrain->SetPatchSize(64);
-    //terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
-    //terrain->SetSmoothing(true);
-    //terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
-    //terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
-    //// The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
-    //// terrain patches and other objects behind it
-    //terrain->SetOccluder(true);
+    Node* terrainNode = scene_->CreateChild("Terrain");
+    terrainNode->SetPosition(worldPosition);
+    auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
+    terrain->SetPatchSize(64);
+    terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
+    terrain->SetSmoothing(true);
+    terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+    terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
+    // The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
+    // terrain patches and other objects behind it
+    terrain->SetOccluder(true);
 
-    //terrainNode->CreateComponent<NewtonCollisionShape_HeightmapTerrain>();
+    terrainNode->CreateComponent<NewtonCollisionShape_HeightmapTerrain>();
 
 
 
@@ -886,7 +891,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     float range = 200;
     float objectScale = 10;
 
-    for (int i = 0; i < 0; i++)
+    for (int i = 0; i < 200; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* stMdl = scenePart->CreateComponent<StaticModel>();
@@ -899,7 +904,6 @@ void Physics::CreateScenery(Vector3 worldPosition)
             stMdl->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
             stMdl->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
             NewtonCollisionShape* colShape = scenePart->CreateComponent<NewtonCollisionShape_Cylinder>();
-            colShape->SetRotationOffset(Quaternion(0, 0, 90));
         }
         else if (i % 3) {
             stMdl->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
@@ -963,7 +967,7 @@ void Physics::CreatePickTargetNodeOnPhysics()
 
 
         //make a kinematics joint
-       // NewtonKinematicsConstraint* constraint = pickPullNode->CreateComponent<NewtonKinematicsConstraint>();
+        NewtonKinematicsConstraint* constraint = pickPullNode->CreateComponent<NewtonKinematicsConstraint>();
 
     }
 }
@@ -998,13 +1002,13 @@ void Physics::UpdatePickPull()
     if (!pickSource)
         return;
 
-    //pickPullNode->GetComponent<NewtonKinematicsConstraint>()->SetTargetPosition(pickTarget->GetWorldPosition());
+    pickPullNode->GetComponent<NewtonKinematicsConstraint>()->SetTargetPosition(pickTarget->GetWorldPosition());
 
     NewtonRigidBody* rigBody = pickPullNode->GetComponent<NewtonRigidBody>();
 
     Vector3 delta = (pickTarget->GetWorldPosition() - pickSource->GetWorldPosition());
 
-    float forceFactor = delta.Length()*100.0f*rigBody->GetEffectiveMass();
+    float forceFactor = delta.Length()*100.0f*rigBody->GetEffectiveMass() - rigBody->GetVelocity().Length()*rigBody->GetEffectiveMass()*0.1f;
     float cuttoff = 10.0f;
 
 
@@ -1015,8 +1019,8 @@ void Physics::UpdatePickPull()
 
     //URHO3D_LOGINFO("picker" + String((unsigned)(void*)rigBody->GetNewtonBody()));
 
-    rigBody->ResetForces();
-    rigBody->AddWorldForce(netForce);
+    //rigBody->ResetForces();
+    //rigBody->AddWorldForce(netForce);
     //rigBody->AddImpulse(Vector3::ZERO, delta * 100000.0f);
 
 }

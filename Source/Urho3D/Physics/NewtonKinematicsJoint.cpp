@@ -58,6 +58,11 @@ namespace Urho3D {
 
 
         newtonJoint_ = new dCustomKinematicController(ownBody_->GetNewtonBody(), UrhoToNewton(ownBody_->GetNode()->GetWorldPosition()));
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(0);
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(1000);
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(1000);
+
+
         updateTarget();
     }
 
@@ -69,7 +74,7 @@ namespace Urho3D {
             //matrix0.m_posit = UrhoToNewton(currentTargetTransform_.Translation());
            // static_cast<dCustomKinematicController*>(newtonJoint_)->ResetAutoSleep();
             static_cast<dCustomKinematicController*>(newtonJoint_)->SetTargetPosit(UrhoToNewton(currentTargetPos_));
-            
+
         }
     }
 

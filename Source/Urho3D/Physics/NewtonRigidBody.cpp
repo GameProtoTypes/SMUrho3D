@@ -274,7 +274,11 @@ namespace Urho3D {
                 {
                     
                     Vector3 scale = colComp->GetNode()->GetScale();
-                    scale = colComp->GetRotationOffset().Inverse()*scale;
+
+
+                    scale = (colComp->internalRotOffset_*colComp->GetRotationOffset()).Inverse()*scale;
+
+
                     NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
                 }
                 accumMass += colComp->GetVolume()*1.0f;

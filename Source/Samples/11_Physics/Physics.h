@@ -77,7 +77,7 @@ private:
     void CreateScene();
 
     void SpawnSceneCompoundTest(const Vector3& worldPos);
-    void CreatePyramids();
+    void CreatePyramids(Vector3 position);
 
 
     /// Construct an instruction text to the UI.
