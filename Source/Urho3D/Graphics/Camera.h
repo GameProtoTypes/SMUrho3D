@@ -218,7 +218,7 @@ protected:
     /// Handle node being assigned.
     void OnNodeSet(Node* node) override;
     /// Handle node transform being dirtied.
-    void OnMarkedDirty(Node* node) override;
+    void OnNodeMarkedDirty(Node* node) override;
 
 private:
     /// Recalculate projection matrix.

@@ -176,7 +176,7 @@ protected:
     /// Recalculate the world-space bounding box.
     void OnWorldBoundingBoxUpdate() override;
     /// Handle node transform being dirtied.
-    void OnMarkedDirty(Node* node) override;
+    void OnNodeMarkedDirty(Node* node) override;
 
 private:
     /// Get triangle faces from the target geometry.

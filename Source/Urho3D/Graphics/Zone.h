@@ -120,7 +120,7 @@ public:
 
 protected:
     /// Handle node transform being dirtied.
-    void OnMarkedDirty(Node* node) override;
+    void OnNodeMarkedDirty(Node* node) override;
     /// Recalculate the world-space bounding box.
     void OnWorldBoundingBoxUpdate() override;
     /// Handle removal from octree.
@@ -130,7 +130,7 @@ protected:
     /// Clear zone reference from drawables inside the bounding box.
     void ClearDrawablesZone();
     /// Mark node transform dirty.
-    void MarkNodeDirty() { OnMarkedDirty(node_); }
+    void MarkNodeDirty() { OnNodeMarkedDirty(node_); }
 
     /// Cached inverse world transform matrix.
     mutable Matrix3x4 inverseWorld_;

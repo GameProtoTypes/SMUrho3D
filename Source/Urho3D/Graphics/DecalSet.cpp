@@ -651,9 +651,9 @@ PODVector<unsigned char> DecalSet::GetDecalsAttr() const
     return ret.GetBuffer();
 }
 
-void DecalSet::OnMarkedDirty(Node* node)
+void DecalSet::OnNodeMarkedDirty(Node* node)
 {
-    Drawable::OnMarkedDirty(node);
+    Drawable::OnNodeMarkedDirty(node);
 
     if (skinned_)
     {
@@ -994,7 +994,7 @@ void DecalSet::MarkDecalsDirty()
     if (!boundingBoxDirty_)
     {
         boundingBoxDirty_ = true;
-        OnMarkedDirty(node_);
+        OnNodeMarkedDirty(node_);
     }
     bufferDirty_ = true;
 }

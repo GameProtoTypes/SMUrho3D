@@ -206,7 +206,7 @@ void RibbonTrail::Update(const RenderFrameInfo &frame)
         return;
 
     UpdateTail(frame.timeStep_);
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     needUpdate_ = false;
 }
 
@@ -348,7 +348,7 @@ void RibbonTrail::SetEmitting(bool emitting)
         bufferSizeDirty_ = true;
     }
 
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
@@ -366,7 +366,7 @@ void RibbonTrail::SetTailColumn(unsigned tailColumn)
     else
         tailColumn_ = tailColumn;
 
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     bufferSizeDirty_ = true;
     MarkNetworkUpdate();
 }
@@ -851,7 +851,7 @@ void RibbonTrail::SetTrailType(TrailType type)
     }
 
     trailType_ = type;
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     bufferSizeDirty_ = true;
     MarkNetworkUpdate();
 }
@@ -894,7 +894,7 @@ void RibbonTrail::Commit()
 
 void RibbonTrail::MarkPositionsDirty()
 {
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     bufferDirty_ = true;
 }
 

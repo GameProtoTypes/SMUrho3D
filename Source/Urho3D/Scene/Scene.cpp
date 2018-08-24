@@ -858,7 +858,7 @@ void Scene::EndThreadedUpdate()
         URHO3D_PROFILE("EndThreadedUpdate");
 
         for (PODVector<Component*>::ConstIterator i = delayedDirtyComponents_.Begin(); i != delayedDirtyComponents_.End(); ++i)
-            (*i)->OnMarkedDirty((*i)->GetNode());
+            (*i)->OnNodeMarkedDirty((*i)->GetNode());
         delayedDirtyComponents_.Clear();
     }
 }

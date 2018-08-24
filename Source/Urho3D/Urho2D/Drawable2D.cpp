@@ -122,9 +122,9 @@ void Drawable2D::OnSceneSet(Scene* scene)
     }
 }
 
-void Drawable2D::OnMarkedDirty(Node* node)
+void Drawable2D::OnNodeMarkedDirty(Node* node)
 {
-    Drawable::OnMarkedDirty(node);
+    Drawable::OnNodeMarkedDirty(node);
 
     sourceBatchesDirty_ = true;
 }

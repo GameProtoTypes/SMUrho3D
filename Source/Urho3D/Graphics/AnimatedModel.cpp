@@ -942,9 +942,9 @@ void AnimatedModel::OnNodeSet(Node* node)
     }
 }
 
-void AnimatedModel::OnMarkedDirty(Node* node)
+void AnimatedModel::OnNodeMarkedDirty(Node* node)
 {
-    Drawable::OnMarkedDirty(node);
+    Drawable::OnNodeMarkedDirty(node);
 
     // If the scene node or any of the bone nodes move, mark skinning dirty
     if (skeleton_.GetNumBones())

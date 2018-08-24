@@ -312,7 +312,7 @@ protected:
     /// Handle scene being assigned.
     void OnSceneSet(Scene* scene) override;
     /// Handle node transform being dirtied.
-    void OnMarkedDirty(Node* node) override;
+    void OnNodeMarkedDirty(Node* node) override;
     /// Recalculate the world-space bounding box.
     virtual void OnWorldBoundingBoxUpdate() = 0;
 

@@ -119,7 +119,7 @@ void Obstacle::OnSceneSet(Scene* scene)
     }
 }
 
-void Obstacle::OnMarkedDirty(Node* node)
+void Obstacle::OnNodeMarkedDirty(Node* node)
 {
     if (IsEnabledEffective() && ownerMesh_)
     {

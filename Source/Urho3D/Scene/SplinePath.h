@@ -112,7 +112,7 @@ public:
 
 protected:
     /// Listener to manage Control Point movement.
-    void OnMarkedDirty(Node* point) override;
+    void OnNodeMarkedDirty(Node* node) override;
     /// Listener to manage Control Point enabling.
     void OnNodeSetEnabled(Node* point) override;
 

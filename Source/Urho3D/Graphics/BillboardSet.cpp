@@ -766,7 +766,7 @@ void BillboardSet::UpdateVertexBuffer(const RenderFrameInfo& frame)
 
 void BillboardSet::MarkPositionsDirty()
 {
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     bufferDirty_ = true;
 }
 

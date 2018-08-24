@@ -792,7 +792,7 @@ void Node::MarkDirty()
             Component *c = *i;
             if (c)
             {
-                c->OnMarkedDirty(cur);
+                c->OnNodeMarkedDirty(cur);
                 ++i;
             }
             // If listener has expired, erase from list (swap with the last element to avoid O(n^2) behavior)
@@ -1197,7 +1197,7 @@ void Node::AddListener(Component* component)
     listeners_.Push(WeakPtr<Component>(component));
     // If the node is currently dirty, notify immediately
     if (dirty_)
-        component->OnMarkedDirty(this);
+        component->OnNodeMarkedDirty(this);
 }
 
 void Node::RemoveListener(Component* component)
@@ -1913,7 +1913,7 @@ void Node::AddComponent(Component* component, unsigned id, CreateMode mode)
     else
         component->SetID(id);
 
-    component->OnMarkedDirty(this);
+    component->OnNodeMarkedDirty(this);
 
     // Check attributes of the new component on next network update, and mark node dirty in all replication states
     component->MarkNetworkUpdate();

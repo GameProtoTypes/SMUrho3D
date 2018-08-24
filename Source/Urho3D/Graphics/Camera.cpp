@@ -639,7 +639,7 @@ void Camera::OnNodeSet(Node* node)
         node->AddListener(this);
 }
 
-void Camera::OnMarkedDirty(Node* node)
+void Camera::OnNodeMarkedDirty(Node* node)
 {
     frustumDirty_ = true;
     viewDirty_ = true;

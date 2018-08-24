@@ -340,7 +340,7 @@ void CustomGeometry::Commit()
     }
 
     // Make sure world-space bounding box will be updated
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
 
     // Resize (recreate) the vertex buffer only if necessary
     if (vertexBuffer_->GetVertexCount() != totalVertices || vertexBuffer_->GetElementMask() != elementMask_ ||

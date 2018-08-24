@@ -282,18 +282,18 @@ void SplinePath::SetControlledIdAttr(unsigned value)
     dirty_ = true;
 }
 
-void SplinePath::OnMarkedDirty(Node* point)
+void SplinePath::OnNodeMarkedDirty(Node* node)
 {
-    if (!point)
+    if (!node)
         return;
 
-    WeakPtr<Node> controlPoint(point);
+    WeakPtr<Node> controlPoint(node);
 
     for (unsigned i = 0; i < controlPoints_.Size(); ++i)
     {
         if (controlPoints_[i] == controlPoint)
         {
-            spline_.SetKnot(point->GetWorldPosition(), i);
+            spline_.SetKnot(node->GetWorldPosition(), i);
             break;
         }
     }

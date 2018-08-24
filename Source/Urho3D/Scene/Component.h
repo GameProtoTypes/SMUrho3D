@@ -118,7 +118,7 @@ protected:
     /// Handle scene being assigned. This may happen several times during the component's lifetime. Scene-wide subsystems and events are subscribed to here.
     virtual void OnSceneSet(Scene* scene);
     /// Handle scene node transform dirtied.
-    virtual void OnMarkedDirty(Node* node);
+    virtual void OnNodeMarkedDirty(Node* node);
     /// Handle scene node enabled status changing.
     virtual void OnNodeSetEnabled(Node* node);
     /// Set ID. Called by Scene.

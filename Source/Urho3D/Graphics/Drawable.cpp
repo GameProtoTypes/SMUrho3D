@@ -210,7 +210,7 @@ void Drawable::SetZoneMask(unsigned mask)
 {
     zoneMask_ = mask;
     // Mark dirty to reset cached zone
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
@@ -371,7 +371,7 @@ void Drawable::OnSceneSet(Scene* scene)
         RemoveFromOctree();
 }
 
-void Drawable::OnMarkedDirty(Node* node)
+void Drawable::OnNodeMarkedDirty(Node* node)
 {
     worldBoundingBoxDirty_ = true;
     if (!updateQueued_ && octant_)

@@ -248,7 +248,7 @@ void HeightmapTerrainPatch::SetMaterial(Material* material)
 void HeightmapTerrainPatch::SetBoundingBox(const BoundingBox& box)
 {
     boundingBox_ = box;
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
 }
 
 void HeightmapTerrainPatch::SetCoordinates(const IntVector2& coordinates)

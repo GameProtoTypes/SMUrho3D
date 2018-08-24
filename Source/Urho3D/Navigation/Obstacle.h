@@ -75,7 +75,7 @@ protected:
     /// Handle scene being assigned, identify our DynamicNavigationMesh.
     void OnSceneSet(Scene* scene) override;
     /// Handle node transform being dirtied.
-    void OnMarkedDirty(Node* node) override;
+    void OnNodeMarkedDirty(Node* node) override;
     /// Handle navigation mesh tile added.
     void HandleNavigationTileAdded(StringHash eventType, VariantMap& eventData);
 

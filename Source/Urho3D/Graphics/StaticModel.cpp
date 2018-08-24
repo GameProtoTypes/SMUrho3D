@@ -359,7 +359,7 @@ bool StaticModel::IsInsideLocal(const Vector3& point) const
 void StaticModel::SetBoundingBox(const BoundingBox& box)
 {
     boundingBox_ = box;
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
 }
 
 void StaticModel::SetNumGeometries(unsigned num)

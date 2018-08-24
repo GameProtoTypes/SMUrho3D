@@ -619,7 +619,7 @@ void CrowdAgent::OnSceneSet(Scene* scene)
         RemoveAgentFromCrowd();
 }
 
-void CrowdAgent::OnMarkedDirty(Node* node)
+void CrowdAgent::OnNodeMarkedDirty(Node* node)
 {
     if (!ignoreTransformChanges_ && IsEnabledEffective())
     {
