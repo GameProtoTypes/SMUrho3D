@@ -39,6 +39,7 @@ namespace Urho3D {
     void NewtonConstraint::SetOtherBody(NewtonRigidBody* body)
     {
         otherBody_ = body;
+        otherBody_->GetNode()->AddListener(this);
         MarkDirty();
     }
 
@@ -69,14 +70,25 @@ namespace Urho3D {
         MarkDirty();
     }
 
+    void NewtonConstraint::OnSetEnabled()
+    {
+        MarkDirty();
+    }
+
     void NewtonConstraint::reEvalConstraint()
     {
-        if (preRebuildCheckAndClean())
-        {
-            buildConstraint();
-            NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
+
+        freeConstraint();
+
+        if (!IsEnabledEffective()) {
             MarkDirty(false);
+            return;
         }
+
+        buildConstraint();
+        NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
+        MarkDirty(false);
+        
     }
 
     void NewtonConstraint::buildConstraint()
@@ -93,12 +105,7 @@ namespace Urho3D {
         }
     }
 
-    bool NewtonConstraint::preRebuildCheckAndClean()
-    {
-        freeConstraint();
-        
-        return true;
-    }
+
 
     void NewtonConstraint::OnNodeSet(Node* node)
     {
@@ -115,6 +122,8 @@ namespace Urho3D {
             if(physicsWorld_)
                 physicsWorld_->addConstraint(this);
 
+            node->AddListener(this);
+
         }
         else
         {
@@ -126,4 +135,10 @@ namespace Urho3D {
 
         }
     }
+
+    void NewtonConstraint::OnNodeSetEnabled(Node* node)
+    {
+        MarkDirty();
+    }
+
 }

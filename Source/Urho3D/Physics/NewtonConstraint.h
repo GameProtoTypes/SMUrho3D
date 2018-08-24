@@ -56,6 +56,9 @@ namespace Urho3D {
         /// Return the other rigid body. May be null if connected to the static world.
         NewtonRigidBody* GetOtherBody() const { return otherBody_; }
 
+
+        virtual void OnSetEnabled() override;
+
     protected:
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
@@ -85,10 +88,12 @@ namespace Urho3D {
         
         /// frees and deletes the internal joint.
         void freeConstraint();
-        /// Called right before rebuildConstraint, checks both bodies and destroys old joints.
-        bool preRebuildCheckAndClean();
+
 
         virtual void OnNodeSet(Node* node) override;
+
+
+        virtual void OnNodeSetEnabled(Node* node) override;
 
     };
 }
