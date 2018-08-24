@@ -180,6 +180,12 @@ namespace Urho3D {
         return transformDirty_;
     }
 
+
+    void NewtonRigidBody::OnSetEnabled(bool oldEnabled, bool newEnabled)
+    {
+        MarkDirty(true);
+    }
+
     void NewtonRigidBody::freeBody()
     {
         if (newtonBody_ != nullptr) {
@@ -201,6 +207,10 @@ namespace Urho3D {
     {
         URHO3D_PROFILE_FUNCTION();
         freeBody();
+
+        if (!enabled_)
+            return;
+
 
 
         GSS<VisualDebugger>()->AddOrb(GetNode()->GetWorldPosition(), 0.5f, Color::RED);
@@ -447,6 +457,14 @@ namespace Urho3D {
                 //NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(nextLinearVelocity_)[0]);
             }
             nextLinearVelocityNeeded_ = false;
+        }
+    }
+
+    void NewtonRigidBody::OnNodeSetEnabled(Node* node)
+    {
+        if (node == node_)
+        {
+            MarkDirty(true);
         }
     }
 

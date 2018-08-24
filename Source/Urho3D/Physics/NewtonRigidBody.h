@@ -52,7 +52,6 @@ namespace Urho3D
         void SetInternalAngularDamping(const Vector3& angularDamping);
 
 
-
         /// Set whether the collision size should be effected by the node scale.
         void SetInheritNodeScale(bool enable = true);
 
@@ -140,6 +139,12 @@ namespace Urho3D
 
 
 
+
+
+
+
+        virtual void OnSetEnabled(bool oldEnabled, bool newEnabled) override;
+
     protected:
 
 
@@ -209,6 +214,9 @@ namespace Urho3D
         Vector3 nextLinearVelocity_;
 
 
+
+
+        virtual void OnNodeSetEnabled(Node* node) override;
 
     };
 

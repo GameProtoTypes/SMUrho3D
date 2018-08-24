@@ -39,19 +39,19 @@ namespace Urho3D {
 
     void NewtonKinematicsControllerConstraint::SetMaxLinearFriction(float friction)
     {
-        if (linearFriction_ != friction) {
-            linearFriction_ = friction;
+        if (maxLinearFriction_ != friction) {
+            maxLinearFriction_ = friction;
             if(newtonJoint_)
-                static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(linearFriction_);
+                static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(maxLinearFriction_);
         }
     }
 
     void NewtonKinematicsControllerConstraint::SetMaxAngularFriction(float friction)
     {
-        if (angularFriction_ != friction) {
-            angularFriction_ = friction;
+        if (maxAngularFriction_ != friction) {
+            maxAngularFriction_ = friction;
             if (newtonJoint_)
-                static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(angularFriction_);
+                static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(maxAngularFriction_);
         }
     }
 
@@ -62,6 +62,16 @@ namespace Urho3D {
             constrainRotation_ = enable;
             if (newtonJoint_)
                 static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(!constrainRotation_);
+        }
+    }
+
+    void NewtonKinematicsControllerConstraint::SetLimitRotationalVelocity(bool enable)
+    {
+        if (limitRotationalVelocity_ != enable)
+        {
+            limitRotationalVelocity_ = enable;
+            if(newtonJoint_)
+                static_cast<dCustomKinematicController*>(newtonJoint_)->SetLimitRotationVelocity(limitRotationalVelocity_);
         }
     }
 
@@ -86,8 +96,9 @@ namespace Urho3D {
 
         newtonJoint_ = new dCustomKinematicController(ownBody_->GetNewtonBody(), UrhoToNewton(ownBody_->GetNode()->LocalToWorld(Matrix3x4(position_, rotation_, 1.0f))));
         static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(constrainRotation_);
-        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(linearFriction_);
-        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(angularFriction_);
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxLinearFriction(maxLinearFriction_);
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetMaxAngularFriction(maxAngularFriction_);
+        static_cast<dCustomKinematicController*>(newtonJoint_)->SetLimitRotationVelocity(limitRotationalVelocity_);
 
 
         updateTarget();
