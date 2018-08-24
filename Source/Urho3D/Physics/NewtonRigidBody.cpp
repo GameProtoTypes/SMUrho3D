@@ -181,7 +181,7 @@ namespace Urho3D {
     }
 
 
-    void NewtonRigidBody::OnSetEnabled(bool oldEnabled, bool newEnabled)
+    void NewtonRigidBody::OnSetEnabled()
     {
         MarkDirty(true);
     }
@@ -208,7 +208,7 @@ namespace Urho3D {
         URHO3D_PROFILE_FUNCTION();
         freeBody();
 
-        if (!enabled_)
+        if (!IsEnabledEffective())
             return;
 
 
@@ -218,10 +218,10 @@ namespace Urho3D {
         PODVector<NewtonCollisionShape*> childCollisionShapes;
         node_->GetDerivedComponents<NewtonCollisionShape>(childCollisionShapes, true, true);//includes this node.
         
-
+        PODVector<NewtonCollisionShape*> filteredList;
+        //if scene root body - filter out shapes with no root rigid body (except the scene root of course)
         if (sceneRootBodyMode_)
         {
-            PODVector<NewtonCollisionShape*> filteredList;
             for (NewtonCollisionShape* col : childCollisionShapes)
             {
                 PODVector<NewtonRigidBody*> parentRigBodies;
@@ -232,7 +232,14 @@ namespace Urho3D {
             childCollisionShapes = filteredList;
         }
 
-
+        //filter out shapes that are not enabled.
+        filteredList.Clear();
+        for (NewtonCollisionShape* col : childCollisionShapes)
+        {
+            if (col->IsEnabledEffective())
+                filteredList += col;
+        }
+        childCollisionShapes = filteredList;
 
 
         if (childCollisionShapes.Size())
@@ -369,7 +376,7 @@ namespace Urho3D {
 
             physicsWorld_->addRigidBody(this);
 
-
+            node->AddListener(this);
 
             SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(NewtonRigidBody, HandleNodeTransformChange));
         }

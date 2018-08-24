@@ -128,6 +128,11 @@ namespace Urho3D {
         }
     }
 
+    void NewtonCollisionShape::OnSetEnabled()
+    {
+        MarkRigidBodyDirty();
+    }
+
     float NewtonCollisionShape::updateVolume()
 {
         float vol = 0.0f;
@@ -168,7 +173,7 @@ namespace Urho3D {
 
 
             physicsWorld_->addCollisionShape(this);
-
+            node->AddListener(this);
 
             SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeTransformChange));
 
@@ -185,6 +190,11 @@ namespace Urho3D {
     }
 
 
+
+    void NewtonCollisionShape::OnNodeSetEnabled(Node* node)
+    {
+        MarkRigidBodyDirty();
+    }
 
     void NewtonCollisionShape::HandleNodeAdded(StringHash event, VariantMap& eventData)
     {

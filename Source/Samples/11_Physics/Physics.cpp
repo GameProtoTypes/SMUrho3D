@@ -952,6 +952,7 @@ void Physics::CreatePickTargetNodeOnPhysics()
         //remember the node
         pickPullNode = res.node_;
 
+
         //create "PickTarget" on the hit surface, parented to the camera.
         Node* pickTarget = cameraNode_->CreateChild("CameraPullPoint");
         pickTarget->SetWorldPosition(res.position_);

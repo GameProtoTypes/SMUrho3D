@@ -70,6 +70,9 @@ namespace Urho3D
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
+
+        virtual void OnSetEnabled() override;
+
     protected:
 
         /// Physics world.
@@ -127,6 +130,9 @@ namespace Urho3D
 
 
         virtual void OnNodeSet(Node* node) override;
+
+        virtual void OnNodeSetEnabled(Node* node) override;
+
     };
 
 

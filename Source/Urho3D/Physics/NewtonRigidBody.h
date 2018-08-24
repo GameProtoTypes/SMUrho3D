@@ -143,7 +143,7 @@ namespace Urho3D
 
 
 
-        virtual void OnSetEnabled(bool oldEnabled, bool newEnabled) override;
+        virtual void OnSetEnabled() override;
 
     protected:
 
