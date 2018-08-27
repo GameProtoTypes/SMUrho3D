@@ -33,11 +33,6 @@ $<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk>
 file(GLOB includes *.h)
 install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
 
-install (TARGETS ${projectName} EXPORT Urho3D
-    LIBRARY DESTINATION ${DEST_LIBRARY_DIR}
-    RUNTIME DESTINATION ${DEST_BIN_DIR}
-    ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR}
-)
 
 if (NEWTON_BUILD_SANDBOX_DEMOS)
 	add_custom_command(
