@@ -117,7 +117,7 @@ endforeach()
 if (MINI_URHO)
     target_compile_definitions(Urho3D PUBLIC -DMINI_URHO)
 endif ()
-target_compile_definitions(Urho3D PRIVATE -DURHO3D_IS_BUILDING)
+target_compile_definitions(Urho3D PRIVATE -DURHO3D_IS_BUILDING PUBLIC -DNOMINMAX)
 
 # Set platform definitions
 foreach(def LINUX ANDROID IOS APPLE MACOS MOBILE DESKTOP)
@@ -133,28 +133,28 @@ if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/librevision.h)
 endif ()
 
 # Link dependencies
-set (THIRD_PARTY_DEPENDENCIES 
+set (THIRD_PARTY_DEPENDENCIES
     FreeType
-    JO 
-    LZ4 
-    PugiXml 
-    rapidjson 
-    SDL 
-    STB 
-    IconFontCppHeaders 
-    Civetweb 
-    kNet 
-    ik 
-    Detour 
-    DetourCrowd 
-    DetourTileCache 
-    Recast 
-    Box2D 
-    WebP 
+    JO
+    LZ4
+    PugiXml
+    rapidjson
+    SDL
+    StanHull
+    STB
+    IconFontCppHeaders
+    Civetweb
+    kNet
+    ik
+    Detour
+    DetourCrowd
+    DetourTileCache
+    Recast
+    Box2D
+    WebP
     
     dAnimation
     dContainers
-    dCustomJoints
     dgCore
     dgNewtonAvx
     dgNewtonAvx2
@@ -166,23 +166,99 @@ set (THIRD_PARTY_DEPENDENCIES
     dScene
     dTimeTracker
     tinyxml
-
-    tracy-lib 
-    imgui 
-    LibCpuId 
-    GLEW 
-    MojoShader 
-    fcontext 
-    cr 
-    yaml-cpp 
+    
+    imgui
+    LibCpuId
+    GLEW
+    MojoShader
+    fcontext
+    cr
+    yaml-cpp
     nativefiledialog
-    )
+)
+
+if (BUILD_SHARED_LIBS AND NOT MSVC AND NOT APPLE)
+    target_link_libraries(Urho3D PRIVATE -Wl,--whole-archive)
+endif ()
 
 foreach (dep ${THIRD_PARTY_DEPENDENCIES})
     if (TARGET "${dep}")
-        target_link_libraries(Urho3D ${dep})
+        # By linking them as private but inheriting definitions/options/dirs we avoid having
+        # to export third party lib targets in a monolithic dll build.
+        get_target_property(_TARGET_TYPE ${dep} TYPE)
+        if (BUILD_SHARED_LIBS AND ${_TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
+            if (MSVC)
+                set_property(TARGET Urho3D APPEND_STRING PROPERTY LINK_FLAGS " /WHOLEARCHIVE:${dep}")
+            elseif (APPLE)
+                set_property(TARGET Urho3D APPEND PROPERTY LINK_LIBRARIES -force_load ${dep})
+            endif ()
+        endif ()
+        get_target_property(VALUE ${dep} INTERFACE_COMPILE_DEFINITIONS)
+        if (VALUE)
+            target_compile_definitions(Urho3D PUBLIC ${VALUE})
+        endif ()
+        get_target_property(VALUE ${dep} INTERFACE_COMPILE_OPTIONS)
+        if (VALUE)
+            target_compile_options(Urho3D PUBLIC ${VALUE})
+        endif ()
+        get_target_property(VALUE ${dep} INTERFACE_INCLUDE_DIRECTORIES)
+        if (VALUE)
+            target_include_directories(Urho3D PUBLIC ${VALUE})
+        endif ()
+        get_target_property(VALUE ${dep} INTERFACE_LINK_LIBRARIES)
+        if (VALUE)
+            foreach (dep_lib ${VALUE})
+                if (NOT TARGET ${dep_lib})
+                    target_link_libraries (Urho3D PUBLIC "${dep_lib}")
+                endif ()
+            endforeach ()
+        endif ()
+        if (BUILD_SHARED_LIBS)
+            target_link_libraries(Urho3D PRIVATE ${dep})
+        else ()
+            if (${_TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
+                list (APPEND DEPENDENCY_TARGET_FILES $<TARGET_FILE:${dep}>)
+            endif ()
+        endif ()
     endif ()
 endforeach()
+
+if (BUILD_SHARED_LIBS AND NOT MSVC AND NOT APPLE)
+    target_link_libraries(Urho3D PRIVATE -Wl,--no-whole-archive)
+endif ()
+
+if (NOT BUILD_SHARED_LIBS)
+    # Merge static libraries of third party dependencies to final engine static library
+    if (MSVC)
+        # If merged library is not deleted in this step then sometimes build system will try to merge dependencies
+        # to already merged library inflating it further.
+        add_custom_command (TARGET Urho3D POST_BUILD
+            COMMAND lib.exe /OUT:$<TARGET_FILE:Urho3D>.engine $<TARGET_FILE:Urho3D> ${DEPENDENCY_TARGET_FILES}
+            COMMAND ${CMAKE_COMMAND} -E rename $<TARGET_FILE:Urho3D>.engine $<TARGET_FILE:Urho3D>
+            COMMENT "Merging all archives into a single static library using lib.exe")
+    elseif (APPLE)
+        # Apple libtool takes archives directly as input
+        add_custom_command (TARGET Urho3D POST_BUILD
+            COMMAND libtool -static $<TARGET_FILE:Urho3D> ${DEPENDENCY_TARGET_FILES} -o $<TARGET_FILE:Urho3D>.engine
+            COMMAND ${CMAKE_COMMAND} -E rename $<TARGET_FILE:Urho3D>.engine $<TARGET_FILE:Urho3D>
+            COMMENT "Merging all archives into a single static library using libtool")
+    else ()
+        # GCC ar does not take archives directly as input like Apple libtool, however, it can be scripted to do so
+        add_custom_command (TARGET Urho3D POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rename $<TARGET_FILE:Urho3D> $<TARGET_FILE:Urho3D>.engine
+            COMMAND echo CREATE $<TARGET_FILE:Urho3D> >script.ar
+            COMMAND echo ADDLIB $<TARGET_FILE:Urho3D>.engine >>script.ar)
+        foreach (ARCHIVE ${DEPENDENCY_TARGET_FILES})
+            add_custom_command (TARGET Urho3D POST_BUILD COMMAND echo ADDLIB ${ARCHIVE} >>script.ar)
+        endforeach ()
+        add_custom_command (TARGET Urho3D POST_BUILD
+            COMMAND echo SAVE >>script.ar
+            COMMAND echo END >>script.ar
+            COMMAND ${CMAKE_AR} -M <script.ar
+            COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:Urho3D>.engine script.ar
+            COMMENT "Merging all archives into a single static library using ar")
+    endif ()
+endif ()
 
 if (URHO3D_SSE AND NOT MSVC)
     target_compile_options (Urho3D PUBLIC -msse -msse2)
@@ -198,14 +274,14 @@ endif ()
 
 if (WIN32)
     if (URHO3D_MINIDUMPS)
-        target_link_libraries (Urho3D dbghelp)
+        target_link_libraries (Urho3D PUBLIC dbghelp)
     endif ()
-    target_link_libraries (Urho3D rpcrt4)
+    target_link_libraries (Urho3D PUBLIC rpcrt4)
 else ()
     if (ANDROID)
-        target_link_libraries (Urho3D dl log android)
+        target_link_libraries (Urho3D PUBLIC dl log android)
     elseif (DESKTOP)
-        target_link_libraries (Urho3D dl m rt pthread uuid)
+        target_link_libraries (Urho3D PUBLIC dl m rt pthread uuid)
     endif ()
 endif ()
 
@@ -214,16 +290,23 @@ if (GNU OR Clang)
     target_compile_options(Urho3D PUBLIC -Wno-invalid-offsetof)
 endif ()
 
+if (URHO3D_PROFILING)
+    target_compile_options(Urho3D PUBLIC -DTRACY_ENABLE=1)
+    if (TARGET tracy-lib)
+        target_link_libraries(Urho3D INTERFACE tracy-lib)
+    endif ()
+endif ()
+
 # Graphics
 if (URHO3D_OPENGL)
     if (APPLE)
         # Do nothing
     elseif (WIN32)
-        target_link_libraries (Urho3D opengl32)
+        target_link_libraries (Urho3D PUBLIC opengl32)
     elseif (ANDROID OR ARM)
-        target_link_libraries (Urho3D GLESv1_CM GLESv2)
+        target_link_libraries (Urho3D PUBLIC GLESv1_CM GLESv2)
     else ()
-        target_link_libraries (Urho3D GL)
+        target_link_libraries (Urho3D PUBLIC GL)
     endif ()
 else ()
     if (URHO3D_D3D9)
@@ -231,11 +314,11 @@ else ()
     else ()
         find_package(DirectX REQUIRED D3D11)
     endif ()
-    target_link_libraries (Urho3D ${DIRECT3D_LIBRARIES})
+    target_link_libraries (Urho3D PUBLIC ${DIRECT3D_LIBRARIES})
 endif ()
 
 if (BUILD_SHARED_LIBS OR EMSCRIPTEN)
-    target_compile_definitions(Urho3D PRIVATE -DURHO3D_EXPORTS)
+    target_compile_definitions(Urho3D PRIVATE -DURHO3D_EXPORTS INTERFACE -DURHO3D_IMPORTS)
 else ()
     target_compile_definitions (Urho3D PUBLIC -DURHO3D_STATIC)
 endif ()
@@ -245,7 +328,7 @@ if (URHO3D_CSHARP)
     if (URHO3D_WITH_MONO)
         find_package(Mono REQUIRED)
         target_include_directories(Urho3D PRIVATE ${MONO_INCLUDE_DIRS})
-        target_link_libraries(Urho3D ${MONO_LIBRARIES})
+        target_link_libraries(Urho3D PUBLIC ${MONO_LIBRARIES})
         target_compile_options(Urho3D PRIVATE ${MONO_CFLAGS})
         if (MSVC)
             set (MONO_RUNTIME_SHARED ${MONO_PATH}/bin/mono-2.0-sgen.dll)
