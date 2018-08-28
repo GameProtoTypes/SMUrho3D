@@ -155,6 +155,7 @@ set (THIRD_PARTY_DEPENDENCIES
     
     dAnimation
     dContainers
+    dCustomJoints
     dgCore
     dgNewtonAvx
     dgNewtonAvx2
