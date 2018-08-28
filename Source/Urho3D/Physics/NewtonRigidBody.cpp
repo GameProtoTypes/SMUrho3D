@@ -608,6 +608,12 @@ namespace Urho3D {
         return NewtonToUrhoQuat(quat);
     }
 
+    void NewtonRigidBody::GetConnectedContraints(PODVector<NewtonConstraint*>& contraints)
+    {
+        contraints.Clear();
+        contraints = connectedConstraints_;
+    }
+
     void NewtonRigidBody::ApplyTransform()
     {
         if (!newtonBody_)

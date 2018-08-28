@@ -38,9 +38,17 @@ namespace Urho3D {
 
     void NewtonConstraint::SetOtherBody(NewtonRigidBody* body)
     {
-        otherBody_ = body;
-        otherBody_->GetNode()->AddListener(this);
-        MarkDirty();
+        if (otherBody_ != body) {
+
+            if (otherBody_ != nullptr)
+                RemoveJointReferenceFromBody(otherBody_);//remove reference from old body
+
+
+            otherBody_ = body;
+            AddJointReferenceToBody(otherBody_);
+            otherBody_->GetNode()->AddListener(this);
+            MarkDirty();
+        }
     }
 
 
@@ -107,6 +115,25 @@ namespace Urho3D {
 
 
 
+    void NewtonConstraint::AddJointReferenceToBody(NewtonRigidBody* rigBody)
+    {
+        auto find = rigBody->connectedConstraints_.Find((this));
+        if(find.ptr_ == nullptr)
+        {
+            rigBody->connectedConstraints_.Insert(0, (this));
+        }
+    }
+
+
+    void NewtonConstraint::RemoveJointReferenceFromBody(NewtonRigidBody* rigBody)
+    {
+        auto find = rigBody->connectedConstraints_.Find((this));
+        if (find.ptr_ != nullptr)
+        {
+            rigBody->connectedConstraints_.Erase(find);
+        }
+    }
+
     void NewtonConstraint::OnNodeSet(Node* node)
     {
         if (node)
@@ -122,11 +149,16 @@ namespace Urho3D {
             if(physicsWorld_)
                 physicsWorld_->addConstraint(this);
 
+            AddJointReferenceToBody(ownBody_);
+
             node->AddListener(this);
 
         }
         else
         {
+            RemoveJointReferenceFromBody(ownBody_);
+
+
             ownBody_ = nullptr;
             if (physicsWorld_)
                 physicsWorld_->removeConstraint(this);

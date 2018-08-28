@@ -89,10 +89,12 @@ namespace Urho3D {
         /// frees and deletes the internal joint.
         void freeConstraint();
 
+        void AddJointReferenceToBody(NewtonRigidBody* rigBody);
+        void RemoveJointReferenceFromBody(NewtonRigidBody* rigBody);
+
+
 
         virtual void OnNodeSet(Node* node) override;
-
-
         virtual void OnNodeSetEnabled(Node* node) override;
 
     };

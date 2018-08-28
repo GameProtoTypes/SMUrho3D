@@ -18,6 +18,7 @@ namespace Urho3D
     public:
 
         friend class NewtonCollisionShape;
+        friend class NewtonConstraint;
         friend class UrhoNewtonPhysicsWorld;
 
         /// Construct.
@@ -115,6 +116,9 @@ namespace Urho3D
         /// Return the world orientation of the center of mass.
         Quaternion GetCenterOfMassRotation();
 
+        /// Get Immediately connected contraints to this rigid body.
+        void GetConnectedContraints(PODVector<NewtonConstraint*>& contraints);
+
 
 
         ///Apply the current newton body transform to the node.
@@ -173,6 +177,11 @@ namespace Urho3D
         Vector3 angularDampeningInternal_;
         ///linera dampening
         float linearDampeningInternal_ = 0.0f;
+
+        ///currently connected constraints.
+        PODVector<NewtonConstraint*> connectedConstraints_;
+
+
 
         dVector netForceNewton_;
         dVector netTorqueNewton_;
