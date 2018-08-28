@@ -23,9 +23,9 @@ namespace Urho3D {
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
         ///Set Max Linear Friction - The higher this is the more powerful the joint will be but may exert too much force on other bodies.
-        void SetMaxLinearFriction(float friction);
+        void SetLinearFrictionalAcceleration(float friction);
         ///Set Max Angular Friction - The higher this is the more powerful the joint will be but may exert too much force on other bodies.
-        void SetMaxAngularFriction(float friction);
+        void SetAngularFrictionalAcceleration(float friction);
 
         ///Enforce rotational target. if disable only position will be constrained and the body will be free to rotate.
         void SetConstrainRotation(bool enable);
@@ -46,6 +46,8 @@ namespace Urho3D {
 
         void updateTarget();
 
+        void updateFrictions();
+
         ///Target Position the joint will pull the body towards.
         Vector3 currentTargetPos_;
         ///Target orientation the joint will torque the body towards.
@@ -57,7 +59,7 @@ namespace Urho3D {
         ///If enabled the constraint will limit the rotational velocity. if false the joint may become unstable.
         bool limitRotationalVelocity_ = true;
 
-        float maxLinearFriction_ = 1000.0f;
-        float maxAngularFriction_ = 1000.0f;
+        float linearFrictionalAcceleration = 1000.0f;
+        float angularFrictionalAcceleration = 1000.0f;
     };
 }

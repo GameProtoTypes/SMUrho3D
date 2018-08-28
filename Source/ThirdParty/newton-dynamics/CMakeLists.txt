@@ -12,13 +12,13 @@ cmake_minimum_required(VERSION 3.12.0)
 
 
 #Urho3D Overrides
-if(URHO3D_THIRDPARTY_SHARED_LIBS)
+if(BUILD_SHARED_LIBS)
 	set(NEWTON_GENERATE_DLL ON CACHE BOOL "build dll libraries")
 	set(NEWTON_STATIC_RUNTIME_LIBRARIES OFF CACHE BOOL "use windows system static libraries")
 else ()
 	set(NEWTON_GENERATE_DLL OFF CACHE BOOL "build dll libraries")
 	set(NEWTON_STATIC_RUNTIME_LIBRARIES ON CACHE BOOL "use windows system static libraries")
-endif ()
+endif()
 
 
 
