@@ -117,21 +117,19 @@ namespace Urho3D {
 
     void NewtonConstraint::AddJointReferenceToBody(NewtonRigidBody* rigBody)
     {
-        auto find = rigBody->connectedConstraints_.Find((this));
-        if(find.ptr_ == nullptr)
-        {
-            rigBody->connectedConstraints_.Insert(0, (this));
-        }
+
+        if (!rigBody->connectedConstraints_.Contains(this))
+            rigBody->connectedConstraints_.Insert(this);
+
     }
 
 
     void NewtonConstraint::RemoveJointReferenceFromBody(NewtonRigidBody* rigBody)
     {
-        auto find = rigBody->connectedConstraints_.Find((this));
-        if (find.ptr_ != nullptr)
-        {
-            rigBody->connectedConstraints_.Erase(find);
-        }
+
+        if (rigBody->connectedConstraints_.Contains(this))
+            rigBody->connectedConstraints_.Erase(this);
+
     }
 
     void NewtonConstraint::OnNodeSet(Node* node)

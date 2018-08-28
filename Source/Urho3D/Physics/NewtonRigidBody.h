@@ -179,8 +179,8 @@ namespace Urho3D
         float linearDampeningInternal_ = 0.0f;
 
         ///currently connected constraints.
-        PODVector<NewtonConstraint*> connectedConstraints_;
-
+        //PODVector<NewtonConstraint*> connectedConstraints_;
+        HashSet<NewtonConstraint*> connectedConstraints_;
 
 
         dVector netForceNewton_;

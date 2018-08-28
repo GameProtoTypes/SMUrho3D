@@ -611,7 +611,10 @@ namespace Urho3D {
     void NewtonRigidBody::GetConnectedContraints(PODVector<NewtonConstraint*>& contraints)
     {
         contraints.Clear();
-        contraints = connectedConstraints_;
+        for (auto i = connectedConstraints_.Begin(); i != connectedConstraints_.End(); ++i)
+        {
+            contraints += *i;
+        }
     }
 
     void NewtonRigidBody::ApplyTransform()
