@@ -19,3 +19,8 @@ file(GLOB source *.cpp *.h)
 
 add_library(${projectName} STATIC ${source})
 
+install (TARGETS ${projectName} EXPORT Urho3D
+    LIBRARY DESTINATION ${DEST_LIBRARY_DIR}
+    RUNTIME DESTINATION ${DEST_BIN_DIR}
+    ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR}
+)
