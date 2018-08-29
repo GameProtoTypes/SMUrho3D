@@ -40,6 +40,9 @@ namespace Urho3D {
     {
         context->RegisterFactory<NewtonRigidBody>(DEF_PHYSICS_CATEGORY.CString());
 
+        URHO3D_COPY_BASE_ATTRIBUTES(Component);
+
+
         URHO3D_ACCESSOR_ATTRIBUTE("MassScale", GetMassScale, SetMassScale, float, 1.0f, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Linear Velocity", GetLinearVelocity, SetLinearVelocity, Vector3, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Angular Velocity", GetAngularVelocity, SetAngularVelocity, Vector3, Vector3::ZERO, AM_DEFAULT);

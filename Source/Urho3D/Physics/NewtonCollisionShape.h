@@ -44,10 +44,10 @@ namespace Urho3D
         void SetRotationOffset(Quaternion rotation) { rotation_ = rotation; MarkDirty(true); }
 
         /// Get the positional offset of the shape in local space to the node.
-        Vector3 GetPositionOffset() { return position_;}
+        Vector3 GetPositionOffset() const { return position_;}
 
         /// Get the rotational offset of the shape in local space to the node.
-        Quaternion GetRotationOffset() { return rotation_; }
+        Quaternion GetRotationOffset() const { return rotation_; }
 
         /// get local offset matrix.
         Matrix3x4 GetOffsetMatrix()
