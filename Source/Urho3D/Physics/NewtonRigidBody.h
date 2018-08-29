@@ -28,7 +28,7 @@ namespace Urho3D
         /// Register object factory.
         static void RegisterObject(Context* context);
 
-        ///Set a scaler on the mass of the rigid body - (scale is applied after collision shape densities)
+        ///Set a scaler on the mass of the rigid body - (scalar is applied to collision shape densities)
         void SetMassScale(float massDensityScale);
 
         ///Get the mass scale of the rigid body
@@ -37,14 +37,22 @@ namespace Urho3D
         /// get the mass of the rigid body 
         float GetEffectiveMass() { return mass_; }
 
-        /// Set linear velocity.
+        /// Set linear velocity in world cordinates.
         void SetLinearVelocity(const Vector3& velocity);
+
+        /// Set the Angular velocity in world cordinates
+        void SetAngularVelocity(const Vector3& angularVelocity);
+
 
         /// Set linear damping factor (0.0 to 1.0) default is 0
         void SetLinearDamping(float dampingFactor);
 
+        float GetLinearDamping() const { return linearDampening_; }
+
         /// Set Angular Damping factor (0.0 to 1.0) for angle component. default is 0 damping is in world space
         void SetAngularDamping(const Vector3& angularDamping);
+
+        Vector3 GetAngularDamping() const { return angularDampening_; }
 
         /// Set the internal linear damping - this is used internally by the newton solver to bring bodies to sleep more effectively.(0.0 to 1.0) default is zero
         void SetInternalLinearDamping(float damping);
@@ -57,12 +65,14 @@ namespace Urho3D
         void SetInheritNodeScale(bool enable = true);
 
 
-        bool GetInheritNodeScale() {
+        bool GetInheritNodeScale() const {
             return inheritCollisionNodeScales_;
         }
 
         /// Set continuous collision so that the body will not pass through walls.
         void SetContinuousCollision(bool sweptCollision);
+
+        bool GetContinuousCollision() const { return continuousCollision_; }
 
         /// Setting this to true will make the rigid body act as a root scene body with Inifite mass.
         void SetIsSceneRootBody(bool enable);
@@ -103,9 +113,11 @@ namespace Urho3D
         NewtonCollision* GetEffectiveNewtonCollision();
 
 
-        Vector3 GetVelocity();
+        Vector3 GetLinearVelocity(TransformSpace space = TS_WORLD) const;
 
-        Vector3 GetAngularVelocity(TransformSpace space = TS_WORLD);
+
+        Vector3 GetAngularVelocity(TransformSpace space = TS_WORLD) const;
+
 
         Vector3 GetAcceleration();
 
@@ -179,7 +191,6 @@ namespace Urho3D
         float linearDampeningInternal_ = 0.0f;
 
         ///currently connected constraints.
-        //PODVector<NewtonConstraint*> connectedConstraints_;
         HashSet<NewtonConstraint*> connectedConstraints_;
 
 
@@ -216,12 +227,14 @@ namespace Urho3D
         void HandleNodeTransformChange(StringHash event, VariantMap& eventData);
 
 
-        void applyDefferedActions();
+       
 
-        //variable for deferered actions on the newtonbody in case it has not been created yet.
+        //variables for deferered singular actions on the newtonbody in case it has not been created yet.
+        void applyDefferedActions();
         bool nextLinearVelocityNeeded_ = false;
         Vector3 nextLinearVelocity_;
-
+        bool nextAngularVelocityNeeded_ = false;
+        Vector3 nextAngularVelocity_;
 
 
 

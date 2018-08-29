@@ -143,23 +143,23 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
     //SpawnMaterialsTest(Vector3(0,0,30));
-    SpawnBallSocketTest(Vector3(0, 10, 0));
+    ////SpawnBallSocketTest(Vector3(0, 10, 0));
 
-    CreatePyramids(Vector3(0,-5,0));
+    ////CreatePyramids(Vector3(0,-5,0));
 
-    int numVertical = 1;
-    for (int i = 0; i < numVertical; i++)
-        SpawnCompound(Vector3(-2, 1 * i, i + 10));
-    for (int i = 0; i < numVertical; i++)
-        SpawnConvexHull(Vector3(0, 1 * i, i + 10));
+    //int numVertical = 1;
+    //for (int i = 0; i < numVertical; i++)
+    //    SpawnCompound(Vector3(-2, 1 * i, i + 10));
+    //for (int i = 0; i < numVertical; i++)
+    //    SpawnConvexHull(Vector3(0, 1 * i, i + 10));
 
 
-    SpawnLinearJointedObject(Vector3(10,1,10));
-    //
-    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    //SpawnLinearJointedObject(Vector3(10,1,10));
+    ////
+    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
-    ////create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    //////create scale test
+    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
 
 
 
@@ -708,7 +708,7 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     if (bulletBalls.Size()) {
         Node* bulletBall = bulletBalls[0];
 
-        Vector3 vel = bulletBall->GetComponent<NewtonRigidBody>()->GetVelocity();
+        Vector3 vel = bulletBall->GetComponent<NewtonRigidBody>()->GetLinearVelocity();
 
             Vector3 dragForce = -vel.Normalized()*(vel.LengthSquared())*0.005f;
 
@@ -1021,7 +1021,7 @@ void Physics::UpdatePickPull()
 
     Vector3 delta = (pickTarget->GetWorldPosition() - pickSource->GetWorldPosition());
 
-    float forceFactor = delta.Length()*100.0f*rigBody->GetEffectiveMass() - rigBody->GetVelocity().Length()*rigBody->GetEffectiveMass()*0.1f;
+    float forceFactor = delta.Length()*100.0f*rigBody->GetEffectiveMass() - rigBody->GetLinearVelocity().Length()*rigBody->GetEffectiveMass()*0.1f;
     float cuttoff = 10.0f;
 
 
