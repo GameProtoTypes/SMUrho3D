@@ -152,7 +152,7 @@ private:
 	HiresTimer renderGoalTimer_;
 
 	float renderTimeGoalUs_{ 5000.0f };  //200 Hz   
-    float updateTimeGoalUs_{ 16666.0f}; //60 Hz
+    float updateTimeGoalUs_{ 16666.0f*0.25f}; //60 Hz
 
     float lastRenderTimeUs_{ 0 };
     float lastUpdateTimeUs_{ 0 };

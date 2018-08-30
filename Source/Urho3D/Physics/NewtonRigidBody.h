@@ -74,6 +74,11 @@ namespace Urho3D
 
         bool GetContinuousCollision() const { return continuousCollision_; }
 
+        void SetAutoSleep(bool enableAutoSleep);
+
+        bool GetAutoSleep() const { return autoSleep_; }
+
+
         /// Setting this to true will make the rigid body act as a root scene body with Inifite mass.
         void SetIsSceneRootBody(bool enable);
 
@@ -201,6 +206,9 @@ namespace Urho3D
         float mass_ = 0.0f;
         ///mass scale
         float massScale_ = 1.0f;
+
+        bool autoSleep_ = true;
+
 
         ///dirty flag
         bool needsRebuilt_ = true;

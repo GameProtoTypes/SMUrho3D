@@ -133,6 +133,19 @@ namespace Urho3D {
     }
 
 
+    void NewtonRigidBody::SetAutoSleep(bool enableAutoSleep)
+    {
+        if (autoSleep_ != enableAutoSleep)
+        {
+            autoSleep_ = enableAutoSleep;
+            if (newtonBody_)
+            {
+                NewtonBodySetAutoSleep(newtonBody_, autoSleep_);
+                NewtonBodySetSleepState(newtonBody_, !autoSleep_);
+            }
+        }
+    }
+
     void NewtonRigidBody::SetIsSceneRootBody(bool enable)
     {
         if (sceneRootBodyMode_ != enable) {
@@ -286,7 +299,8 @@ namespace Urho3D {
 
                     NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
                 }
-                accumMass += colComp->GetVolume()*1.0f;
+                float vol = NewtonConvexCollisionCalculateVolume(usedCollision);
+                accumMass += vol*1.0f;
 
                 if (compoundNeeded) {
 
@@ -336,6 +350,9 @@ namespace Urho3D {
             NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
             NewtonBodySetAngularDamping(newtonBody_, &UrhoToNewton(angularDampeningInternal_)[0]);
 
+            //set sleep state.
+            NewtonBodySetAutoSleep(newtonBody_, autoSleep_);
+            NewtonBodySetSleepState(newtonBody_, !autoSleep_);
 
 
             //assign callbacks

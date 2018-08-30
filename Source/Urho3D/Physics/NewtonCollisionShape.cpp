@@ -68,9 +68,6 @@ namespace Urho3D {
 
             //apply material
             applyMaterial();
-
-            //compute volume.
-            updateVolume();
     }
 
     void NewtonCollisionShape::buildNewtonCollision()
@@ -122,24 +119,7 @@ namespace Urho3D {
         MarkRigidBodyDirty();
     }
 
-    float NewtonCollisionShape::updateVolume()
-{
-        float vol = 0.0f;
-        if (newtonCollision_)
-            vol = NewtonConvexCollisionCalculateVolume(newtonCollision_);
 
-        if (vol <= 0.0f) {
-            volume_ = 0.0f;
-            return 0.0f;
-        }
-        else
-        {
-            volume_ = vol;
-            return vol;
-        }
-    }
-
- 
     void NewtonCollisionShape::MarkRigidBodyDirty()
     {
         PODVector<NewtonRigidBody*> rootRigidBodies;

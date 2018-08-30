@@ -28,7 +28,7 @@ Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, f
         return sphere1;
 }
 
-Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition, float radius)
+Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition, float radius, float height)
 {
     Node* sphere1 = parentNode->CreateChild("SamplePhysicsCylinder");
 
@@ -49,8 +49,8 @@ Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition,
 
     s1RigBody->SetMassScale(1.0f);
 
-    sphere1->SetRotation(Quaternion(0, 0, 45));
-    sphere1->SetScale(radius);
+
+    sphere1->SetScale(Vector3(radius, height, radius));
 
     return sphere1;
 }

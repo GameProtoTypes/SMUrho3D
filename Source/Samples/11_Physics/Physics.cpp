@@ -135,7 +135,7 @@ void Physics::CreateScene()
 
 
 
-    CreateScenery(Vector3(0,-20,0));
+    CreateScenery(Vector3(0,0,0));
 
 
 
@@ -160,7 +160,7 @@ void Physics::CreateScene()
 
     //////create scale test
     //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
-
+    CreateTowerOfLiar(Vector3(0, 0, 0));
 
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
@@ -170,7 +170,7 @@ void Physics::CreateScene()
     camera->SetFarClip(500.0f);
 
     // Set an initial position for the camera scene node above the floor
-    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0));
+    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, -15.0));
 }
 void Physics::CreateInstructions()
 {
@@ -265,7 +265,19 @@ void Physics::MoveCamera(float timeStep)
 
     if (input->GetKeyPress(KEY_R)) {
 
-        int rando = Random(6);
+        //print stuff about the rigid body
+        RayQueryResult res = GetCameraPickNode();
+        if (res.node_)
+        {
+            NewtonRigidBody* rigBody = res.node_->GetComponent<NewtonRigidBody>();
+            if (rigBody)
+            {
+                float mass = rigBody->GetEffectiveMass();
+                URHO3D_LOGINFO("mass: " + String(mass));
+
+            }
+
+        }
     }
 
     if (input->GetKeyPress(KEY_TAB))
@@ -451,6 +463,39 @@ void Physics::CreatePyramids(Vector3 position)
             }
         }
 }
+
+
+void Physics::CreateTowerOfLiar(Vector3 position)
+{
+    float length = 1.0f;
+    float width = 1.0f;
+    int numBoxes = 32;
+
+    float thickness = 10.0f / (float(numBoxes));
+    float fudgeFactor = 0.0001f;
+    Vector3 curPosition = position + Vector3(0,thickness*0.5f,0);
+    for (int i = 0; i < numBoxes; i++) {
+
+
+        Node* box = SpawnSamplePhysicsBox(scene_, curPosition, Vector3(length, thickness, width));
+        box->GetComponent<NewtonRigidBody>()->SetAutoSleep(false);
+
+        float delta = length / (2.0f*(numBoxes - i));
+        
+        curPosition = curPosition + Vector3(delta - delta*fudgeFactor, thickness, 0);
+    }
+
+    Node* box = SpawnSamplePhysicsBox(scene_, curPosition, Vector3(length, thickness, width));
+    box->GetComponent<NewtonRigidBody>()->SetAutoSleep(false);
+
+
+    URHO3D_LOGINFO(String(box->GetComponent<NewtonRigidBody>()->GetEffectiveMass()));
+
+
+
+
+}
+
 
 
 
@@ -845,23 +890,23 @@ void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
     // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
-   // Node* floorNode = scene_->CreateChild("Floor");
-   // floorNode->SetPosition(worldPosition);
-   // floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
-   // auto* floorObject = floorNode->CreateComponent<StaticModel>();
-   // floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-   // floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    Node* floorNode = scene_->CreateChild("Floor");
+    floorNode->SetPosition(worldPosition - Vector3(0,0.5f,0));
+    floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+    auto* floorObject = floorNode->CreateComponent<StaticModel>();
+    floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-   // // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
-   // // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
-   // // in the physics simulation
-   // //NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
-   // //body->SetMassScale(0.0f);
-   // auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-   // //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-   //// shape->SetPositionOffset(Vector3(1, 0, 0));
-   // // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
-   // // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
+    // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
+    // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
+    // in the physics simulation
+    NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
+    body->SetMassScale(0.0f);
+    auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+    //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
+   // shape->SetPositionOffset(Vector3(1, 0, 0));
+    // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
+    // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
 
 
@@ -891,7 +936,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     float range = 200;
     float objectScale = 10;
 
-    for (int i = 0; i < 200; i++)
+    for (int i = 0; i < 0; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* stMdl = scenePart->CreateComponent<StaticModel>();

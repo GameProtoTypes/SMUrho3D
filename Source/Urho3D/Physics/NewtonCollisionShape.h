@@ -55,10 +55,6 @@ namespace Urho3D
             return Matrix3x4(position_, rotation_, 1.0f);
         }
 
-
-        /// Returns the volume of the collision shape (convex only);
-        float GetVolume() { return volume_; }
-
         /// Mark the shape as dirty causing it to be rebuilt by the physics world.
         void MarkDirty(bool dirty = true);
         /// Get the current dirty status.
@@ -90,9 +86,6 @@ namespace Urho3D
         ///optional scene collision node for use if the collision is part of the scene collision of the newton world.
         void* newtonSceneCollisionNode = nullptr;
 
-
-        /// volume
-        float volume_ = 0.0f;
         /// shape dirty flag
         bool shapeNeedsRebuilt_ = true;
 
@@ -119,8 +112,7 @@ namespace Urho3D
         /// Frees the internal collision shape and mesh;
         void freeInternalCollision();
         void applyMaterial();
-        /// Calculates the effective mass based off density and size. (could be expensive)
-        float updateVolume();
+
 
         void MarkRigidBodyDirty();
 

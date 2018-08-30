@@ -80,6 +80,7 @@ private:
     void CreatePyramids(Vector3 position);
 
 
+    void CreateTowerOfLiar(Vector3 position);
     /// Construct an instruction text to the UI.
     void CreateInstructions();
     /// Set up a viewport for displaying the scene.
