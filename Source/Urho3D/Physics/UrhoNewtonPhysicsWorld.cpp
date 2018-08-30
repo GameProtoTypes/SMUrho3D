@@ -42,7 +42,6 @@ namespace Urho3D {
 
     UrhoNewtonPhysicsWorld::~UrhoNewtonPhysicsWorld()
     {
-        freeWorld();
     }
 
     void UrhoNewtonPhysicsWorld::RegisterObject(Context* context)
@@ -275,28 +274,20 @@ namespace Urho3D {
     void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
         URHO3D_PROFILE_FUNCTION();
+        float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 
-           
-        //rebuild collision shapes from child nodes to root nodes.
-        rebuildDirtyPhysicsComponents();
+        //send prestep physics event
+        VariantMap sendEventData;
+        sendEventData[PhysicsPreStep::P_WORLD] = this;
+        sendEventData[PhysicsPreStep::P_TIMESTEP] = timeStep;
         {
-            URHO3D_PROFILE("NewtonUpdate");
-            //use target time step to give newton constant time steps. 
-            float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
-
-            //send prestep physics event
-            VariantMap eventData;
-            eventData[PhysicsPreStep::P_WORLD] = this;
-            eventData[PhysicsPreStep::P_TIMESTEP] = timeStep;
-            SendEvent(E_PHYSICSPRESTEP, eventData);
-
-
-            NewtonUpdate(newtonWorld_, timeStep);
+            URHO3D_PROFILE("Wait For ASync Update To finish.");
             NewtonWaitForUpdateToFinish(newtonWorld_);
-
-            //send post physics event.
-            SendEvent(E_PHYSICSPOSTSTEP, eventData);
         }
+
+        //send post physics event.
+        SendEvent(E_PHYSICSPOSTSTEP, sendEventData);
+
 
         {
             URHO3D_PROFILE("Apply Node Transforms");
@@ -309,6 +300,21 @@ namespace Urho3D {
                 }
             }
         }
+
+
+        //rebuild collision shapes from child nodes to root nodes.
+        rebuildDirtyPhysicsComponents();
+
+        {
+            URHO3D_PROFILE("NewtonUpdate");
+            //use target time step to give newton constant time steps. 
+
+            SendEvent(E_PHYSICSPRESTEP, sendEventData);
+            NewtonUpdateAsync(newtonWorld_, timeStep);
+
+        }
+
+
 
     }
 
