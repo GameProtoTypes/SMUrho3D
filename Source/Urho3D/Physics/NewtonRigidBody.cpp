@@ -300,7 +300,7 @@ namespace Urho3D {
                     NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
                 }
                 float vol = NewtonConvexCollisionCalculateVolume(usedCollision);
-                accumMass += vol*1.0f;
+                accumMass += vol*1.0f;//#todo 1.0f should be mass density of material assigned to collision shape.
 
                 if (compoundNeeded) {
 

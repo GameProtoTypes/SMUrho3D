@@ -467,29 +467,24 @@ void Physics::CreatePyramids(Vector3 position)
 
 void Physics::CreateTowerOfLiar(Vector3 position)
 {
-    float length = 1.0f;
-    float width = 1.0f;
-    int numBoxes = 32;
+    float length = 100.0f;
+    float width = 20.0f;
+    int numBoxes = 16;
 
-    float thickness = 10.0f / (float(numBoxes));
-    float fudgeFactor = 0.0001f;
-    Vector3 curPosition = position + Vector3(0,thickness*0.5f,0);
+    float thickness = 100.0f / (float(numBoxes));
+    float fudgeFactor = 0.01f;
+    Vector3 curPosition = position - Vector3(0,thickness*0.5f,0);
     for (int i = 0; i < numBoxes; i++) {
+        float delta = length / (2.0f*(numBoxes - i));
 
+
+        curPosition = curPosition + Vector3(delta - delta*fudgeFactor, thickness, 0);
 
         Node* box = SpawnSamplePhysicsBox(scene_, curPosition, Vector3(length, thickness, width));
-        box->GetComponent<NewtonRigidBody>()->SetAutoSleep(false);
+        //box->GetComponent<NewtonRigidBody>()->SetAutoSleep(false);
 
-        float delta = length / (2.0f*(numBoxes - i));
-        
-        curPosition = curPosition + Vector3(delta - delta*fudgeFactor, thickness, 0);
+  
     }
-
-    Node* box = SpawnSamplePhysicsBox(scene_, curPosition, Vector3(length, thickness, width));
-    box->GetComponent<NewtonRigidBody>()->SetAutoSleep(false);
-
-
-    URHO3D_LOGINFO(String(box->GetComponent<NewtonRigidBody>()->GetEffectiveMass()));
 
 
 
