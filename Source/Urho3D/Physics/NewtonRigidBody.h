@@ -113,9 +113,9 @@ namespace Urho3D
         Vector3 GetNetTorque();
 
         ///Get the currently used newton body.
-        NewtonBody* GetNewtonBody() { return newtonBody_; }
+        NewtonBody* GetNewtonBody() const { return newtonBody_; }
         /// Return the currently used newton collision
-        NewtonCollision* GetEffectiveNewtonCollision();
+        NewtonCollision* GetEffectiveNewtonCollision() const;
 
 
         Vector3 GetLinearVelocity(TransformSpace space = TS_WORLD) const;

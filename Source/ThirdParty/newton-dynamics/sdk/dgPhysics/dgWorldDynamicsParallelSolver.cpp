@@ -38,12 +38,8 @@ void dgWorldDynamicUpdate::CalculateReactionForcesParallel(const dgBodyCluster* 
 	dgWorld* const world = (dgWorld*) this;
 
 	dgBodyCluster cluster(MergeClusters(clusterArray, clustersCount));
-
-	dgBodyInfo* const bodyPtr = (dgBodyInfo*)&world->m_bodiesMemory[0];
-	dgJointInfo* const constraintArray = &world->m_jointsMemory[0];
-
-	dgBodyInfo* const bodyArray = &bodyPtr[m_bodies];
-	dgJointInfo* const jointArray = &constraintArray[m_joints];
+	dgBodyInfo* const bodyArray = &world->m_bodiesMemory[m_bodies];
+	dgJointInfo* const jointArray = &world->m_jointsMemory[m_joints];
 
 	if (world->m_currentPlugin) {
 		dgWorldPlugin* const plugin = world->m_currentPlugin->GetInfo().m_plugin;
@@ -74,7 +70,7 @@ dgBodyCluster dgWorldDynamicUpdate::MergeClusters(const dgBodyCluster* const clu
 	world->m_bodiesMemory.ResizeIfNecessary((m_bodies + bodyCount + 1) * sizeof(dgBodyInfo));
 	world->m_jointsMemory.ResizeIfNecessary(m_joints + jointsCount + 32);
 
-	dgBodyInfo* const bodyPtr = (dgBodyInfo*)&world->m_bodiesMemory[0];
+	dgBodyInfo* const bodyPtr = &world->m_bodiesMemory[0];
 	dgJointInfo* const constraintPtr = &world->m_jointsMemory[0];
 
 	dgBodyInfo* const bodyArray = &bodyPtr[m_bodies];
@@ -88,7 +84,7 @@ dgBodyCluster dgWorldDynamicUpdate::MergeClusters(const dgBodyCluster* const clu
 	dgInt32 jointIndex = 0;
 	for (dgInt32 i = 0; i < clustersCount; i++) {
 		const dgBodyCluster* const srcCluster = &clusterArray[i];
-		rowsCount += srcCluster->m_rowsCount;
+		rowsCount += srcCluster->m_rowCount;
 
 		dgBodyInfo* const srcBodyArray = &bodyPtr[srcCluster->m_bodyStart];
 		const dgInt32 count = srcCluster->m_bodyCount;
@@ -121,9 +117,9 @@ dgBodyCluster dgWorldDynamicUpdate::MergeClusters(const dgBodyCluster* const clu
 	cluster.m_jointStart = 0;
 	cluster.m_bodyCount = bodyIndex;
 	cluster.m_jointCount = jointsCount;
-	cluster.m_rowsCount = rowsCount;
+	cluster.m_rowCount = rowsCount;
 
-	cluster.m_rowsStart = 0;
+	cluster.m_rowStart = 0;
 	cluster.m_isContinueCollision = 0;
 	cluster.m_hasSoftBodies = 0;
 

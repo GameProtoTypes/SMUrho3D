@@ -37,7 +37,7 @@ namespace Urho3D {
 
     ///shape conversion
 
-    ///return a newton collision from an urho shape - optionally include the translation of the shape in the collision.
+    ///return a newton collision from an urho shape - optionally include the translation of the shape in the collision. Remember to NewtonDestroy the NewtonCollision when you are done with it!
     NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const Sphere& sphere, bool includeTranslation = true);
     NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const BoundingBox& box, bool includeTranslation = true);
 

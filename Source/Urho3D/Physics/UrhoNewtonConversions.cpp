@@ -73,8 +73,8 @@ namespace Urho3D {
 
 
 
-
-    NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const Sphere& sphere, bool includeTranslation /*= true*/)
+    
+    NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const Sphere& sphere, bool includePosition /*= true*/)
     {
         Matrix3x4 mat;
         mat.SetTranslation(sphere.center_);
@@ -82,7 +82,7 @@ namespace Urho3D {
 
         NewtonCollision* newtonShape;
 
-        if (includeTranslation) {
+        if (includePosition) {
             newtonShape = NewtonCreateSphere(newtonWorld, sphere.radius_, 0, &dMat[0][0]);
         }
         else
@@ -96,7 +96,7 @@ namespace Urho3D {
 
 
 
-    NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const BoundingBox& box, bool includeTranslation /*= true*/)
+    NewtonCollision* UrhoShapeToNewtonCollision(const NewtonWorld* newtonWorld, const BoundingBox& box, bool includePosition /*= true*/)
     {
         Matrix3x4 mat;
         mat.SetTranslation(box.Center());
@@ -104,7 +104,7 @@ namespace Urho3D {
 
         NewtonCollision* newtonShape;
 
-        if (includeTranslation) {
+        if (includePosition) {
             newtonShape = NewtonCreateBox(newtonWorld, box.Size().x_, box.Size().y_, box.Size().z_, 0, &dMat[0][0]);
         }
         else
@@ -114,6 +114,12 @@ namespace Urho3D {
 
         return newtonShape;
     }
+
+
+
+
+
+
 
     void PrintNewton(dMatrix mat)
     {

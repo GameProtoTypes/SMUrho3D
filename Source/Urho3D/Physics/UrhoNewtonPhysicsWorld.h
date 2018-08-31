@@ -23,7 +23,6 @@ namespace Urho3D
     static const String DEF_PHYSICS_CATEGORY = "Physics";
 
 
-
     class URHO3D_API UrhoNewtonPhysicsWorld : public Component
     {
         URHO3D_OBJECT(UrhoNewtonPhysicsWorld, Component);
@@ -54,6 +53,10 @@ namespace Urho3D
         String GetSolverPluginName();
 
 
+
+
+
+
         /// Return rigid bodies by a sphere query.
         void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const Sphere& sphere, unsigned collisionMask = M_MAX_UNSIGNED);
         /// Return rigid bodies by a box query.
@@ -61,14 +64,30 @@ namespace Urho3D
         /// Return rigid bodies by contact test with the specified body.
         void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const NewtonRigidBody* body);
 
+
+
+
+
+
+
+
         
         ///set the global force acting on all rigid bodies in the world
         void SetGravity(const Vector3& force);
         ///return global force acting on all rigid bodies
         Vector3 GetGravity();
-        /// set how many iterations newton will run in total per update.
-        void SetTotalIterations(int numIterations = 8);
+        /// set how many iterations newton will run.
+        void SetIterationCount(int numIterations);
 
+        int GetIterationCount() const;
+        /// set how many substeps newton will run per iteration (slightly different effect that changing Iteration Count)
+        void SetSubstepCount(int numSubsteps);
+
+        int GetSubstepCount() const;
+        /// set how many threads the newton can use.
+        void SetThreadCount(int numThreads);
+
+        int GetThreadCount() const;
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
@@ -78,10 +97,12 @@ namespace Urho3D
         ///Global force
         Vector3 gravity_ = DEF_GRAVITY;
 
-        /// number of thread to allow newton to use (#todo draw from thread pool)
+        /// number of thread to allow newton to use
         int newtonThreadCount_ = 4;
         /// number of iterations newton will internally use.
-        int totalIterationCount_ = 128;
+        int iterationCount_ = 2;
+        /// number of substeps per iteration.
+        int numSubsteps_ = 16;
 
 
         virtual void OnSceneSet(Scene* scene) override;

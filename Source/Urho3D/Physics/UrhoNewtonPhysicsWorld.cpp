@@ -93,9 +93,15 @@ namespace Urho3D {
 
     }
 
+
     void UrhoNewtonPhysicsWorld::GetRigidBodies(PODVector<NewtonRigidBody*>& result, const NewtonRigidBody* body)
     {
+        dMatrix mat;
+        NewtonBodyGetMatrix(body->GetNewtonBody(), &mat[0][0]);
+        NewtonCollision* newtonShape = body->GetEffectiveNewtonCollision();
+        int numContacts = DoNewtonCollideTest(&mat[0][0], newtonShape);
 
+        GetBodiesInConvexCast(result, numContacts);
     }
 
 
@@ -111,12 +117,39 @@ namespace Urho3D {
         return gravity_;
     }
 
-    void UrhoNewtonPhysicsWorld::SetTotalIterations(int numIterations /*= 8*/)
+    void UrhoNewtonPhysicsWorld::SetIterationCount(int numIterations /*= 8*/)
     {
-        totalIterationCount_ = numIterations;
+        iterationCount_ = numIterations;
         applyNewtonWorldSettings();
     }
 
+
+    int UrhoNewtonPhysicsWorld::GetIterationCount() const
+    {
+        return iterationCount_;
+    }
+
+    void UrhoNewtonPhysicsWorld::SetSubstepCount(int numSubsteps)
+    {
+        numSubsteps_ = numSubsteps;
+        applyNewtonWorldSettings();
+    }
+
+    int UrhoNewtonPhysicsWorld::GetSubstepCount() const
+    {
+        return numSubsteps_;
+    }
+
+    void UrhoNewtonPhysicsWorld::SetThreadCount(int numThreads)
+    {
+        newtonThreadCount_ = numThreads;
+        applyNewtonWorldSettings();
+    }
+
+    int UrhoNewtonPhysicsWorld::GetThreadCount() const
+    {
+        return newtonThreadCount_;
+    }
 
     void UrhoNewtonPhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
@@ -266,7 +299,8 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::applyNewtonWorldSettings()
     {
-        NewtonSetSolverModel(newtonWorld_, totalIterationCount_);
+        NewtonSetSolverModel(newtonWorld_, iterationCount_);
+        NewtonSetNumberOfSubsteps(newtonWorld_, numSubsteps_);
         NewtonSetThreadsCount(newtonWorld_, newtonThreadCount_);
         NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
     }

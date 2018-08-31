@@ -31,13 +31,13 @@
 #include "dgCollisionScene.h"
 #include "dgCollisionSphere.h"
 #include "dgInverseDynamics.h"
+#include "dgBroadPhaseMixed.h"
 #include "dgCollisionCapsule.h"
-#include "dgBroadPhaseDefault.h"
 #include "dgCollisionInstance.h"
 #include "dgCollisionCompound.h"
 #include "dgWorldDynamicUpdate.h"
 #include "dgCollisionConvexHull.h"
-#include "dgBroadPhasePersistent.h"
+#include "dgBroadPhaseSegregated.h"
 #include "dgCollisionChamferCylinder.h"
 
 #include "dgUserConstraint.h"
@@ -228,10 +228,10 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,m_perInstanceData(allocator)
 	,m_bodiesMemory (allocator, 64)
 	,m_jointsMemory (allocator, 64)
+	,m_clusterMemory (allocator, 64)
 	,m_solverJacobiansMemory (allocator, 64)
 	,m_solverRightHandSideMemory (allocator, 64)
 	,m_solverForceAccumulatorMemory (allocator, 64)
-	,m_clusterMemory (allocator, 64)
 	,m_concurrentUpdate(false)
 {
 	//TestAStart();
@@ -241,9 +241,9 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	SetParentThread (myThread);
 
 	// avoid small memory fragmentations on initialization
-	m_bodiesMemory.Resize(1024 * 32);
+	m_bodiesMemory.Resize(1024);
+	m_clusterMemory.Resize(1024);
 	m_jointsMemory.Resize(1024 * 2);
-	m_clusterMemory.Resize(1024 * 32);
 	m_solverJacobiansMemory.Resize(1024 * 64);
 	m_solverRightHandSideMemory.Resize(1024 * 64);
 	m_solverForceAccumulatorMemory.Resize(1024 * 32);
@@ -313,8 +313,8 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 
 	SetThreadsCount (0);
 
-	m_broadPhase = new (allocator) dgBroadPhaseDefault(this);
-	//m_broadPhase = new (allocator) dgBroadPhasePersistent(this);
+	m_broadPhase = new (allocator) dgBroadPhaseMixed(this);
+	//m_broadPhase = new (allocator) dgBroadPhaseSegregated (this);
 
 	//m_pointCollision = new (m_allocator) dgCollisionPoint(m_allocator);
 	dgCollision* const pointCollison = new (m_allocator) dgCollisionPoint(m_allocator);
@@ -894,8 +894,6 @@ void dgWorld::FlushCache()
 }
 
 
-
-
 void dgWorld::StepDynamics (dgFloat32 timestep)
 {
 	//SerializeToFile ("xxx.bin");
@@ -1069,13 +1067,13 @@ void dgWorld::SetBroadPhaseType(dgInt32 type)
 		
 		switch (type)
 		{
-			case m_persistentBroadphase:
-				newBroadPhase = new (m_allocator) dgBroadPhasePersistent(this);
+			case m_broadphaseSegregated:
+				newBroadPhase = new (m_allocator) dgBroadPhaseSegregated (this);
 				break;
 
-			case m_defaultBroadphase:
+			case m_broadphaseMixed:
 			default:
-				newBroadPhase = new (m_allocator) dgBroadPhaseDefault(this);
+				newBroadPhase = new (m_allocator) dgBroadPhaseMixed(this);
 				break;
 		}
 
@@ -1091,13 +1089,13 @@ void dgWorld::ResetBroadPhase()
 
 	switch (GetBroadPhaseType())
 	{
-		case m_persistentBroadphase:
-			newBroadPhase = new (m_allocator) dgBroadPhasePersistent(this);
+		case m_broadphaseSegregated:
+			newBroadPhase = new (m_allocator) dgBroadPhaseSegregated (this);
 			break;
 
-		case m_defaultBroadphase:
+		case m_broadphaseMixed:
 		default:
-			newBroadPhase = new (m_allocator) dgBroadPhaseDefault(this);
+			newBroadPhase = new (m_allocator) dgBroadPhaseMixed(this);
 			break;
 	}
 

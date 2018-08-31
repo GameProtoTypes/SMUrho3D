@@ -26,13 +26,13 @@
 #include "dgBroadPhase.h"
 
 
-class dgBroadPhasePersistent: public dgBroadPhase
+class dgBroadPhaseSegregated : public dgBroadPhase
 {
 	public:
 	DG_CLASS_ALLOCATOR(allocator);
 
-	dgBroadPhasePersistent(dgWorld* const world);
-	virtual ~dgBroadPhasePersistent();
+	dgBroadPhaseSegregated (dgWorld* const world);
+	virtual ~dgBroadPhaseSegregated ();
 
 	protected:
 	virtual dgInt32 GetType() const;
@@ -55,6 +55,8 @@ class dgBroadPhasePersistent: public dgBroadPhase
 	virtual dgInt32 ConvexCast(dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, dgFloat32* const param, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const;
 
 	void RemoveNode(dgBroadPhaseNode* const node);
+
+	bool SanitySleeping(dgBroadPhaseNode* const root) const;
 
 	dgFloat64 m_staticEntropy;
 	dgFloat64 m_dynamicsEntropy;

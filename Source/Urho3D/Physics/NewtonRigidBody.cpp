@@ -548,7 +548,7 @@ namespace Urho3D {
         return netTorque_;
     }
 
-    NewtonCollision* NewtonRigidBody::GetEffectiveNewtonCollision()
+    NewtonCollision* NewtonRigidBody::GetEffectiveNewtonCollision() const
     {
         if (compoundCollision_)
             return compoundCollision_;

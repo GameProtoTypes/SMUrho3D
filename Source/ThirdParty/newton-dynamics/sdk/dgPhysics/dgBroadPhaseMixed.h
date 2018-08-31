@@ -26,13 +26,13 @@
 #include "dgBroadPhase.h"
 
 
-class dgBroadPhaseDefault: public dgBroadPhase
+class dgBroadPhaseMixed: public dgBroadPhase
 {
 	public:
 	DG_CLASS_ALLOCATOR(allocator);
 
-	dgBroadPhaseDefault(dgWorld* const world);
-	virtual ~dgBroadPhaseDefault();
+	dgBroadPhaseMixed(dgWorld* const world);
+	virtual ~dgBroadPhaseMixed();
 
 	protected:
 	virtual dgInt32 GetType() const;

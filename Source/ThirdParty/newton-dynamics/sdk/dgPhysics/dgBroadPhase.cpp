@@ -692,13 +692,17 @@ void dgBroadPhase::UpdateBody(dgBody* const body, dgInt32 threadIndex)
 		dgBroadPhaseBodyNode* const node = body->GetBroadPhase();
 		dgBody* const body1 = node->GetBody();
 		dgAssert(body1 == body);
-
+		dgAssert(!body1->m_equilibrium);
 		dgAssert(!node->GetLeft());
 		dgAssert(!node->GetRight());
 		dgAssert(!body1->GetCollision()->IsType(dgCollision::dgCollisionNull_RTTI));
 
 		const dgBroadPhaseNode* const root = (m_rootNode->GetLeft() && m_rootNode->GetRight()) ? NULL : m_rootNode;
 		
+		for (dgBroadPhaseNode* parent = node; parent && parent->m_isSleeping; parent = parent->m_parent) {
+			parent->m_isSleeping = 0;
+		}
+
 		if (body1->GetBroadPhaseAggregate()) {
 			dgBroadPhaseAggregate* const aggregate = body1->GetBroadPhaseAggregate();
 			dgScopeSpinPause lock(&aggregate->m_criticalSectionLock);
@@ -860,6 +864,7 @@ void dgBroadPhase::ImproveFitness(dgFitnessList& fitness, dgFloat64& oldEntropy,
 				dgAssert(!(*root)->m_parent);
 				//entropy = CalculateEntropy(fitness, root);
 				entropy = fitness.TotalCost();
+				fitness.m_prevCost = entropy;
 			}
 			oldEntropy = entropy;
 		}
@@ -1278,11 +1283,15 @@ void dgBroadPhase::SubmitPairs(dgBroadPhaseNode* const leafNode, dgBroadPhaseNod
 	const dgVector boxP0 (body0 ? body0->m_minAABB : leafNode->m_minBox);
 	const dgVector boxP1 (body0 ? body0->m_maxAABB : leafNode->m_maxBox);
 
+	const dgInt32 isSleeping = leafNode->m_isSleeping;
+
 	const bool test0 = body0 ? (body0->GetInvMass().m_w != dgFloat32(0.0f)) : true;
 	while (stack) {
 		stack--;
 		dgBroadPhaseNode* const rootNode = pool[stack];
-		if (dgOverlapTest(rootNode->m_minBox, rootNode->m_maxBox, boxP0, boxP1)) {
+		const dgInt32 isActive = !(isSleeping & rootNode->m_isSleeping);
+		//const dgInt32 isActive = 1;
+		if (isActive && dgOverlapTest(rootNode->m_minBox, rootNode->m_maxBox, boxP0, boxP1)) {
 			if (rootNode->IsLeafNode()) {
 				dgAssert(!rootNode->GetRight());
 				dgAssert(!rootNode->GetLeft());
@@ -1311,6 +1320,7 @@ void dgBroadPhase::SubmitPairs(dgBroadPhaseNode* const leafNode, dgBroadPhaseNod
 				dgBroadPhaseTreeNode* const tmpNode = (dgBroadPhaseTreeNode*) rootNode;
 				dgAssert (tmpNode->m_left);
 				dgAssert (tmpNode->m_right);
+				tmpNode->m_isSleeping = tmpNode->m_left->m_isSleeping | tmpNode->m_right->m_isSleeping;
 
 				pool[stack] = tmpNode->m_left;
 				stack++;
@@ -1379,13 +1389,12 @@ dgFloat64 dgBroadPhase::CalculateEntropy (dgFitnessList& fitness, dgBroadPhaseNo
 				node = node ? node->GetNext() : NULL;
 			}
 		} while (node);
-		
-		fitness.m_index++;
-		if (fitness.m_index >= mod) {
-			fitness.m_index = 0;
+	
+		if (!fitness.m_index) {
 			cost = fitness.TotalCost();
 			fitness.m_prevCost = cost;
 		}
+		fitness.m_index = (fitness.m_index + 1) % mod;
 	}
 	return cost;
 #endif
@@ -1690,6 +1699,8 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	}
 	m_world->SynchronizationBarrier();
 
+	UpdateFitness();
+
 	dgContactList::dgListNode* contactListNode = contactList->GetFirst();
 	for (dgInt32 i = 0; i < threadsCount; i++) {
 		m_world->QueueJob(UpdateRigidBodyContactKernel, &syncPoints, contactListNode, "dgBroadPhase::UpdateRigidBodyContact");
@@ -1747,7 +1758,4 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 
 	AttachNewContacts(lastNode);
 	RemoveOldContacts();
-
-	UpdateFitness();
 }
-

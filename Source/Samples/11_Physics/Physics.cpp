@@ -160,7 +160,7 @@ void Physics::CreateScene()
 
     //////create scale test
     //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
-    CreateTowerOfLiar(Vector3(0, 0, 0));
+    //CreateTowerOfLiar(Vector3(0, 0, 0));
 
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
