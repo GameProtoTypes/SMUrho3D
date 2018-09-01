@@ -160,7 +160,7 @@ void Physics::CreateScene()
 
     //////create scale test
     //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
-    //CreateTowerOfLiar(Vector3(0, 0, 0));
+    CreateTowerOfLiar(Vector3(0, 0, 0));
 
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
@@ -688,7 +688,7 @@ void Physics::FireSmallBall()
 
 
         node->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 10.0f);
-        node->GetComponent<NewtonRigidBody>()->SetContinuousCollision(true);
+        node->GetComponent<NewtonRigidBody>()->SetContinuousCollision(false);
         node->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.01f);
         node->GetComponent<NewtonRigidBody>()->SetMassScale(Random(1.0f, 10.0f));
     }
