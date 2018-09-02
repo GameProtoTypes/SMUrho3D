@@ -34,6 +34,9 @@ namespace Urho3D {
         if (!ownBody_)
             return;
 
+        if (!ownBody_->GetNewtonBody())
+            return;
+
         debug->AddLine(ownBody_->GetCenterOfMassPosition(), currentTargetPos_, Color::GRAY, false);
     }
 

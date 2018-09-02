@@ -92,9 +92,10 @@ namespace Urho3D {
             MarkDirty(false);
             return;
         }
-
-        buildConstraint();
-        NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
+        if (ownBody_->GetNewtonBody()) {
+            buildConstraint();
+            NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
+        }
         MarkDirty(false);
         
     }

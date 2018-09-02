@@ -145,7 +145,7 @@ void Physics::CreateScene()
     //SpawnMaterialsTest(Vector3(0,0,30));
     ////SpawnBallSocketTest(Vector3(0, 10, 0));
 
-    ////CreatePyramids(Vector3(0,-5,0));
+    CreatePyramids(Vector3(0,0,0));
 
     //int numVertical = 1;
     //for (int i = 0; i < numVertical; i++)
@@ -159,8 +159,8 @@ void Physics::CreateScene()
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //////create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
-    CreateTowerOfLiar(Vector3(0, 0, 0));
+    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    CreateTowerOfLiar(Vector3(0, 0, 20));
 
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
@@ -374,8 +374,8 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         curNode->AddTag("scaleTestCube");
         float rotDelta = 0;// Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
-        //curNode->SetScale(Random(0.8f,1.2f)); this will make things crash.
-        curNode->Translate(Vector3(0, 1.5f, 0));
+        curNode->SetWorldScale(Vector3(Random(0.5f,1.5f), Random(0.5f, 1.5f), Random(0.5f, 1.5f)));// this will make things crash.
+        curNode->Translate(Vector3(0, Random(0.5f,2.0f), 0));
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cone.mdl"));
@@ -384,7 +384,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         //if (i == 0) {
             NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
             rigBody->SetMassScale(1.0f);
-       // }
+        //}
         NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Cone>();
         colShape->SetRotationOffset(Quaternion(0, 0, 90));
 
@@ -467,11 +467,11 @@ void Physics::CreatePyramids(Vector3 position)
 
 void Physics::CreateTowerOfLiar(Vector3 position)
 {
-    float length = 100.0f;
-    float width = 20.0f;
+    float length = 10.0f;
+    float width = 5.0f;
     int numBoxes = 16;
 
-    float thickness = 100.0f / (float(numBoxes));
+    float thickness = 10.0f / (float(numBoxes));
     float fudgeFactor = 0.01f;
     Vector3 curPosition = position - Vector3(0,thickness*0.5f,0);
     for (int i = 0; i < numBoxes; i++) {
@@ -833,7 +833,7 @@ void Physics::DecomposePhysicsTree()
 void Physics::RecomposePhysicsTree()
 {
 
-    PODVector<Node*> nodes = scene_->GetChildrenWithTag("scaleTestCube");
+    PODVector<Node*> nodes = scene_->GetChildrenWithTag("scaleTestCube", true);
 
     for (int i = 1; i < nodes.Size(); i++) {
         nodes[i]->SetParent(nodes[0]);
@@ -931,7 +931,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     float range = 200;
     float objectScale = 10;
 
-    for (int i = 0; i < 0; i++)
+    for (int i = 0; i < 10; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* stMdl = scenePart->CreateComponent<StaticModel>();

@@ -365,7 +365,6 @@ namespace Urho3D {
         {
             if (colShape->GetDirty()) {
                 colShape->updateBuild();
-                //GSS<VisualDebugger>()->AddOrb(colShape->GetNode()->GetWorldPosition(), 1.0f, Color::GREEN);
                 colShape->MarkDirty(false);
             }
         }
@@ -385,14 +384,12 @@ namespace Urho3D {
             }
 
 
-
             //trigger a rebuild on the root of the new tree.
             PODVector<NewtonRigidBody*> rigBodies;
             GetRootRigidBodies(rigBodies, rigBody->GetNode(), false);
             NewtonRigidBody* mostRootRigBody = rigBodies.Back();
             if (mostRootRigBody->needsRebuilt_){
                 mostRootRigBody->reBuildBody();
-                GSS<VisualDebugger>()->AddOrb(mostRootRigBody->GetNode()->GetWorldPosition(), 1.0f, Color::BLUE);
                 mostRootRigBody->MarkDirty(false);
             }
         }

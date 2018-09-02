@@ -213,8 +213,6 @@ namespace Urho3D {
             return;
 
 
-
-        GSS<VisualDebugger>()->AddOrb(GetNode()->GetWorldPosition(), 0.5f, Color::RED);
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<NewtonCollisionShape*> childCollisionShapes;
         node_->GetDerivedComponents<NewtonCollisionShape>(childCollisionShapes, true, true);//includes this node.
@@ -271,27 +269,38 @@ namespace Urho3D {
                 NewtonCollision* usedCollision = nullptr;
 
 
+                //check if there is a rigid body on the same node as colComp - if so (and it isnt this RigidBody) free the internal body of it.
+                if (colComp->GetNode() != node_ && colComp->GetNode()->HasComponent<NewtonRigidBody>())
+                    colComp->GetComponent<NewtonRigidBody>()->freeBody();
+
 
                 if (compoundNeeded)
                     usedCollision = NewtonCollisionCreateInstance(curNewtCollision);
                 else
                     usedCollision = curNewtCollision;
 
-                Vector3 savedScale = colComp->GetNode()->GetScale();
-                colComp->GetNode()->SetScale(1.0f);//temp set node scale to 1 so we can use nice functions below.
 
-                Matrix3x4 uMat = colComp->GetNode()->LocalToWorld(colComp->getInternalOffsetMatrix()*colComp->GetOffsetMatrix());
-                Matrix3x4 localTransformNoScale = node_->WorldToLocal(uMat);
-                dMatrix localTransform = UrhoToNewton(localTransformNoScale);
 
+                Matrix3x4 colWorldTransformNoScale = Matrix3x4(colComp->GetNode()->GetWorldPosition(), colComp->GetNode()->GetWorldRotation(), 1.0f);
+                Matrix3x4 thisWorldTransformNoScale = Matrix3x4(node_->GetWorldPosition(), node_->GetWorldRotation(), 1.0f);
+                Matrix3x4 thisLocalTransformNoScale = Matrix3x4(node_->GetPosition(), node_->GetRotation(), 1.0f);
+
+
+                Matrix3x4 colLocalOffsetTransform = colComp->getInternalOffsetMatrix()*colComp->GetOffsetMatrix();
+
+                Matrix3x4 colWorldOffset = colWorldTransformNoScale * colLocalOffsetTransform;
+                Matrix3x4 colLocalToThisNode = thisWorldTransformNoScale.Inverse()*colWorldOffset;
+
+
+
+                dMatrix localTransform = UrhoToNewton(colLocalToThisNode);
+                PrintNewton(localTransform);
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
-
-                colComp->GetNode()->SetScale(savedScale);//restore node scale.
 
                 if (inheritCollisionNodeScales_)
                 {
                     
-                    Vector3 scale = colComp->GetNode()->GetScale();
+                    Vector3 scale = colComp->GetNode()->GetWorldScale();
 
 
                     scale = (colComp->internalRotOffset_*colComp->GetRotationOffset()).Inverse()*scale;
