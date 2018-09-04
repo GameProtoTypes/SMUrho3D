@@ -143,7 +143,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
     //SpawnMaterialsTest(Vector3(0,0,30));
-    //SpawnBallSocketTest(Vector3(0, 10, 0));
+    SpawnBallSocketTest(Vector3(0, 10, 0));
 
     //CreatePyramids(Vector3(0,0,0));
 
@@ -665,7 +665,7 @@ void Physics::SpawnBallSocketTest(Vector3 worldPosition)
 
     Node* sphere1 =  SpawnSamplePhysicsSphere(scene_, worldPosition);
     Node* sphere2 = SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,-2.0, 0));
-    sphere1->GetComponent<NewtonRigidBody>()->SetMassScale(0);
+   // sphere1->GetComponent<NewtonRigidBody>()->SetMassScale(0);
     NewtonBallAndSocketConstraint* constraint = sphere1->CreateComponent<NewtonBallAndSocketConstraint>();
     constraint->SetOtherBody(sphere2->GetComponent<NewtonRigidBody>());
 
