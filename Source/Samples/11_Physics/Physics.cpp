@@ -156,7 +156,7 @@ void Physics::CreateScene()
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     ////
-    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //////create scale test
     //SpawnSceneCompoundTest(Vector3(-20, 10, 10));

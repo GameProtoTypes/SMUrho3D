@@ -92,12 +92,12 @@ namespace Urho3D {
         if (!IsEnabledEffective()) {
             freeInternal();
         }
-        else if (ownBody_  && ownBody_->GetNode() && ownBody_->GetNewtonBody()) {
+        else if (ownBody_ && ownBody_->GetNode() && ownBody_->GetNewtonBody()) {
             freeInternal();
             buildConstraint();
             NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
         }
-        else//we dont have 2 bodies so free the joint.
+        else//we dont have own body so free the joint..
         {
             freeInternal();
         }
