@@ -142,7 +142,7 @@ namespace Urho3D
         void ApplyTransform();
 
         ///Return the net force and torque for newton.
-        void GetForceAndTorque(dVector& force, dVector& torque);
+        void GetForceAndTorque(Vector3& force, Vector3& torque);
 
         /// Draw Debug geometry
         void DrawDebugGeometry(DebugRenderer* debug, bool depthTest, bool showAABB = true, bool showCollisionMesh = true, bool showCenterOfMass = true, bool showContactForces = true);

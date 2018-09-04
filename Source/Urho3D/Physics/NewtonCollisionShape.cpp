@@ -78,7 +78,7 @@ namespace Urho3D {
     void NewtonCollisionShape::freeInternalCollision()
     {
         if (newtonCollision_) {
-            NewtonDestroyCollision(newtonCollision_);//decrement the reference count of the collision.
+            physicsWorld_->addToFreeQueue(newtonCollision_);
             newtonCollision_ = nullptr;
         }
     }

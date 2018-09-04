@@ -28,6 +28,7 @@
 #include "NewtonKinematicsJoint.h"
 #include "NewtonDebugDrawing.h"
 #include "dgMatrix.h"
+#include "dCustomJoint.h"
 
 namespace Urho3D {
 
@@ -190,6 +191,9 @@ namespace Urho3D {
         }
         else
         {
+            //wait for update to finish if in async mode so we can safely clean up.
+            NewtonWaitForUpdateToFinish(newtonWorld_);
+
             freeWorld();
         }
     }
@@ -253,8 +257,9 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::freeWorld()
     {
-        //wait for update to finish if in async mode so we can safely clean up.
-        NewtonWaitForUpdateToFinish(newtonWorld_);
+
+
+
 
         //free any joints
         for (NewtonConstraint* constraint : constraintList)
@@ -283,7 +288,8 @@ namespace Urho3D {
         newtonMeshCache_.Clear();
 
 
-       
+        freePhysicsInternals();
+
 
         //destroy newton world.
         if (newtonWorld_ != nullptr) {
@@ -294,6 +300,21 @@ namespace Urho3D {
 
 
 
+
+    void UrhoNewtonPhysicsWorld::addToFreeQueue(NewtonBody* newtonBody)
+    {
+        freeBodyQueue_ += newtonBody;
+    }
+
+    void UrhoNewtonPhysicsWorld::addToFreeQueue(dCustomJoint* newtonConstraint)
+    {
+        freeConstraintQueue_ += newtonConstraint;
+    }
+
+    void UrhoNewtonPhysicsWorld::addToFreeQueue(NewtonCollision* newtonCollision)
+    {
+        freeCollisionQueue_ += newtonCollision;
+    }
 
     void UrhoNewtonPhysicsWorld::applyNewtonWorldSettings()
     {
@@ -336,13 +357,14 @@ namespace Urho3D {
 
         //rebuild collision shapes from child nodes to root nodes.
         rebuildDirtyPhysicsComponents();
+        freePhysicsInternals();
 
         {
             URHO3D_PROFILE("NewtonUpdate");
             //use target time step to give newton constant time steps. 
 
             SendEvent(E_PHYSICSPRESTEP, sendEventData);
-            NewtonUpdate(newtonWorld_, timeStep);
+            NewtonUpdateAsync(newtonWorld_, timeStep);
            // NewtonWaitForUpdateToFinish(newtonWorld_);
 
         }
@@ -464,6 +486,32 @@ namespace Urho3D {
         return nullptr;
     }
 
+    void UrhoNewtonPhysicsWorld::freePhysicsInternals()
+    {
+        for (dCustomJoint* constraint : freeConstraintQueue_)
+        {
+            delete constraint;
+        }
+        freeConstraintQueue_.Clear();
+
+
+        for (NewtonCollision* col : freeCollisionQueue_)
+        {
+            NewtonDestroyCollision(col);
+        }
+        freeCollisionQueue_.Clear();
+
+
+        for (NewtonBody* body : freeBodyQueue_)
+        {
+            NewtonDestroyBody(body);
+        }
+        freeBodyQueue_.Clear();
+
+
+
+
+    }
  
 
     String NewtonThreadProfilerString(int threadIndex)
@@ -477,18 +525,24 @@ namespace Urho3D {
         URHO3D_PROFILE_FUNCTION()
 
 
-        dVector netForce;
-        dVector netTorque;
+        Vector3 netForce;
+        Vector3 netTorque;
         NewtonRigidBody* rigidBodyComp = nullptr;
 
         rigidBodyComp = static_cast<NewtonRigidBody*>(NewtonBodyGetUserData(body));
 
 
         rigidBodyComp->GetForceAndTorque(netForce, netTorque);
-        
 
-        NewtonBodySetForce(body, &netForce[0]);
-        NewtonBodySetTorque(body, &netTorque[0]);
+
+        Vector3 gravityForce;
+        if(rigidBodyComp->GetScene())//on scene destruction sometimes this is null so check...
+            gravityForce = rigidBodyComp->GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity() * rigidBodyComp->GetEffectiveMass();
+
+        netForce += gravityForce;
+
+        NewtonBodySetForce(body, &UrhoToNewton(netForce)[0]);
+        NewtonBodySetTorque(body, &UrhoToNewton(netTorque)[0]);
     }
 
 

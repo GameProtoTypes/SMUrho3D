@@ -7,6 +7,7 @@
 #include "../Container/Vector.h"
 class NewtonWorld;
 class dMatrix;
+class dCustomJoint;
 namespace Urho3D
 {
     class Component;
@@ -116,17 +117,28 @@ namespace Urho3D
         void addConstraint(NewtonConstraint* constraint);
         void removeConstraint(NewtonConstraint* constraint);
 
+
         void addPhysicsMaterial(NewtonPhysicsMaterial* material);
         void computeMaterialPairs();
-
-        void freeWorld();
-
 
         Vector<WeakPtr<NewtonCollisionShape>> collisionComponentList;
         Vector<WeakPtr<NewtonRigidBody>> rigidBodyComponentList;
         Vector<WeakPtr<NewtonConstraint>> constraintList;
         Vector<SharedPtr<NewtonPhysicsMaterial>> physMaterialList;
         Vector<SharedPtr<NewtonPhysicsMaterialContactPair>> physMaterialPairList;
+
+
+        void freeWorld();
+
+        void addToFreeQueue(NewtonBody* newtonBody);
+        void addToFreeQueue(dCustomJoint* newtonConstraint);
+        void addToFreeQueue(NewtonCollision* newtonCollision);
+
+
+        PODVector<NewtonBody*> freeBodyQueue_;
+        PODVector<dCustomJoint*> freeConstraintQueue_;
+        PODVector<NewtonCollision*> freeCollisionQueue_;
+
 
         void applyNewtonWorldSettings();
 
@@ -159,6 +171,8 @@ namespace Urho3D
 
 
 
+private:
+    void freePhysicsInternals();
     };
     String NewtonThreadProfilerString(int threadIndex);
 

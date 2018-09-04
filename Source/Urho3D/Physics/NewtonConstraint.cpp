@@ -114,7 +114,7 @@ namespace Urho3D {
     {
 
         if (newtonJoint_ != nullptr) {
-            delete newtonJoint_;
+            physicsWorld_->addToFreeQueue(newtonJoint_);
             newtonJoint_ = nullptr;
         }
     }
@@ -160,8 +160,8 @@ namespace Urho3D {
         }
         else
         {
-            RemoveJointReferenceFromBody(ownBody_);
-
+            if(!ownBody_.Expired())
+                RemoveJointReferenceFromBody(ownBody_);
 
             ownBody_ = nullptr;
             if (physicsWorld_)

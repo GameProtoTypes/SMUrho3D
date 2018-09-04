@@ -191,14 +191,15 @@ namespace Urho3D {
     void NewtonRigidBody::freeBody()
     {
         if (newtonBody_ != nullptr) {
-            NewtonDestroyBody(newtonBody_);
+            physicsWorld_->addToFreeQueue(newtonBody_);
             newtonBody_ = nullptr;
         }
+
 
         //also free the compound collision if there is one
         if (compoundCollision_)
         {
-            NewtonDestroyCollision(compoundCollision_);
+            physicsWorld_->addToFreeQueue(compoundCollision_);
             compoundCollision_ = nullptr;
         }
     }
@@ -682,12 +683,9 @@ namespace Urho3D {
     }
 
 
-    void NewtonRigidBody::GetForceAndTorque(dVector& force, dVector& torque)
+    void NewtonRigidBody::GetForceAndTorque(Vector3& force, Vector3& torque)
     {
         URHO3D_PROFILE("GetForceAndTorque");
-
-
-        Vector3 gravityForce = GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity() * mass_;
 
 
         //basic damping forces (clamp to some reasonable values)
@@ -703,8 +701,8 @@ namespace Urho3D {
         Vector3 angularVelocity = GetAngularVelocity();
         Vector3 angularDampingTorque = Vector3::ZERO;// -angularVelocity.Normalized()*(angularVelocity.LengthSquared())*angularDampingClamped * mass_;
 
-        force = UrhoToNewton((linearDampingForce + gravityForce + netForce_));
-        torque = UrhoToNewton(angularDampingTorque + netTorque_);
+        force = linearDampingForce + netForce_;
+        torque = angularDampingTorque + netTorque_;
 
     }
 

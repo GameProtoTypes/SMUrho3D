@@ -532,7 +532,7 @@ public:
     bool Empty() const { return size_ == 0; }
 
     /// Return the buffer with right type.
-    T* Buffer() const { return reinterpret_cast<T*>(buffer_); }
+   T* Buffer() const { return reinterpret_cast<T*>(buffer_); }
 
 private:
     /// Construct elements using default ctor.

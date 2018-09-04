@@ -58,6 +58,9 @@ namespace Urho3D {
         /// Return the other rigid body. May be null if connected to the static world.
         NewtonRigidBody* GetOtherBody() const { return otherBody_; }
 
+        dCustomJoint* GetNewtonJoint() const {
+            return  newtonJoint_;
+        }
 
         virtual void OnSetEnabled() override;
 
