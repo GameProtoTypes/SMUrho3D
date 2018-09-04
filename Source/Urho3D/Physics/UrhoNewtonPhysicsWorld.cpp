@@ -156,7 +156,7 @@ namespace Urho3D {
         URHO3D_PROFILE_FUNCTION();
         if (debug)
         {
-            //#todo draw physics world specific things. joints?
+            //draw debug geometry on constraints.
             for (NewtonConstraint* consttraint : constraintList)
             {
                 consttraint->DrawDebugGeometry(debug, depthTest);
@@ -167,14 +167,10 @@ namespace Urho3D {
                 body->DrawDebugGeometry(debug, depthTest);
             }
 
-            //draw debug geomtry on collision shapes that are not owned by a rigid body
-            PODVector<NewtonCollisionShape*> aloneCollisionShapes;
-            GetAloneCollisionShapes(aloneCollisionShapes, node_, true);
+            //draw debug geometry on static scene.
+            if (sceneBody_)
+                sceneBody_->DrawDebugGeometry(debug, depthTest);
 
-            for (NewtonCollisionShape* col : aloneCollisionShapes)
-            {
-                col->DrawDebugGeometry(debug, depthTest);
-            }
 
         }
     }
@@ -257,11 +253,13 @@ namespace Urho3D {
 
     void UrhoNewtonPhysicsWorld::freeWorld()
     {
+        //wait for update to finish if in async mode so we can safely clean up.
+        NewtonWaitForUpdateToFinish(newtonWorld_);
 
         //free any joints
         for (NewtonConstraint* constraint : constraintList)
         {
-            constraint->freeConstraint();
+            constraint->freeInternal();
         }
         constraintList.Clear();
 
@@ -344,7 +342,8 @@ namespace Urho3D {
             //use target time step to give newton constant time steps. 
 
             SendEvent(E_PHYSICSPRESTEP, sendEventData);
-            NewtonUpdateAsync(newtonWorld_, timeStep);
+            NewtonUpdate(newtonWorld_, timeStep);
+           // NewtonWaitForUpdateToFinish(newtonWorld_);
 
         }
 

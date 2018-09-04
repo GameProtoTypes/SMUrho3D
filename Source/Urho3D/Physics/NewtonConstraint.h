@@ -18,7 +18,7 @@ namespace Urho3D {
     public:
 
         friend class UrhoNewtonPhysicsWorld;
-
+        friend class NewtonRigidBody;
         /// Construct.
         NewtonConstraint(Context* context);
         /// Destruct. Free the rigid body and geometries.
@@ -42,9 +42,11 @@ namespace Urho3D {
         /// set the rotational frame to use on own body 
         void SetRotation(const Quaternion& rotation);
 
+
+
         /// Set constraint position in local cordinates relative to the other body. If connected to the static world, is a world space position.
         void SetOtherPosition(const Vector3& position);
-        /// set the rotational frame to use on own body 
+        /// set the rotational frame to use on own body. If connected to the static world, is a world space position.
         void SetOtherRotation(const Quaternion& rotation);
 
         /// Return physics world.
@@ -83,11 +85,12 @@ namespace Urho3D {
 
         /// Upper level re-evaulation.
         void reEvalConstraint();
+        
         /// build the newton constraint.
         virtual void buildConstraint();
         
         /// frees and deletes the internal joint.
-        void freeConstraint();
+        void freeInternal();
 
         void AddJointReferenceToBody(NewtonRigidBody* rigBody);
         void RemoveJointReferenceFromBody(NewtonRigidBody* rigBody);

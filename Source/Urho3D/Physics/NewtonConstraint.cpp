@@ -45,8 +45,10 @@ namespace Urho3D {
 
 
             otherBody_ = body;
-            AddJointReferenceToBody(otherBody_);
-            otherBody_->GetNode()->AddListener(this);
+            if (otherBody_ != nullptr) {
+                AddJointReferenceToBody(otherBody_);
+                otherBody_->GetNode()->AddListener(this);
+            }
             MarkDirty();
         }
     }
@@ -65,6 +67,7 @@ namespace Urho3D {
         MarkDirty();
     }
 
+
     void NewtonConstraint::SetOtherPosition(const Vector3& position)
     {
         otherPosition_ = position_;
@@ -78,6 +81,7 @@ namespace Urho3D {
         MarkDirty();
     }
 
+
     void NewtonConstraint::OnSetEnabled()
     {
         MarkDirty();
@@ -85,19 +89,19 @@ namespace Urho3D {
 
     void NewtonConstraint::reEvalConstraint()
     {
-
-        freeConstraint();
-
         if (!IsEnabledEffective()) {
-            MarkDirty(false);
-            return;
+            freeInternal();
         }
-        if (ownBody_->GetNewtonBody()) {
+        else if (ownBody_  && ownBody_->GetNode() && ownBody_->GetNewtonBody()) {
+            freeInternal();
             buildConstraint();
             NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
         }
+        else//we dont have 2 bodies so free the joint.
+        {
+            freeInternal();
+        }
         MarkDirty(false);
-        
     }
 
     void NewtonConstraint::buildConstraint()
@@ -106,8 +110,9 @@ namespace Urho3D {
     }
 
 
-    void NewtonConstraint::freeConstraint()
+    void NewtonConstraint::freeInternal()
     {
+
         if (newtonJoint_ != nullptr) {
             delete newtonJoint_;
             newtonJoint_ = nullptr;
@@ -162,7 +167,7 @@ namespace Urho3D {
             if (physicsWorld_)
                 physicsWorld_->removeConstraint(this);
 
-            freeConstraint();
+            freeInternal();
 
         }
     }

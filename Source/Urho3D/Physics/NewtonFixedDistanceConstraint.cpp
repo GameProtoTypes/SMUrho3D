@@ -31,15 +31,22 @@ namespace Urho3D {
     void NewtonFixedDistanceConstraint::buildConstraint()
 {
         //get own body transform.
-        //dMatrix matrix0;
-        //NewtonBodyGetMatrix(ownBody_->GetNewtonBody(), &matrix0[0][0]);
         dVector pivot0(UrhoToNewton(ownBody_->GetNode()->LocalToWorld(position_)));
 
-        //dMatrix matrix1;
-        //NewtonBodyGetMatrix(otherBody_->GetNewtonBody(), &matrix1[0][0]);
-        dVector pivot1(UrhoToNewton(otherBody_->GetNode()->LocalToWorld(position_)));
+        if (otherBody_) {
 
-        newtonJoint_ = new dCustomFixDistance(pivot1, pivot0, otherBody_->GetNewtonBody(), ownBody_->GetNewtonBody());
+            dVector pivot1(UrhoToNewton(otherBody_->GetNode()->LocalToWorld(otherPosition_)));
+
+            newtonJoint_ = new dCustomFixDistance(pivot0, pivot1, ownBody_->GetNewtonBody(), otherBody_->GetNewtonBody());
+
+        }
+        else
+        {
+            dVector pivot1(UrhoToNewton(otherPosition_));
+            newtonJoint_ = new dCustomFixDistance(pivot0, pivot1, ownBody_->GetNewtonBody(), nullptr );
+        }
+
+
 
     }
 

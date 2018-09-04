@@ -143,9 +143,9 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
     //SpawnMaterialsTest(Vector3(0,0,30));
-    ////SpawnBallSocketTest(Vector3(0, 10, 0));
+    //SpawnBallSocketTest(Vector3(0, 10, 0));
 
-    CreatePyramids(Vector3(0,0,0));
+    //CreatePyramids(Vector3(0,0,0));
 
     //int numVertical = 1;
     //for (int i = 0; i < numVertical; i++)
@@ -156,11 +156,11 @@ void Physics::CreateScene()
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     ////
-    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //////create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
-    CreateTowerOfLiar(Vector3(0, 0, 20));
+    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    //CreateTowerOfLiar(Vector3(0, 0, 20));
 
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
@@ -303,6 +303,11 @@ void Physics::MoveCamera(float timeStep)
     if (input->GetKeyPress(KEY_Y))
         RecomposePhysicsTree();
 
+    if (input->GetKeyPress(KEY_DELETE))
+        RemovePickNode();
+
+
+
     if (input->GetKeyPress(KEY_L))
     {
         //mark all physics things dirty
@@ -372,7 +377,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         curNode = curNode->CreateChild();
         curNode->SetName("SpawnSceneCompoundTest:" + String(i));
         curNode->AddTag("scaleTestCube");
-        float rotDelta = 0;// Random(-20.0f, 20.0f);
+        float rotDelta =  Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
         curNode->SetWorldScale(Vector3(Random(0.5f,1.5f), Random(0.5f, 1.5f), Random(0.5f, 1.5f)));// this will make things crash.
         curNode->Translate(Vector3(0, Random(0.5f,2.0f), 0));
@@ -658,7 +663,7 @@ void Physics::SpawnBallSocketTest(Vector3 worldPosition)
 
 
     Node* sphere1 =  SpawnSamplePhysicsSphere(scene_, worldPosition);
-    Node* sphere2 = SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,-1.0, 0));
+    Node* sphere2 = SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,-2.0, 0));
     sphere1->GetComponent<NewtonRigidBody>()->SetMassScale(0);
     NewtonBallAndSocketConstraint* constraint = sphere1->CreateComponent<NewtonBallAndSocketConstraint>();
     constraint->SetOtherBody(sphere2->GetComponent<NewtonRigidBody>());
@@ -978,6 +983,14 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
 
+}
+
+void Physics::RemovePickNode()
+{
+    RayQueryResult res = GetCameraPickNode();
+    if (res.node_) {
+        res.node_->Remove();
+    }
 }
 
 void Physics::CreatePickTargetNodeOnPhysics()

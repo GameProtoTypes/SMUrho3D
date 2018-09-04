@@ -16,6 +16,7 @@
 #include "Graphics/VisualDebugger.h"
 #include "Core/Object.h"
 #include "dQuaternion.h"
+#include "NewtonConstraint.h"
 
 
 namespace Urho3D {
@@ -396,8 +397,14 @@ namespace Urho3D {
         }
         else
         {
+
             if (physicsWorld_)
                 physicsWorld_->removeRigidBody(this);
+
+            //remove any connected constraints.
+            for (NewtonConstraint* constraint : connectedConstraints_) {
+                constraint->Remove();
+            }
 
             freeBody();
             UnsubscribeFromEvent(E_NODETRANSFORMCHANGE);
