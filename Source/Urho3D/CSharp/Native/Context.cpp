@@ -20,42 +20,63 @@
 // THE SOFTWARE.
 //
 
-#include "Urho3DClassWrappers.hpp"
-#include "CSharp.h"
+#include <Urho3D/Core/Context.h>
+
+#if _WIN32
+#  define SWIGSTDCALL __stdcall
+#else
+#  define SWIGSTDCALL
+#endif
 
 extern "C"
 {
 
-EXPORT_API const char** Urho3D__Context__GetObjectCategories(Context* context)
-{
-    if (context == nullptr)
-        return nullptr;
-    return CSharpConverter<Urho3D::StringVector>::ToCSharp(context->GetObjectCategories().Keys());
+const Urho3D::TypeInfo* Urho3DGetDirectorTypeInfo(Urho3D::StringHash type);
+typedef void* (SWIGSTDCALL* SWIG_CSharpCreateObjectCallback)(Urho3D::Context* context, unsigned type);
+extern SWIG_CSharpCreateObjectCallback SWIG_CSharpCreateObject;
+
 }
 
-EXPORT_API const char** Urho3D__Context__GetObjectsByCategory(Context* context, const char* category)
+namespace Urho3D
 {
-    StringVector result;
-    const auto& factories = context->GetObjectFactories();
-    auto it = context->GetObjectCategories().Find(category);
-    if (it != context->GetObjectCategories().End())
+
+class ManagedObjectFactory : public ObjectFactory
+{
+public:
+    ManagedObjectFactory(Context* context, const char* typeName, StringHash baseType)
+        : ObjectFactory(context)
+        , baseType_(baseType)
+        , managedType_(typeName)
     {
-        for (const StringHash& type : it->second_)
-        {
-            auto jt = factories.Find(type);
-            if (jt != factories.End())
-                result.Push(jt->second_->GetTypeName());
-        }
-        return CSharpConverter<StringVector>::ToCSharp(result);
+        typeInfo_ = new TypeInfo(typeName, Urho3DGetDirectorTypeInfo(baseType));
     }
-    else
-        return nullptr;
-}
 
-// Urho3D::Application::engineParameters_
-EXPORT_API Urho3D::VariantMap* get_Urho3D__Application_engineParameters_ref(Wrappers::Application* instance)
+    ~ManagedObjectFactory() override
+    {
+        delete typeInfo_;
+    }
+
+public:
+    SharedPtr<Object> CreateObject() override
+    {
+        auto* result = SWIG_CSharpCreateObject(context_, managedType_.Value());
+        return SharedPtr<Object>((Object*)result);
+    }
+
+protected:
+    StringHash baseType_;
+    StringHash managedType_;
+};
+
+extern "C"
 {
-    return &instance->__get_engineParameters_();
+
+URHO3D_EXPORT_API void Urho3D_Context_RegisterFactory(Context* context, const char* typeName, unsigned baseType, const char* category)
+{
+    context->RegisterFactory(new ManagedObjectFactory(context, typeName, StringHash(baseType)), category);
 }
 
 }
+
+}
+

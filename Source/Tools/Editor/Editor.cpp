@@ -50,9 +50,6 @@ Editor::Editor(Context* context)
 #if URHO3D_PLUGINS_NATIVE
     , pluginsNative_(context)
 #endif
-#if URHO3D_PLUGINS_CSHARP
-    , pluginsManaged_(context)
-#endif
 {
 }
 
@@ -170,9 +167,6 @@ void Editor::Start()
     }
 
     // Plugin loading
-#if URHO3D_PLUGINS_CSHARP
-    pluginsManaged_.AutoLoadFrom(GetFileSystem()->GetProgramDir());
-#endif
 #if URHO3D_PLUGINS_NATIVE
     pluginsNative_.AutoLoadFrom(GetFileSystem()->GetProgramDir());
 #endif

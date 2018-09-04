@@ -1,0 +1,30 @@
+<Project ToolsVersion="15.0">
+  <PropertyGroup>
+    <TargetFramework>net471</TargetFramework>
+    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard2.0' ">2.0.0</NetStandardImplicitPackageVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net471'">
+    <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <RuntimeIdentifiers Condition=" '$(OS)' == 'Unix' ">ubuntu.14.04-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers Condition=" '$(OS)' == 'Windows_NT' ">win-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers Condition=" '$(OS)' == 'OSX' ">osx.10.10-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PlatformTarget Condition=" '$(PlatformTarget)' == '' ">x64</PlatformTarget>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(BuildDir)' == '' And '$(SolutionDir)' != '' ">
+    <BuildDir Condition=" '$(OS)' != 'Unix' ">$(SolutionDir)/</BuildDir>
+    <BuildDir Condition=" '$(OS)' == 'Unix' ">$(SolutionDir)build/</BuildDir>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(BuildDir)' != '' ">
+    <BaseOutputPath>$(BuildDir)bin/</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(BuildDir)obj/</BaseIntermediateOutputPath>
+    <OutDir Condition="'$(OS)' == 'Windows_NT'">$(BaseOutputPath)/$(Configuration)/</OutDir>
+    <OutDir Condition="'$(OS)' != 'Windows_NT'">$(BaseOutputPath)/</OutDir>
+  </PropertyGroup>
+</Project>

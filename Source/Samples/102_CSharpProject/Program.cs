@@ -22,9 +22,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using Urho3D;
-using ImGui;
-using Urho3D.Events;
+using Urho3DNet;
+using ImGuiNet;
 
 namespace DemoApplication
 {
@@ -33,15 +32,16 @@ namespace DemoApplication
     {
         public RotateObject(Context context) : base(context)
         {
-            UpdateEventMask = UpdateEvent.UseUpdate;
+            SetUpdateEventMask(UpdateEvent.UseUpdate);
         }
 
         public override void Update(float timeStep)
         {
             var d = new Quaternion(10 * timeStep, 20 * timeStep, 30 * timeStep);
-            Node.Rotate(d);
+            GetNode().Rotate(d);
         }
     }
+
 
     class DemoApplication : Application
     {
@@ -58,55 +58,57 @@ namespace DemoApplication
         public override void Setup()
         {
             var currentDir = Directory.GetCurrentDirectory();
-            EngineParameters[EngineDefs.EpFullScreen] = false;
-            EngineParameters[EngineDefs.EpWindowWidth] = 1920;
-            EngineParameters[EngineDefs.EpWindowHeight] = 1080;
-            EngineParameters[EngineDefs.EpWindowTitle] = "Hello C#";
-            EngineParameters[EngineDefs.EpResourcePrefixPaths] = $"{currentDir};{currentDir}/..";
+            EngineParameters[Urho3D.EpFullScreen] = false;
+            EngineParameters[Urho3D.EpWindowWidth] = 1920;
+            EngineParameters[Urho3D.EpWindowHeight] = 1080;
+            EngineParameters[Urho3D.EpWindowTitle] = "Hello C#";
+            EngineParameters[Urho3D.EpResourcePrefixPaths] = $"{currentDir};{currentDir}/..";
         }
 
         public override void Start()
         {
-            Input.SetMouseVisible(true);
+            GetInput().SetMouseVisible(true);
 
             // Viewport
-            _scene = new Scene(Context);
+            _scene = new Scene(GetContext());
             _scene.CreateComponent<Octree>();
 
             _camera = _scene.CreateChild("Camera");
-            _viewport = new Viewport(Context, _scene, _camera.CreateComponent<Camera>());
-            Renderer.SetViewport(0, _viewport);
+            _viewport = new Viewport(GetContext());
+            _viewport.SetScene(_scene);
+            _viewport.SetCamera(_camera.CreateComponent<Camera>());
+            GetRenderer().SetViewport(0, _viewport);
 
             // Background
-            Renderer.DefaultZone.FogColor = new Color(0.5f, 0.5f, 0.7f);
+            GetRenderer().GetDefaultZone().SetFogColor(new Color(0.5f, 0.5f, 0.7f));
 
             // Scene
-            _camera.Position = new Vector3(0, 2, -2);
+            _camera.SetPosition(new Vector3(0, 2, -2));
             _camera.LookAt(Vector3.Zero);
 
             // Cube
             _cube = _scene.CreateChild("Cube");
             var model = _cube.CreateComponent<StaticModel>();
-            model.Model = Cache.GetResource<Model>("Models/Box.mdl");
-            model.SetMaterial(0, Cache.GetResource<Material>("Materials/Stone.xml"));
-            _cube.CreateComponent<RotateObject>();
+            model.SetModel(GetCache().GetResource<Model>("Models/Box.mdl"));
+            model.SetMaterial(0, GetCache().GetResource<Material>("Materials/Stone.xml"));
+            var rotator = _cube.CreateComponent<RotateObject>();
 
             // Light
             _light = _scene.CreateChild("Light");
             _light.CreateComponent<Light>();
-            _light.Position = new Vector3(0, 2, -1);
+            _light.SetPosition(new Vector3(0, 2, -1));
             _light.LookAt(Vector3.Zero);
 
-            SubscribeToEvent<Update>(args =>
+            SubscribeToEvent(E.Update, args =>
             {
-                var timestep = args.GetFloat(Update.TimeStep);
+                var timestep = args[E.Update.TimeStep].GetFloat();
                 Debug.Assert(this != null);
 
-                if (ui.Begin("Urho3D.NET"))
+                if (ImGui.Begin("Urho3D.NET"))
                 {
-                    ui.Text("Hello world from C#");
+                    ImGui.TextColored(Color.Red, $"Hello world from C#.\nFrame time: {timestep}");
                 }
-                ui.End();
+                ImGui.End();
             });
         }
     }

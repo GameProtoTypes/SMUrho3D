@@ -13,6 +13,13 @@
 #include <stdexcept>
 #include <string>
 
+// This is here for compatibility with older versions of Visual Studio
+// which don't support noexcept
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    #define YAML_CPP_NOEXCEPT _NOEXCEPT
+#else
+    #define YAML_CPP_NOEXCEPT noexcept
+#endif
 
 #define YAML_CPP_NOEXCEPT noexcept
 

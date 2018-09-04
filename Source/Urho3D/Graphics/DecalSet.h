@@ -34,7 +34,7 @@ class IndexBuffer;
 class VertexBuffer;
 
 /// %Decal vertex.
-struct DecalVertex
+struct URHO3D_API DecalVertex
 {
     /// Construct with defaults.
     DecalVertex() = default;
@@ -58,6 +58,18 @@ struct DecalVertex
         }
     }
 
+    /// Instance equality operator.
+    bool operator ==(const DecalVertex& rhs) const
+    {
+        return this == &rhs;
+    }
+
+    /// Instance inequality operator.
+    bool operator !=(const DecalVertex& rhs) const
+    {
+        return this != &rhs;
+    }
+
     /// Position.
     Vector3 position_;
     /// Normal.
@@ -73,7 +85,7 @@ struct DecalVertex
 };
 
 /// One decal in a decal set.
-struct Decal
+struct URHO3D_API Decal
 {
     /// Construct with defaults.
     Decal() :

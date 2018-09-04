@@ -128,6 +128,14 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set (GNU ON)
 endif()
 
+if ("${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Linux")
+    set (HOST_LINUX 1)
+elseif ("${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Windows")
+    set (HOST_WIN32 1)
+elseif ("${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Darwin")
+    set (HOST_MACOS 1)
+endif ()
+
 # Macro for setting symbolic link on platform that supports it
 macro (create_symlink SOURCE DESTINATION)
     # Make absolute paths so they work more reliably on cmake-gui
@@ -174,23 +182,8 @@ endmacro ()
 
 macro (add_sample TARGET)
     if ("${ARGN}" STREQUAL CSHARP)
-        if (DESKTOP)    # TODO: Support other platforms
-            add_target_csharp(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.csproj)
-            add_dependencies(${TARGET} Urho3DNet)
-            if (MSVC AND URHO3D_WITH_MONO)
-                # On windows managed sample executable will not run when double-clicked. Create a
-                # native executable (bundle) which includes all managed dependencies instead.
-                find_package(Mono REQUIRED)
-                set (OUTPUT_DIR ${CMAKE_BINARY_DIR}/${DEST_BIN_DIR_CONFIG})
-                set (OUTPUT_FILE ${OUTPUT_DIR}/${TARGET}.exe)
-                add_custom_command (TARGET ${TARGET} POST_BUILD
-                    COMMAND ${MONO_PATH}/bin/mkbundle.bat ARGS --deps -L "${OUTPUT_DIR}" -L "${MONO_PATH}/lib/mono/4.5" -o "${OUTPUT_FILE}.tmp" "${OUTPUT_FILE}"
-                    COMMAND ${CMAKE_COMMAND} -E remove ${OUTPUT_FILE}
-                    COMMAND ${CMAKE_COMMAND} -E rename ${OUTPUT_FILE}.tmp ${OUTPUT_FILE}
-                )
-            endif ()
-            install(FILES ${OUTPUT_FILE} DESTINATION ${DEST_SAMPLES_DIR})
-        endif ()
+        add_target_csharp(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.csproj Urho3DNet)
+        #install (FILES ${NET_OUTPUT_DIRECTORY}/${BIND_MANAGED_TARGET}.dll DESTINATION ${DEST_LIBRARY_DIR})
     else ()
         file (GLOB SOURCE_FILES *.cpp *.h)
         if (NOT URHO3D_WIN32_CONSOLE)
@@ -267,6 +260,214 @@ function(vs_group_subdirectory_targets DIR FOLDER_NAME)
         vs_group_subdirectory_targets(${DIR} ${FOLDER_NAME})
     endforeach()
 endfunction()
+
+if (URHO3D_CSHARP)
+    if (NOT SWIG_EXECUTABLE)
+        # Prebuilt files are mainly for windows/CI. If you run linux or macos you should probably build SWIG yourself.
+        # A SWIG distribution built from code at https://github.com/rokups/swig/tree/Urho3D
+        # You may build it yourself and set SWIG_EXECUTABLE in order to not use prebuilt binaries.
+        file(DOWNLOAD https://github.com/rokups/Urho3D/files/2343051/swig-dist.zip ${CMAKE_BINARY_DIR}/swig-dist.zip)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf swig-dist.zip WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        if (HOST_LINUX)
+            set (SWIG_PLATFORM lin64)
+            set (SWIG_SHARE share/swig)
+        elseif (HOST_WIN32)
+            set (SWIG_PLATFORM win64)
+            set (SWIG_SHARE share)
+        elseif (HOST_MACOS)
+            set (SWIG_PLATFORM mac64)
+            set (SWIG_SHARE share/swig)
+        endif ()
+        set (SWIG_EXECUTABLE ${CMAKE_BINARY_DIR}/swig-dist/${SWIG_PLATFORM}/bin/swig${CMAKE_EXECUTABLE_SUFFIX})
+        # Get SWIG version
+        execute_process(COMMAND ${SWIG_EXECUTABLE} -version OUTPUT_VARIABLE SWIG_VERSION)
+        string(REGEX MATCH "SWIG Version ([0-9\\.]+)" SWIG_VERSION "${SWIG_VERSION}")
+        string(REPLACE "SWIG Version " "" SWIG_VERSION "${SWIG_VERSION}")
+        string(STRIP "${SWIG_VERSION}" SWIG_VERSION)
+        # Swig library path is embeded into executable. We extracted swig somewhere else other than prefix path so we
+        # must override library path here.
+        set (SWIG_DIR ${CMAKE_BINARY_DIR}/swig-dist/${SWIG_PLATFORM}/${SWIG_SHARE}/${SWIG_VERSION})
+        message(STATUS "Using prebuilt SWIG binaries for ${SWIG_PLATFORM} platform.")
+    endif ()
+    include(UrhoSWIG)
+
+    if (WIN32)
+        find_package(Mono REQUIRED)
+    endif ()
+    find_program(MSBUILD msbuild PATHS /Library/Frameworks/Mono.framework/Versions/Current/bin ${MONO_PATH}/bin)
+    if (NOT MSBUILD)
+        message(FATAL_ERROR "MSBuild could not be found.")
+    endif ()
+
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set (CSHARP_PLATFORM x64)
+    else ()
+        set (CSHARP_PLATFORM x86)
+    endif ()
+    set (MSBUILD_COMMON_PARAMETERS /p:BuildDir="${CMAKE_BINARY_DIR}/" /p:Platform=${CSHARP_PLATFORM}
+                                   /p:Configuration=$<CONFIG> /consoleloggerparameters:ErrorsOnly)
+
+    if (URHO3D_WITH_MONO)
+        list (APPEND MSBUILD_COMMON_PARAMETERS /p:TargetFramework=net471)
+    endif ()
+
+    if (MSVC)
+        set (CSHARP_SOLUTION ${CMAKE_BINARY_DIR}/Urho3D.sln)
+    else ()
+        set (CSHARP_SOLUTION ${Urho3D_SOURCE_DIR}/Urho3D.part.sln)
+    endif ()
+
+    add_custom_target(NugetRestore COMMAND ${TERM_WORKAROUND} ${MSBUILD} ${CSHARP_SOLUTION} /t:restore)
+endif()
+
+if ("${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Linux")
+    # Workaround for some cases where csc has issues when invoked by CMake.
+    set (TERM_WORKAROUND env TERM=xterm)
+endif ()
+
+macro (__TARGET_GET_PROPERTIES_RECURSIVE OUTPUT TARGET PROPERTY)
+    get_target_property(values ${TARGET} ${PROPERTY})
+    if (values)
+        list (APPEND ${OUTPUT} ${values})
+    endif ()
+    get_target_property(values ${TARGET} INTERFACE_LINK_LIBRARIES)
+    if (values)
+        foreach(lib ${values})
+            if (TARGET ${lib})
+                __TARGET_GET_PROPERTIES_RECURSIVE(${OUTPUT} ${lib} ${PROPERTY})
+            endif ()
+        endforeach()
+    endif()
+endmacro()
+
+macro (add_target_csharp TARGET PROJECT_FILE)
+    if (WIN32 AND NOT URHO3D_WITH_MONO)
+        include_external_msproject(${TARGET} ${PROJECT_FILE} TYPE FAE04EC0-301F-11D3-BF4B-00C04F79EFBC ${ARGN} NugetRestore)
+    else ()
+        add_custom_target(${TARGET}
+            COMMAND ${TERM_WORKAROUND} ${MSBUILD} ${PROJECT_FILE} ${MSBUILD_COMMON_PARAMETERS}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            DEPENDS ${ARGN} NugetRestore
+        )
+        set_target_properties(${TARGET} PROPERTIES EXCLUDE_FROM_ALL OFF)
+    endif ()
+endmacro ()
+
+macro (csharp_bind_target)
+    if (NOT URHO3D_CSHARP)
+        return ()
+    endif ()
+
+    cmake_parse_arguments(BIND "" "TARGET;MANAGED_TARGET" "" ${ARGN})
+
+    get_target_property(BIND_SOURCE_DIR ${BIND_TARGET} SOURCE_DIR)
+
+    if (NOT BIND_MANAGED_TARGET)
+        set (BIND_MANAGED_TARGET ${BIND_TARGET}Net)
+    endif ()
+
+    # Parse bindings using same compile definitions as built target
+    __TARGET_GET_PROPERTIES_RECURSIVE(INCLUDES ${BIND_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+    __TARGET_GET_PROPERTIES_RECURSIVE(DEFINES  ${BIND_TARGET} INTERFACE_COMPILE_DEFINITIONS)
+    __TARGET_GET_PROPERTIES_RECURSIVE(OPTIONS  ${BIND_TARGET} INTERFACE_COMPILE_OPTIONS)
+    if (INCLUDES)
+        list (REMOVE_DUPLICATES INCLUDES)
+    endif ()
+    if (DEFINES)
+        list (REMOVE_DUPLICATES DEFINES)
+    endif ()
+    if (OPTIONS)
+        list (REMOVE_DUPLICATES OPTIONS)
+    endif ()
+    foreach(item ${INCLUDES})
+        if ("${item}" MATCHES "\\$<INSTALL_INTERFACE:.+")
+            continue()
+        endif ()
+        if ("${item}" MATCHES "\\$<BUILD_INTERFACE:.+")
+            string(LENGTH "${item}" len)
+            math(EXPR len "${len} - 19")
+            string(SUBSTRING "${item}" 18 ${len} item)
+        endif ()
+        list(APPEND GENERATOR_OPTIONS -I${item})
+    endforeach()
+    foreach(item ${DEFINES})
+        string(FIND "${item}" "=" EQUALITY_INDEX)
+        if (EQUALITY_INDEX EQUAL -1)
+            set (item "${item}=1")
+        endif ()
+        list(APPEND GENERATOR_OPTIONS -D${item})
+    endforeach()
+
+    # Swig
+    set(CMAKE_SWIG_FLAGS
+        -namespace ${BIND_MANAGED_TARGET}
+        -fastdispatch
+        -I${CMAKE_CURRENT_BINARY_DIR}
+        ${GENERATOR_OPTIONS}
+    )
+
+    foreach(item ${OPTIONS})
+        list(APPEND GENERATOR_OPTIONS -O${item})
+    endforeach()
+
+    #    get_target_property(_TARGET_TYPE ${BIND_TARGET} TYPE)
+    #    if(_TARGET_TYPE STREQUAL "STATIC_LIBRARY")
+    #        list (APPEND GENERATOR_OPTIONS --static)
+    #    endif ()
+    #    if (SNK_PUB_KEY)
+    #        list (APPEND GENERATOR_OPTIONS --signed-with=${SNK_PUB_KEY})
+    #    endif ()
+
+    set (CSHARP_LIBRARY_NAME ${BIND_TARGET}CSharp)
+    set (COMMON_DIR ${CSHARP_SOURCE_DIR}/Common)
+
+    # Finalize option list
+    list (APPEND GENERATOR_OPTIONS ${BIND_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Swig)
+    set (CSHARP_BINDING_GENERATOR_OPTIONS "${CMAKE_CURRENT_BINARY_DIR}/generator_options.txt")
+    file (WRITE ${CSHARP_BINDING_GENERATOR_OPTIONS} "")
+    foreach (opt ${GENERATOR_OPTIONS})
+        file(APPEND ${CSHARP_BINDING_GENERATOR_OPTIONS} "${opt}\n")
+    endforeach ()
+
+    set (SWIG_SYSTEM_INCLUDE_DIRS "${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES};${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES};${CMAKE_SYSTEM_INCLUDE_PATH};${CMAKE_EXTRA_GENERATOR_CXX_SYSTEM_INCLUDE_DIRS}")
+    string (REPLACE ";" ";-I" SWIG_SYSTEM_INCLUDE_DIRS "${SWIG_SYSTEM_INCLUDE_DIRS}")
+
+    set_source_files_properties(Swig/${BIND_TARGET}.i PROPERTIES
+        CPLUSPLUS ON
+        SWIG_FLAGS "-I${SWIG_SYSTEM_INCLUDE_DIRS}"
+    )
+
+    swig_add_module(${CSHARP_LIBRARY_NAME} csharp Swig/${BIND_TARGET}.i)
+    swig_link_libraries(${CSHARP_LIBRARY_NAME} ${BIND_TARGET})
+    set_target_properties(${CSHARP_LIBRARY_NAME} PROPERTIES PREFIX "${CMAKE_SHARED_LIBRARY_PREFIX}")
+
+    # Etc
+    #    if (CLANG)
+    #        target_compile_options(${CSHARP_LIBRARY_NAME} PRIVATE -Wno-return-type-c-linkage)
+    #    endif ()
+    #
+    #    if (URHO3D_WITH_MONO)
+    #        find_package(Mono REQUIRED)
+    #        target_include_directories(${CSHARP_LIBRARY_NAME} PRIVATE ${MONO_INCLUDE_DIRS})
+    #        target_link_libraries(${CSHARP_LIBRARY_NAME} ${MONO_LIBRARIES})
+    #        target_compile_options(${CSHARP_LIBRARY_NAME} PRIVATE ${MONO_CFLAGS})
+    #    endif ()
+
+    if (MSVC)
+        set (NET_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
+    else ()
+        set (NET_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+        # Needed for mono on unixes but not on windows.
+        set (FACADES Facades/)
+    endif ()
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${BIND_MANAGED_TARGET}.csproj")
+        add_target_csharp(${BIND_MANAGED_TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/${BIND_MANAGED_TARGET}.csproj ${CSHARP_LIBRARY_NAME})
+        install (FILES ${NET_OUTPUT_DIRECTORY}/${BIND_MANAGED_TARGET}.dll DESTINATION ${DEST_LIBRARY_DIR})
+    endif ()
+
+    file (GLOB_RECURSE EXTRA_NATIVE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Native/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Native/*.cpp)
+    target_sources(${CSHARP_LIBRARY_NAME} PRIVATE ${EXTRA_NATIVE_FILES})
+endmacro ()
 
 # Configure for MingW
 if (CMAKE_CROSSCOMPILING AND MINGW)
