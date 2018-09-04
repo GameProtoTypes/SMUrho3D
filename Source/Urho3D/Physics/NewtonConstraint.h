@@ -37,6 +37,10 @@ namespace Urho3D {
         /// Set other body to connect to. Set to null to connect to the static world.
         void SetOtherBody(NewtonRigidBody* body);
 
+        void SetOtherBodyById(unsigned bodyId);
+
+
+
         /// Set constraint position in local cordinates to body.
         void SetPosition(const Vector3& position);
         /// set the rotational frame to use on own body 
@@ -58,6 +62,15 @@ namespace Urho3D {
         /// Return the other rigid body. May be null if connected to the static world.
         NewtonRigidBody* GetOtherBody() const { return otherBody_; }
 
+        unsigned GetOtherBodyId() const { return otherBodyId_; }
+
+        Vector3 GetOtherPosition() const { return otherPosition_; }
+
+        Quaternion GetOtherRotation() const { return otherRotation_; }
+
+
+
+
         dCustomJoint* GetNewtonJoint() const {
             return  newtonJoint_;
         }
@@ -69,8 +82,10 @@ namespace Urho3D {
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
         /// Own rigid body.
         WeakPtr<NewtonRigidBody> ownBody_;
+        unsigned ownBodyId_ = 0;
         /// Other rigid body.
         WeakPtr<NewtonRigidBody> otherBody_;
+        unsigned otherBodyId_ = 0;
         /// Internal newtonJoint.
         dCustomJoint* newtonJoint_ = nullptr;
         /// Flag indicating the two bodies should collide with each other.

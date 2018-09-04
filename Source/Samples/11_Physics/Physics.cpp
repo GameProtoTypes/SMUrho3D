@@ -602,6 +602,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
 
             NewtonFixedDistanceConstraint* constraint = node->CreateComponent<NewtonFixedDistanceConstraint>();
             constraint->SetOtherBody(node2->GetComponent<NewtonRigidBody>());
+            constraint->SetOtherPosition(Vector3(1, 0, 0));
         }
     }
 }

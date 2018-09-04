@@ -25,6 +25,12 @@ namespace Urho3D {
     void NewtonFixedDistanceConstraint::RegisterObject(Context* context)
     {
         context->RegisterFactory<NewtonFixedDistanceConstraint>(DEF_PHYSICS_CATEGORY.CString());
+
+
+        URHO3D_COPY_BASE_ATTRIBUTES(NewtonConstraint);
+
+
+
     }
 
 

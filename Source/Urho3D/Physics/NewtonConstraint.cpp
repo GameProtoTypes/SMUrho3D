@@ -20,14 +20,21 @@ namespace Urho3D {
     void NewtonConstraint::RegisterObject(Context* context)
     {
         context->RegisterFactory<NewtonConstraint>(DEF_PHYSICS_CATEGORY.CString());
+        URHO3D_COPY_BASE_ATTRIBUTES(Component);
+
+        URHO3D_ACCESSOR_ATTRIBUTE("Other Body ID", GetOtherBodyId, SetOtherBodyById, unsigned, 0, AM_DEFAULT | AM_COMPONENTID);
+        URHO3D_ACCESSOR_ATTRIBUTE("Other Body Position", GetOtherPosition, SetOtherPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Other Body Rotation", GetOtherRotation, SetOtherRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
+
+
     }
 
     void NewtonConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
-        if (!ownBody_ || !otherBody_)
-            return;
-
-        debug->AddLine(ownBody_->GetCenterOfMassPosition(), otherBody_->GetCenterOfMassPosition(), Color::BLUE, false);
+        if (ownBody_ && otherBody_) {
+            debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), otherBody_->GetNode()->LocalToWorld(otherPosition_), Color::BLUE, false);
+            
+        }
     }
 
     void NewtonConstraint::SetDisableCollision(bool disable)
@@ -45,14 +52,27 @@ namespace Urho3D {
 
 
             otherBody_ = body;
-            if (otherBody_ != nullptr) {
-                AddJointReferenceToBody(otherBody_);
-                otherBody_->GetNode()->AddListener(this);
+            if (body != nullptr) {
+                AddJointReferenceToBody(body);
+                body->GetNode()->AddListener(this);
             }
+
+            if (body == nullptr)
+                otherBodyId_ = 0;
+            else
+                otherBodyId_ = body->GetID();
+
             MarkDirty();
         }
     }
 
+
+    void NewtonConstraint::SetOtherBodyById(unsigned bodyId)
+    {
+        otherBodyId_ = bodyId;
+        //resolve to body later.
+        MarkDirty();
+    }
 
     void NewtonConstraint::SetPosition(const Vector3& position)
     {
@@ -63,14 +83,14 @@ namespace Urho3D {
 
     void NewtonConstraint::SetRotation(const Quaternion& rotation)
     {
-        rotation_ = rotation_;
+        rotation_ = rotation;
         MarkDirty();
     }
 
 
     void NewtonConstraint::SetOtherPosition(const Vector3& position)
     {
-        otherPosition_ = position_;
+        otherPosition_ = position;
         MarkDirty();
     }
 
@@ -89,6 +109,10 @@ namespace Urho3D {
 
     void NewtonConstraint::reEvalConstraint()
     {
+        //resolve other body id to component
+        otherBody_ = static_cast<NewtonRigidBody*>(GetScene()->GetComponent(otherBodyId_));
+
+
         if (!IsEnabledEffective()) {
             freeInternal();
         }
@@ -148,6 +172,7 @@ namespace Urho3D {
             NewtonRigidBody* rigBody = node->GetComponent<NewtonRigidBody>();
             if (rigBody) {
                 ownBody_ = rigBody;
+                ownBodyId_ = ownBody_->GetID();
             }
            
             if(physicsWorld_)
