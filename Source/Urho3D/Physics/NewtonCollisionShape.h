@@ -10,7 +10,7 @@ namespace Urho3D
 
     class NewtonNodePhysicsGlue;
     class UrhoNewtonPhysicsWorld;
-    class NewtonRigidBody;
+    class RigidBody;
     class NewtonMeshObject;
     class NewtonPhysicsMaterial;
     class Component;
@@ -23,7 +23,7 @@ namespace Urho3D
     public:
 
         friend class UrhoNewtonPhysicsWorld;
-        friend class NewtonRigidBody;
+        friend class RigidBody;
 
         NewtonCollisionShape(Context* context);
 

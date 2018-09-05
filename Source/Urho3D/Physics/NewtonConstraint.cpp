@@ -1,5 +1,5 @@
 #include "NewtonConstraint.h"
-#include "NewtonRigidBody.h"
+#include "RigidBody.h"
 #include "UrhoNewtonPhysicsWorld.h"
 #include "Core/Context.h"
 #include "Scene/Component.h"
@@ -43,7 +43,7 @@ namespace Urho3D {
         MarkDirty();
     }
 
-    void NewtonConstraint::SetOtherBody(NewtonRigidBody* body)
+    void NewtonConstraint::SetOtherBody(RigidBody* body)
     {
         if (otherBody_ != body) {
 
@@ -110,7 +110,7 @@ namespace Urho3D {
     void NewtonConstraint::reEvalConstraint()
     {
         //resolve other body id to component
-        otherBody_ = static_cast<NewtonRigidBody*>(GetScene()->GetComponent(otherBodyId_));
+        otherBody_ = static_cast<RigidBody*>(GetScene()->GetComponent(otherBodyId_));
 
 
         if (!IsEnabledEffective()) {
@@ -145,7 +145,7 @@ namespace Urho3D {
 
 
 
-    void NewtonConstraint::AddJointReferenceToBody(NewtonRigidBody* rigBody)
+    void NewtonConstraint::AddJointReferenceToBody(RigidBody* rigBody)
     {
 
         if (!rigBody->connectedConstraints_.Contains(this))
@@ -154,7 +154,7 @@ namespace Urho3D {
     }
 
 
-    void NewtonConstraint::RemoveJointReferenceFromBody(NewtonRigidBody* rigBody)
+    void NewtonConstraint::RemoveJointReferenceFromBody(RigidBody* rigBody)
     {
 
         if (rigBody->connectedConstraints_.Contains(this))
@@ -169,7 +169,7 @@ namespace Urho3D {
             //auto create physics world similar to rigid body.
             physicsWorld_ = node->GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>();
 
-            NewtonRigidBody* rigBody = node->GetComponent<NewtonRigidBody>();
+            RigidBody* rigBody = node->GetComponent<RigidBody>();
             if (rigBody) {
                 ownBody_ = rigBody;
                 ownBodyId_ = ownBody_->GetID();

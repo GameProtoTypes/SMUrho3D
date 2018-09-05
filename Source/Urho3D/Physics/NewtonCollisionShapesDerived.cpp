@@ -1,6 +1,6 @@
 #include "NewtonCollisionShapesDerived.h"
 #include "UrhoNewtonPhysicsWorld.h"
-#include "NewtonRigidBody.h"
+#include "RigidBody.h"
 #include "NewtonMeshObject.h"
 #include "NewtonPhysicsMaterial.h"
 

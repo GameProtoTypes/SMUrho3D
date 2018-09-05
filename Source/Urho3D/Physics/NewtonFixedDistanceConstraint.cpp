@@ -3,7 +3,7 @@
 #include "Core/Context.h"
 #include "Newton.h"
 #include "dMatrix.h"
-#include "../Physics/NewtonRigidBody.h"
+#include "../Physics/RigidBody.h"
 #include "UrhoNewtonConversions.h"
 #include "dCustomFixDistance.h"
 #include "Scene/Component.h"

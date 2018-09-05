@@ -14,7 +14,7 @@ Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, f
         sphere1StMdl->SetModel(sphereMdl);
         sphere1StMdl->SetMaterial(sphereMat);
 
-        NewtonRigidBody* s1RigBody = sphere1->CreateComponent<NewtonRigidBody>();
+        RigidBody* s1RigBody = sphere1->CreateComponent<RigidBody>();
 
         NewtonCollisionShape_Sphere* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape_Sphere>();
 
@@ -41,7 +41,7 @@ Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition,
     sphere1StMdl->SetModel(sphereMdl);
     sphere1StMdl->SetMaterial(sphereMat);
 
-    NewtonRigidBody* s1RigBody = sphere1->CreateComponent<NewtonRigidBody>();
+    RigidBody* s1RigBody = sphere1->CreateComponent<RigidBody>();
 
     NewtonCollisionShape_Cylinder* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape_Cylinder>();
 
@@ -71,7 +71,7 @@ Node* SpawnSamplePhysicsBox(Node* parentNode, const Vector3& worldPosition, cons
     sphere1StMdl->SetMaterial(sphereMat);
 
 
-    NewtonRigidBody* s1RigBody = box->CreateComponent<NewtonRigidBody>();
+    RigidBody* s1RigBody = box->CreateComponent<RigidBody>();
 
     NewtonCollisionShape_Box* s1ColShape = box->CreateComponent<NewtonCollisionShape_Box>();
 

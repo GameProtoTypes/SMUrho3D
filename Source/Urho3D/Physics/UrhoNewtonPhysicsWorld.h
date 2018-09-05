@@ -12,7 +12,7 @@ namespace Urho3D
 {
     class Component;
     class NewtonCollisionShape;
-    class NewtonRigidBody;
+    class RigidBody;
     class NewtonConstraint;
     class NewtonPhysicsMaterial;
     class NewtonPhysicsMaterialContactPair;
@@ -33,7 +33,7 @@ namespace Urho3D
         friend class NewtonCollisionShape_Geometry;
         friend class NewtonCollisionShape_ConvexDecompositionCompound;
         friend class NewtonCollisionShape_SceneCollision;
-        friend class NewtonRigidBody;
+        friend class RigidBody;
         friend class NewtonConstraint;
 
         /// Construct.
@@ -59,11 +59,11 @@ namespace Urho3D
 
 
         /// Return rigid bodies by a sphere query.
-        void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const Sphere& sphere, unsigned collisionMask = M_MAX_UNSIGNED);
+        void GetRigidBodies(PODVector<RigidBody*>& result, const Sphere& sphere, unsigned collisionMask = M_MAX_UNSIGNED);
         /// Return rigid bodies by a box query.
-        void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const BoundingBox& box, unsigned collisionMask = M_MAX_UNSIGNED);
+        void GetRigidBodies(PODVector<RigidBody*>& result, const BoundingBox& box, unsigned collisionMask = M_MAX_UNSIGNED);
         /// Return rigid bodies by contact test with the specified body.
-        void GetRigidBodies(PODVector<NewtonRigidBody*>& result, const NewtonRigidBody* body);
+        void GetRigidBodies(PODVector<RigidBody*>& result, const RigidBody* body);
 
 
 
@@ -111,8 +111,8 @@ namespace Urho3D
         void addCollisionShape(NewtonCollisionShape* collision);
         void removeCollisionShape(NewtonCollisionShape* collision);
 
-        void addRigidBody(NewtonRigidBody* body);
-        void removeRigidBody(NewtonRigidBody* body);
+        void addRigidBody(RigidBody* body);
+        void removeRigidBody(RigidBody* body);
 
         void addConstraint(NewtonConstraint* constraint);
         void removeConstraint(NewtonConstraint* constraint);
@@ -122,7 +122,7 @@ namespace Urho3D
         void computeMaterialPairs();
 
         Vector<WeakPtr<NewtonCollisionShape>> collisionComponentList;
-        Vector<WeakPtr<NewtonRigidBody>> rigidBodyComponentList;
+        Vector<WeakPtr<RigidBody>> rigidBodyComponentList;
         Vector<WeakPtr<NewtonConstraint>> constraintList;
         Vector<SharedPtr<NewtonPhysicsMaterial>> physMaterialList;
         Vector<SharedPtr<NewtonPhysicsMaterialContactPair>> physMaterialPairList;
@@ -151,13 +151,13 @@ namespace Urho3D
         /// Internal newton world
         NewtonWorld* newtonWorld_ = nullptr;
 
-        NewtonRigidBody* sceneBody_ = nullptr;
+        RigidBody* sceneBody_ = nullptr;
 
         ///convex casts
         static const int convexCastRetInfoSize_ = 1000;
         NewtonWorldConvexCastReturnInfo convexCastRetInfoArray[convexCastRetInfoSize_];
         int DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape);
-        void GetBodiesInConvexCast(PODVector<NewtonRigidBody*>& result, int numContacts);
+        void GetBodiesInConvexCast(PODVector<RigidBody*>& result, int numContacts);
 
         ///newton mesh caching
         HashMap<StringHash, SharedPtr<NewtonMeshObject>> newtonMeshCache_;
@@ -186,7 +186,7 @@ private:
     void Newton_ProcessContactsCallback(const NewtonJoint* contactJoint, dFloat timestep, int threadIndex);
     int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex);
 
-    void GetRootRigidBodies(PODVector<NewtonRigidBody*>& rigidBodies, Node* node, bool includeScene);
+    void GetRootRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node, bool includeScene);
     void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
 
     void OnPhysicsNodeAdded(Node* node);

@@ -38,7 +38,7 @@
 #include <Urho3D/Physics/NewtonCollisionShape.h>
 #include <Urho3D/Physics/NewtonCollisionShapesDerived.h>
 #include "Urho3D/Physics/UrhoNewtonPhysicsWorld.h"
-#include <Urho3D/Physics/NewtonRigidBody.h>
+#include <Urho3D/Physics/RigidBody.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/UI/Font.h>
@@ -271,7 +271,7 @@ void Physics::MoveCamera(float timeStep)
         RayQueryResult res = GetCameraPickNode();
         if (res.node_)
         {
-            NewtonRigidBody* rigBody = res.node_->GetComponent<NewtonRigidBody>();
+            RigidBody* rigBody = res.node_->GetComponent<RigidBody>();
             if (rigBody)
             {
                 float mass = rigBody->GetEffectiveMass();
@@ -314,11 +314,11 @@ void Physics::MoveCamera(float timeStep)
     {
         //mark all physics things dirty
         PODVector<Node*> nodes;
-        scene_->GetChildrenWithComponent<NewtonRigidBody>(nodes, true);
+        scene_->GetChildrenWithComponent<RigidBody>(nodes, true);
 
         for (Node* node : nodes)
         {
-            node->GetComponent<NewtonRigidBody>()->MarkDirty();
+            node->GetComponent<RigidBody>()->MarkDirty();
         }
         nodes.Clear();
         scene_->GetChildrenWithDerivedComponent<NewtonCollisionShape>(nodes, true);
@@ -389,7 +389,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml"));
         stMdl->SetCastShadows(true);
         //if (i == 0) {
-            NewtonRigidBody* rigBody = curNode->CreateComponent<NewtonRigidBody>();
+            RigidBody* rigBody = curNode->CreateComponent<RigidBody>();
             rigBody->SetMassScale(1.0f);
         //}
         NewtonCollisionShape* colShape = curNode->CreateComponent<NewtonCollisionShape_Cone>();
@@ -432,7 +432,7 @@ void Physics::SpawnObject()
 
 
          // Create physics components, use a smaller mass also
-         auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+         auto* body = boxNode->CreateComponent<RigidBody>();
          body->SetMassScale(0.1f);
         
         
@@ -443,7 +443,7 @@ void Physics::SpawnObject()
 
         const float OBJECT_VELOCITY = 20.0f;
 
-        // Set initial velocity for the NewtonRigidBody based on camera forward vector. Add also a slight up component
+        // Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
         // to overcome gravity better
        // body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
 
@@ -488,7 +488,7 @@ void Physics::CreateTowerOfLiar(Vector3 position)
         curPosition = curPosition + Vector3(delta - delta*fudgeFactor, thickness, 0);
 
         Node* box = SpawnSamplePhysicsBox(scene_, curPosition, Vector3(length, thickness, width));
-        //box->GetComponent<NewtonRigidBody>()->SetAutoSleep(false);
+        //box->GetComponent<RigidBody>()->SetAutoSleep(false);
 
   
     }
@@ -519,7 +519,7 @@ void Physics::SpawnConvexHull(const Vector3& worldPos)
 
 
     // Create physics components, use a smaller mass also
-    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    auto* body = boxNode->CreateComponent<RigidBody>();
     body->SetMassScale(1.0f);
 
     auto* shape = boxNode->CreateComponent<NewtonCollisionShape_ConvexHull>();
@@ -546,7 +546,7 @@ void Physics::SpawnCompound(const Vector3& worldPos)
 
 
     // Create physics components, use a smaller mass also
-    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    auto* body = boxNode->CreateComponent<RigidBody>();
     body->SetMassScale(1.0f);
 
     auto* shape = boxNode->CreateComponent<NewtonCollisionShape_ConvexHullCompound>();
@@ -573,7 +573,7 @@ void Physics::SpawnDecompCompound(const Vector3& worldPos)
 
 
     // Create physics components, use a smaller mass also
-    auto* body = boxNode->CreateComponent<NewtonRigidBody>();
+    auto* body = boxNode->CreateComponent<RigidBody>();
     body->SetMassScale(1.0f);
 
     auto* shape = boxNode->CreateComponent<NewtonCollisionShape_ConvexDecompositionCompound>();
@@ -603,7 +603,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
                 continue;
 
             NewtonFixedDistanceConstraint* constraint = node->CreateComponent<NewtonFixedDistanceConstraint>();
-            constraint->SetOtherBody(node2->GetComponent<NewtonRigidBody>());
+            constraint->SetOtherBody(node2->GetComponent<RigidBody>());
             constraint->SetOtherPosition(Vector3(0.2f, 0, 0));
         }
     }
@@ -625,7 +625,7 @@ void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
 
         if (i > 0) {
             NewtonFixedDistanceConstraint* constraint = nodes[i - 1]->CreateComponent<NewtonFixedDistanceConstraint>();
-            constraint->SetOtherBody(nodes[i]->GetComponent<NewtonRigidBody>());
+            constraint->SetOtherBody(nodes[i]->GetComponent<RigidBody>());
         }
     }
 }
@@ -638,7 +638,7 @@ void Physics::SpawnMaterialsTest(Vector3 worldPosition)
     Node* ramp = SpawnSamplePhysicsBox(scene_, worldPosition, Vector3(100, 1, 100));
     ramp->Rotate(Quaternion(-45.0f, 0, 0));
     ramp->Translate(Vector3(0, 50, 0), TS_WORLD);
-    ramp->GetComponent<NewtonRigidBody>()->SetMassScale(0);
+    ramp->GetComponent<RigidBody>()->SetMassScale(0);
 
 
     for (int i = 0; i < 5; i++)
@@ -667,9 +667,9 @@ void Physics::SpawnBallSocketTest(Vector3 worldPosition)
 
     Node* sphere1 =  SpawnSamplePhysicsSphere(scene_, worldPosition);
     Node* sphere2 = SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,-2.0, 0));
-   // sphere1->GetComponent<NewtonRigidBody>()->SetMassScale(0);
+   // sphere1->GetComponent<RigidBody>()->SetMassScale(0);
     NewtonBallAndSocketConstraint* constraint = sphere1->CreateComponent<NewtonBallAndSocketConstraint>();
-    constraint->SetOtherBody(sphere2->GetComponent<NewtonRigidBody>());
+    constraint->SetOtherBody(sphere2->GetComponent<RigidBody>());
 
 
 
@@ -695,21 +695,21 @@ void Physics::FireSmallBall()
             node = SpawnSamplePhysicsCylinder(scene_, cameraNode_->GetWorldPosition() + posOffset, Sqrt(2));
 
 
-        node->GetComponent<NewtonRigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 10.0f);
-        node->GetComponent<NewtonRigidBody>()->SetContinuousCollision(false);
-        node->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.01f);
-        node->GetComponent<NewtonRigidBody>()->SetMassScale(Random(1.0f, 10.0f));
+        node->GetComponent<RigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 10.0f);
+        node->GetComponent<RigidBody>()->SetContinuousCollision(false);
+        node->GetComponent<RigidBody>()->SetLinearDamping(0.01f);
+        node->GetComponent<RigidBody>()->SetMassScale(Random(1.0f, 10.0f));
     }
 
     //if (Random(2) == 0)
     //{
     //    sphere->AddTag("bulletball_linearDamp");
-    //    sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0.5);
+    //    sphere->GetComponent<RigidBody>()->SetLinearDamping(0.5);
     //}
     //else
     //{
     //    sphere->AddTag("bulletball_customDamp");
-    //    sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0);
+    //    sphere->GetComponent<RigidBody>()->SetLinearDamping(0);
 
     //}
 }
@@ -735,7 +735,7 @@ void Physics::SpawnCompoundedRectTest(Vector3 worldPosition)
     sphere1StMdl->SetMaterial(sphereMat);
 
     compoundRootRect->SetWorldPosition(worldPosition + Vector3(2, 0, 0));
-    compoundRootRect->CreateComponent<NewtonRigidBody>();
+    compoundRootRect->CreateComponent<RigidBody>();
     NewtonCollisionShape_Box* box1 = compoundRootRect->CreateComponent<NewtonCollisionShape_Box>();
     NewtonCollisionShape_Box* box2 = compoundRootRect->CreateComponent<NewtonCollisionShape_Box>();
     box1->SetPositionOffset(Vector3(0, 0, 1));
@@ -784,13 +784,13 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     if (bulletBalls.Size()) {
         Node* bulletBall = bulletBalls[0];
 
-        Vector3 vel = bulletBall->GetComponent<NewtonRigidBody>()->GetLinearVelocity();
+        Vector3 vel = bulletBall->GetComponent<RigidBody>()->GetLinearVelocity();
 
             Vector3 dragForce = -vel.Normalized()*(vel.LengthSquared())*0.005f;
 
 
-            bulletBall->GetComponent<NewtonRigidBody>()->ResetForces();
-            bulletBall->GetComponent<NewtonRigidBody>()->AddWorldForce(dragForce);
+            bulletBall->GetComponent<RigidBody>()->ResetForces();
+            bulletBall->GetComponent<RigidBody>()->AddWorldForce(dragForce);
 
 
         float sampleCountFactor = ((1000.0 / 60.0) / (GSS<Engine>()->GetUpdateTimeGoalMs()));
@@ -810,9 +810,9 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     //for (Node* node : dest)
     //{
     //    URHO3D_LOGINFO(node->GetName());
-    //    if (node->HasComponent<NewtonRigidBody>())
+    //    if (node->HasComponent<RigidBody>())
     //    {
-    //        NewtonRigidBody* rigBody = node->GetComponent<NewtonRigidBody>();
+    //        RigidBody* rigBody = node->GetComponent<RigidBody>();
     //        URHO3D_LOGINFO("    Rigid Body: " + String((unsigned)(void*)rigBody->GetNewtonBody()));
     //        if (rigBody->GetNewtonBody())
     //        {
@@ -928,10 +928,10 @@ void Physics::CreateScenery(Vector3 worldPosition)
     floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-    // Make the floor physical by adding NewtonRigidBody and NewtonCollisionShape components. The NewtonRigidBody's default
+    // Make the floor physical by adding RigidBody and NewtonCollisionShape components. The RigidBody's default
     // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
     // in the physics simulation
-    NewtonRigidBody* body = floorNode->CreateComponent<NewtonRigidBody>();
+    RigidBody* body = floorNode->CreateComponent<RigidBody>();
     body->SetMassScale(0.0f);
     auto* shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
     //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
@@ -1030,7 +1030,7 @@ void Physics::CreatePickTargetNodeOnPhysics()
     if (res.node_) {
         if (res.node_->GetName() == "Floor")
             return;
-        if (!res.node_->HasComponent<NewtonRigidBody>())
+        if (!res.node_->HasComponent<RigidBody>())
             return;
 
         //remember the node
@@ -1071,7 +1071,7 @@ void Physics::ReleasePickTargetOnPhysics()
     if (pickPullNode)
     {
         pickPullNode->RemoveChild(pickPullNode->GetChild("PickPullSurfaceNode"));
-        NewtonRigidBody* rigBody = pickPullNode->GetComponent<NewtonRigidBody>();
+        RigidBody* rigBody = pickPullNode->GetComponent<RigidBody>();
         if (rigBody)
         {
             rigBody->ResetForces();
@@ -1101,7 +1101,7 @@ void Physics::UpdatePickPull()
 
 
 
-    NewtonRigidBody* rigBody = pickPullNode->GetComponent<NewtonRigidBody>();
+    RigidBody* rigBody = pickPullNode->GetComponent<RigidBody>();
 
     Vector3 delta = (pickTarget->GetWorldPosition() - pickSource->GetWorldPosition());
 

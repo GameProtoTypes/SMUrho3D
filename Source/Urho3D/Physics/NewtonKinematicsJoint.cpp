@@ -3,7 +3,7 @@
 #include "Core/Context.h"
 #include "NewtonConstraint.h"
 #include "dCustomKinematicController.h"
-#include "NewtonRigidBody.h"
+#include "RigidBody.h"
 #include "UrhoNewtonConversions.h"
 #include "Graphics/DebugRenderer.h"
 

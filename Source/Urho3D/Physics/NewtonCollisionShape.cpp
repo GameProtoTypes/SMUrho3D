@@ -1,7 +1,7 @@
 
 #include "NewtonCollisionShape.h"
 #include "UrhoNewtonPhysicsWorld.h"
-#include "NewtonRigidBody.h"
+#include "RigidBody.h"
 #include "NewtonMeshObject.h"
 #include "NewtonPhysicsMaterial.h"
 
@@ -122,7 +122,7 @@ namespace Urho3D {
 
     void NewtonCollisionShape::MarkRigidBodyDirty()
     {
-        PODVector<NewtonRigidBody*> rootRigidBodies;
+        PODVector<RigidBody*> rootRigidBodies;
         GetRootRigidBodies(rootRigidBodies, node_, true);
         if (rootRigidBodies.Size() > 1)
             rootRigidBodies[rootRigidBodies.Size() - 2]->MarkDirty(true);

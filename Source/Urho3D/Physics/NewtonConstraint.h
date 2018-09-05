@@ -6,7 +6,7 @@ class dCustomJoint;
 namespace Urho3D {
 
     class Context;
-    class NewtonRigidBody;
+    class RigidBody;
     class UrhoNewtonPhysicsWorld;
 
     ///Base class for newton constraints.
@@ -18,7 +18,7 @@ namespace Urho3D {
     public:
 
         friend class UrhoNewtonPhysicsWorld;
-        friend class NewtonRigidBody;
+        friend class RigidBody;
         /// Construct.
         NewtonConstraint(Context* context);
         /// Destruct. Free the rigid body and geometries.
@@ -35,7 +35,7 @@ namespace Urho3D {
         void SetDisableCollision(bool disable);
 
         /// Set other body to connect to. Set to null to connect to the static world.
-        void SetOtherBody(NewtonRigidBody* body);
+        void SetOtherBody(RigidBody* body);
 
         void SetOtherBodyById(unsigned bodyId);
 
@@ -57,10 +57,10 @@ namespace Urho3D {
         UrhoNewtonPhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
 
         /// Return rigid body in own scene node.
-        NewtonRigidBody* GetOwnBody() const { return ownBody_; }
+        RigidBody* GetOwnBody() const { return ownBody_; }
 
         /// Return the other rigid body. May be null if connected to the static world.
-        NewtonRigidBody* GetOtherBody() const { return otherBody_; }
+        RigidBody* GetOtherBody() const { return otherBody_; }
 
         unsigned GetOtherBodyId() const { return otherBodyId_; }
 
@@ -81,10 +81,10 @@ namespace Urho3D {
         /// Physics world.
         WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
         /// Own rigid body.
-        WeakPtr<NewtonRigidBody> ownBody_;
+        WeakPtr<RigidBody> ownBody_;
         unsigned ownBodyId_ = 0;
         /// Other rigid body.
-        WeakPtr<NewtonRigidBody> otherBody_;
+        WeakPtr<RigidBody> otherBody_;
         unsigned otherBodyId_ = 0;
         /// Internal newtonJoint.
         dCustomJoint* newtonJoint_ = nullptr;
@@ -110,8 +110,8 @@ namespace Urho3D {
         /// frees and deletes the internal joint.
         void freeInternal();
 
-        void AddJointReferenceToBody(NewtonRigidBody* rigBody);
-        void RemoveJointReferenceFromBody(NewtonRigidBody* rigBody);
+        void AddJointReferenceToBody(RigidBody* rigBody);
+        void RemoveJointReferenceFromBody(RigidBody* rigBody);
 
 
 
