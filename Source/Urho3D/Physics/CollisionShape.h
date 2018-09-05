@@ -9,7 +9,7 @@ namespace Urho3D
 
 
     class NewtonNodePhysicsGlue;
-    class UrhoNewtonPhysicsWorld;
+    class PhysicsWorld;
     class RigidBody;
     class NewtonMeshObject;
     class NewtonPhysicsMaterial;
@@ -17,17 +17,17 @@ namespace Urho3D
     class Model;
 
     /// base component for attaching collision shapes to nodes.
-    class URHO3D_API NewtonCollisionShape : public Component
+    class URHO3D_API CollisionShape : public Component
     {
-        URHO3D_OBJECT(NewtonCollisionShape, Component);
+        URHO3D_OBJECT(CollisionShape, Component);
     public:
 
-        friend class UrhoNewtonPhysicsWorld;
+        friend class PhysicsWorld;
         friend class RigidBody;
 
-        NewtonCollisionShape(Context* context);
+        CollisionShape(Context* context);
 
-        virtual ~NewtonCollisionShape();
+        virtual ~CollisionShape();
 
         static void RegisterObject(Context* context);
 
@@ -72,7 +72,7 @@ namespace Urho3D
     protected:
 
         /// Physics world.
-        WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
+        WeakPtr<PhysicsWorld> physicsWorld_;
 
         /// Internal Newton Collision
         NewtonCollision* newtonCollision_ = nullptr;

@@ -43,7 +43,7 @@
 #include "../Navigation/Obstacle.h"
 #include "../Navigation/OffMeshConnection.h"
 #ifdef URHO3D_PHYSICS
-#include "../Physics/NewtonCollisionShape.h"
+#include "../Physics/CollisionShape.h"
 #endif
 #include "../Scene/Scene.h"
 
@@ -54,7 +54,7 @@
 #include <Recast/Recast.h>
 
 #include "../DebugNew.h"
-#include "Physics/NewtonCollisionShape.h"
+#include "Physics/CollisionShape.h"
 
 namespace Urho3D
 {

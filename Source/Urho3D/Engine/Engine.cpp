@@ -54,7 +54,7 @@
 #include "../Network/Network.h"
 #endif
 #ifdef URHO3D_PHYSICS
-#include "Physics/UrhoNewtonPhysicsWorld.h"
+#include "Physics/PhysicsWorld.h"
 #endif
 #include "../Resource/ResourceCache.h"
 #include "../Resource/Localization.h"

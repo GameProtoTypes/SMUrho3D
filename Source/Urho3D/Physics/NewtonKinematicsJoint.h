@@ -1,5 +1,5 @@
 #pragma once
-#include "NewtonConstraint.h"
+#include "Constraint.h"
 
 
 
@@ -8,14 +8,14 @@ namespace Urho3D {
     class Context;
 
     ///Contraint for moving rigid bodies to a target position and orientation.
-    class URHO3D_API NewtonKinematicsControllerConstraint : public NewtonConstraint
+    class URHO3D_API KinematicsControllerConstraint : public Constraint
     {
-        URHO3D_OBJECT(NewtonKinematicsControllerConstraint, NewtonConstraint);
+        URHO3D_OBJECT(KinematicsControllerConstraint, Constraint);
 
     public:
 
-        NewtonKinematicsControllerConstraint(Context* context);
-        ~NewtonKinematicsControllerConstraint();
+        KinematicsControllerConstraint(Context* context);
+        ~KinematicsControllerConstraint();
 
         static void RegisterObject(Context* context);
 

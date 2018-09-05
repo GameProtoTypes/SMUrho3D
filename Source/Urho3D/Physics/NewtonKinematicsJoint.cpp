@@ -1,7 +1,7 @@
 #include "NewtonKinematicsJoint.h"
-#include "UrhoNewtonPhysicsWorld.h"
+#include "PhysicsWorld.h"
 #include "Core/Context.h"
-#include "NewtonConstraint.h"
+#include "Constraint.h"
 #include "dCustomKinematicController.h"
 #include "RigidBody.h"
 #include "UrhoNewtonConversions.h"
@@ -14,22 +14,22 @@ namespace Urho3D {
 
 
 
-    NewtonKinematicsControllerConstraint::NewtonKinematicsControllerConstraint(Context* context) : NewtonConstraint(context)
+    KinematicsControllerConstraint::KinematicsControllerConstraint(Context* context) : Constraint(context)
     {
 
     }
 
-    NewtonKinematicsControllerConstraint::~NewtonKinematicsControllerConstraint()
+    KinematicsControllerConstraint::~KinematicsControllerConstraint()
     {
 
     }
 
-    void NewtonKinematicsControllerConstraint::RegisterObject(Context* context)
+    void KinematicsControllerConstraint::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonKinematicsControllerConstraint>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<KinematicsControllerConstraint>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonKinematicsControllerConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    void KinematicsControllerConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         if (!ownBody_)
             return;
@@ -40,7 +40,7 @@ namespace Urho3D {
         debug->AddLine(ownBody_->GetCenterOfMassPosition(), currentTargetPos_, Color::GRAY, false);
     }
 
-    void NewtonKinematicsControllerConstraint::SetLinearFrictionalAcceleration(float friction)
+    void KinematicsControllerConstraint::SetLinearFrictionalAcceleration(float friction)
     {
         if (linearFrictionalAcceleration != friction) {
             linearFrictionalAcceleration = friction;
@@ -49,7 +49,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonKinematicsControllerConstraint::SetAngularFrictionalAcceleration(float friction)
+    void KinematicsControllerConstraint::SetAngularFrictionalAcceleration(float friction)
     {
         if (angularFrictionalAcceleration != friction) {
             angularFrictionalAcceleration = friction;
@@ -58,7 +58,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonKinematicsControllerConstraint::SetConstrainRotation(bool enable)
+    void KinematicsControllerConstraint::SetConstrainRotation(bool enable)
     {
         if (constrainRotation_ != enable)
         {
@@ -68,7 +68,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonKinematicsControllerConstraint::SetLimitRotationalVelocity(bool enable)
+    void KinematicsControllerConstraint::SetLimitRotationalVelocity(bool enable)
     {
         if (limitRotationalVelocity_ != enable)
         {
@@ -78,19 +78,19 @@ namespace Urho3D {
         }
     }
 
-    void NewtonKinematicsControllerConstraint::SetTargetPosition(Vector3 worldPos)
+    void KinematicsControllerConstraint::SetTargetPosition(Vector3 worldPos)
     {
         currentTargetPos_ = worldPos;
         updateTarget();
     }
 
-    void NewtonKinematicsControllerConstraint::SetTargetRotation(Quaternion worldOrientation)
+    void KinematicsControllerConstraint::SetTargetRotation(Quaternion worldOrientation)
     {
         currentTargetRotation_ = worldOrientation;
         updateTarget();
     }
 
-    void NewtonKinematicsControllerConstraint::buildConstraint()
+    void KinematicsControllerConstraint::buildConstraint()
     {
         //get own body transform.
         dMatrix matrix0;
@@ -106,7 +106,7 @@ namespace Urho3D {
         updateTarget();
     }
 
-    void NewtonKinematicsControllerConstraint::updateTarget()
+    void KinematicsControllerConstraint::updateTarget()
     {
         if (newtonJoint_) {
 
@@ -115,7 +115,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonKinematicsControllerConstraint::updateFrictions()
+    void KinematicsControllerConstraint::updateFrictions()
     {
 
         dFloat Ixx;

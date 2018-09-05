@@ -1,7 +1,7 @@
-#include "UrhoNewtonPhysicsWorld.h"
+#include "PhysicsWorld.h"
 #include "IO/Log.h"
-#include "NewtonCollisionShape.h"
-#include "NewtonCollisionShapesDerived.h"
+#include "CollisionShape.h"
+#include "CollisionShapesDerived.h"
 #include "RigidBody.h"
 #include "dMatrix.h"
 #include "Core/Context.h"
@@ -18,13 +18,13 @@
 #include "Newton.h"
 #include "NewtonMeshObject.h"
 #include "Core/Thread.h"
-#include "NewtonConstraint.h"
-#include "NewtonFixedDistanceConstraint.h"
+#include "Constraint.h"
+#include "FixedDistanceConstraint.h"
 #include "Core/Profiler.h"
 #include "PhysicsEvents.h"
 #include "Graphics/VisualDebugger.h"
 #include "NewtonPhysicsMaterial.h"
-#include "NewtonBallAndSocketConstraint.h"
+#include "BallAndSocketConstraint.h"
 #include "NewtonKinematicsJoint.h"
 #include "NewtonDebugDrawing.h"
 #include "dgMatrix.h"
@@ -35,25 +35,25 @@ namespace Urho3D {
 
     static const Vector3 DEFAULT_GRAVITY = Vector3(0.0f, -9.81f, 0.0f);
 
-    UrhoNewtonPhysicsWorld::UrhoNewtonPhysicsWorld(Context* context) : Component(context)
+    PhysicsWorld::PhysicsWorld(Context* context) : Component(context)
     {
-        SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(UrhoNewtonPhysicsWorld, HandleUpdate));
+        SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleUpdate));
 
     }
 
-    UrhoNewtonPhysicsWorld::~UrhoNewtonPhysicsWorld()
+    PhysicsWorld::~PhysicsWorld()
     {
     }
 
-    void UrhoNewtonPhysicsWorld::RegisterObject(Context* context)
+    void PhysicsWorld::RegisterObject(Context* context)
     {
-        context->RegisterFactory<UrhoNewtonPhysicsWorld>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<PhysicsWorld>(DEF_PHYSICS_CATEGORY.CString());
     }
 
 
 
 
-    void UrhoNewtonPhysicsWorld::SerializeNewtonWorld(String fileName)
+    void PhysicsWorld::SerializeNewtonWorld(String fileName)
     {
         NewtonSerializeToFile(newtonWorld_, fileName.CString(), nullptr, nullptr);
     }
@@ -61,13 +61,13 @@ namespace Urho3D {
 
 
     
-    String UrhoNewtonPhysicsWorld::GetSolverPluginName()
+    String PhysicsWorld::GetSolverPluginName()
     {
         void* plugin = NewtonCurrentPlugin(newtonWorld_);
         return String(NewtonGetPluginString(newtonWorld_, plugin));
     }
 
-    void UrhoNewtonPhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const Sphere& sphere, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
+    void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const Sphere& sphere, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
     {
 
         Matrix3x4 mat;
@@ -81,7 +81,7 @@ namespace Urho3D {
         NewtonDestroyCollision(newtonShape);
     }
 
-    void UrhoNewtonPhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const BoundingBox& box, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
+    void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const BoundingBox& box, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
     {
         Matrix3x4 mat;
         mat.SetTranslation(box.Center());
@@ -95,7 +95,7 @@ namespace Urho3D {
     }
 
 
-    void UrhoNewtonPhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const RigidBody* body)
+    void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const RigidBody* body)
     {
         dMatrix mat;
         NewtonBodyGetMatrix(body->GetNewtonBody(), &mat[0][0]);
@@ -107,58 +107,58 @@ namespace Urho3D {
 
 
 
-    void UrhoNewtonPhysicsWorld::SetGravity(const Vector3& force)
+    void PhysicsWorld::SetGravity(const Vector3& force)
     {
         gravity_ = force;
     }
 
 
-    Urho3D::Vector3 UrhoNewtonPhysicsWorld::GetGravity()
+    Urho3D::Vector3 PhysicsWorld::GetGravity()
 {
         return gravity_;
     }
 
-    void UrhoNewtonPhysicsWorld::SetIterationCount(int numIterations /*= 8*/)
+    void PhysicsWorld::SetIterationCount(int numIterations /*= 8*/)
     {
         iterationCount_ = numIterations;
         applyNewtonWorldSettings();
     }
 
 
-    int UrhoNewtonPhysicsWorld::GetIterationCount() const
+    int PhysicsWorld::GetIterationCount() const
     {
         return iterationCount_;
     }
 
-    void UrhoNewtonPhysicsWorld::SetSubstepCount(int numSubsteps)
+    void PhysicsWorld::SetSubstepCount(int numSubsteps)
     {
         numSubsteps_ = numSubsteps;
         applyNewtonWorldSettings();
     }
 
-    int UrhoNewtonPhysicsWorld::GetSubstepCount() const
+    int PhysicsWorld::GetSubstepCount() const
     {
         return numSubsteps_;
     }
 
-    void UrhoNewtonPhysicsWorld::SetThreadCount(int numThreads)
+    void PhysicsWorld::SetThreadCount(int numThreads)
     {
         newtonThreadCount_ = numThreads;
         applyNewtonWorldSettings();
     }
 
-    int UrhoNewtonPhysicsWorld::GetThreadCount() const
+    int PhysicsWorld::GetThreadCount() const
     {
         return newtonThreadCount_;
     }
 
-    void UrhoNewtonPhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    void PhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         URHO3D_PROFILE_FUNCTION();
         if (debug)
         {
             //draw debug geometry on constraints.
-            for (NewtonConstraint* consttraint : constraintList)
+            for (Constraint* consttraint : constraintList)
             {
                 consttraint->DrawDebugGeometry(debug, depthTest);
             }
@@ -176,7 +176,7 @@ namespace Urho3D {
         }
     }
 
-    void UrhoNewtonPhysicsWorld::OnSceneSet(Scene* scene)
+    void PhysicsWorld::OnSceneSet(Scene* scene)
     {
         if (scene) {
             //create the newton world
@@ -198,37 +198,37 @@ namespace Urho3D {
         }
     }
 
-    void UrhoNewtonPhysicsWorld::addCollisionShape(NewtonCollisionShape* collision)
+    void PhysicsWorld::addCollisionShape(CollisionShape* collision)
     {
-        collisionComponentList.Insert(0, WeakPtr<NewtonCollisionShape>(collision));
+        collisionComponentList.Insert(0, WeakPtr<CollisionShape>(collision));
     }
 
-    void UrhoNewtonPhysicsWorld::removeCollisionShape(NewtonCollisionShape* collision)
+    void PhysicsWorld::removeCollisionShape(CollisionShape* collision)
     {
-        collisionComponentList.Remove(WeakPtr<NewtonCollisionShape>(collision));
+        collisionComponentList.Remove(WeakPtr<CollisionShape>(collision));
     }
 
-    void UrhoNewtonPhysicsWorld::addRigidBody(RigidBody* body)
+    void PhysicsWorld::addRigidBody(RigidBody* body)
     {
         rigidBodyComponentList.Insert(0, WeakPtr<RigidBody>(body));
     }
 
-    void UrhoNewtonPhysicsWorld::removeRigidBody(RigidBody* body)
+    void PhysicsWorld::removeRigidBody(RigidBody* body)
     {
         rigidBodyComponentList.Remove(WeakPtr<RigidBody>(body));
     }
 
-    void UrhoNewtonPhysicsWorld::addConstraint(NewtonConstraint* constraint)
+    void PhysicsWorld::addConstraint(Constraint* constraint)
     {
-        constraintList.Insert(0, WeakPtr<NewtonConstraint>(constraint));
+        constraintList.Insert(0, WeakPtr<Constraint>(constraint));
     }
 
-    void UrhoNewtonPhysicsWorld::removeConstraint(NewtonConstraint* constraint)
+    void PhysicsWorld::removeConstraint(Constraint* constraint)
     {
-        constraintList.Remove(WeakPtr<NewtonConstraint>(constraint));
+        constraintList.Remove(WeakPtr<Constraint>(constraint));
     }
 
-    void UrhoNewtonPhysicsWorld::addPhysicsMaterial(NewtonPhysicsMaterial* material)
+    void PhysicsWorld::addPhysicsMaterial(NewtonPhysicsMaterial* material)
     {
         if (physMaterialList.Contains(SharedPtr<NewtonPhysicsMaterial>(material)))
             return;
@@ -243,7 +243,7 @@ namespace Urho3D {
         }
     }
 
-    void UrhoNewtonPhysicsWorld::computeMaterialPairs()
+    void PhysicsWorld::computeMaterialPairs()
     {
         physMaterialPairList.Clear();
         for (NewtonPhysicsMaterial* mat1 : physMaterialList) {
@@ -255,21 +255,21 @@ namespace Urho3D {
         }
     }
 
-    void UrhoNewtonPhysicsWorld::freeWorld()
+    void PhysicsWorld::freeWorld()
     {
 
 
 
 
         //free any joints
-        for (NewtonConstraint* constraint : constraintList)
+        for (Constraint* constraint : constraintList)
         {
             constraint->freeInternal();
         }
         constraintList.Clear();
 
         //free any collision shapes currently in the list
-        for (NewtonCollisionShape* col : collisionComponentList)
+        for (CollisionShape* col : collisionComponentList)
         {
             col->freeInternalCollision();
         }
@@ -301,22 +301,22 @@ namespace Urho3D {
 
 
 
-    void UrhoNewtonPhysicsWorld::addToFreeQueue(NewtonBody* newtonBody)
+    void PhysicsWorld::addToFreeQueue(NewtonBody* newtonBody)
     {
         freeBodyQueue_ += newtonBody;
     }
 
-    void UrhoNewtonPhysicsWorld::addToFreeQueue(dCustomJoint* newtonConstraint)
+    void PhysicsWorld::addToFreeQueue(dCustomJoint* newtonConstraint)
     {
         freeConstraintQueue_ += newtonConstraint;
     }
 
-    void UrhoNewtonPhysicsWorld::addToFreeQueue(NewtonCollision* newtonCollision)
+    void PhysicsWorld::addToFreeQueue(NewtonCollision* newtonCollision)
     {
         freeCollisionQueue_ += newtonCollision;
     }
 
-    void UrhoNewtonPhysicsWorld::applyNewtonWorldSettings()
+    void PhysicsWorld::applyNewtonWorldSettings()
     {
         NewtonSetSolverModel(newtonWorld_, iterationCount_);
         NewtonSetNumberOfSubsteps(newtonWorld_, numSubsteps_);
@@ -324,7 +324,7 @@ namespace Urho3D {
         NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
     }
 
-    void UrhoNewtonPhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
+    void PhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
         URHO3D_PROFILE_FUNCTION();
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
@@ -375,14 +375,14 @@ namespace Urho3D {
 
 
 
-    void UrhoNewtonPhysicsWorld::rebuildDirtyPhysicsComponents()
+    void PhysicsWorld::rebuildDirtyPhysicsComponents()
     {
         URHO3D_PROFILE_FUNCTION();
 
 
 
         //rebuild dirty collision shapes
-        for (NewtonCollisionShape* colShape : collisionComponentList)
+        for (CollisionShape* colShape : collisionComponentList)
         {
             if (colShape->GetDirty()) {
                 colShape->updateBuild();
@@ -423,7 +423,7 @@ namespace Urho3D {
 
 
         //rebuild contraints if they need rebuilt (dirty)
-        for (NewtonConstraint* constraint : constraintList)
+        for (Constraint* constraint : constraintList)
         {
             if (constraint->needsRebuilt_)
                 constraint->reEvalConstraint();
@@ -431,7 +431,7 @@ namespace Urho3D {
     }
 
 
-    int UrhoNewtonPhysicsWorld::DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape)
+    int PhysicsWorld::DoNewtonCollideTest(const float* const matrix, const NewtonCollision* shape)
     {
 
         return  NewtonWorldCollide(newtonWorld_,
@@ -441,7 +441,7 @@ namespace Urho3D {
 
     }
 
-    void UrhoNewtonPhysicsWorld::GetBodiesInConvexCast(PODVector<RigidBody*>& result, int numContacts)
+    void PhysicsWorld::GetBodiesInConvexCast(PODVector<RigidBody*>& result, int numContacts)
     {
         //iterate though contacts.
         for (int i = 0; i < numContacts; i++) {
@@ -458,12 +458,12 @@ namespace Urho3D {
         }
     }
 
-    Urho3D::StringHash UrhoNewtonPhysicsWorld::NewtonMeshKey(String modelResourceName, int modelLodLevel, String otherData)
+    Urho3D::StringHash PhysicsWorld::NewtonMeshKey(String modelResourceName, int modelLodLevel, String otherData)
     {
         return modelResourceName + String(modelLodLevel) + otherData;
     }
 
-    NewtonMeshObject* UrhoNewtonPhysicsWorld::GetCreateNewtonMesh(StringHash urhoNewtonMeshKey)
+    NewtonMeshObject* PhysicsWorld::GetCreateNewtonMesh(StringHash urhoNewtonMeshKey)
     {
         if (newtonMeshCache_.Contains(urhoNewtonMeshKey)) {
             return newtonMeshCache_[urhoNewtonMeshKey];
@@ -478,7 +478,7 @@ namespace Urho3D {
         }
     }
 
-    NewtonMeshObject* UrhoNewtonPhysicsWorld::GetNewtonMesh(StringHash urhoNewtonMeshKey)
+    NewtonMeshObject* PhysicsWorld::GetNewtonMesh(StringHash urhoNewtonMeshKey)
     {
         if (newtonMeshCache_.Contains(urhoNewtonMeshKey)) {
             return newtonMeshCache_[urhoNewtonMeshKey];
@@ -486,7 +486,7 @@ namespace Urho3D {
         return nullptr;
     }
 
-    void UrhoNewtonPhysicsWorld::freePhysicsInternals()
+    void PhysicsWorld::freePhysicsInternals()
     {
         for (dCustomJoint* constraint : freeConstraintQueue_)
         {
@@ -537,7 +537,7 @@ namespace Urho3D {
 
         Vector3 gravityForce;
         if(rigidBodyComp->GetScene())//on scene destruction sometimes this is null so check...
-            gravityForce = rigidBodyComp->GetScene()->GetComponent<UrhoNewtonPhysicsWorld>()->GetGravity() * rigidBodyComp->GetEffectiveMass();
+            gravityForce = rigidBodyComp->GetScene()->GetComponent<PhysicsWorld>()->GetGravity() * rigidBodyComp->GetEffectiveMass();
 
         netForce += gravityForce;
 
@@ -614,17 +614,17 @@ namespace Urho3D {
 
 
     //recurses up the scene tree starting a node and continuing up every branch adding collision shapes to the array until a rigid body is encountered in which case the algorithm stops traversing that branch.
-    void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode, bool recurse)
+    void GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode, bool recurse)
     {
-        PODVector<NewtonCollisionShape*> colList;
+        PODVector<CollisionShape*> colList;
         if (includeStartingNode)
         {
             if (startingNode_->HasComponent<RigidBody>())
                 return;
 
-            if ((!startingNode_->HasComponent<RigidBody>()) && startingNode_->GetDerivedComponent<NewtonCollisionShape>()) {
+            if ((!startingNode_->HasComponent<RigidBody>()) && startingNode_->GetDerivedComponent<CollisionShape>()) {
 
-                PODVector<NewtonCollisionShape*> compsOnNode;
+                PODVector<CollisionShape*> compsOnNode;
                 startingNode_->GetDerivedComponents(compsOnNode, false, true);
                 colList += compsOnNode;
             }
@@ -632,7 +632,7 @@ namespace Urho3D {
         }
 
         PODVector<Node*> childrenWithCollisionShapes;
-        startingNode_->GetChildrenWithDerivedComponent<NewtonCollisionShape>(childrenWithCollisionShapes, false);
+        startingNode_->GetChildrenWithDerivedComponent<CollisionShape>(childrenWithCollisionShapes, false);
 
 
         //trim out the children with rigid bodies from the list
@@ -640,7 +640,7 @@ namespace Urho3D {
         {
             if (!node->HasComponent<RigidBody>())
             {
-                PODVector<NewtonCollisionShape*> compsOnNode;
+                PODVector<CollisionShape*> compsOnNode;
                 node->GetDerivedComponents(compsOnNode, false, true);
                 colList += compsOnNode;
             }          
@@ -650,7 +650,7 @@ namespace Urho3D {
         colShapes += colList;
 
         if (recurse) {
-            for (NewtonCollisionShape* col : colList)
+            for (CollisionShape* col : colList)
             {
                 if(col->GetNode() != startingNode_)
                     GetAloneCollisionShapes(colShapes, col->GetNode(), false, true);
@@ -692,26 +692,26 @@ namespace Urho3D {
 
     void RegisterPhysicsLibrary(Context* context)
     {
-        UrhoNewtonPhysicsWorld::RegisterObject(context);
+        PhysicsWorld::RegisterObject(context);
 
-        NewtonCollisionShape::RegisterObject(context);
-        NewtonCollisionShape_Box::RegisterObject(context);
-        NewtonCollisionShape_Sphere::RegisterObject(context);
-        NewtonCollisionShape_Cylinder::RegisterObject(context);
-        NewtonCollisionShape_Capsule::RegisterObject(context);
-        NewtonCollisionShape_Cone::RegisterObject(context);
-        NewtonCollisionShape_Geometry::RegisterObject(context);
-        NewtonCollisionShape_ConvexHull::RegisterObject(context);
-        NewtonCollisionShape_ConvexHullCompound::RegisterObject(context);
-        NewtonCollisionShape_ConvexDecompositionCompound::RegisterObject(context);
+        CollisionShape::RegisterObject(context);
+        CollisionShape_Box::RegisterObject(context);
+        CollisionShape_Sphere::RegisterObject(context);
+        CollisionShape_Cylinder::RegisterObject(context);
+        CollisionShape_Capsule::RegisterObject(context);
+        CollisionShape_Cone::RegisterObject(context);
+        CollisionShape_Geometry::RegisterObject(context);
+        CollisionShape_ConvexHull::RegisterObject(context);
+        CollisionShape_ConvexHullCompound::RegisterObject(context);
+        CollisionShape_ConvexDecompositionCompound::RegisterObject(context);
         NewtonCollisionShape_HeightmapTerrain::RegisterObject(context);
 
         RigidBody::RegisterObject(context);
         NewtonMeshObject::RegisterObject(context);
-        NewtonConstraint::RegisterObject(context);
-        NewtonFixedDistanceConstraint::RegisterObject(context);
-        NewtonBallAndSocketConstraint::RegisterObject(context);
-        NewtonKinematicsControllerConstraint::RegisterObject(context);
+        Constraint::RegisterObject(context);
+        FixedDistanceConstraint::RegisterObject(context);
+        BallAndSocketConstraint::RegisterObject(context);
+        KinematicsControllerConstraint::RegisterObject(context);
         //Constraint::RegisterObject(context);
         
         //RaycastVehicle::RegisterObject(context);

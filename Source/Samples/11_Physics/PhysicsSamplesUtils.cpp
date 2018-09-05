@@ -1,5 +1,5 @@
 #include "PhysicsSamplesUtils.h"
-#include "Urho3D/Physics/NewtonCollisionShapesDerived.h"
+#include "Urho3D/Physics/CollisionShapesDerived.h"
 
 Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, float radius)
 {
@@ -16,7 +16,7 @@ Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, f
 
         RigidBody* s1RigBody = sphere1->CreateComponent<RigidBody>();
 
-        NewtonCollisionShape_Sphere* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape_Sphere>();
+        CollisionShape_Sphere* s1ColShape = sphere1->CreateComponent<CollisionShape_Sphere>();
 
 
         sphere1->SetWorldPosition(worldPosition);
@@ -43,7 +43,7 @@ Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition,
 
     RigidBody* s1RigBody = sphere1->CreateComponent<RigidBody>();
 
-    NewtonCollisionShape_Cylinder* s1ColShape = sphere1->CreateComponent<NewtonCollisionShape_Cylinder>();
+    CollisionShape_Cylinder* s1ColShape = sphere1->CreateComponent<CollisionShape_Cylinder>();
 
     sphere1->SetWorldPosition(worldPosition);
 
@@ -73,7 +73,7 @@ Node* SpawnSamplePhysicsBox(Node* parentNode, const Vector3& worldPosition, cons
 
     RigidBody* s1RigBody = box->CreateComponent<RigidBody>();
 
-    NewtonCollisionShape_Box* s1ColShape = box->CreateComponent<NewtonCollisionShape_Box>();
+    CollisionShape_Box* s1ColShape = box->CreateComponent<CollisionShape_Box>();
 
     box->SetWorldPosition(worldPosition);
 

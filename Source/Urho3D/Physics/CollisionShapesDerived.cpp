@@ -1,5 +1,5 @@
-#include "NewtonCollisionShapesDerived.h"
-#include "UrhoNewtonPhysicsWorld.h"
+#include "CollisionShapesDerived.h"
+#include "PhysicsWorld.h"
 #include "RigidBody.h"
 #include "NewtonMeshObject.h"
 #include "NewtonPhysicsMaterial.h"
@@ -23,7 +23,7 @@
 #include "Graphics/VisualDebugger.h"
 #include "Graphics/StaticModel.h"
 #include "Scene/SceneEvents.h"
-#include "NewtonCollisionShape.h"
+#include "CollisionShape.h"
 #include "Graphics/HeightmapTerrain.h"
 #include "Container/ArrayPtr.h"
 
@@ -36,24 +36,24 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape_Box::NewtonCollisionShape_Box(Context* context) : NewtonCollisionShape(context)
+    CollisionShape_Box::CollisionShape_Box(Context* context) : CollisionShape(context)
     {
 
     }
 
-    NewtonCollisionShape_Box::~NewtonCollisionShape_Box()
+    CollisionShape_Box::~CollisionShape_Box()
     {
 
     }
 
-    void NewtonCollisionShape_Box::RegisterObject(Context* context)
+    void CollisionShape_Box::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_Box>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_Box>(DEF_PHYSICS_CATEGORY.CString());
 
 
     }
 
-    void NewtonCollisionShape_Box::buildNewtonCollision()
+    void CollisionShape_Box::buildNewtonCollision()
     {
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
         newtonCollision_ = NewtonCreateBox(physicsWorld_->GetNewtonWorld(), size_.x_,
@@ -67,22 +67,22 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape_Sphere::NewtonCollisionShape_Sphere(Context* context) : NewtonCollisionShape(context)
+    CollisionShape_Sphere::CollisionShape_Sphere(Context* context) : CollisionShape(context)
     {
 
     }
 
-    NewtonCollisionShape_Sphere::~NewtonCollisionShape_Sphere()
+    CollisionShape_Sphere::~CollisionShape_Sphere()
     {
 
     }
 
-    void NewtonCollisionShape_Sphere::RegisterObject(Context* context)
+    void CollisionShape_Sphere::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_Sphere>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_Sphere>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonCollisionShape_Sphere::buildNewtonCollision()
+    void CollisionShape_Sphere::buildNewtonCollision()
     {
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
         newtonCollision_ = NewtonCreateSphere(physicsWorld_->GetNewtonWorld(), radius_, 0, nullptr);
@@ -99,22 +99,22 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape_Geometry::NewtonCollisionShape_Geometry(Context* context) : NewtonCollisionShape(context)
+    CollisionShape_Geometry::CollisionShape_Geometry(Context* context) : CollisionShape(context)
     {
 
     }
 
-    NewtonCollisionShape_Geometry::~NewtonCollisionShape_Geometry()
+    CollisionShape_Geometry::~CollisionShape_Geometry()
     {
 
     }
 
-    void NewtonCollisionShape_Geometry::RegisterObject(Context* context)
+    void CollisionShape_Geometry::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_Geometry>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_Geometry>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    bool NewtonCollisionShape_Geometry::resolveOrCreateTriangleMesh()
+    bool CollisionShape_Geometry::resolveOrCreateTriangleMesh()
     {
         if (!model_)
             return false;
@@ -122,7 +122,7 @@ namespace Urho3D {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
         /// if the newton mesh is in cache already - return that.
-        StringHash meshKey = UrhoNewtonPhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, "");
+        StringHash meshKey = PhysicsWorld::NewtonMeshKey(model_->GetName(), modelLodLevel_, "");
         NewtonMeshObject* cachedMesh = physicsWorld_->GetNewtonMesh(meshKey);
         if (cachedMesh)
         {
@@ -199,21 +199,21 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape_Geometry::OnNodeSet(Node* node)
+    void CollisionShape_Geometry::OnNodeSet(Node* node)
     {
-        NewtonCollisionShape::OnNodeSet(node);
+        CollisionShape::OnNodeSet(node);
 
         if (node)
             autoSetModel();
     }
 
-    void NewtonCollisionShape_Geometry::buildNewtonCollision()
+    void CollisionShape_Geometry::buildNewtonCollision()
     {
         resolveOrCreateTriangleMesh();
     }
 
 
-    void NewtonCollisionShape_Geometry::autoSetModel()
+    void CollisionShape_Geometry::autoSetModel()
     {
         StaticModel* stMdl = node_->GetComponent<StaticModel>();
 
@@ -235,21 +235,21 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape_ConvexHullCompound::NewtonCollisionShape_ConvexHullCompound(Context* context) : NewtonCollisionShape_Geometry(context)
+    CollisionShape_ConvexHullCompound::CollisionShape_ConvexHullCompound(Context* context) : CollisionShape_Geometry(context)
     {
     }
 
-    NewtonCollisionShape_ConvexHullCompound::~NewtonCollisionShape_ConvexHullCompound()
+    CollisionShape_ConvexHullCompound::~CollisionShape_ConvexHullCompound()
     {
     }
 
-    void NewtonCollisionShape_ConvexHullCompound::RegisterObject(Context* context)
+    void CollisionShape_ConvexHullCompound::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_ConvexHullCompound>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_ConvexHullCompound>(DEF_PHYSICS_CATEGORY.CString());
     }
 
 
-    void NewtonCollisionShape_ConvexHullCompound::buildNewtonCollision()
+    void CollisionShape_ConvexHullCompound::buildNewtonCollision()
     {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
@@ -260,14 +260,14 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape_ConvexDecompositionCompound::NewtonCollisionShape_ConvexDecompositionCompound(Context* context) : NewtonCollisionShape_Geometry(context)
+    CollisionShape_ConvexDecompositionCompound::CollisionShape_ConvexDecompositionCompound(Context* context) : CollisionShape_Geometry(context)
     {
 
     }
 
 
 
-    NewtonCollisionShape_ConvexDecompositionCompound::~NewtonCollisionShape_ConvexDecompositionCompound()
+    CollisionShape_ConvexDecompositionCompound::~CollisionShape_ConvexDecompositionCompound()
     {
 
     }
@@ -275,14 +275,14 @@ namespace Urho3D {
 
 
 
-    void NewtonCollisionShape_ConvexDecompositionCompound::RegisterObject(Context* context)
+    void CollisionShape_ConvexDecompositionCompound::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_ConvexDecompositionCompound>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_ConvexDecompositionCompound>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonCollisionShape_ConvexDecompositionCompound::buildNewtonCollision()
+    void CollisionShape_ConvexDecompositionCompound::buildNewtonCollision()
     {
-        NewtonCollisionShape_Geometry::buildNewtonCollision();
+        CollisionShape_Geometry::buildNewtonCollision();
 
         //NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
@@ -306,24 +306,24 @@ namespace Urho3D {
         //newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, meshDecomposition_->mesh, hullTolerance_, 0, 0);
     }
 
-    NewtonCollisionShape_ConvexHull::NewtonCollisionShape_ConvexHull(Context* context) : NewtonCollisionShape_Geometry(context)
+    CollisionShape_ConvexHull::CollisionShape_ConvexHull(Context* context) : CollisionShape_Geometry(context)
     {
 
     }
 
-    NewtonCollisionShape_ConvexHull::~NewtonCollisionShape_ConvexHull()
+    CollisionShape_ConvexHull::~CollisionShape_ConvexHull()
     {
 
     }
 
-    void NewtonCollisionShape_ConvexHull::RegisterObject(Context* context)
+    void CollisionShape_ConvexHull::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_ConvexHull>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_ConvexHull>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonCollisionShape_ConvexHull::buildNewtonCollision()
+    void CollisionShape_ConvexHull::buildNewtonCollision()
     {
-        NewtonCollisionShape_Geometry::buildNewtonCollision();
+        CollisionShape_Geometry::buildNewtonCollision();
 
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
@@ -335,21 +335,21 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape_Cylinder::NewtonCollisionShape_Cylinder(Context* context) : NewtonCollisionShape(context)
+    CollisionShape_Cylinder::CollisionShape_Cylinder(Context* context) : CollisionShape(context)
     {
     }
 
-    NewtonCollisionShape_Cylinder::~NewtonCollisionShape_Cylinder()
+    CollisionShape_Cylinder::~CollisionShape_Cylinder()
     {
 
     }
 
-    void NewtonCollisionShape_Cylinder::RegisterObject(Context* context)
+    void CollisionShape_Cylinder::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_Cylinder>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_Cylinder>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonCollisionShape_Cylinder::buildNewtonCollision()
+    void CollisionShape_Cylinder::buildNewtonCollision()
     {
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
         newtonCollision_ = NewtonCreateCylinder(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
@@ -360,38 +360,38 @@ namespace Urho3D {
 
     }
 
-    NewtonCollisionShape_Capsule::NewtonCollisionShape_Capsule(Context* context) : NewtonCollisionShape(context)
+    CollisionShape_Capsule::CollisionShape_Capsule(Context* context) : CollisionShape(context)
     {
     }
 
-    NewtonCollisionShape_Capsule::~NewtonCollisionShape_Capsule()
+    CollisionShape_Capsule::~CollisionShape_Capsule()
     {
     }
 
-    void NewtonCollisionShape_Capsule::RegisterObject(Context* context)
+    void CollisionShape_Capsule::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_Cylinder>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_Cylinder>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonCollisionShape_Capsule::buildNewtonCollision()
+    void CollisionShape_Capsule::buildNewtonCollision()
     {
         newtonCollision_ = NewtonCreateCapsule(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
     }
 
-    NewtonCollisionShape_Cone::NewtonCollisionShape_Cone(Context* context) : NewtonCollisionShape(context)
+    CollisionShape_Cone::CollisionShape_Cone(Context* context) : CollisionShape(context)
     {
     }
 
-    NewtonCollisionShape_Cone::~NewtonCollisionShape_Cone()
+    CollisionShape_Cone::~CollisionShape_Cone()
     {
     }
 
-    void NewtonCollisionShape_Cone::RegisterObject(Context* context)
+    void CollisionShape_Cone::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_Cone>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_Cone>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonCollisionShape_Cone::buildNewtonCollision()
+    void CollisionShape_Cone::buildNewtonCollision()
     {
         newtonCollision_ = NewtonCreateCone(physicsWorld_->GetNewtonWorld(), radius_, length_, 0, nullptr);
     }
@@ -410,7 +410,7 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape_HeightmapTerrain::NewtonCollisionShape_HeightmapTerrain(Context* context) : NewtonCollisionShape(context)
+    NewtonCollisionShape_HeightmapTerrain::NewtonCollisionShape_HeightmapTerrain(Context* context) : CollisionShape(context)
     {
 
     }

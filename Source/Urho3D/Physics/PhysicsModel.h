@@ -6,19 +6,19 @@
 namespace Urho3D {
 
     ///resource providing physics model data 
-    class URHO3D_API NewtonPhysicsModel : public ResourceWithMetadata
+    class URHO3D_API PhysicsModel : public ResourceWithMetadata
     {
-        URHO3D_OBJECT(NewtonPhysicsModel, ResourceWithMetadata);
+        URHO3D_OBJECT(PhysicsModel, ResourceWithMetadata);
 
     public:
-        NewtonPhysicsModel(Context* context) : ResourceWithMetadata(context)
+        PhysicsModel(Context* context) : ResourceWithMetadata(context)
         {
 
         }
-        virtual ~NewtonPhysicsModel() {}
+        virtual ~PhysicsModel() {}
 
         static void RegisterObject(Context* context) {
-            context->RegisterFactory< NewtonPhysicsModel>();
+            context->RegisterFactory< PhysicsModel>();
         }
 
     protected:

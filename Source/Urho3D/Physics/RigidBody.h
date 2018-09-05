@@ -9,17 +9,17 @@ class NewtonBody;
 namespace Urho3D
 {
     class Component;
-    class UrhoNewtonPhysicsWorld;
-    class NewtonCollisionShape;
+    class PhysicsWorld;
+    class CollisionShape;
     class NewtonNodePhysicsGlue;
     class URHO3D_API RigidBody : public Component
     {
         URHO3D_OBJECT(RigidBody, Component);
     public:
 
-        friend class NewtonCollisionShape;
-        friend class NewtonConstraint;
-        friend class UrhoNewtonPhysicsWorld;
+        friend class CollisionShape;
+        friend class Constraint;
+        friend class PhysicsWorld;
 
         /// Construct.
         RigidBody(Context* context);
@@ -134,7 +134,7 @@ namespace Urho3D
         Quaternion GetCenterOfMassRotation();
 
         /// Get Immediately connected contraints to this rigid body.
-        void GetConnectedContraints(PODVector<NewtonConstraint*>& contraints);
+        void GetConnectedContraints(PODVector<Constraint*>& contraints);
 
 
 
@@ -174,7 +174,7 @@ namespace Urho3D
         /// compound collision if needed.
         NewtonCollision* compoundCollision_ = nullptr;
         /// Physics world.
-        WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
+        WeakPtr<PhysicsWorld> physicsWorld_;
 
         bool sceneRootBodyMode_ = false;
         ///Continuous Collision
@@ -196,7 +196,7 @@ namespace Urho3D
         float linearDampeningInternal_ = 0.0f;
 
         ///currently connected constraints.
-        HashSet<NewtonConstraint*> connectedConstraints_;
+        HashSet<Constraint*> connectedConstraints_;
 
 
         dVector netForceNewton_;

@@ -1,6 +1,6 @@
 
-#include "NewtonCollisionShape.h"
-#include "UrhoNewtonPhysicsWorld.h"
+#include "CollisionShape.h"
+#include "PhysicsWorld.h"
 #include "RigidBody.h"
 #include "NewtonMeshObject.h"
 #include "NewtonPhysicsMaterial.h"
@@ -29,20 +29,20 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape::NewtonCollisionShape(Context* context) : Component(context)
+    CollisionShape::CollisionShape(Context* context) : Component(context)
     {
-        SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeAdded));
-        SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeRemoved));
+        SubscribeToEvent(E_NODEADDED, URHO3D_HANDLER(CollisionShape, HandleNodeAdded));
+        SubscribeToEvent(E_NODEREMOVED, URHO3D_HANDLER(CollisionShape, HandleNodeRemoved));
     }
 
-    NewtonCollisionShape::~NewtonCollisionShape()
+    CollisionShape::~CollisionShape()
     {
         freeInternalCollision();
     }
 
-    void NewtonCollisionShape::RegisterObject(Context* context)
+    void CollisionShape::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape>(DEF_PHYSICS_CATEGORY.CString());
         URHO3D_COPY_BASE_ATTRIBUTES(Component);
 
         URHO3D_ACCESSOR_ATTRIBUTE("Position Offset", GetPositionOffset, SetPositionOffset, Vector3, Vector3::ZERO, AM_DEFAULT);
@@ -50,7 +50,7 @@ namespace Urho3D {
     }
 
 
-    void NewtonCollisionShape::SetPhysicsMaterial(NewtonPhysicsMaterial* material)
+    void CollisionShape::SetPhysicsMaterial(NewtonPhysicsMaterial* material)
     {
         physicsMaterial_ = material;
 
@@ -58,7 +58,7 @@ namespace Urho3D {
         physicsWorld_->addPhysicsMaterial(material);
     }
 
-    void NewtonCollisionShape::updateBuild()
+    void CollisionShape::updateBuild()
     {
             // first free any reference to an existing collision.
             freeInternalCollision();
@@ -70,12 +70,12 @@ namespace Urho3D {
             applyMaterial();
     }
 
-    void NewtonCollisionShape::buildNewtonCollision()
+    void CollisionShape::buildNewtonCollision()
     {
 
     }
 
-    void NewtonCollisionShape::freeInternalCollision()
+    void CollisionShape::freeInternalCollision()
     {
         if (newtonCollision_) {
             physicsWorld_->addToFreeQueue(newtonCollision_);
@@ -83,7 +83,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::applyMaterial()
+    void CollisionShape::applyMaterial()
     {
         if (physicsMaterial_)
         {
@@ -91,7 +91,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::MarkDirty(bool dirty /*= true*/)
+    void CollisionShape::MarkDirty(bool dirty /*= true*/)
     {
         if (shapeNeedsRebuilt_ != dirty) {
             shapeNeedsRebuilt_ = dirty;
@@ -100,13 +100,13 @@ namespace Urho3D {
         }
     }
 
-    NewtonCollision* NewtonCollisionShape::GetNewtonCollision()
+    NewtonCollision* CollisionShape::GetNewtonCollision()
     {
         return newtonCollision_;
     }
 
 
-    void NewtonCollisionShape::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    void CollisionShape::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         Component::DrawDebugGeometry(debug, depthTest);
         if (newtonCollision_) {
@@ -114,13 +114,13 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::OnSetEnabled()
+    void CollisionShape::OnSetEnabled()
     {
         MarkRigidBodyDirty();
     }
 
 
-    void NewtonCollisionShape::MarkRigidBodyDirty()
+    void CollisionShape::MarkRigidBodyDirty()
     {
         PODVector<RigidBody*> rootRigidBodies;
         GetRootRigidBodies(rootRigidBodies, node_, true);
@@ -132,19 +132,19 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::OnNodeSet(Node* node)
+    void CollisionShape::OnNodeSet(Node* node)
     {
 
         if (node)
         {
             ///auto create physics world
-            physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
+            physicsWorld_ = WeakPtr<PhysicsWorld>(GetScene()->GetOrCreateComponent<PhysicsWorld>());
 
 
             physicsWorld_->addCollisionShape(this);
             node->AddListener(this);
 
-            SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(NewtonCollisionShape, HandleNodeTransformChange));
+            SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(CollisionShape, HandleNodeTransformChange));
 
         }
         else
@@ -160,12 +160,12 @@ namespace Urho3D {
 
 
 
-    void NewtonCollisionShape::OnNodeSetEnabled(Node* node)
+    void CollisionShape::OnNodeSetEnabled(Node* node)
     {
         MarkRigidBodyDirty();
     }
 
-    void NewtonCollisionShape::HandleNodeAdded(StringHash event, VariantMap& eventData)
+    void CollisionShape::HandleNodeAdded(StringHash event, VariantMap& eventData)
     {
         Node* node = static_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
         Node* newParent = static_cast<Node*>(eventData[NodeRemoved::P_PARENT].GetPtr());
@@ -176,7 +176,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonCollisionShape::HandleNodeRemoved(StringHash event, VariantMap& eventData)
+    void CollisionShape::HandleNodeRemoved(StringHash event, VariantMap& eventData)
     {
         Node* node = static_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
         if (node == node_)
@@ -195,7 +195,7 @@ namespace Urho3D {
     }
 
 
-    void NewtonCollisionShape::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
+    void CollisionShape::HandleNodeTransformChange(StringHash event, VariantMap& eventData)
     {
         MarkRigidBodyDirty();
     }

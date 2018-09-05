@@ -1,17 +1,17 @@
 #pragma once
-#include "NewtonCollisionShape.h"
+#include "CollisionShape.h"
 
 namespace Urho3D {
 
 
 
-    class URHO3D_API NewtonCollisionShape_Box : public NewtonCollisionShape {
+    class URHO3D_API CollisionShape_Box : public CollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_Box, NewtonCollisionShape);
+        URHO3D_OBJECT(CollisionShape_Box, CollisionShape);
 
     public:
-        NewtonCollisionShape_Box(Context* context);
-        virtual ~NewtonCollisionShape_Box();
+        CollisionShape_Box(Context* context);
+        virtual ~CollisionShape_Box();
 
         static void RegisterObject(Context* context);
 
@@ -28,13 +28,13 @@ namespace Urho3D {
 
     };
 
-    class URHO3D_API NewtonCollisionShape_Sphere : public NewtonCollisionShape {
+    class URHO3D_API CollisionShape_Sphere : public CollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_Sphere, NewtonCollisionShape);
+        URHO3D_OBJECT(CollisionShape_Sphere, CollisionShape);
 
     public:
-        NewtonCollisionShape_Sphere(Context* context);
-        virtual ~NewtonCollisionShape_Sphere();
+        CollisionShape_Sphere(Context* context);
+        virtual ~CollisionShape_Sphere();
 
         static void RegisterObject(Context* context);
 
@@ -51,13 +51,13 @@ namespace Urho3D {
 
     };
 
-    class URHO3D_API NewtonCollisionShape_Capsule : public NewtonCollisionShape {
+    class URHO3D_API CollisionShape_Capsule : public CollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_Capsule, NewtonCollisionShape);
+        URHO3D_OBJECT(CollisionShape_Capsule, CollisionShape);
 
     public:
-        NewtonCollisionShape_Capsule(Context* context);
-        virtual ~NewtonCollisionShape_Capsule();
+        CollisionShape_Capsule(Context* context);
+        virtual ~CollisionShape_Capsule();
 
         static void RegisterObject(Context* context);
 
@@ -78,13 +78,13 @@ namespace Urho3D {
 
     };
 
-    class URHO3D_API NewtonCollisionShape_Cone : public NewtonCollisionShape {
+    class URHO3D_API CollisionShape_Cone : public CollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_Cone, NewtonCollisionShape);
+        URHO3D_OBJECT(CollisionShape_Cone, CollisionShape);
 
     public:
-        NewtonCollisionShape_Cone(Context* context);
-        virtual ~NewtonCollisionShape_Cone();
+        CollisionShape_Cone(Context* context);
+        virtual ~CollisionShape_Cone();
 
         static void RegisterObject(Context* context);
 
@@ -102,13 +102,13 @@ namespace Urho3D {
     };
 
 
-    class URHO3D_API NewtonCollisionShape_Cylinder : public NewtonCollisionShape {
+    class URHO3D_API CollisionShape_Cylinder : public CollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_Cylinder, NewtonCollisionShape);
+        URHO3D_OBJECT(CollisionShape_Cylinder, CollisionShape);
 
     public:
-        NewtonCollisionShape_Cylinder(Context* context);
-        virtual ~NewtonCollisionShape_Cylinder();
+        CollisionShape_Cylinder(Context* context);
+        virtual ~CollisionShape_Cylinder();
 
         static void RegisterObject(Context* context);
 
@@ -141,13 +141,13 @@ namespace Urho3D {
 
 
 
-    class URHO3D_API NewtonCollisionShape_Geometry : public NewtonCollisionShape {
+    class URHO3D_API CollisionShape_Geometry : public CollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_Geometry, NewtonCollisionShape);
+        URHO3D_OBJECT(CollisionShape_Geometry, CollisionShape);
 
     public:
-        NewtonCollisionShape_Geometry(Context* context);
-        virtual ~NewtonCollisionShape_Geometry();
+        CollisionShape_Geometry(Context* context);
+        virtual ~CollisionShape_Geometry();
 
         static void RegisterObject(Context* context);
 
@@ -182,13 +182,13 @@ namespace Urho3D {
 
     };
 
-    class URHO3D_API NewtonCollisionShape_ConvexHullCompound : public NewtonCollisionShape_Geometry {
+    class URHO3D_API CollisionShape_ConvexHullCompound : public CollisionShape_Geometry {
 
-        URHO3D_OBJECT(NewtonCollisionShape_ConvexHullCompound, NewtonCollisionShape_Geometry);
+        URHO3D_OBJECT(CollisionShape_ConvexHullCompound, CollisionShape_Geometry);
 
     public:
-        NewtonCollisionShape_ConvexHullCompound(Context* context);
-        virtual ~NewtonCollisionShape_ConvexHullCompound();
+        CollisionShape_ConvexHullCompound(Context* context);
+        virtual ~CollisionShape_ConvexHullCompound();
 
         static void RegisterObject(Context* context);
         /// Set the tolerancing for hull creation.
@@ -202,13 +202,13 @@ namespace Urho3D {
 
     };
 
-    class URHO3D_API NewtonCollisionShape_ConvexDecompositionCompound : public NewtonCollisionShape_Geometry {
+    class URHO3D_API CollisionShape_ConvexDecompositionCompound : public CollisionShape_Geometry {
 
-        URHO3D_OBJECT(NewtonCollisionShape_ConvexDecompositionCompound, NewtonCollisionShape_Geometry);
+        URHO3D_OBJECT(CollisionShape_ConvexDecompositionCompound, CollisionShape_Geometry);
 
     public:
-        NewtonCollisionShape_ConvexDecompositionCompound(Context* context);
-        virtual ~NewtonCollisionShape_ConvexDecompositionCompound();
+        CollisionShape_ConvexDecompositionCompound(Context* context);
+        virtual ~CollisionShape_ConvexDecompositionCompound();
 
         static void RegisterObject(Context* context);
 
@@ -220,13 +220,13 @@ namespace Urho3D {
 
     };
 
-    class URHO3D_API NewtonCollisionShape_ConvexHull : public NewtonCollisionShape_Geometry {
+    class URHO3D_API CollisionShape_ConvexHull : public CollisionShape_Geometry {
 
-        URHO3D_OBJECT(NewtonCollisionShape_ConvexHull, NewtonCollisionShape_Geometry);
+        URHO3D_OBJECT(CollisionShape_ConvexHull, CollisionShape_Geometry);
 
     public:
-        NewtonCollisionShape_ConvexHull(Context* context);
-        virtual ~NewtonCollisionShape_ConvexHull();
+        CollisionShape_ConvexHull(Context* context);
+        virtual ~CollisionShape_ConvexHull();
 
         static void RegisterObject(Context* context);
 
@@ -242,9 +242,9 @@ namespace Urho3D {
 
 
 
-    class URHO3D_API NewtonCollisionShape_HeightmapTerrain : public NewtonCollisionShape {
+    class URHO3D_API NewtonCollisionShape_HeightmapTerrain : public CollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_HeightmapTerrain, NewtonCollisionShape);
+        URHO3D_OBJECT(NewtonCollisionShape_HeightmapTerrain, CollisionShape);
 
     public:
         NewtonCollisionShape_HeightmapTerrain(Context* context);

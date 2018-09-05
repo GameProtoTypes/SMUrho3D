@@ -1,5 +1,5 @@
-#include "NewtonFixedDistanceConstraint.h"
-#include "UrhoNewtonPhysicsWorld.h"
+#include "FixedDistanceConstraint.h"
+#include "PhysicsWorld.h"
 #include "Core/Context.h"
 #include "Newton.h"
 #include "dMatrix.h"
@@ -14,27 +14,27 @@ namespace Urho3D {
 
 
 
-    NewtonFixedDistanceConstraint::NewtonFixedDistanceConstraint(Context* context) : NewtonConstraint(context)
+    FixedDistanceConstraint::FixedDistanceConstraint(Context* context) : Constraint(context)
     {
     }
 
-    NewtonFixedDistanceConstraint::~NewtonFixedDistanceConstraint()
+    FixedDistanceConstraint::~FixedDistanceConstraint()
     {
     }
 
-    void NewtonFixedDistanceConstraint::RegisterObject(Context* context)
+    void FixedDistanceConstraint::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonFixedDistanceConstraint>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<FixedDistanceConstraint>(DEF_PHYSICS_CATEGORY.CString());
 
 
-        URHO3D_COPY_BASE_ATTRIBUTES(NewtonConstraint);
+        URHO3D_COPY_BASE_ATTRIBUTES(Constraint);
 
 
 
     }
 
 
-    void NewtonFixedDistanceConstraint::buildConstraint()
+    void FixedDistanceConstraint::buildConstraint()
 {
         //get own body transform.
         dVector pivot0(UrhoToNewton(ownBody_->GetNode()->LocalToWorld(position_)));

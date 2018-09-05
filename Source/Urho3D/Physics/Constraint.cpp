@@ -1,6 +1,6 @@
-#include "NewtonConstraint.h"
+#include "Constraint.h"
 #include "RigidBody.h"
-#include "UrhoNewtonPhysicsWorld.h"
+#include "PhysicsWorld.h"
 #include "Core/Context.h"
 #include "Scene/Component.h"
 #include "Graphics/DebugRenderer.h"
@@ -8,18 +8,18 @@
 #include "Scene/Scene.h"
 #include "dCustomFixDistance.h"
 namespace Urho3D {
-    NewtonConstraint::NewtonConstraint(Context* context) : Component(context)
+    Constraint::Constraint(Context* context) : Component(context)
     {
 
     }
 
-    NewtonConstraint::~NewtonConstraint()
+    Constraint::~Constraint()
     {
     }
 
-    void NewtonConstraint::RegisterObject(Context* context)
+    void Constraint::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonConstraint>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<Constraint>(DEF_PHYSICS_CATEGORY.CString());
         URHO3D_COPY_BASE_ATTRIBUTES(Component);
 
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body ID", GetOtherBodyId, SetOtherBodyById, unsigned, 0, AM_DEFAULT | AM_COMPONENTID);
@@ -29,7 +29,7 @@ namespace Urho3D {
 
     }
 
-    void NewtonConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    void Constraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         if (ownBody_ && otherBody_) {
             debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), otherBody_->GetNode()->LocalToWorld(otherPosition_), Color::BLUE, false);
@@ -37,13 +37,13 @@ namespace Urho3D {
         }
     }
 
-    void NewtonConstraint::SetDisableCollision(bool disable)
+    void Constraint::SetDisableCollision(bool disable)
     {
         enableBodyCollision_ = !disable;
         MarkDirty();
     }
 
-    void NewtonConstraint::SetOtherBody(RigidBody* body)
+    void Constraint::SetOtherBody(RigidBody* body)
     {
         if (otherBody_ != body) {
 
@@ -67,47 +67,47 @@ namespace Urho3D {
     }
 
 
-    void NewtonConstraint::SetOtherBodyById(unsigned bodyId)
+    void Constraint::SetOtherBodyById(unsigned bodyId)
     {
         otherBodyId_ = bodyId;
         //resolve to body later.
         MarkDirty();
     }
 
-    void NewtonConstraint::SetPosition(const Vector3& position)
+    void Constraint::SetPosition(const Vector3& position)
     {
         position_ = position;
         MarkDirty();
     }
 
 
-    void NewtonConstraint::SetRotation(const Quaternion& rotation)
+    void Constraint::SetRotation(const Quaternion& rotation)
     {
         rotation_ = rotation;
         MarkDirty();
     }
 
 
-    void NewtonConstraint::SetOtherPosition(const Vector3& position)
+    void Constraint::SetOtherPosition(const Vector3& position)
     {
         otherPosition_ = position;
         MarkDirty();
     }
 
 
-    void NewtonConstraint::SetOtherRotation(const Quaternion& rotation)
+    void Constraint::SetOtherRotation(const Quaternion& rotation)
     {
         otherRotation_ = rotation;
         MarkDirty();
     }
 
 
-    void NewtonConstraint::OnSetEnabled()
+    void Constraint::OnSetEnabled()
     {
         MarkDirty();
     }
 
-    void NewtonConstraint::reEvalConstraint()
+    void Constraint::reEvalConstraint()
     {
         //resolve other body id to component
         otherBody_ = static_cast<RigidBody*>(GetScene()->GetComponent(otherBodyId_));
@@ -128,13 +128,13 @@ namespace Urho3D {
         MarkDirty(false);
     }
 
-    void NewtonConstraint::buildConstraint()
+    void Constraint::buildConstraint()
     {
         /// ovverride in derived classes.
     }
 
 
-    void NewtonConstraint::freeInternal()
+    void Constraint::freeInternal()
     {
 
         if (newtonJoint_ != nullptr) {
@@ -145,7 +145,7 @@ namespace Urho3D {
 
 
 
-    void NewtonConstraint::AddJointReferenceToBody(RigidBody* rigBody)
+    void Constraint::AddJointReferenceToBody(RigidBody* rigBody)
     {
 
         if (!rigBody->connectedConstraints_.Contains(this))
@@ -154,7 +154,7 @@ namespace Urho3D {
     }
 
 
-    void NewtonConstraint::RemoveJointReferenceFromBody(RigidBody* rigBody)
+    void Constraint::RemoveJointReferenceFromBody(RigidBody* rigBody)
     {
 
         if (rigBody->connectedConstraints_.Contains(this))
@@ -162,12 +162,12 @@ namespace Urho3D {
 
     }
 
-    void NewtonConstraint::OnNodeSet(Node* node)
+    void Constraint::OnNodeSet(Node* node)
     {
         if (node)
         {
             //auto create physics world similar to rigid body.
-            physicsWorld_ = node->GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>();
+            physicsWorld_ = node->GetScene()->GetOrCreateComponent<PhysicsWorld>();
 
             RigidBody* rigBody = node->GetComponent<RigidBody>();
             if (rigBody) {
@@ -197,7 +197,7 @@ namespace Urho3D {
         }
     }
 
-    void NewtonConstraint::OnNodeSetEnabled(Node* node)
+    void Constraint::OnNodeSetEnabled(Node* node)
     {
         MarkDirty();
     }

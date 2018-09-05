@@ -7,22 +7,22 @@ namespace Urho3D {
 
     class Context;
     class RigidBody;
-    class UrhoNewtonPhysicsWorld;
+    class PhysicsWorld;
 
     ///Base class for newton constraints.
-    class URHO3D_API NewtonConstraint : public Component
+    class URHO3D_API Constraint : public Component
     {
-        URHO3D_OBJECT(NewtonConstraint, Component);
+        URHO3D_OBJECT(Constraint, Component);
 
 
     public:
 
-        friend class UrhoNewtonPhysicsWorld;
+        friend class PhysicsWorld;
         friend class RigidBody;
         /// Construct.
-        NewtonConstraint(Context* context);
+        Constraint(Context* context);
         /// Destruct. Free the rigid body and geometries.
-        ~NewtonConstraint() override;
+        ~Constraint() override;
 
         static void RegisterObject(Context* context);
 
@@ -54,7 +54,7 @@ namespace Urho3D {
         void SetOtherRotation(const Quaternion& rotation);
 
         /// Return physics world.
-        UrhoNewtonPhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
+        PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
 
         /// Return rigid body in own scene node.
         RigidBody* GetOwnBody() const { return ownBody_; }
@@ -79,7 +79,7 @@ namespace Urho3D {
 
     protected:
         /// Physics world.
-        WeakPtr<UrhoNewtonPhysicsWorld> physicsWorld_;
+        WeakPtr<PhysicsWorld> physicsWorld_;
         /// Own rigid body.
         WeakPtr<RigidBody> ownBody_;
         unsigned ownBodyId_ = 0;

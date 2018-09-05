@@ -1,5 +1,5 @@
-#include "../Physics/UrhoNewtonPhysicsWorld.h"
-#include "../Physics/NewtonCollisionShape.h"
+#include "../Physics/PhysicsWorld.h"
+#include "../Physics/CollisionShape.h"
 #include "../Physics/RigidBody.h"
 #include "../Core/Context.h"
 #include "../Graphics/Model.h"
@@ -16,7 +16,7 @@
 #include "Graphics/VisualDebugger.h"
 #include "Core/Object.h"
 #include "dQuaternion.h"
-#include "NewtonConstraint.h"
+#include "Constraint.h"
 
 
 namespace Urho3D {
@@ -216,14 +216,14 @@ namespace Urho3D {
 
 
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
-        PODVector<NewtonCollisionShape*> childCollisionShapes;
-        node_->GetDerivedComponents<NewtonCollisionShape>(childCollisionShapes, true, true);//includes this node.
+        PODVector<CollisionShape*> childCollisionShapes;
+        node_->GetDerivedComponents<CollisionShape>(childCollisionShapes, true, true);//includes this node.
         
-        PODVector<NewtonCollisionShape*> filteredList;
+        PODVector<CollisionShape*> filteredList;
         //if scene root body - filter out shapes with no root rigid body (except the scene root of course)
         if (sceneRootBodyMode_)
         {
-            for (NewtonCollisionShape* col : childCollisionShapes)
+            for (CollisionShape* col : childCollisionShapes)
             {
                 PODVector<RigidBody*> parentRigBodies;
                 GetRootRigidBodies(parentRigBodies, col->GetNode(), false);
@@ -235,7 +235,7 @@ namespace Urho3D {
 
         //filter out shapes that are not enabled.
         filteredList.Clear();
-        for (NewtonCollisionShape* col : childCollisionShapes)
+        for (CollisionShape* col : childCollisionShapes)
         {
             if (col->IsEnabledEffective())
                 filteredList += col;
@@ -265,7 +265,7 @@ namespace Urho3D {
             }
             float accumMass = 0.0f;
 
-            for (NewtonCollisionShape* colComp : childCollisionShapes)
+            for (CollisionShape* colComp : childCollisionShapes)
             {
                 NewtonCollision* curNewtCollision = colComp->GetNewtonCollision();
                 NewtonCollision* usedCollision = nullptr;
@@ -398,7 +398,7 @@ namespace Urho3D {
         {
 
             //Auto-create a physics world on the scene if it does not yet exist.
-            physicsWorld_ = WeakPtr<UrhoNewtonPhysicsWorld>(GetScene()->GetOrCreateComponent<UrhoNewtonPhysicsWorld>());
+            physicsWorld_ = WeakPtr<PhysicsWorld>(GetScene()->GetOrCreateComponent<PhysicsWorld>());
 
             physicsWorld_->addRigidBody(this);
 
@@ -413,7 +413,7 @@ namespace Urho3D {
                 physicsWorld_->removeRigidBody(this);
 
             //remove any connected constraints.
-            for (NewtonConstraint* constraint : connectedConstraints_) {
+            for (Constraint* constraint : connectedConstraints_) {
                 constraint->Remove();
             }
 
@@ -581,8 +581,8 @@ namespace Urho3D {
             return compoundCollision_;
         else
         {
-            if (node_->GetComponent<NewtonCollisionShape>()) {
-                return node_->GetComponent<NewtonCollisionShape>()->GetNewtonCollision();
+            if (node_->GetComponent<CollisionShape>()) {
+                return node_->GetComponent<CollisionShape>()->GetNewtonCollision();
             }
             return nullptr;
         }
@@ -663,7 +663,7 @@ namespace Urho3D {
         return NewtonToUrhoQuat(quat);
     }
 
-    void RigidBody::GetConnectedContraints(PODVector<NewtonConstraint*>& contraints)
+    void RigidBody::GetConnectedContraints(PODVector<Constraint*>& contraints)
     {
         contraints.Clear();
         for (auto i = connectedConstraints_.Begin(); i != connectedConstraints_.End(); ++i)

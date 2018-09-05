@@ -1,5 +1,5 @@
-#include "NewtonBallAndSocketConstraint.h"
-#include "UrhoNewtonPhysicsWorld.h"
+#include "BallAndSocketConstraint.h"
+#include "PhysicsWorld.h"
 #include "Core/Context.h"
 #include "Newton.h"
 #include "dMatrix.h"
@@ -13,22 +13,22 @@
 
 namespace Urho3D {
 
-    NewtonBallAndSocketConstraint::NewtonBallAndSocketConstraint(Context* context) : NewtonConstraint(context)
+    BallAndSocketConstraint::BallAndSocketConstraint(Context* context) : Constraint(context)
     {
 
     }
 
-    Urho3D::NewtonBallAndSocketConstraint::~NewtonBallAndSocketConstraint()
+    Urho3D::BallAndSocketConstraint::~BallAndSocketConstraint()
     {
 
     }
 
-    void Urho3D::NewtonBallAndSocketConstraint::RegisterObject(Context* context)
+    void Urho3D::BallAndSocketConstraint::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonBallAndSocketConstraint>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<BallAndSocketConstraint>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void Urho3D::NewtonBallAndSocketConstraint::buildConstraint()
+    void Urho3D::BallAndSocketConstraint::buildConstraint()
     {
         //get own body transform.
         dMatrix ownBodyWorldMatrix;

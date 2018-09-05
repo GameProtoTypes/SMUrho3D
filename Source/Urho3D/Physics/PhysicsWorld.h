@@ -11,9 +11,9 @@ class dCustomJoint;
 namespace Urho3D
 {
     class Component;
-    class NewtonCollisionShape;
+    class CollisionShape;
     class RigidBody;
-    class NewtonConstraint;
+    class Constraint;
     class NewtonPhysicsMaterial;
     class NewtonPhysicsMaterialContactPair;
     class Sphere;
@@ -24,22 +24,22 @@ namespace Urho3D
     static const String DEF_PHYSICS_CATEGORY = "Physics";
 
 
-    class URHO3D_API UrhoNewtonPhysicsWorld : public Component
+    class URHO3D_API PhysicsWorld : public Component
     {
-        URHO3D_OBJECT(UrhoNewtonPhysicsWorld, Component);
+        URHO3D_OBJECT(PhysicsWorld, Component);
     public:
 
-        friend class NewtonCollisionShape;
-        friend class NewtonCollisionShape_Geometry;
-        friend class NewtonCollisionShape_ConvexDecompositionCompound;
+        friend class CollisionShape;
+        friend class CollisionShape_Geometry;
+        friend class CollisionShape_ConvexDecompositionCompound;
         friend class NewtonCollisionShape_SceneCollision;
         friend class RigidBody;
-        friend class NewtonConstraint;
+        friend class Constraint;
 
         /// Construct.
-        UrhoNewtonPhysicsWorld(Context* context);
+        PhysicsWorld(Context* context);
         /// Destruct. Free the rigid body and geometries.
-        ~UrhoNewtonPhysicsWorld() override;
+        ~PhysicsWorld() override;
         /// Register object factory.
         static void RegisterObject(Context* context);
 
@@ -108,22 +108,22 @@ namespace Urho3D
 
         virtual void OnSceneSet(Scene* scene) override;
 
-        void addCollisionShape(NewtonCollisionShape* collision);
-        void removeCollisionShape(NewtonCollisionShape* collision);
+        void addCollisionShape(CollisionShape* collision);
+        void removeCollisionShape(CollisionShape* collision);
 
         void addRigidBody(RigidBody* body);
         void removeRigidBody(RigidBody* body);
 
-        void addConstraint(NewtonConstraint* constraint);
-        void removeConstraint(NewtonConstraint* constraint);
+        void addConstraint(Constraint* constraint);
+        void removeConstraint(Constraint* constraint);
 
 
         void addPhysicsMaterial(NewtonPhysicsMaterial* material);
         void computeMaterialPairs();
 
-        Vector<WeakPtr<NewtonCollisionShape>> collisionComponentList;
+        Vector<WeakPtr<CollisionShape>> collisionComponentList;
         Vector<WeakPtr<RigidBody>> rigidBodyComponentList;
-        Vector<WeakPtr<NewtonConstraint>> constraintList;
+        Vector<WeakPtr<Constraint>> constraintList;
         Vector<SharedPtr<NewtonPhysicsMaterial>> physMaterialList;
         Vector<SharedPtr<NewtonPhysicsMaterialContactPair>> physMaterialPairList;
 
@@ -187,7 +187,7 @@ private:
     int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex);
 
     void GetRootRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node, bool includeScene);
-    void GetAloneCollisionShapes(PODVector<NewtonCollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
+    void GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
 
     void OnPhysicsNodeAdded(Node* node);
     void OnPhysicsNodeRemoved(Node* oldParent);

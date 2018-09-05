@@ -24,7 +24,7 @@
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Graphics/Model.h>
 #include <Urho3D/Graphics/StaticModel.h>
-#include <Urho3D/Physics/NewtonCollisionShape.h>
+#include <Urho3D/Physics/CollisionShape.h>
 #include <Urho3D/Physics/Constraint.h>
 #include <Urho3D/Physics/PhysicsEvents.h>
 #include <Urho3D/Physics/PhysicsWorld.h>
@@ -125,7 +125,7 @@ void Vehicle::Init()
 
     auto* hullObject = node_->CreateComponent<StaticModel>();
     hullBody_ = node_->CreateComponent<RigidBody>();
-    auto* hullShape = node_->CreateComponent<NewtonCollisionShape>();
+    auto* hullShape = node_->CreateComponent<CollisionShape>();
 
     node_->SetScale(Vector3(1.5f, 1.0f, 3.0f));
     hullObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
@@ -161,7 +161,7 @@ void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>
 
     auto* wheelObject = wheelNode->CreateComponent<StaticModel>();
     auto* wheelBody = wheelNode->CreateComponent<RigidBody>();
-    auto* wheelShape = wheelNode->CreateComponent<NewtonCollisionShape>();
+    auto* wheelShape = wheelNode->CreateComponent<CollisionShape>();
     auto* wheelConstraint = wheelNode->CreateComponent<Constraint>();
 
     wheelObject->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
