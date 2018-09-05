@@ -143,7 +143,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
     //SpawnMaterialsTest(Vector3(0,0,30));
-    SpawnBallSocketTest(Vector3(0, 10, 0));
+    //SpawnBallSocketTest(Vector3(0, 10, 0));
 
     //CreatePyramids(Vector3(0,0,0));
 
@@ -156,10 +156,12 @@ void Physics::CreateScene()
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     ////
-    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+
+    SpawnCompoundedRectTest(Vector3(20, 10, 10));
 
     //////create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
     //CreateTowerOfLiar(Vector3(0, 0, 20));
 
 
@@ -380,7 +382,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         float rotDelta =  Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
         curNode->SetWorldScale(Vector3(Random(0.5f,1.5f), Random(0.5f, 1.5f), Random(0.5f, 1.5f)));// this will make things crash.
-        curNode->Translate(Vector3(0, Random(0.5f,2.0f), 0));
+        curNode->Translate(Vector3(Random(0.5f, 2.0f), Random(0.5f,2.0f), Random(0.5f, 2.0f)));
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cone.mdl"));
@@ -602,7 +604,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
 
             NewtonFixedDistanceConstraint* constraint = node->CreateComponent<NewtonFixedDistanceConstraint>();
             constraint->SetOtherBody(node2->GetComponent<NewtonRigidBody>());
-            constraint->SetOtherPosition(Vector3(1, 0, 0));
+            constraint->SetOtherPosition(Vector3(0.2f, 0, 0));
         }
     }
 }
@@ -710,6 +712,34 @@ void Physics::FireSmallBall()
     //    sphere->GetComponent<NewtonRigidBody>()->SetLinearDamping(0);
 
     //}
+}
+
+void Physics::SpawnCompoundedRectTest(Vector3 worldPosition)
+{
+    //make 2 1x1x1 physics rectangles. 1 with just one shape and 1 with 2 smaller compounds.
+
+    Node* regularRect = SpawnSamplePhysicsBox(scene_, worldPosition + Vector3(-2, 0, 0), Vector3(1, 1, 2));
+
+    Node* compoundRootRect = scene_->CreateChild();
+
+    Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
+    Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+
+    Node* visualNode = compoundRootRect->CreateChild();
+
+    visualNode->SetPosition(Vector3(0, 0, 0.5));
+    visualNode->SetScale(Vector3(1, 1, 2));
+    StaticModel* sphere1StMdl = visualNode->CreateComponent<StaticModel>();
+    sphere1StMdl->SetCastShadows(true);
+    sphere1StMdl->SetModel(sphereMdl);
+    sphere1StMdl->SetMaterial(sphereMat);
+
+    compoundRootRect->SetWorldPosition(worldPosition + Vector3(2, 0, 0));
+    compoundRootRect->CreateComponent<NewtonRigidBody>();
+    NewtonCollisionShape_Box* box1 = compoundRootRect->CreateComponent<NewtonCollisionShape_Box>();
+    NewtonCollisionShape_Box* box2 = compoundRootRect->CreateComponent<NewtonCollisionShape_Box>();
+    box1->SetPositionOffset(Vector3(0, 0, 1));
+
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -937,7 +967,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     float range = 200;
     float objectScale = 10;
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 0; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* stMdl = scenePart->CreateComponent<StaticModel>();

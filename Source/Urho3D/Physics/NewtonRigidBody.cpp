@@ -296,7 +296,6 @@ namespace Urho3D {
 
 
                 dMatrix localTransform = UrhoToNewton(colLocalToThisNode);
-                PrintNewton(localTransform);
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
 
                 if (inheritCollisionNodeScales_)
@@ -311,7 +310,7 @@ namespace Urho3D {
                     NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
                 }
                 float vol = NewtonConvexCollisionCalculateVolume(usedCollision);
-                accumMass += vol*1.0f;//#todo 1.0f should be mass density of material assigned to collision shape.
+                accumMass += vol*1.0f;//#todo 1.0f should be mass density of material attached to collision shape.
 
                 if (compoundNeeded) {
 
@@ -343,15 +342,26 @@ namespace Urho3D {
             dMatrix mat = UrhoToNewton(transform);
 
             newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
-
-
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
+            dVector inertia;
+            dVector com;
+            if (compoundNeeded) {
+                NewtonConvexCollisionCalculateInertialMatrix(resolvedCollision, &inertia[0], &com[0]);
+            }
+
 
             mass_ = accumMass * massScale_;
             if (sceneRootBodyMode_)
                 mass_ = 0;
 
-            NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
+            if (compoundNeeded) {
+                NewtonBodySetMassMatrix(newtonBody_, mass_, inertia[0], inertia[1], inertia[2]);
+                NewtonBodySetCentreOfMass(newtonBody_, &com[0]);
+            }
+            else
+                NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
+
+
 
             NewtonBodySetUserData(newtonBody_, (void*)this);
 

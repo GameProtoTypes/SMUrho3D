@@ -109,7 +109,7 @@ private:
     void SpawnMaterialsTest(Vector3 worldPosition);
     void SpawnBallSocketTest(Vector3 worldPosition);
     void FireSmallBall();
-
+    void SpawnCompoundedRectTest(Vector3 worldPosition);
 
 
     /// Handle the logic update event.
