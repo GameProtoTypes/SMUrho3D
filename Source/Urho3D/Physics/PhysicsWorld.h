@@ -15,7 +15,7 @@ namespace Urho3D
     class RigidBody;
     class Constraint;
     class PhysicsMaterial;
-    class NewtonPhysicsMaterialContactPair;
+    class PhysicsMaterialContactPair;
     class Sphere;
     class BoundingBox;
     class NewtonMeshObject;
@@ -125,7 +125,7 @@ namespace Urho3D
         Vector<WeakPtr<RigidBody>> rigidBodyComponentList;
         Vector<WeakPtr<Constraint>> constraintList;
         Vector<SharedPtr<PhysicsMaterial>> physMaterialList;
-        Vector<SharedPtr<NewtonPhysicsMaterialContactPair>> physMaterialPairList;
+        Vector<SharedPtr<PhysicsMaterialContactPair>> physMaterialPairList;
 
 
         void freeWorld();

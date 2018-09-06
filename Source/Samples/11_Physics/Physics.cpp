@@ -142,7 +142,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(0, 0, 0));
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
-    //SpawnMaterialsTest(Vector3(0,0,30));
+    SpawnMaterialsTest(Vector3(0,0,30));
     //SpawnBallSocketTest(Vector3(0, 10, 0));
 
     //CreatePyramids(Vector3(0,0,0));

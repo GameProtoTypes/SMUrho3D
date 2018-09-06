@@ -253,11 +253,11 @@ namespace Urho3D {
         physMaterialPairList.Clear();
         for (PhysicsMaterial* mat1 : physMaterialList) {
             for (PhysicsMaterial* mat2 : physMaterialList) {
-                SharedPtr<NewtonPhysicsMaterialContactPair> newPair = context_->CreateObject<NewtonPhysicsMaterialContactPair>();
+                SharedPtr<PhysicsMaterialContactPair> newPair = context_->CreateObject<PhysicsMaterialContactPair>();
                 newPair->SetMaterials(mat1, mat2);//compute.
 
+                NewtonMaterialSetCallbackUserData(newtonWorld_, mat1->newtonGroupId, mat2->newtonGroupId, (void*)newPair);
                 NewtonMaterialSetCollisionCallback(newtonWorld_, newPair->newtonGroupId0, newPair->newtonGroupId1, nullptr, Newton_ProcessContactsCallback);
-
 
 
                 physMaterialPairList.Insert(0, newPair);
@@ -580,23 +580,21 @@ namespace Urho3D {
         URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
         URHO3D_PROFILE_FUNCTION();;
 
-        URHO3D_LOGINFO("Contact!");
-        //#todo
-        //const NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
-        //const NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
+        const NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
+        const NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
 
 
 
-        //for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
-        //    NewtonMaterial* const material = NewtonContactGetMaterial(contact);
-        //    float frictionValue = 0.2;
+        for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
+            NewtonMaterial* const material = NewtonContactGetMaterial(contact);
 
-        //    //NewtonMaterialGet
+            //extract the urho pairData from the newton pair.
+            PhysicsMaterialContactPair* pairData = static_cast<PhysicsMaterialContactPair*>(NewtonMaterialGetMaterialPairUserData(material));
 
-
-        //    NewtonMaterialSetContactFrictionCoef(material, frictionValue + 0.1f, frictionValue, 0);
-        //    NewtonMaterialSetContactFrictionCoef(material, frictionValue + 0.1f, frictionValue, 1);
-        //}
+            NewtonMaterialSetContactFrictionCoef(material, pairData->staticFrictionCoef_, pairData->kineticFrictionCoef_, 0);
+            NewtonMaterialSetContactElasticity(material, pairData->elasticity_);
+            NewtonMaterialSetContactSoftness(material, pairData->softness_);
+        }
     }
 
     int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex)
@@ -726,7 +724,7 @@ namespace Urho3D {
         //RaycastVehicle::RegisterObject(context);
 
         PhysicsMaterial::RegisterObject(context);
-        NewtonPhysicsMaterialContactPair::RegisterObject(context);
+        PhysicsMaterialContactPair::RegisterObject(context);
     }
 
 

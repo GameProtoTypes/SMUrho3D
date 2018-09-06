@@ -14,7 +14,7 @@ namespace Urho3D {
         URHO3D_OBJECT(PhysicsMaterial, Resource);
 
     public:
-        friend class NewtonPhysicsMaterialContactPair;
+        friend class PhysicsMaterialContactPair;
         PhysicsMaterial(Context* context) : Resource(context)
         {
 
@@ -57,12 +57,12 @@ namespace Urho3D {
     protected:
 
         //friction, restitution, etc..
-        float softness_;//
-        float elasticity_;//how "rubbery the surface along the normal
-        float slipperiness_;//[0 - 1] where 1 is icy and 0 is glue.
+        float softness_ = 0.2f;//
+        float elasticity_ = 0.5f;//how "rubbery the surface along the normal
+        float slipperiness_ = 0.5f;//[0 - 1] where 1 is icy and 0 is glue.
 
-        float staticRugosity_; //roughness used for approximating coefficients of friction. Rugosity = (Surface Area Actual)/(Surface Area Geometrical) [ 1 - 1.1 ]
-        float kineticRugosity_;
+        float staticRugosity_  = 1.05f; //roughness used for approximating coefficients of friction. Rugosity = (Surface Area Actual)/(Surface Area Geometrical) [ 1 - 1.1 ]
+        float kineticRugosity_ = 1.0f;
 
         float normalAcceleration_;//acceleration to apply along the normal of the surface. 
         Vector2 tangentalAcceleration_; //acceleration to apply along the surface (x,y)
@@ -86,18 +86,18 @@ namespace Urho3D {
 
 
 
-    class URHO3D_API NewtonPhysicsMaterialContactPair : public Object
+    class URHO3D_API PhysicsMaterialContactPair : public Object
     {
-        URHO3D_OBJECT(NewtonPhysicsMaterialContactPair, Object);
+        URHO3D_OBJECT(PhysicsMaterialContactPair, Object);
     public:
-        NewtonPhysicsMaterialContactPair(Context* context) : Object(context)
+        PhysicsMaterialContactPair(Context* context) : Object(context)
         {
 
         }
-        virtual ~NewtonPhysicsMaterialContactPair() {}
+        virtual ~PhysicsMaterialContactPair() {}
 
         static void RegisterObject(Context* context) {
-            context->RegisterFactory< NewtonPhysicsMaterialContactPair>();
+            context->RegisterFactory< PhysicsMaterialContactPair>();
         }
 
         ///computes the metrics of this material contact pair for the given two material definitions.
@@ -123,6 +123,11 @@ namespace Urho3D {
 
 
 
+            elasticity_ = Max(material1->elasticity_, material2->elasticity_);
+            softness_ = Max(material1->softness_, material2->softness_);
+
+
+
             newtonGroupId0 = material1->newtonGroupId;
             newtonGroupId1 = material2->newtonGroupId;
 
@@ -133,6 +138,9 @@ namespace Urho3D {
 
         float staticFrictionCoef_;
         float kineticFrictionCoef_;
+
+        float elasticity_;
+        float softness_;
 
         int newtonGroupId0 = -1;
         int newtonGroupId1 = -1;
