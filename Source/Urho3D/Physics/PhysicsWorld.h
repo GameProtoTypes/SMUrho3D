@@ -175,7 +175,10 @@ namespace Urho3D
 
 private:
     void freePhysicsInternals();
-    };
+};
+
+
+
     String NewtonThreadProfilerString(int threadIndex);
 
     /// netwon body callbacks
@@ -191,8 +194,7 @@ private:
     void GetRootRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node, bool includeScene);
     void GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
 
-    void OnPhysicsNodeAdded(Node* node);
-    void OnPhysicsNodeRemoved(Node* oldParent);
+    void RebuildPhysicsNodeTree(Node* node);
 
 
     /// Register Physics library objects.

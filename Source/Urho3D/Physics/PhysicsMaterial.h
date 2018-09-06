@@ -41,6 +41,20 @@ namespace Urho3D {
             XMLElement slipperiness = rootElem.GetChild("slipperiness");
             slipperiness_ = slipperiness.GetFloat("value");
 
+            XMLElement elasticity = rootElem.GetChild("elasticity");
+            elasticity_ = elasticity.GetFloat("value");
+
+            XMLElement softness = rootElem.GetChild("softness");
+            softness_ = softness.GetFloat("value");
+
+            XMLElement staticRugosity = rootElem.GetChild("staticRugosity");
+            staticRugosity_ = staticRugosity.GetFloat("value");
+
+            XMLElement kineticRugosity = rootElem.GetChild("kineticRugosity");
+            kineticRugosity_ = kineticRugosity.GetFloat("value");
+
+
+
             return true;
         }
 
@@ -49,6 +63,8 @@ namespace Urho3D {
         {
             SharedPtr<XMLFile> xml(new XMLFile(context_));
             XMLElement materialElem = xml->CreateRoot("physicsmaterial");
+
+
             //Save(materialElem);
             return xml->Save(dest);
         }

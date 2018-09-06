@@ -67,44 +67,6 @@ namespace Urho3D {
         return String(NewtonGetPluginString(newtonWorld_, plugin));
     }
 
-    void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const Sphere& sphere, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
-    {
-
-        Matrix3x4 mat;
-        mat.SetTranslation(sphere.center_);
-
-        NewtonCollision* newtonShape = UrhoShapeToNewtonCollision(newtonWorld_, sphere, false);
-        int numContacts = DoNewtonCollideTest(&UrhoToNewton(mat)[0][0], newtonShape);
-
-        GetBodiesInConvexCast(result, numContacts);
-
-        NewtonDestroyCollision(newtonShape);
-    }
-
-    void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const BoundingBox& box, unsigned collisionMask /*= M_MAX_UNSIGNED*/)
-    {
-        Matrix3x4 mat;
-        mat.SetTranslation(box.Center());
-
-        NewtonCollision* newtonShape = UrhoShapeToNewtonCollision(newtonWorld_, box, false);
-        int numContacts = DoNewtonCollideTest(&UrhoToNewton(mat)[0][0], newtonShape);
-
-        GetBodiesInConvexCast(result, numContacts);
-        NewtonDestroyCollision(newtonShape);
-
-    }
-
-
-    void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const RigidBody* body)
-    {
-        dMatrix mat;
-        NewtonBodyGetMatrix(body->GetNewtonBody(), &mat[0][0]);
-        NewtonCollision* newtonShape = body->GetEffectiveNewtonCollision();
-        int numContacts = DoNewtonCollideTest(&mat[0][0], newtonShape);
-
-        GetBodiesInConvexCast(result, numContacts);
-    }
-
 
 
     void PhysicsWorld::SetGravity(const Vector3& force)
@@ -529,81 +491,7 @@ namespace Urho3D {
         return (String("Newton_Thread") + String(threadIndex));
     }
 
-    void Newton_ApplyForceAndTorqueCallback(const NewtonBody* body, dFloat timestep, int threadIndex)
-    {
-        URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
-        URHO3D_PROFILE_FUNCTION()
-
-
-        Vector3 netForce;
-        Vector3 netTorque;
-        RigidBody* rigidBodyComp = nullptr;
-
-        rigidBodyComp = static_cast<RigidBody*>(NewtonBodyGetUserData(body));
-
-
-        rigidBodyComp->GetForceAndTorque(netForce, netTorque);
-
-
-        Vector3 gravityForce;
-        if(rigidBodyComp->GetScene())//on scene destruction sometimes this is null so check...
-            gravityForce = rigidBodyComp->GetScene()->GetComponent<PhysicsWorld>()->GetGravity() * rigidBodyComp->GetEffectiveMass();
-
-        netForce += gravityForce;
-
-        NewtonBodySetForce(body, &UrhoToNewton(netForce)[0]);
-        NewtonBodySetTorque(body, &UrhoToNewton(netTorque)[0]);
-    }
-
-
-    void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
-    {
-        RigidBody* rigBody = static_cast<RigidBody*>(NewtonBodyGetUserData(body));
-        rigBody->MarkInternalTransformDirty();
-    }
-
-
-    void Newton_DestroyBodyCallback(const NewtonBody* body)
-    {
-
-    }
-
-    unsigned Newton_WorldRayPrefilterCallback(const NewtonBody* const body, const NewtonCollision* const collision, void* const userData)
-    {
-        ///no filtering right now.
-        return 1;///?
-    }
-
-
-    void Newton_ProcessContactsCallback(const NewtonJoint* contactJoint, dFloat timestep, int threadIndex)
-    {
-        URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
-        URHO3D_PROFILE_FUNCTION();;
-
-        const NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
-        const NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
-
-
-
-        for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
-            NewtonMaterial* const material = NewtonContactGetMaterial(contact);
-
-            //extract the urho pairData from the newton pair.
-            PhysicsMaterialContactPair* pairData = static_cast<PhysicsMaterialContactPair*>(NewtonMaterialGetMaterialPairUserData(material));
-
-            NewtonMaterialSetContactFrictionCoef(material, pairData->staticFrictionCoef_, pairData->kineticFrictionCoef_, 0);
-            NewtonMaterialSetContactElasticity(material, pairData->elasticity_);
-            NewtonMaterialSetContactSoftness(material, pairData->softness_);
-        }
-    }
-
-    int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex)
-    {
-        URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
-        URHO3D_PROFILE_FUNCTION();
-        return 1;
-    }
-
+    
 
     //add rigid bodies to the list as the function recurses from node to root. the last rigidbody in rigidBodies is the most root. optionally include the scene as root.
     void GetRootRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node, bool includeScene)
@@ -674,7 +562,7 @@ namespace Urho3D {
 
 
 
-    void OnPhysicsNodeAdded(Node* node)
+    void RebuildPhysicsNodeTree(Node* node)
     {
         //trigger a rebuild on the root of the new tree.
         PODVector<RigidBody*> rigBodies;
@@ -686,17 +574,6 @@ namespace Urho3D {
         }
     }
 
-    void OnPhysicsNodeRemoved(Node* oldParent)
-    {
-        //trigger a rebuild on the root of the old tree.
-        PODVector<RigidBody*> rigBodies;
-        GetRootRigidBodies(rigBodies, oldParent, false);
-        if (rigBodies.Size()) {
-            RigidBody* mostRootRigBody = rigBodies.Back();
-            if (mostRootRigBody)
-                mostRootRigBody->MarkDirty(true);
-        }
-    }
 
     void RegisterPhysicsLibrary(Context* context)
     {

@@ -32,8 +32,9 @@ namespace Urho3D
         ///Set a scaler on the mass of the rigid body - (scalar is applied to collision shape densities)
         void SetMassScale(float massDensityScale);
 
-        void SetPhysicsMaterial(PhysicsMaterial* material);
 
+        /// set the physics material resource.
+        void SetPhysicsMaterial(PhysicsMaterial* material);
 
         /// Set materials attribute.
         void SetPhysMaterialAttr(const ResourceRef& value);

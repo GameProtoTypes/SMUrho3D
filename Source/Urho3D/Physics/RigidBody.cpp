@@ -471,7 +471,7 @@ namespace Urho3D {
 
         if (node == node_)
         {
-            OnPhysicsNodeAdded(node);
+            RebuildPhysicsNodeTree(node);
         }
     }
 
@@ -486,7 +486,7 @@ namespace Urho3D {
 
             if (oldParent)
             {
-                OnPhysicsNodeRemoved(oldParent);
+                RebuildPhysicsNodeTree(oldParent);
             }
             else
             {
