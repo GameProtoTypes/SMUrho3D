@@ -232,6 +232,7 @@ namespace Urho3D {
     {
         if (physMaterialList.Contains(SharedPtr<NewtonPhysicsMaterial>(material)))
             return;
+
         else
         {
             physMaterialList.Insert(0, SharedPtr<NewtonPhysicsMaterial>(material));
@@ -287,7 +288,7 @@ namespace Urho3D {
         //free meshes in mesh cache
         newtonMeshCache_.Clear();
 
-
+        //free the actual memory
         freePhysicsInternals();
 
 
@@ -570,7 +571,7 @@ namespace Urho3D {
         URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
         URHO3D_PROFILE_FUNCTION();;
 
-
+        URHO3D_LOGINFO("Contact!");
         //#todo
         //const NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
         //const NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
@@ -712,8 +713,7 @@ namespace Urho3D {
         FixedDistanceConstraint::RegisterObject(context);
         BallAndSocketConstraint::RegisterObject(context);
         KinematicsControllerConstraint::RegisterObject(context);
-        //Constraint::RegisterObject(context);
-        
+
         //RaycastVehicle::RegisterObject(context);
 
         NewtonPhysicsMaterial::RegisterObject(context);

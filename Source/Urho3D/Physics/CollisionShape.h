@@ -111,7 +111,7 @@ namespace Urho3D
         virtual void buildNewtonCollision();
         /// Frees the internal collision shape and mesh;
         void freeInternalCollision();
-        void applyMaterial();
+
 
 
         void MarkRigidBodyDirty();

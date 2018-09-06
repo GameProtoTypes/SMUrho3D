@@ -54,7 +54,7 @@ namespace Urho3D {
     {
         physicsMaterial_ = material;
 
-        //add the physics material to the newton world 
+        //add the physics material to the newton world if it is not there already.
         physicsWorld_->addPhysicsMaterial(material);
     }
 
@@ -65,9 +65,6 @@ namespace Urho3D {
 
             //call the derived class createNewtonCollision function.
             buildNewtonCollision();
-
-            //apply material
-            applyMaterial();
     }
 
     void CollisionShape::buildNewtonCollision()
@@ -83,13 +80,6 @@ namespace Urho3D {
         }
     }
 
-    void CollisionShape::applyMaterial()
-    {
-        if (physicsMaterial_)
-        {
-
-        }
-    }
 
     void CollisionShape::MarkDirty(bool dirty /*= true*/)
     {
