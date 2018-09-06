@@ -50,7 +50,7 @@
 #include <Urho3D/DebugNew.h>
 #include "Urho3D/Graphics/VisualDebugger.h"
 #include "Urho3D/Physics/FixedDistanceConstraint.h"
-#include "Urho3D/Physics/NewtonPhysicsMaterial.h"
+#include "Urho3D/Physics/PhysicsMaterial.h"
 #include "Urho3D/Physics/BallAndSocketConstraint.h"
 #include "Urho3D/Physics/NewtonKinematicsJoint.h"
 
@@ -644,14 +644,14 @@ void Physics::SpawnMaterialsTest(Vector3 worldPosition)
     for (int i = 0; i < 5; i++)
     {
         Node* box = SpawnSamplePhysicsBox(scene_, ramp->GetWorldPosition() + Vector3(-2.5 + float(i)*1.1f, 2, 0), Vector3::ONE);
-        NewtonPhysicsMaterial* mat;
+        PhysicsMaterial* mat;
         String physMatName = "PhysicsMaterials/Rock.xml";
         if(i > 2)
             physMatName = "PhysicsMaterials/Ice.xml";
 
-        mat = GSS<ResourceCache>()->GetResource<NewtonPhysicsMaterial>(physMatName);
+        mat = GSS<ResourceCache>()->GetResource<PhysicsMaterial>(physMatName);
         CollisionShape* collisionShape = box->GetDerivedComponent<CollisionShape>();
-        collisionShape->SetPhysicsMaterial(mat);
+      
     }
 }
 
@@ -934,6 +934,8 @@ void Physics::CreateScenery(Vector3 worldPosition)
     RigidBody* body = floorNode->CreateComponent<RigidBody>();
     body->SetMassScale(0.0f);
     auto* shape = floorNode->CreateComponent<CollisionShape_Box>();
+    //body->SetPhysicsMaterial(GSS<ResourceCache>()->GetResource<PhysicsMaterial>("PhysicsMaterials/dummyPhysicsMaterial.xml"));
+
     //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
    // shape->SetPositionOffset(Vector3(1, 0, 0));
     // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the

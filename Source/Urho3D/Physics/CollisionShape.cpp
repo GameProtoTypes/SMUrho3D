@@ -3,7 +3,7 @@
 #include "PhysicsWorld.h"
 #include "RigidBody.h"
 #include "NewtonMeshObject.h"
-#include "NewtonPhysicsMaterial.h"
+#include "PhysicsMaterial.h"
 
 #include "../Core/Context.h"
 #include "../Scene/Component.h"
@@ -50,13 +50,7 @@ namespace Urho3D {
     }
 
 
-    void CollisionShape::SetPhysicsMaterial(NewtonPhysicsMaterial* material)
-    {
-        physicsMaterial_ = material;
 
-        //add the physics material to the newton world if it is not there already.
-        physicsWorld_->addPhysicsMaterial(material);
-    }
 
     void CollisionShape::updateBuild()
     {

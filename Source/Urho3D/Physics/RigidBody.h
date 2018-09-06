@@ -12,6 +12,7 @@ namespace Urho3D
     class PhysicsWorld;
     class CollisionShape;
     class NewtonNodePhysicsGlue;
+    class PhysicsMaterial;
     class URHO3D_API RigidBody : public Component
     {
         URHO3D_OBJECT(RigidBody, Component);
@@ -31,6 +32,7 @@ namespace Urho3D
         ///Set a scaler on the mass of the rigid body - (scalar is applied to collision shape densities)
         void SetMassScale(float massDensityScale);
 
+        void SetPhysicsMaterial(PhysicsMaterial* material);
         ///Get the mass scale of the rigid body
         float GetMassScale() const { return massScale_; }
 
@@ -176,11 +178,16 @@ namespace Urho3D
         /// Physics world.
         WeakPtr<PhysicsWorld> physicsWorld_;
 
+        ///reference to physics material resource;
+        WeakPtr<PhysicsMaterial> physicsMaterial_ = nullptr;
+
         bool sceneRootBodyMode_ = false;
         ///Continuous Collision
         bool continuousCollision_ = false;
         /// flag indicating collision shape should be additionally sized based on node scale.
         bool inheritCollisionNodeScales_ = true;
+
+
 
         ///Net Force in local cordinates
         Vector3 netForce_;
@@ -197,6 +204,7 @@ namespace Urho3D
 
         ///currently connected constraints.
         HashSet<Constraint*> connectedConstraints_;
+
 
 
         dVector netForceNewton_;

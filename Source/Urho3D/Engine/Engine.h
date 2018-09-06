@@ -157,6 +157,7 @@ private:
     float lastRenderTimeUs_{ 0 };
     float lastUpdateTimeUs_{ 0 };
 
+   // bool renderedOncePerUpdate_ = true;
 
     /// Pause when minimized flag.
     bool pauseMinimized_;
@@ -177,7 +178,7 @@ private:
 
 	void updateFpsGoalTimer();
 	void updateUpdateTimeTimer();
-	void updateAveragingTimeWindows();
+
 
 };
 

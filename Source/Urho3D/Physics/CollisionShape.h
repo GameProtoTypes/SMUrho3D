@@ -12,7 +12,7 @@ namespace Urho3D
     class PhysicsWorld;
     class RigidBody;
     class NewtonMeshObject;
-    class NewtonPhysicsMaterial;
+    class PhysicsMaterial;
     class Component;
     class Model;
 
@@ -34,7 +34,7 @@ namespace Urho3D
         
 
 
-        void SetPhysicsMaterial(NewtonPhysicsMaterial* material);
+        //void SetPhysicsMaterial(PhysicsMaterial* material);
 
 
         /// Set the positional offset of the shape in local space to the node.
@@ -81,7 +81,7 @@ namespace Urho3D
         WeakPtr<NewtonMeshObject> newtonMesh_ = nullptr;
 
         ///reference to physics material resource;
-        WeakPtr<NewtonPhysicsMaterial> physicsMaterial_ = nullptr;
+        WeakPtr<PhysicsMaterial> physicsMaterial_ = nullptr;
 
         ///optional scene collision node for use if the collision is part of the scene collision of the newton world.
         void* newtonSceneCollisionNode = nullptr;

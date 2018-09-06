@@ -2,7 +2,7 @@
 #include "PhysicsWorld.h"
 #include "RigidBody.h"
 #include "NewtonMeshObject.h"
-#include "NewtonPhysicsMaterial.h"
+#include "PhysicsMaterial.h"
 
 #include "../Core/Context.h"
 #include "../Scene/Component.h"
@@ -29,12 +29,6 @@
 
 
 namespace Urho3D {
-
-
-
-
-
-
 
     CollisionShape_Box::CollisionShape_Box(Context* context) : CollisionShape(context)
     {

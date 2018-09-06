@@ -72,8 +72,10 @@ Node* SpawnSamplePhysicsBox(Node* parentNode, const Vector3& worldPosition, cons
 
 
     RigidBody* s1RigBody = box->CreateComponent<RigidBody>();
+    //s1RigBody->SetPhysicsMaterial(parentNode->GSS<ResourceCache>()->GetResource<PhysicsMaterial>("PhysicsMaterials/dummyPhysicsMaterial.xml"));
 
     CollisionShape_Box* s1ColShape = box->CreateComponent<CollisionShape_Box>();
+
 
     box->SetWorldPosition(worldPosition);
 

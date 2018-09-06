@@ -9,20 +9,20 @@
 namespace Urho3D {
 
     ///physics material resource providing data for a physics surface.
-    class URHO3D_API NewtonPhysicsMaterial : public Resource
+    class URHO3D_API PhysicsMaterial : public Resource
     {
-        URHO3D_OBJECT(NewtonPhysicsMaterial, Resource);
+        URHO3D_OBJECT(PhysicsMaterial, Resource);
 
     public:
         friend class NewtonPhysicsMaterialContactPair;
-        NewtonPhysicsMaterial(Context* context) : Resource(context)
+        PhysicsMaterial(Context* context) : Resource(context)
         {
 
         }
-        virtual ~NewtonPhysicsMaterial() {}
+        virtual ~PhysicsMaterial() {}
 
         static void RegisterObject(Context* context) {
-            context->RegisterFactory<NewtonPhysicsMaterial>();
+            context->RegisterFactory<PhysicsMaterial>();
         }
 
 
@@ -101,7 +101,7 @@ namespace Urho3D {
         }
 
         ///computes the metrics of this material contact pair for the given two material definitions.
-        void SetMaterials(NewtonPhysicsMaterial* material1, NewtonPhysicsMaterial* material2)
+        void SetMaterials(PhysicsMaterial* material1, PhysicsMaterial* material2)
         {
             float reverseSlipperyness1 = 1 - material1->slipperiness_;
             float reverseSlipperyness2 = 1 - material2->slipperiness_;
@@ -129,7 +129,6 @@ namespace Urho3D {
 
         }
 
-    protected:
 
 
         float staticFrictionCoef_;

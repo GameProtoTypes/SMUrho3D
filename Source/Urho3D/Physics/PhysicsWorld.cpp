@@ -23,7 +23,7 @@
 #include "Core/Profiler.h"
 #include "PhysicsEvents.h"
 #include "Graphics/VisualDebugger.h"
-#include "NewtonPhysicsMaterial.h"
+#include "PhysicsMaterial.h"
 #include "BallAndSocketConstraint.h"
 #include "NewtonKinematicsJoint.h"
 #include "NewtonDebugDrawing.h"
@@ -187,6 +187,12 @@ namespace Urho3D {
 
                 sceneBody_ = scene->CreateComponent<RigidBody>();
                 sceneBody_->SetIsSceneRootBody(true);
+
+                //add a default physics material
+                defaultPhysicsMaterial_ = context_->CreateObject<PhysicsMaterial>();
+                addPhysicsMaterial(defaultPhysicsMaterial_);
+
+
             }
         }
         else
@@ -228,17 +234,15 @@ namespace Urho3D {
         constraintList.Remove(WeakPtr<Constraint>(constraint));
     }
 
-    void PhysicsWorld::addPhysicsMaterial(NewtonPhysicsMaterial* material)
+    void PhysicsWorld::addPhysicsMaterial(PhysicsMaterial* material)
     {
-        if (physMaterialList.Contains(SharedPtr<NewtonPhysicsMaterial>(material)))
+        if (physMaterialList.Contains(SharedPtr<PhysicsMaterial>(material)))
             return;
 
         else
         {
-            physMaterialList.Insert(0, SharedPtr<NewtonPhysicsMaterial>(material));
+            physMaterialList.Insert(0, SharedPtr<PhysicsMaterial>(material));
             material->newtonGroupId = NewtonMaterialCreateGroupID(newtonWorld_);
-
-
 
             computeMaterialPairs();
         }
@@ -247,10 +251,15 @@ namespace Urho3D {
     void PhysicsWorld::computeMaterialPairs()
     {
         physMaterialPairList.Clear();
-        for (NewtonPhysicsMaterial* mat1 : physMaterialList) {
-            for (NewtonPhysicsMaterial* mat2 : physMaterialList) {
+        for (PhysicsMaterial* mat1 : physMaterialList) {
+            for (PhysicsMaterial* mat2 : physMaterialList) {
                 SharedPtr<NewtonPhysicsMaterialContactPair> newPair = context_->CreateObject<NewtonPhysicsMaterialContactPair>();
                 newPair->SetMaterials(mat1, mat2);//compute.
+
+                NewtonMaterialSetCollisionCallback(newtonWorld_, newPair->newtonGroupId0, newPair->newtonGroupId1, nullptr, Newton_ProcessContactsCallback);
+
+
+
                 physMaterialPairList.Insert(0, newPair);
             }
         }
@@ -716,7 +725,7 @@ namespace Urho3D {
 
         //RaycastVehicle::RegisterObject(context);
 
-        NewtonPhysicsMaterial::RegisterObject(context);
+        PhysicsMaterial::RegisterObject(context);
         NewtonPhysicsMaterialContactPair::RegisterObject(context);
     }
 

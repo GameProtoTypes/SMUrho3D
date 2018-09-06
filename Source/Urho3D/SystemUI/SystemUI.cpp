@@ -103,6 +103,7 @@ namespace Urho3D
         {
             float timeStep = GSS<Engine>()->GetUpdateTimeGoalMs()*0.001f;
             ImGui::GetIO().DeltaTime = timeStep;
+            ImGui::EndFrame();
             ImGui::NewFrame();
             ImGuizmo::BeginFrame();
         });

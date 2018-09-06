@@ -17,6 +17,7 @@
 #include "Core/Object.h"
 #include "dQuaternion.h"
 #include "Constraint.h"
+#include "PhysicsMaterial.h"
 
 
 namespace Urho3D {
@@ -64,7 +65,25 @@ namespace Urho3D {
             MarkDirty(true);
         }
     }
+    void RigidBody::SetPhysicsMaterial(PhysicsMaterial* material)
+    {
+        if (material != physicsMaterial_) {
+            physicsMaterial_ = material;
 
+            //add the physics material to the newton world if it is not there already.
+            physicsWorld_->addPhysicsMaterial(material);
+
+            if (newtonBody_)
+            {
+                NewtonBodySetMaterialGroupID(newtonBody_, physicsMaterial_->newtonGroupId);
+            }
+            else {
+                MarkDirty(true);
+            }
+
+        }
+        
+    }
 
     void RigidBody::SetLinearVelocity(const Vector3& velocity)
     {
@@ -375,6 +394,9 @@ namespace Urho3D {
             NewtonBodySetAutoSleep(newtonBody_, autoSleep_);
             NewtonBodySetSleepState(newtonBody_, !autoSleep_);
 
+            //assign material
+            if(physicsMaterial_)
+                NewtonBodySetMaterialGroupID(newtonBody_, physicsMaterial_->newtonGroupId);
 
             //assign callbacks
             NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
@@ -403,6 +425,10 @@ namespace Urho3D {
             physicsWorld_->addRigidBody(this);
 
             node->AddListener(this);
+
+            //assign the default physics material.
+            if (physicsMaterial_ == nullptr)
+                SetPhysicsMaterial(physicsWorld_->defaultPhysicsMaterial_);
 
             SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(RigidBody, HandleNodeTransformChange));
         }

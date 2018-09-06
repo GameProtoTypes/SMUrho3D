@@ -14,7 +14,7 @@ namespace Urho3D
     class CollisionShape;
     class RigidBody;
     class Constraint;
-    class NewtonPhysicsMaterial;
+    class PhysicsMaterial;
     class NewtonPhysicsMaterialContactPair;
     class Sphere;
     class BoundingBox;
@@ -118,13 +118,13 @@ namespace Urho3D
         void removeConstraint(Constraint* constraint);
 
 
-        void addPhysicsMaterial(NewtonPhysicsMaterial* material);
+        void addPhysicsMaterial(PhysicsMaterial* material);
         void computeMaterialPairs();
 
         Vector<WeakPtr<CollisionShape>> collisionComponentList;
         Vector<WeakPtr<RigidBody>> rigidBodyComponentList;
         Vector<WeakPtr<Constraint>> constraintList;
-        Vector<SharedPtr<NewtonPhysicsMaterial>> physMaterialList;
+        Vector<SharedPtr<PhysicsMaterial>> physMaterialList;
         Vector<SharedPtr<NewtonPhysicsMaterialContactPair>> physMaterialPairList;
 
 
@@ -152,6 +152,8 @@ namespace Urho3D
         NewtonWorld* newtonWorld_ = nullptr;
 
         RigidBody* sceneBody_ = nullptr;
+
+        SharedPtr<PhysicsMaterial> defaultPhysicsMaterial_ = nullptr;
 
         ///convex casts
         static const int convexCastRetInfoSize_ = 1000;
