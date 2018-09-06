@@ -69,6 +69,28 @@ namespace Urho3D {
 
 
 
+    void PhysicsWorld::TouchBodyContactMap(RigidBody* rigidBody0, RigidBody* rigidBody1)
+    {
+        
+        //URHO3D_LOGINFO(String(Thread::GetCurrentThreadID()));
+        unsigned int key = IntVector2(rigidBody0->GetID(), rigidBody1->GetID()).ToHash();
+
+        if (bodyContactMap_.Contains(key))
+        {
+
+            bodyContactMap_[key].inContactProgress = true;//keep awake.
+        }
+        else
+        {
+
+            bodyContactMap_[key].inContactProgress = true;
+            bodyContactMap_[key].body0 = rigidBody0;
+            bodyContactMap_[key].body1 = rigidBody1;
+        }
+
+        
+    }
+
     void PhysicsWorld::SetGravity(const Vector3& force)
     {
         gravity_ = force;
@@ -296,6 +318,43 @@ namespace Urho3D {
         NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
     }
 
+    void PhysicsWorld::parseBodyContactMap()
+{
+        PODVector<unsigned int> removeKeys;
+        for (HashMap<unsigned int, RigidBodyContactEntry>::Iterator it = bodyContactMap_.Begin(); it != bodyContactMap_.End(); it++)
+        {
+            if (it->second_.inContactProgress && !it->second_.inContactProgressPrev)//begin contact
+            {
+                //URHO3D_LOGINFO("begin");
+            }
+            else if (!it->second_.inContactProgress && it->second_.inContactProgressPrev)//end contact
+            {
+                //URHO3D_LOGINFO("end");
+            }
+            else if(it->second_.inContactProgress && it->second_.inContactProgressPrev)//continued contact
+            {
+                //URHO3D_LOGINFO("continue");
+            }
+            else if (!it->second_.inContactProgress && !it->second_.inContactProgressPrev)//no contact (mark for removal)
+            {
+                //URHO3D_LOGINFO("erase");
+                removeKeys += IntVector2(it->second_.body0->GetID(), it->second_.body1->GetID()).ToHash();
+            }
+
+            //move on..
+            it->second_.inContactProgressPrev = it->second_.inContactProgress;
+            it->second_.inContactProgress = false;
+        }
+
+
+        //clean old contacts.
+        for (auto key : removeKeys)
+        {
+            bodyContactMap_.Erase(key);
+        }
+    }
+
+
     void PhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
     {
         URHO3D_PROFILE_FUNCTION();
@@ -327,15 +386,21 @@ namespace Urho3D {
         }
 
 
+
+        SendEvent(E_PHYSICSPRESTEP, sendEventData);
+
         //rebuild collision shapes from child nodes to root nodes.
         rebuildDirtyPhysicsComponents();
+
+        parseBodyContactMap();
+
         freePhysicsInternals();
 
         {
             URHO3D_PROFILE("NewtonUpdate");
             //use target time step to give newton constant time steps. 
 
-            SendEvent(E_PHYSICSPRESTEP, sendEventData);
+            
             NewtonUpdateAsync(newtonWorld_, timeStep);
            // NewtonWaitForUpdateToFinish(newtonWorld_);
 

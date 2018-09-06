@@ -24,6 +24,14 @@ namespace Urho3D
     static const String DEF_PHYSICS_CATEGORY = "Physics";
 
 
+    struct RigidBodyContactEntry {
+        WeakPtr<RigidBody> body0 = nullptr;
+        WeakPtr<RigidBody> body1 = nullptr;
+        bool inContactProgress = false;
+        bool inContactProgressPrev = false;
+    };
+
+
     class URHO3D_API PhysicsWorld : public Component
     {
         URHO3D_OBJECT(PhysicsWorld, Component);
@@ -67,7 +75,7 @@ namespace Urho3D
 
 
 
-
+        void TouchBodyContactMap(RigidBody* rigidBody0, RigidBody* rigidBody1);
 
 
 
@@ -142,6 +150,10 @@ namespace Urho3D
 
         void applyNewtonWorldSettings();
 
+
+        HashMap<unsigned int, RigidBodyContactEntry> bodyContactMap_;
+        unsigned int preBodyContactKeyQueue_[10000] = { 0 };
+        void parseBodyContactMap();
 
         /// Step the simulation forward.
         void HandleUpdate(StringHash eventType, VariantMap& eventData);

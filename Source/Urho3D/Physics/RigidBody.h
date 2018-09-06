@@ -42,7 +42,7 @@ namespace Urho3D
         /// Return materials attribute.
         ResourceRef GetPhysMaterialAttr() const;
 
-
+        PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
 
         ///Get the mass scale of the rigid body
         float GetMassScale() const { return massScale_; }
