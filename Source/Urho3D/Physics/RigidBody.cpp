@@ -18,6 +18,7 @@
 #include "dQuaternion.h"
 #include "Constraint.h"
 #include "PhysicsMaterial.h"
+#include "Resource/ResourceCache.h"
 
 
 namespace Urho3D {
@@ -44,7 +45,7 @@ namespace Urho3D {
 
         URHO3D_COPY_BASE_ATTRIBUTES(Component);
 
-
+        URHO3D_MIXED_ACCESSOR_ATTRIBUTE("PhysicsMaterial", GetPhysMaterialAttr, SetPhysMaterialAttr, ResourceRef, ResourceRef(PhysicsMaterial::GetTypeStatic()), AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("MassScale", GetMassScale, SetMassScale, float, 1.0f, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Linear Velocity", GetLinearVelocity, SetLinearVelocity, Vector3, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Angular Velocity", GetAngularVelocity, SetAngularVelocity, Vector3, Vector3::ZERO, AM_DEFAULT);
@@ -82,7 +83,17 @@ namespace Urho3D {
             }
 
         }
-        
+    }
+    void RigidBody::SetPhysMaterialAttr(const ResourceRef& value)
+    {
+        auto* cache = GetSubsystem<ResourceCache>();
+        SetPhysicsMaterial(cache->GetResource<PhysicsMaterial>(value.name_));
+    }
+
+
+    ResourceRef RigidBody::GetPhysMaterialAttr() const
+    {
+        return GetResourceRef(physicsMaterial_, PhysicsMaterial::GetTypeStatic());
     }
 
     void RigidBody::SetLinearVelocity(const Vector3& velocity)

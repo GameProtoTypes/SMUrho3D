@@ -33,6 +33,16 @@ namespace Urho3D
         void SetMassScale(float massDensityScale);
 
         void SetPhysicsMaterial(PhysicsMaterial* material);
+
+
+        /// Set materials attribute.
+        void SetPhysMaterialAttr(const ResourceRef& value);
+
+        /// Return materials attribute.
+        ResourceRef GetPhysMaterialAttr() const;
+
+
+
         ///Get the mass scale of the rigid body
         float GetMassScale() const { return massScale_; }
 
