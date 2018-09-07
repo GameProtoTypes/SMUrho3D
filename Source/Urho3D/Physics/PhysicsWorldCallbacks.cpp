@@ -83,7 +83,7 @@ namespace Urho3D {
         PhysicsWorld* physicsWorld = rigBody0->GetPhysicsWorld();
 
         if (physicsWorld == nullptr)
-            return;
+            return;//scene is being destroyed.
 
         SharedPtr<RigidBodyContactEntry> contactEntry = nullptr;
 
