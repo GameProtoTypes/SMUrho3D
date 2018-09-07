@@ -71,8 +71,7 @@ namespace Urho3D {
 
     void PhysicsWorld::TouchBodyContactMap(RigidBody* rigidBody0, RigidBody* rigidBody1)
     {
-        
-        //URHO3D_LOGINFO(String(Thread::GetCurrentThreadID()));
+
         unsigned int key = IntVector2(rigidBody0->GetID(), rigidBody1->GetID()).ToHash();
 
         if (bodyContactMap_.Contains(key))
@@ -88,7 +87,6 @@ namespace Urho3D {
             bodyContactMap_[key].body1 = rigidBody1;
         }
 
-        
     }
 
     void PhysicsWorld::SetGravity(const Vector3& force)
@@ -319,25 +317,59 @@ namespace Urho3D {
     }
 
     void PhysicsWorld::parseBodyContactMap()
-{
+    {
+        //parse contacts.
+        for (RigidBody* rigBody : rigidBodyComponentList)
+        {
+            NewtonBody* body = rigBody->GetNewtonBody();
+            if (!body)
+                continue;
+
+            NewtonJoint* curContactJoint = NewtonBodyGetFirstContactJoint(body);
+
+            while (curContactJoint)
+            {
+                if (NewtonJointIsActive(curContactJoint))
+                {
+
+                    const NewtonBody* const body0 = NewtonJointGetBody0(curContactJoint);
+                    const NewtonBody* const body1 = NewtonJointGetBody1(curContactJoint);
+
+                    RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
+                    RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
+                    TouchBodyContactMap(rigBody0, rigBody1);
+                }
+                curContactJoint = NewtonBodyGetNextContactJoint(body, curContactJoint);
+            }
+        }
+
+
+
         PODVector<unsigned int> removeKeys;
+        VariantMap eventData;
+        eventData[PhysicsCollisionStart::P_WORLD] = this;
         for (HashMap<unsigned int, RigidBodyContactEntry>::Iterator it = bodyContactMap_.Begin(); it != bodyContactMap_.End(); it++)
         {
+            eventData[PhysicsCollisionStart::P_NODEA] = it->second_.body0->GetNode();
+            eventData[PhysicsCollisionStart::P_NODEB] = it->second_.body1->GetNode();
+            eventData[PhysicsCollisionStart::P_BODYA] = it->second_.body0;
+            eventData[PhysicsCollisionStart::P_BODYB] = it->second_.body1;
+            eventData[PhysicsCollisionStart::P_TRIGGER] = true;
+
             if (it->second_.inContactProgress && !it->second_.inContactProgressPrev)//begin contact
             {
-                //URHO3D_LOGINFO("begin");
+                SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
             }
             else if (!it->second_.inContactProgress && it->second_.inContactProgressPrev)//end contact
             {
-                //URHO3D_LOGINFO("end");
+                SendEvent(E_PHYSICSCOLLISIONEND, eventData);
             }
             else if(it->second_.inContactProgress && it->second_.inContactProgressPrev)//continued contact
             {
-                //URHO3D_LOGINFO("continue");
+                SendEvent(E_PHYSICSCOLLISION, eventData);
             }
-            else if (!it->second_.inContactProgress && !it->second_.inContactProgressPrev)//no contact (mark for removal)
+            else if (!it->second_.inContactProgress && !it->second_.inContactProgressPrev)//no contact (mark for removal from the map)
             {
-                //URHO3D_LOGINFO("erase");
                 removeKeys += IntVector2(it->second_.body0->GetID(), it->second_.body1->GetID()).ToHash();
             }
 

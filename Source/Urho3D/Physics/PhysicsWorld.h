@@ -109,9 +109,9 @@ namespace Urho3D
         /// number of thread to allow newton to use
         int newtonThreadCount_ = 4;
         /// number of iterations newton will internally use.
-        int iterationCount_ = 2;
+        int iterationCount_ = 32;
         /// number of substeps per iteration.
-        int numSubsteps_ = 16;
+        int numSubsteps_ = 1;
 
 
         virtual void OnSceneSet(Scene* scene) override;
@@ -152,8 +152,9 @@ namespace Urho3D
 
 
         HashMap<unsigned int, RigidBodyContactEntry> bodyContactMap_;
-        unsigned int preBodyContactKeyQueue_[10000] = { 0 };
+        
         void parseBodyContactMap();
+        bool contactMapLocked_ = false;
 
         /// Step the simulation forward.
         void HandleUpdate(StringHash eventType, VariantMap& eventData);

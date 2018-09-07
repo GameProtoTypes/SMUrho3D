@@ -94,7 +94,7 @@ namespace Urho3D {
         //insert a struct into the physicsWorld body contact state map
 
         //causes threading conflict.
-        //physicsWorld->TouchBodyContactMap(rigBody0, rigBody1);
+        //physicsWorld->TouchBodyContactMap(rigBody0, rigBody1, threadIndex);
 
 
 
