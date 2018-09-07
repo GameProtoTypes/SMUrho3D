@@ -326,22 +326,34 @@ namespace Urho3D {
                 continue;
 
             NewtonJoint* curContactJoint = NewtonBodyGetFirstContactJoint(body);
-
+            NewtonJoint* baseContactJoint = curContactJoint;
             while (curContactJoint)
             {
                 if (NewtonJointIsActive(curContactJoint))
                 {
 
-                    const NewtonBody* const body0 = NewtonJointGetBody0(curContactJoint);
-                    const NewtonBody* const body1 = NewtonJointGetBody1(curContactJoint);
 
-                    RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
-                    RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
-                    TouchBodyContactMap(rigBody0, rigBody1);
                 }
                 curContactJoint = NewtonBodyGetNextContactJoint(body, curContactJoint);
             }
+
+            if (baseContactJoint && NewtonJointIsActive(baseContactJoint))
+            {
+                const NewtonBody* const body0 = NewtonJointGetBody0(baseContactJoint);
+                const NewtonBody* const body1 = NewtonJointGetBody1(baseContactJoint);
+
+                RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
+                RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
+                TouchBodyContactMap(rigBody0, rigBody1);
+            }
+
+
         }
+
+
+
+
+
 
 
 
