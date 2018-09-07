@@ -218,6 +218,11 @@ void Physics::SubscribeToEvents()
     SubscribeToEvent(E_MOUSEBUTTONUP, URHO3D_HANDLER(Physics, HandleMouseButtonUp));
 
     SubscribeToEvent(E_MOUSEBUTTONDOWN, URHO3D_HANDLER(Physics, HandleMouseButtonDown));
+
+
+    SubscribeToEvent(E_PHYSICSCOLLISIONSTART, URHO3D_HANDLER(Physics, HandleCollisionStart));
+
+
 }
 
 void Physics::MoveCamera(float timeStep)
@@ -899,6 +904,21 @@ void Physics::HandleMouseButtonUp(StringHash eventType, VariantMap& eventData)
 
 void Physics::HandleMouseButtonDown(StringHash eventType, VariantMap& eventData)
 {
+
+}
+
+
+void Physics::HandleCollisionStart(StringHash eventType, VariantMap& eventData)
+{
+    RigidBody* bodyA = static_cast<RigidBody*>(eventData[PhysicsCollisionStart::P_BODYA].GetPtr());
+    RigidBody* bodyB = static_cast<RigidBody*>(eventData[PhysicsCollisionStart::P_BODYB].GetPtr());
+
+    RigidBodyContactEntry* contactData = static_cast<RigidBodyContactEntry*>(eventData[PhysicsCollisionStart::P_CONTACT_DATA].GetPtr());
+    for (int i = 0; i < contactData->numContacts; i++) {
+        GSS<VisualDebugger>()->AddOrb(contactData->contactPositions[i], 0.1f, Color::RED);
+
+    }
+
 
 }
 

@@ -69,23 +69,13 @@ namespace Urho3D {
 
 
 
-    void PhysicsWorld::TouchBodyContactMap(RigidBody* rigidBody0, RigidBody* rigidBody1)
+    void PhysicsWorld::TouchBodyContactMap(SharedPtr<RigidBodyContactEntry> contactEntry)
     {
+        unsigned int key = IntVector2(contactEntry->body0->GetID(), contactEntry->body1->GetID()).ToHash();
 
-        unsigned int key = IntVector2(rigidBody0->GetID(), rigidBody1->GetID()).ToHash();
-
-        if (bodyContactMap_.Contains(key))
-        {
-
-            bodyContactMap_[key].inContactProgress = true;//keep awake.
-        }
-        else
-        {
-
-            bodyContactMap_[key].inContactProgress = true;
-            bodyContactMap_[key].body0 = rigidBody0;
-            bodyContactMap_[key].body1 = rigidBody1;
-        }
+        bodyContactMap_.Insert(Pair<unsigned int, SharedPtr<RigidBodyContactEntry>>(key, contactEntry));
+       // bodyContactMap_[key] = contactEntry;
+        
 
     }
 
@@ -318,76 +308,35 @@ namespace Urho3D {
 
     void PhysicsWorld::parseBodyContactMap()
     {
-        //parse contacts.
-        for (RigidBody* rigBody : rigidBodyComponentList)
-        {
-            NewtonBody* body = rigBody->GetNewtonBody();
-            if (!body)
-                continue;
-
-            NewtonJoint* curContactJoint = NewtonBodyGetFirstContactJoint(body);
-            NewtonJoint* baseContactJoint = curContactJoint;
-            while (curContactJoint)
-            {
-                if (NewtonJointIsActive(curContactJoint))
-                {
-
-
-                }
-                curContactJoint = NewtonBodyGetNextContactJoint(body, curContactJoint);
-            }
-
-            if (baseContactJoint && NewtonJointIsActive(baseContactJoint))
-            {
-                const NewtonBody* const body0 = NewtonJointGetBody0(baseContactJoint);
-                const NewtonBody* const body1 = NewtonJointGetBody1(baseContactJoint);
-
-                RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
-                RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
-                TouchBodyContactMap(rigBody0, rigBody1);
-            }
-
-
-        }
-
-
-
-
-
-
-
-
         PODVector<unsigned int> removeKeys;
         VariantMap eventData;
         eventData[PhysicsCollisionStart::P_WORLD] = this;
-        for (HashMap<unsigned int, RigidBodyContactEntry>::Iterator it = bodyContactMap_.Begin(); it != bodyContactMap_.End(); it++)
+        for (HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>>::Iterator it = bodyContactMap_.Begin(); it != bodyContactMap_.End(); it++)
         {
-            eventData[PhysicsCollisionStart::P_NODEA] = it->second_.body0->GetNode();
-            eventData[PhysicsCollisionStart::P_NODEB] = it->second_.body1->GetNode();
-            eventData[PhysicsCollisionStart::P_BODYA] = it->second_.body0;
-            eventData[PhysicsCollisionStart::P_BODYB] = it->second_.body1;
-            eventData[PhysicsCollisionStart::P_TRIGGER] = true;
+            eventData[PhysicsCollisionStart::P_BODYA] = it->second_->body0;
+            eventData[PhysicsCollisionStart::P_BODYB] = it->second_->body1;
+            eventData[PhysicsCollisionStart::P_CONTACT_DATA] = it->second_;
 
-            if (it->second_.inContactProgress && !it->second_.inContactProgressPrev)//begin contact
+            if (it->second_->inContactProgress && !it->second_->inContactProgressPrev)//begin contact
             {
                 SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
             }
-            else if (!it->second_.inContactProgress && it->second_.inContactProgressPrev)//end contact
+            else if (!it->second_->inContactProgress && it->second_->inContactProgressPrev)//end contact
             {
                 SendEvent(E_PHYSICSCOLLISIONEND, eventData);
             }
-            else if(it->second_.inContactProgress && it->second_.inContactProgressPrev)//continued contact
+            else if(it->second_->inContactProgress && it->second_->inContactProgressPrev)//continued contact
             {
                 SendEvent(E_PHYSICSCOLLISION, eventData);
             }
-            else if (!it->second_.inContactProgress && !it->second_.inContactProgressPrev)//no contact (mark for removal from the map)
+            else if (!it->second_->inContactProgress && !it->second_->inContactProgressPrev)//no contact for one update. (mark for removal from the map)
             {
-                removeKeys += IntVector2(it->second_.body0->GetID(), it->second_.body1->GetID()).ToHash();
+                removeKeys += IntVector2(it->second_->body0->GetID(), it->second_->body1->GetID()).ToHash();
             }
 
             //move on..
-            it->second_.inContactProgressPrev = it->second_.inContactProgress;
-            it->second_.inContactProgress = false;
+            it->second_->inContactProgressPrev = it->second_->inContactProgress;
+            it->second_->inContactProgress = false;
         }
 
 
@@ -706,6 +655,7 @@ namespace Urho3D {
         FixedDistanceConstraint::RegisterObject(context);
         BallAndSocketConstraint::RegisterObject(context);
         KinematicsControllerConstraint::RegisterObject(context);
+        RigidBodyContactEntry::RegisterObject(context);
 
         //RaycastVehicle::RegisterObject(context);
 
@@ -719,5 +669,24 @@ namespace Urho3D {
 
 
 
+
+
+
+
+
+    RigidBodyContactEntry::RigidBodyContactEntry(Context* context) : Object(context)
+    {
+
+    }
+
+    RigidBodyContactEntry::~RigidBodyContactEntry()
+    {
+
+    }
+
+    void RigidBodyContactEntry::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<RigidBodyContactEntry>();
+    }
 
 }

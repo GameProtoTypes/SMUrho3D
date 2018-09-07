@@ -78,23 +78,44 @@ namespace Urho3D {
 
         PhysicsWorld* physicsWorld = rigBody0->GetPhysicsWorld();
 
+        SharedPtr<RigidBodyContactEntry> contactEntry = SharedPtr<RigidBodyContactEntry>(new RigidBodyContactEntry(rigBody0->GetContext()));
+        contactEntry->body0 = rigBody0;
+        contactEntry->body1 = rigBody1;
+        contactEntry->inContactProgress = true;
+        contactEntry->numContacts = NewtonContactJointGetContactCount(contactJoint);
+        contactEntry->contactPositions.Resize(contactEntry->numContacts);
+        contactEntry->contactNormals.Resize(contactEntry->numContacts);
 
+        int contactIdx = 0;
         for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
+
+
             NewtonMaterial* const material = NewtonContactGetMaterial(contact);
 
-            //extract the urho pairData from the newton pair.
+            //extract the urho material pair Data from the newton material pair.
             PhysicsMaterialContactPair* pairData = static_cast<PhysicsMaterialContactPair*>(NewtonMaterialGetMaterialPairUserData(material));
-            
+
+            //apply material settings to contact.
             NewtonMaterialSetContactFrictionCoef(material, pairData->staticFrictionCoef_, pairData->kineticFrictionCoef_, 0);
             NewtonMaterialSetContactElasticity(material, pairData->elasticity_);
             NewtonMaterialSetContactSoftness(material, pairData->softness_);
+
+            //get contact geometric info for the contact struct
+
+            dVector pos, norm;
+            NewtonMaterialGetContactPositionAndNormal(material, body0, &pos[0], &norm[0]);
+            contactEntry->contactNormals[contactIdx] = NewtonToUrhoVec3(norm);
+            contactEntry->contactPositions[contactIdx] = NewtonToUrhoVec3(pos);
+
+
+            contactIdx++;
         }
 
 
-        //insert a struct into the physicsWorld body contact state map
-
-        //causes threading conflict.
-        //physicsWorld->TouchBodyContactMap(rigBody0, rigBody1, threadIndex);
+        //insert the struct into the physicsWorld body contact state map
+        NewtonWorldCriticalSectionLock(physicsWorld->GetNewtonWorld(), threadIndex);
+        physicsWorld->TouchBodyContactMap(contactEntry);
+        NewtonWorldCriticalSectionUnlock(physicsWorld->GetNewtonWorld());
 
 
 

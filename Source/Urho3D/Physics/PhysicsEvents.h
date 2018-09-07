@@ -45,35 +45,26 @@ URHO3D_EVENT(E_PHYSICSPOSTSTEP, PhysicsPostStep)
 URHO3D_EVENT(E_PHYSICSCOLLISIONSTART, PhysicsCollisionStart)
 {
     URHO3D_PARAM(P_WORLD, World);                  // PhysicsWorld pointer
-    URHO3D_PARAM(P_NODEA, NodeA);                  // Node pointer
-    URHO3D_PARAM(P_NODEB, NodeB);                  // Node pointer
     URHO3D_PARAM(P_BODYA, BodyA);                  // RigidBody pointer
     URHO3D_PARAM(P_BODYB, BodyB);                  // RigidBody pointer
-    URHO3D_PARAM(P_TRIGGER, Trigger);              // bool
-    URHO3D_PARAM(P_CONTACTS, Contacts);            // Buffer containing position (Vector3), normal (Vector3), distance (float), impulse (float) for each contact
+    URHO3D_PARAM(P_CONTACT_DATA, Contacts);        // RigidBodyContactEntry pointer containing information relating to contacts. 
 }
 
 /// Physics collision ongoing. Global event sent by the PhysicsWorld.
 URHO3D_EVENT(E_PHYSICSCOLLISION, PhysicsCollision)
 {
     URHO3D_PARAM(P_WORLD, World);                  // PhysicsWorld pointer
-    URHO3D_PARAM(P_NODEA, NodeA);                  // Node pointer
-    URHO3D_PARAM(P_NODEB, NodeB);                  // Node pointer
     URHO3D_PARAM(P_BODYA, BodyA);                  // RigidBody pointer
     URHO3D_PARAM(P_BODYB, BodyB);                  // RigidBody pointer
-    URHO3D_PARAM(P_TRIGGER, Trigger);              // bool
-    URHO3D_PARAM(P_CONTACTS, Contacts);            // Buffer containing position (Vector3), normal (Vector3), distance (float), impulse (float) for each contact
+    URHO3D_PARAM(P_CONTACT_DATA, Contacts);        // RigidBodyContactEntry pointer containing information relating to contacts. 
 }
 
 /// Physics collision ended. Global event sent by the PhysicsWorld.
 URHO3D_EVENT(E_PHYSICSCOLLISIONEND, PhysicsCollisionEnd)
 {
     URHO3D_PARAM(P_WORLD, World);                  // PhysicsWorld pointer
-    URHO3D_PARAM(P_NODEA, NodeA);                  // Node pointer
-    URHO3D_PARAM(P_NODEB, NodeB);                  // Node pointer
     URHO3D_PARAM(P_BODYA, BodyA);                  // RigidBody pointer
     URHO3D_PARAM(P_BODYB, BodyB);                  // RigidBody pointer
-    URHO3D_PARAM(P_TRIGGER, Trigger);              // bool
 }
 
 /// Node's physics collision started. Sent by scene nodes participating in a collision.

@@ -19,16 +19,30 @@ namespace Urho3D
     class Sphere;
     class BoundingBox;
     class NewtonMeshObject;
+    class Context;
 
     static const Vector3 DEF_GRAVITY = Vector3(0, -9.81, 0);
     static const String DEF_PHYSICS_CATEGORY = "Physics";
 
 
-    struct RigidBodyContactEntry {
+    class URHO3D_API  RigidBodyContactEntry : public Object
+    {
+        URHO3D_OBJECT(RigidBodyContactEntry, Object);
+    public:
+
+        RigidBodyContactEntry(Context* context);
+        ~RigidBodyContactEntry() override;
+
+        /// Register object factory.
+        static void RegisterObject(Context* context);
+
         WeakPtr<RigidBody> body0 = nullptr;
         WeakPtr<RigidBody> body1 = nullptr;
         bool inContactProgress = false;
         bool inContactProgressPrev = false;
+        int numContacts = 0;
+        PODVector<Vector3> contactPositions; //global space
+        PODVector<Vector3> contactNormals;   //normal relative to body0
     };
 
 
@@ -75,7 +89,7 @@ namespace Urho3D
 
 
 
-        void TouchBodyContactMap(RigidBody* rigidBody0, RigidBody* rigidBody1);
+        void TouchBodyContactMap(SharedPtr<RigidBodyContactEntry> contactEntry);
 
 
 
@@ -151,7 +165,7 @@ namespace Urho3D
         void applyNewtonWorldSettings();
 
 
-        HashMap<unsigned int, RigidBodyContactEntry> bodyContactMap_;
+        HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>> bodyContactMap_;
         
         void parseBodyContactMap();
         bool contactMapLocked_ = false;

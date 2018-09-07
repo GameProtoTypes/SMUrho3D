@@ -129,6 +129,10 @@ private:
     void HandleMouseButtonDown(StringHash eventType, VariantMap& eventData);
 
 
+    void HandleCollisionStart(StringHash eventType, VariantMap& eventData);
+
+
+
     Node* pickPullNode = nullptr;
     Quaternion pickPullCameraStartOrientation;
     Vector3 pickPullStartPositionWorld;
