@@ -76,9 +76,23 @@ namespace Urho3D {
         RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
         RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
 
+        
+
+        unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
+
         PhysicsWorld* physicsWorld = rigBody0->GetPhysicsWorld();
 
-        SharedPtr<RigidBodyContactEntry> contactEntry = SharedPtr<RigidBodyContactEntry>(new RigidBodyContactEntry(rigBody0->GetContext()));
+        if (physicsWorld == nullptr)
+            return;
+
+        SharedPtr<RigidBodyContactEntry> contactEntry = nullptr;
+
+        //get/create the struct into the physicsWorld body contact state map
+        NewtonWorldCriticalSectionLock(physicsWorld->GetNewtonWorld(), threadIndex);
+            contactEntry = physicsWorld->GetCreateBodyContactEntry(key);
+        NewtonWorldCriticalSectionUnlock(physicsWorld->GetNewtonWorld());
+
+
         contactEntry->body0 = rigBody0;
         contactEntry->body1 = rigBody1;
         contactEntry->inContactProgress = true;
@@ -112,10 +126,7 @@ namespace Urho3D {
         }
 
 
-        //insert the struct into the physicsWorld body contact state map
-        NewtonWorldCriticalSectionLock(physicsWorld->GetNewtonWorld(), threadIndex);
-        physicsWorld->TouchBodyContactMap(contactEntry);
-        NewtonWorldCriticalSectionUnlock(physicsWorld->GetNewtonWorld());
+
 
 
 

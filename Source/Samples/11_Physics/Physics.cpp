@@ -145,7 +145,7 @@ void Physics::CreateScene()
     //SpawnMaterialsTest(Vector3(0,0,30));
     //SpawnBallSocketTest(Vector3(0, 10, 0));
 
-    //CreatePyramids(Vector3(0,0,0));
+    CreatePyramids(Vector3(0,0,0));
 
     //int numVertical = 1;
     //for (int i = 0; i < numVertical; i++)
@@ -915,7 +915,7 @@ void Physics::HandleCollisionStart(StringHash eventType, VariantMap& eventData)
 
     RigidBodyContactEntry* contactData = static_cast<RigidBodyContactEntry*>(eventData[PhysicsCollisionStart::P_CONTACT_DATA].GetPtr());
     for (int i = 0; i < contactData->numContacts; i++) {
-        GSS<VisualDebugger>()->AddOrb(contactData->contactPositions[i], 0.1f, Color::RED);
+        GSS<VisualDebugger>()->AddCross(contactData->contactPositions[i], 0.2f, Color::RED, true);
 
     }
 

@@ -36,6 +36,10 @@ namespace Urho3D
         /// Register object factory.
         static void RegisterObject(Context* context);
 
+        virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest);
+
+        unsigned int hashKey_ = 0;
+
         WeakPtr<RigidBody> body0 = nullptr;
         WeakPtr<RigidBody> body1 = nullptr;
         bool inContactProgress = false;
@@ -89,7 +93,7 @@ namespace Urho3D
 
 
 
-        void TouchBodyContactMap(SharedPtr<RigidBodyContactEntry> contactEntry);
+        RigidBodyContactEntry* GetCreateBodyContactEntry(unsigned int key);
 
 
 

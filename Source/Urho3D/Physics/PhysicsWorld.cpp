@@ -29,6 +29,7 @@
 #include "NewtonDebugDrawing.h"
 #include "dgMatrix.h"
 #include "dCustomJoint.h"
+#include "Graphics/DebugRenderer.h"
 
 namespace Urho3D {
 
@@ -69,14 +70,16 @@ namespace Urho3D {
 
 
 
-    void PhysicsWorld::TouchBodyContactMap(SharedPtr<RigidBodyContactEntry> contactEntry)
+    Urho3D::RigidBodyContactEntry* PhysicsWorld::GetCreateBodyContactEntry(unsigned int key)
     {
-        unsigned int key = IntVector2(contactEntry->body0->GetID(), contactEntry->body1->GetID()).ToHash();
+        if (!bodyContactMap_.Contains(key)) {
+            SharedPtr<RigidBodyContactEntry> newContact = SharedPtr<RigidBodyContactEntry>((new RigidBodyContactEntry(context_)));
+            newContact->hashKey_ = key;
+            bodyContactMap_.Insert(Pair<unsigned int, SharedPtr<RigidBodyContactEntry>>(key, newContact));
 
-        bodyContactMap_.Insert(Pair<unsigned int, SharedPtr<RigidBodyContactEntry>>(key, contactEntry));
-       // bodyContactMap_[key] = contactEntry;
-        
+        }
 
+        return bodyContactMap_[key];
     }
 
     void PhysicsWorld::SetGravity(const Vector3& force)
@@ -135,6 +138,13 @@ namespace Urho3D {
                 consttraint->DrawDebugGeometry(debug, depthTest);
             }
 
+            //draw debug geometry for contacts
+            for (auto pair : bodyContactMap_)
+            {
+                pair.second_->DrawDebugGeometry(debug, depthTest);
+            }
+
+
             //draw debug geometry on rigid bodies.
             for (RigidBody* body : rigidBodyComponentList) {
                 body->DrawDebugGeometry(debug, depthTest);
@@ -144,7 +154,7 @@ namespace Urho3D {
             if (sceneBody_)
                 sceneBody_->DrawDebugGeometry(debug, depthTest);
 
-
+            
         }
     }
 
@@ -331,7 +341,7 @@ namespace Urho3D {
             }
             else if (!it->second_->inContactProgress && !it->second_->inContactProgressPrev)//no contact for one update. (mark for removal from the map)
             {
-                removeKeys += IntVector2(it->second_->body0->GetID(), it->second_->body1->GetID()).ToHash();
+               removeKeys += it->second_->hashKey_;
             }
 
             //move on..
@@ -687,6 +697,28 @@ namespace Urho3D {
     void RigidBodyContactEntry::RegisterObject(Context* context)
     {
         context->RegisterFactory<RigidBodyContactEntry>();
+    }
+
+    void RigidBodyContactEntry::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    {
+        //draw contact points
+        if (inContactProgress)
+        {
+            for (int i = 0; i < numContacts; i++)
+            {
+
+                //debug->AddCross(contactPositions[i], 0.2f, Color::RED, false);
+                debug->AddLine(contactPositions[i], contactPositions[i] + contactNormals[i], Color::GREEN, depthTest);
+
+            }
+
+
+
+
+
+        }
+
+
     }
 
 }
