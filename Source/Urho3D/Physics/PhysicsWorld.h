@@ -31,7 +31,7 @@ namespace Urho3D
     public:
 
         RigidBodyContactEntry(Context* context);
-        ~RigidBodyContactEntry() override;
+        virtual ~RigidBodyContactEntry() override;
 
         /// Register object factory.
         static void RegisterObject(Context* context);

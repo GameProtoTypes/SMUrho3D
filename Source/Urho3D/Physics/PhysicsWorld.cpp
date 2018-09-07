@@ -73,7 +73,7 @@ namespace Urho3D {
     Urho3D::RigidBodyContactEntry* PhysicsWorld::GetCreateBodyContactEntry(unsigned int key)
     {
         if (!bodyContactMap_.Contains(key)) {
-            SharedPtr<RigidBodyContactEntry> newContact = SharedPtr<RigidBodyContactEntry>((new RigidBodyContactEntry(context_)));
+            SharedPtr<RigidBodyContactEntry> newContact = context_->CreateObject<RigidBodyContactEntry>();
             newContact->hashKey_ = key;
             bodyContactMap_.Insert(Pair<unsigned int, SharedPtr<RigidBodyContactEntry>>(key, newContact));
 
@@ -139,9 +139,9 @@ namespace Urho3D {
             }
 
             //draw debug geometry for contacts
-            for (HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>>::ConstIterator i = bodyContactMap_.Begin(); i != bodyContactMap_.End(); i++)
+            for (HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>>::Iterator i = bodyContactMap_.Begin(); i != bodyContactMap_.End(); ++i)
             {
-
+               
                    i->second_->DrawDebugGeometry(debug, depthTest);
             }
 
