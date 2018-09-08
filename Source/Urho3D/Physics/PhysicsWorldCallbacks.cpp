@@ -95,7 +95,7 @@ namespace Urho3D {
 
         contactEntry->body0 = rigBody0;
         contactEntry->body1 = rigBody1;
-        contactEntry->inContactProgress = true;
+        contactEntry->wakeFlag_ = true;
         contactEntry->numContacts = NewtonContactJointGetContactCount(contactJoint);
         contactEntry->contactPositions.Resize(contactEntry->numContacts);
         contactEntry->contactNormals.Resize(contactEntry->numContacts);

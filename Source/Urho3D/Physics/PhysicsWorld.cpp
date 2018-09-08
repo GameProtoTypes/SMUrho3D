@@ -328,26 +328,28 @@ namespace Urho3D {
             eventData[PhysicsCollisionStart::P_BODYB] = it->second_->body1;
             eventData[PhysicsCollisionStart::P_CONTACT_DATA] = it->second_;
 
-            if (it->second_->inContactProgress && !it->second_->inContactProgressPrev)//begin contact
+            if (it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//begin contact
             {
+                it->second_->inContact_ = true;
                 SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
             }
-            else if (!it->second_->inContactProgress && it->second_->inContactProgressPrev)//end contact
+            else if (!it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//end contact
             {
+                it->second_->inContact_ = false;
                 SendEvent(E_PHYSICSCOLLISIONEND, eventData);
             }
-            else if(it->second_->inContactProgress && it->second_->inContactProgressPrev)//continued contact
+            else if(it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//continued contact
             {
                 SendEvent(E_PHYSICSCOLLISION, eventData);
             }
-            else if (!it->second_->inContactProgress && !it->second_->inContactProgressPrev)//no contact for one update. (mark for removal from the map)
+            else if (!it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//no contact for one update. (mark for removal from the map)
             {
                removeKeys += it->second_->hashKey_;
             }
 
             //move on..
-            it->second_->inContactProgressPrev = it->second_->inContactProgress;
-            it->second_->inContactProgress = false;
+            it->second_->wakeFlagPrev_ = it->second_->wakeFlag_;
+            it->second_->wakeFlag_ = false;
         }
 
 
@@ -703,7 +705,7 @@ namespace Urho3D {
     void RigidBodyContactEntry::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         //draw contact points
-        if (inContactProgress)
+        if (inContact_)
         {
             for (int i = 0; i < numContacts; i++)
             {

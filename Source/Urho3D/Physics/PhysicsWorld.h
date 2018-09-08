@@ -42,8 +42,9 @@ namespace Urho3D
 
         WeakPtr<RigidBody> body0 = nullptr;
         WeakPtr<RigidBody> body1 = nullptr;
-        bool inContactProgress = false;
-        bool inContactProgressPrev = false;
+        bool wakeFlag_ = false;
+        bool wakeFlagPrev_ = false;
+        bool inContact_ = false;
         int numContacts = 0;
         PODVector<Vector3> contactPositions; //global space
         PODVector<Vector3> contactNormals;   //normal relative to body0
