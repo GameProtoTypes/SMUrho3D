@@ -203,4 +203,14 @@ namespace Urho3D {
         NewtonCollisionForEachPolygonDo(collision, &UrhoToNewton(transform)[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
     }
 
+    void UrhoNewtonDebugDisplay::SetColor(const dVector& color)
+    {
+        currentColor_ = Color(color.m_x, color.m_y, color.m_z);
+    }
+
+    void UrhoNewtonDebugDisplay::DrawLine(const dVector& p0, const dVector& p1)
+    {
+        debugRenderer_->AddLine(NewtonToUrhoVec3(p0), NewtonToUrhoVec3(p1), currentColor_, depthTest_);
+    }
+
 }

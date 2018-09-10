@@ -8,6 +8,7 @@
 #include "Scene/Scene.h"
 #include "dCustomFixDistance.h"
 #include "Newton.h"
+#include "NewtonDebugDrawing.h"
 namespace Urho3D {
     Constraint::Constraint(Context* context) : Component(context)
     {
@@ -92,6 +93,13 @@ namespace Urho3D {
         debug->AddLine(otherPosWorld, otherPosWorld + yAxisOther, Color::GREEN, depthTest);
         debug->AddLine(otherPosWorld, otherPosWorld + zAxisOther, Color::BLUE, depthTest);
 
+
+        //draw the special joint stuff given to us by newton
+        UrhoNewtonDebugDisplay debugDisplay(debug, depthTest);
+        if (newtonJoint_)
+        {
+            newtonJoint_->Debug(&debugDisplay);
+        }
 
     }
 

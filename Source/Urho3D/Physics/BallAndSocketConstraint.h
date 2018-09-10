@@ -20,6 +20,9 @@ namespace Urho3D {
         static void RegisterObject(Context* context);
 
 
+
+        virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
+
     protected:
 
         virtual void buildConstraint() override;

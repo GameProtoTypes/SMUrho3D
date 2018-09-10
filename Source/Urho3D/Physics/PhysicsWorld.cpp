@@ -134,9 +134,9 @@ namespace Urho3D {
         if (debug)
         {
             //draw debug geometry on constraints.
-            for (Constraint* consttraint : constraintList)
+            for (Constraint* constraint : constraintList)
             {
-                consttraint->DrawDebugGeometry(debug, depthTest);
+                constraint->DrawDebugGeometry(debug, depthTest);
             }
 
             //draw debug geometry for contacts

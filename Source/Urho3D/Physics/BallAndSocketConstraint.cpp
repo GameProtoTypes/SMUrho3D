@@ -10,12 +10,19 @@
 #include "dCustomBallAndSocket.h"
 #include "dCustomJoint.h"
 #include "dCustom6dof.h"
+#include "NewtonDebugDrawing.h"
+#include "Graphics/DebugRenderer.h"
 
 namespace Urho3D {
 
     BallAndSocketConstraint::BallAndSocketConstraint(Context* context) : Constraint(context)
     {
 
+    }
+
+    void BallAndSocketConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    {
+        Constraint::DrawDebugGeometry(debug, depthTest);
     }
 
     Urho3D::BallAndSocketConstraint::~BallAndSocketConstraint()
