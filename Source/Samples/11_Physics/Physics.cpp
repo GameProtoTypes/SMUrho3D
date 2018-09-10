@@ -608,7 +608,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
     {
         for (Node* node2 : nodes)
         {
-            if (node == nodes[0])
+            if (node == node2)
                 continue;
 
             FixedDistanceConstraint* constraint = node->CreateComponent<FixedDistanceConstraint>();

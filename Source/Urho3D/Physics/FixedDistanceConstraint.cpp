@@ -38,21 +38,17 @@ namespace Urho3D {
 {
         //get own body transform.
         dVector pivot0(UrhoToNewton(ownBody_->GetNode()->LocalToWorld(position_)));
-
+        dVector pivot1;
         if (otherBody_) {
-
-            dVector pivot1(UrhoToNewton(otherBody_->GetNode()->LocalToWorld(otherPosition_)));
-
-            newtonJoint_ = new dCustomFixDistance(pivot0, pivot1, ownBody_->GetNewtonBody(), otherBody_->GetNewtonBody());
-
+            pivot1 = (UrhoToNewton(otherBody_->GetNode()->LocalToWorld(otherPosition_)));
         }
         else
         {
-            dVector pivot1(UrhoToNewton(otherPosition_));
-            newtonJoint_ = new dCustomFixDistance(pivot0, pivot1, ownBody_->GetNewtonBody(), nullptr );
+            pivot1 = (UrhoToNewton(otherPosition_));
         }
 
 
+        newtonJoint_ = new dCustomFixDistance(pivot0, pivot1, GetOwnNewtonBody(), GetOtherNewtonBody());
 
     }
 

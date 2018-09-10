@@ -33,14 +33,19 @@ namespace Urho3D {
 
     void Constraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
-        //draw line from one frame to the other.
+        //draw 2 part line from one frame to the other. Black touching own body and graw touching other body.
         if (ownBody_) {
+           
             if (otherBody_) {
-                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), otherBody_->GetNode()->LocalToWorld(otherPosition_), Color::GRAY, false);
+                Vector3 midPoint = (otherBody_->GetNode()->LocalToWorld(otherPosition_) + ownBody_->GetNode()->LocalToWorld(position_))*0.5f;
+                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), midPoint, Color::BLACK, false);
+                debug->AddLine(midPoint, otherBody_->GetNode()->LocalToWorld(otherPosition_), Color::GRAY, false);
             }
             else
             {   //draw from own body frame to world.
-                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), otherPosition_, Color::GRAY, false);
+                Vector3 midPoint = (otherPosition_ + ownBody_->GetNode()->LocalToWorld(position_))*0.5f;
+                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), midPoint, Color::BLACK, false);
+                debug->AddLine(midPoint, otherPosition_, Color::GRAY, false);
             }
         }
 
