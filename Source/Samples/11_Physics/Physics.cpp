@@ -156,7 +156,7 @@ void Physics::CreateScene()
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     ////
-    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //SpawnCompoundedRectTest(Vector3(20, 10, 10));
 
@@ -609,7 +609,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
 
             FixedDistanceConstraint* constraint = node->CreateComponent<FixedDistanceConstraint>();
             constraint->SetOtherBody(node2->GetComponent<RigidBody>());
-            constraint->SetOtherPosition(Vector3(0.2f, 0, 0));
+            constraint->SetOtherPosition(Vector3(0.0, 0, 0));
         }
     }
 }
