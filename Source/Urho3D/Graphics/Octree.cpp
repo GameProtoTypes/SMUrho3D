@@ -501,7 +501,7 @@ void Octree::GetDrawables(OctreeQuery& query) const
 
 void Octree::Raycast(RayOctreeQuery& query) const
 {
-    URHO3D_PROFILE("Raycast");
+    URHO3D_PROFILE_FUNCTION();
 
     query.result_.Clear();
     GetDrawablesInternal(query);
@@ -510,7 +510,7 @@ void Octree::Raycast(RayOctreeQuery& query) const
 
 void Octree::RaycastSingle(RayOctreeQuery& query) const
 {
-    URHO3D_PROFILE("Raycast");
+    URHO3D_PROFILE_FUNCTION();
 
     query.result_.Clear();
     rayQueryDrawables_.Clear();

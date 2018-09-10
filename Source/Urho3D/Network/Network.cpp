@@ -202,7 +202,7 @@ void Network::ClientDisconnected(kNet::MessageConnection* connection)
 
 bool Network::Connect(const String& address, unsigned short port, Scene* scene, const VariantMap& identity)
 {
-    URHO3D_PROFILE("Connect");
+    URHO3D_PROFILE_FUNCTION();
 
     // If a previous connection already exists, disconnect it and wait for some time for the connection to terminate
     if (serverConnection_)
@@ -236,7 +236,7 @@ void Network::Disconnect(int waitMSec)
     if (!serverConnection_)
         return;
 
-    URHO3D_PROFILE("Disconnect");
+    URHO3D_PROFILE_FUNCTION();
     serverConnection_->Disconnect(waitMSec);
 }
 
@@ -245,7 +245,7 @@ bool Network::StartServer(unsigned short port)
     if (IsServerRunning())
         return true;
 
-    URHO3D_PROFILE("StartServer");
+    URHO3D_PROFILE_FUNCTION();
 
     if (network_->StartServer(port, kNet::SocketOverUDP, this, true) != nullptr)
     {
@@ -264,7 +264,7 @@ void Network::StopServer()
     if (!IsServerRunning())
         return;
 
-    URHO3D_PROFILE("StopServer");
+    URHO3D_PROFILE_FUNCTION();
 
     clientConnections_.Clear();
     network_->StopServer();
@@ -401,7 +401,7 @@ void Network::SendPackageToClients(Scene* scene, PackageFile* package)
 SharedPtr<HttpRequest> Network::MakeHttpRequest(const String& url, const String& verb, const Vector<String>& headers,
     const String& postData)
 {
-    URHO3D_PROFILE("MakeHttpRequest");
+    URHO3D_PROFILE_FUNCTION();
 
     // The initialization of the request will take time, can not know at this point if it has an error or not
     SharedPtr<HttpRequest> request(new HttpRequest(url, verb, headers, postData));

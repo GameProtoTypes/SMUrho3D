@@ -477,7 +477,7 @@ bool Engine::InitializeResourceCache(const VariantMap& parameters, bool removeOl
 void Engine::RunFrame()
 {
     {
-        URHO3D_PROFILE("RunFrame");
+        URHO3D_PROFILE_FUNCTION();
         assert(initialized_);
 
         // If not headless, and the graphics subsystem no longer has a window open, assume we should exit
@@ -692,7 +692,7 @@ void Engine::DumpMemory()
 
 void Engine::Update()
 {
-    URHO3D_PROFILE("Update");
+    URHO3D_PROFILE_FUNCTION();
 
     // Logic update event
     using namespace Update;
@@ -716,7 +716,7 @@ void Engine::Render()
     if (headless_)
         return;
 
-    URHO3D_PROFILE("Render");
+    URHO3D_PROFILE_FUNCTION();
 
     // If device is lost, BeginFrame will fail and we skip rendering
     auto* graphics = GetSubsystem<Graphics>();
@@ -751,7 +751,7 @@ void Engine::ApplyFrameLimit()
     if (maxFps < 60)
 #endif
     {
-        URHO3D_PROFILE("ApplyFrameLimit");
+        URHO3D_PROFILE_FUNCTION();
 
         long long targetMax = 1000000LL / maxFps;
 
