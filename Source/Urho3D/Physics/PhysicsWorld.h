@@ -128,7 +128,7 @@ namespace Urho3D
         /// number of thread to allow newton to use
         int newtonThreadCount_ = 4;
         /// number of iterations newton will internally use.
-        int iterationCount_ = 1;
+        int iterationCount_ = 4;
         /// number of substeps per iteration.
         int numSubsteps_ = 2;
 

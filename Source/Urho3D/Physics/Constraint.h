@@ -41,16 +41,18 @@ namespace Urho3D {
 
 
 
-        /// Set constraint position in local cordinates to body.
+        /// Set constraint position in local cordinates to node.
         void SetPosition(const Vector3& position);
-        /// set the rotational frame to use on own body 
+        /// set the rotational frame to use on own node 
         void SetRotation(const Quaternion& rotation);
 
+        Vector3 GetPosition() const { return position_; }
 
+        Quaternion GetRotation() const { return rotation_; }
 
         /// Set constraint position in local cordinates relative to the other body. If connected to the static world, is a world space position.
         void SetOtherPosition(const Vector3& position);
-        /// set the rotational frame to use on own body. If connected to the static world, is a world space position.
+        /// set the rotational frame to use on other body. If connected to the static world, is a world space position.
         void SetOtherRotation(const Quaternion& rotation);
 
         /// Return physics world.

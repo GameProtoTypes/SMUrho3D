@@ -25,16 +25,61 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body ID", GetOtherBodyId, SetOtherBodyById, unsigned, 0, AM_DEFAULT | AM_COMPONENTID);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Position", GetOtherPosition, SetOtherPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Rotation", GetOtherRotation, SetOtherRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
-
+        URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Position", GetPosition, SetPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Rotation", GetRotation, SetRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
 
     }
 
     void Constraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
-        if (ownBody_ && otherBody_) {
-            debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), otherBody_->GetNode()->LocalToWorld(otherPosition_), Color::BLUE, false);
-            
+        //draw line from one frame to the other.
+        if (ownBody_) {
+            if (otherBody_) {
+                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), otherBody_->GetNode()->LocalToWorld(otherPosition_), Color::GRAY, false);
+            }
+            else
+            {   //draw from own body frame to world.
+                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), otherPosition_, Color::GRAY, false);
+            }
         }
+
+
+        //draw frames themselves.
+        const float axisLengths = 0.5f;
+        Vector3 xAxis, yAxis, zAxis;
+        xAxis = Vector3(axisLengths, 0, 0);
+        yAxis = Vector3(0, axisLengths, 0);
+        zAxis = Vector3(0, 0, axisLengths);
+
+        Vector3 xAxisOwn = (GetNode()->GetWorldRotation() * rotation_) * xAxis;
+        Vector3 yAxisOwn = (GetNode()->GetWorldRotation() * rotation_) * yAxis;
+        Vector3 zAxisOwn = (GetNode()->GetWorldRotation() * rotation_) * zAxis;
+
+        Vector3 xAxisOther = xAxis;
+        Vector3 yAxisOther = yAxis;
+        Vector3 zAxisOther = zAxis;
+
+        if (otherBody_) {
+            xAxisOther = (otherBody_->GetNode()->GetWorldRotation() * rotation_) * xAxis;
+            yAxisOther = (otherBody_->GetNode()->GetWorldRotation() * rotation_) * yAxis;
+            zAxisOther = (otherBody_->GetNode()->GetWorldRotation() * rotation_) * zAxis;
+        }
+        Vector3 ownPosWorld = ownBody_->GetNode()->LocalToWorld(position_);
+        Vector3 otherPosWorld;
+        if (otherBody_)
+            otherPosWorld = otherBody_->GetNode()->LocalToWorld(otherPosition_);
+        else
+            otherPosWorld = otherPosition_;
+
+        debug->AddLine(ownPosWorld, ownPosWorld + xAxisOwn, Color::RED, depthTest);
+        debug->AddLine(ownPosWorld, ownPosWorld + yAxisOwn, Color::GREEN, depthTest);
+        debug->AddLine(ownPosWorld, ownPosWorld + zAxisOwn, Color::BLUE, depthTest);
+
+        debug->AddLine(otherPosWorld, otherPosWorld + xAxisOther, Color::RED, depthTest);
+        debug->AddLine(otherPosWorld, otherPosWorld + yAxisOther, Color::GREEN, depthTest);
+        debug->AddLine(otherPosWorld, otherPosWorld + zAxisOther, Color::BLUE, depthTest);
+
+
     }
 
     void Constraint::SetDisableCollision(bool disable)

@@ -595,7 +595,10 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
     //make lots of spheres
     for (int i = 0; i < numSpheres; i++)
     {
-        nodes += SpawnSamplePhysicsSphere(scene_, worldPosition - Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f) * (Vector3::FORWARD*dist));
+        Node* node = SpawnSamplePhysicsSphere(scene_, worldPosition - Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f) * (Vector3::FORWARD*dist));
+      
+        nodes += node;
+        
     }
 
 
@@ -608,6 +611,8 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
                 continue;
 
             FixedDistanceConstraint* constraint = node->CreateComponent<FixedDistanceConstraint>();
+            constraint->SetRotation(Quaternion(45, 45, 45));
+            //constraint->SetOtherRotation(Quaternion(45, 0, 0));
             constraint->SetOtherBody(node2->GetComponent<RigidBody>());
             constraint->SetOtherPosition(Vector3(0.0, 0, 0));
         }
