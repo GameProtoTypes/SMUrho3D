@@ -1639,7 +1639,7 @@ void Renderer::LoadShaders()
 
 void Renderer::LoadPassShaders(Pass* pass, Vector<SharedPtr<ShaderVariation> >& vertexShaders, Vector<SharedPtr<ShaderVariation> >& pixelShaders, const BatchQueue& queue)
 {
-    URHO3D_PROFILE("LoadPassShaders");
+    URHO3D_PROFILE_FUNCTION();
 
     // Forget all the old shaders
     vertexShaders.Clear();
