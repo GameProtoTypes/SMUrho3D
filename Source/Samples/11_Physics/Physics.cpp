@@ -144,9 +144,9 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
     //SpawnMaterialsTest(Vector3(0,0,30));
-    //SpawnBallSocketTest(Vector3(0, 10, 0));
+    SpawnBallSocketTest(Vector3(0, 10, 0));
 
-    CreatePyramids(Vector3(0,0,0));
+    //CreatePyramids(Vector3(0,0,0));
 
     //int numVertical = 1;
     //for (int i = 0; i < numVertical; i++)
@@ -157,12 +157,12 @@ void Physics::CreateScene()
 
     //SpawnLinearJointedObject(Vector3(10,1,10));
     ////
-    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //SpawnCompoundedRectTest(Vector3(20, 10, 10));
 
     //////create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
     //CreateTowerOfLiar(Vector3(0, 0, 20));
 
 
@@ -709,10 +709,11 @@ void Physics::SpawnBallSocketTest(Vector3 worldPosition)
 
 
     Node* sphere1 =  SpawnSamplePhysicsSphere(scene_, worldPosition);
-    Node* sphere2 = SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,-2.0, 0));
+    //Node* sphere2 = SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,-2.0, 0));
    // sphere1->GetComponent<RigidBody>()->SetMassScale(0);
     BallAndSocketConstraint* constraint = sphere1->CreateComponent<BallAndSocketConstraint>();
-    constraint->SetOtherBody(sphere2->GetComponent<RigidBody>());
+    constraint->SetOtherPosition(sphere1->GetWorldPosition());
+    //constraint->SetOtherBody(sphere2->GetComponent<RigidBody>());
 
 
 
@@ -878,7 +879,7 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
 {
     // If draw debug mode is enabled, draw physics debug geometry. Use depth test to make the result easier to interpret
     if (drawDebug_) {
-        scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>(), false);
+        scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>(), true);
         GSS<VisualDebugger>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>());
     }
 }
@@ -1119,7 +1120,7 @@ void Physics::CreatePickTargetNodeOnPhysics()
         KinematicsControllerConstraint* constraint = pickPullNode->CreateComponent<KinematicsControllerConstraint>();
         constraint->SetPosition(res.node_->GetChild("PickPullSurfaceNode")->GetPosition());
         constraint->SetRotation(pickPullCameraStartOrientation.Inverse()*res.node_->GetChild("PickPullSurfaceNode")->GetRotation());
-        constraint->SetConstrainRotation(true);
+        constraint->SetConstrainRotation(false);
     }
 }
 
