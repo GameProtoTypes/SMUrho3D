@@ -24,6 +24,10 @@
 #include "dNewtonMesh.h"
 #include "dNewtonCollision.h"
 
+dNewtonMesh::dNewtonMesh(NewtonWorld* const world)
+:m_mesh(NewtonMeshCreate(world))
+{
+}
 
 dNewtonMesh::dNewtonMesh(dNewton* const world)
 	:m_mesh (NewtonMeshCreate (world->GetNewton()))
@@ -60,22 +64,82 @@ NewtonMesh* dNewtonMesh::GetMesh() const
 	return m_mesh;
 }
 
-void dNewtonMesh::BeginPolygon()
+void dNewtonMesh::BeginBuild()
 {
-	dAssert (0);
-//	NewtonMeshBeginFace(m_mesh);
+	NewtonMeshBeginBuild(m_mesh);
 }
 
+void dNewtonMesh::BeginPolygon()
+{
+	NewtonMeshBeginFace(m_mesh);
+}
+
+/*
 void dNewtonMesh::AddFace (int vertexCount, const dFloat* const vertex, int strideInBytes, int materialIndex)
 {
-	dAssert(0);
 //	NewtonMeshAddFace (m_mesh, vertexCount, vertex, strideInBytes, materialIndex);
+	int stride = strideInBytes / sizeof (dFloat);
+	for (int i = 0; i < vertexCount; i ++) {
+		NewtonMeshAddPoint(m_mesh, vertex[i * stride + 0], vertex[i * stride + 1], vertex[i * stride + 2]);
+		NewtonMeshAddMaterial(m_mesh, materialIndex);
+	}
+}
+*/
+
+
+void dNewtonMesh::AddPoint (dFloat64 x, dFloat64 y, dFloat64 z)
+{
+	NewtonMeshAddPoint(m_mesh, x, y, z);
+}
+
+void dNewtonMesh::AddNormal(dFloat32 nx, dFloat32 ny, dFloat32 nz)
+{
+	NewtonMeshAddNormal(m_mesh, nx, ny, nz);
+}
+
+void dNewtonMesh::AddBiNormal(dFloat32 nx, dFloat32 ny, dFloat32 nz)
+{
+	NewtonMeshAddBinormal(m_mesh, nx, ny, nz);
+}
+
+void dNewtonMesh::AddMaterial(int materialIndex)
+{
+	NewtonMeshAddMaterial(m_mesh, materialIndex);
+}
+
+void dNewtonMesh::AddLayer(int layer)
+{
+	NewtonMeshAddLayer(m_mesh, layer);
+}
+
+void dNewtonMesh::AddUV0(dFloat32 u, dFloat32 v)
+{
+	NewtonMeshAddUV0(m_mesh, u, v);
+}
+
+void dNewtonMesh::AddUV1(dFloat32 u, dFloat32 v)
+{
+	NewtonMeshAddUV1(m_mesh, u, v);
+}
+
+void dNewtonMesh::AddVertexColor(dFloat32 r, dFloat32 g, dFloat32 b, dFloat32 a)
+{
+	NewtonMeshAddVertexColor(m_mesh, r, g, b, a);
+}
+
+void dNewtonMesh::AddVertexWeight(int matrixIndex[4], dFloat weights[4])
+{
+	NewtonMeshAddVertexWeight(m_mesh, matrixIndex, weights);
 }
 
 void dNewtonMesh::EndPolygon()
 {
-	dAssert (0);
-//	NewtonMeshEndFace(m_mesh);
+	NewtonMeshEndFace(m_mesh);
+}
+
+void dNewtonMesh::EndBuild()
+{
+	NewtonMeshEndBuild(m_mesh);
 }
 
 

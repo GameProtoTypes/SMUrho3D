@@ -104,6 +104,7 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	sentinelBody->m_index = 0; 
 	sentinelBody->m_resting = 1;
 	sentinelBody->m_sleeping = 1;
+	sentinelBody->m_autoSleep = 1;
 	sentinelBody->m_equilibrium = 1;
 	sentinelBody->m_dynamicsLru = m_markLru;
 
@@ -157,20 +158,6 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 
 	m_clusterData = NULL;
 }
-
-
-/*
-dgInt32 dgWorldDynamicUpdate::CompareBodyInfos(const dgBodyInfo* const infoA, const dgBodyInfo* const infoB, void*)
-{
-	if (infoA->m_clusterKey < infoB->m_clusterKey) {
-		return -1;
-	}
-	else if (infoA->m_clusterKey > infoB->m_clusterKey) {
-		return 1;
-	}
-	return 0;
-}
-*/
 
 dgInt32 dgWorldDynamicUpdate::CompareKey(dgInt32 highA, dgInt32 lowA, dgInt32 highB, dgInt32 lowB)
 {
@@ -245,7 +232,7 @@ void dgWorldDynamicUpdate::BuildClusters(dgFloat32 timestep)
 	dgContactList& contactList = *world;
 	dgBodyMasterList& masterList = *world;
 	const dgBilateralConstraintList& jointList = *world;
-	dgInt32 jointCount = contactList.m_activeContacts;
+	dgInt32 jointCount = contactList.m_activeContactsCount;
 
 	dgArray<dgJointInfo>& jointArray = world->m_jointsMemory;
 	jointArray.ResizeIfNecessary(jointCount + jointList.GetCount());

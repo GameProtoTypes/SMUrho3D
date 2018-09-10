@@ -35,7 +35,7 @@ class dgBroadPhaseSegregatedRootNode: public dgBroadPhaseTreeNode
 	{
 	}
 
-	virtual bool IsPersistentRoot() const
+	virtual bool IsSegregatedRoot() const
 	{
 		return true;
 	}
@@ -93,15 +93,13 @@ void dgBroadPhaseSegregated::Add(dgBody* const body)
 {
 	dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
 	dgBroadPhaseSegregatedRootNode* const root = (dgBroadPhaseSegregatedRootNode*)m_rootNode;
-	dgAssert (m_rootNode->IsPersistentRoot());
+	dgAssert (m_rootNode->IsSegregatedRoot());
 
 	if (body->GetCollision()->IsType(dgCollision::dgCollisionMesh_RTTI) || (body->GetInvMass().m_w == dgFloat32(0.0f))) {
 		m_staticNeedsUpdate = true;
 		dgBroadPhaseBodyNode* const bodyNode = new (m_world->GetAllocator()) dgBroadPhaseBodyNode(body);
-		bodyNode->m_isSleeping = 1;
 		if (root->m_right) {
 			dgBroadPhaseTreeNode* const node = InsertNode(root->m_right, bodyNode);
-			node->m_isSleeping = 1;
 			node->m_fitnessNode = m_staticFitness.Append(node);
 		} else {
 			root->m_right = bodyNode;
@@ -129,7 +127,7 @@ dgBroadPhaseAggregate* dgBroadPhaseSegregated::CreateAggregate()
 
 void dgBroadPhaseSegregated::LinkAggregate(dgBroadPhaseAggregate* const aggregate)
 {
-	dgAssert(m_rootNode->IsPersistentRoot());
+	dgAssert(m_rootNode->IsSegregatedRoot());
 	dgBroadPhaseSegregatedRootNode* const root = (dgBroadPhaseSegregatedRootNode*)m_rootNode;
 
 	aggregate->m_broadPhase = this;
@@ -155,7 +153,7 @@ void dgBroadPhaseSegregated::RemoveNode(dgBroadPhaseNode* const node)
 {
 	dgAssert (node->m_parent);
 
-	if (node->m_parent->IsPersistentRoot()) {
+	if (node->m_parent->IsSegregatedRoot()) {
 		dgBroadPhaseSegregatedRootNode* const parent = (dgBroadPhaseSegregatedRootNode*)m_rootNode;
 		dgAssert(parent == node->m_parent);
 
@@ -206,7 +204,7 @@ void dgBroadPhaseSegregated::RemoveNode(dgBroadPhaseNode* const node)
 
 			delete parent;
 
-		} else if (parent->m_parent->IsPersistentRoot()) {
+		} else if (parent->m_parent->IsSegregatedRoot()) {
 			dgBroadPhaseSegregatedRootNode* const grandParent = (dgBroadPhaseSegregatedRootNode*) parent->m_parent;
 			if (grandParent->m_right == parent) {
 				m_staticNeedsUpdate = true;
@@ -350,7 +348,7 @@ void dgBroadPhaseSegregated::InvalidateCache()
 {
 	ResetEntropy();
 	m_staticNeedsUpdate = false;
-	dgAssert (m_rootNode->IsPersistentRoot());
+	dgAssert (m_rootNode->IsSegregatedRoot());
 	dgBroadPhaseSegregatedRootNode* const root = (dgBroadPhaseSegregatedRootNode*)m_rootNode;
 	ImproveFitness(m_staticFitness, m_staticEntropy, &root->m_right);
 	ImproveFitness(m_dynamicsFitness, m_dynamicsEntropy, &root->m_left);
@@ -508,28 +506,60 @@ void dgBroadPhaseSegregated::FindCollidingPairs (dgBroadphaseSyncDescriptor* con
 
 	dgList<dgBroadPhaseNode*>::dgListNode* node = nodePtr;
 	const dgInt32 threadCount = descriptor->m_world->GetThreadCount();
-	while (node) {
-		dgBroadPhaseNode* const broadPhaseNode = node->GetInfo();
-		dgAssert(broadPhaseNode->IsLeafNode());
-		dgAssert(!broadPhaseNode->GetBody() || (broadPhaseNode->GetBody()->GetBroadPhase() == broadPhaseNode));
+	if (descriptor->m_fullScan) {
+		while (node) {
+			dgBroadPhaseNode* const broadPhaseNode = node->GetInfo();
+			dgAssert(broadPhaseNode->IsLeafNode());
+			dgAssert(!broadPhaseNode->GetBody() || (broadPhaseNode->GetBody()->GetBroadPhase() == broadPhaseNode));
 
-		if (broadPhaseNode->IsAggregate()) {
-			((dgBroadPhaseAggregate*)broadPhaseNode)->SubmitSelfPairs(timestep, threadID);
-		}
+			if (broadPhaseNode->IsAggregate()) {
+				((dgBroadPhaseAggregate*)broadPhaseNode)->SubmitSelfPairs(timestep, threadID);
+			}
 
-		for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
-			dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)ptr->m_parent;
-			dgAssert(!parent->IsLeafNode());
-			dgBroadPhaseNode* const sibling = parent->m_right;
-			if (sibling && (sibling != ptr)) {
-				SubmitPairs(broadPhaseNode, sibling, timestep, 0, threadID);
+			for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
+				dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)ptr->m_parent;
+				dgAssert(!parent->IsLeafNode());
+				dgBroadPhaseNode* const sibling = parent->m_right;
+				if (sibling && (sibling != ptr)) {
+					SubmitPairs(broadPhaseNode, sibling, timestep, 0, threadID);
+				}
+			}
+
+			for (dgInt32 i = 0; i < threadCount; i++) {
+				dgBroadPhaseNode* const info = node ? node->GetInfo() : NULL;
+				node = (info && ((info->GetBody() && (info->GetBody()->GetInvMass().m_w != dgFloat32(0.0f))) || info->IsAggregate())) ? node->GetNext() : NULL;
+			}
+		}	
+
+	} else {
+		const dgBodyInfo* const bodyArray = &m_world->m_bodiesMemory[0];
+		const dgInt32 bodyCount = descriptor->m_atomicPendingBodiesCount;
+		dgInt32* const atomicIndex = &descriptor->m_atomicIndex;
+
+		for (dgInt32 i = dgAtomicExchangeAndAdd(atomicIndex, 1); i < bodyCount; i = dgAtomicExchangeAndAdd(atomicIndex, 1)) {
+			dgBroadPhaseNode* const broadPhaseNode = bodyArray[i].m_body->GetBroadPhase();
+			dgAssert(broadPhaseNode->IsLeafNode());
+			dgAssert(!broadPhaseNode->GetBody() || (broadPhaseNode->GetBody()->GetBroadPhase() == broadPhaseNode));
+
+			if (broadPhaseNode->IsAggregate()) {
+				((dgBroadPhaseAggregate*)broadPhaseNode)->SubmitSelfPairs(timestep, threadID);
+			}
+
+			for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
+				dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)ptr->m_parent;
+				dgAssert(!parent->IsLeafNode());
+
+				dgBroadPhaseNode* const rightSibling = parent->m_right;
+				if (rightSibling && (rightSibling != ptr)) {
+					SubmitPairs(broadPhaseNode, rightSibling, timestep, 0, threadID);
+				}
+
+				dgBroadPhaseNode* const leftSibling = parent->m_left;
+				if (leftSibling && (leftSibling != ptr)) {
+					SubmitPairs(broadPhaseNode, leftSibling, timestep, threadCount, threadID);
+				}
 			}
 		}
-
-		for (dgInt32 i = 0; i < threadCount; i++) {
-			dgBroadPhaseNode* const info = node ? node->GetInfo() : NULL;
-			node = (info && ((info->GetBody() && (info->GetBody()->GetInvMass().m_w != dgFloat32(0.0f))) || info->IsAggregate())) ? node->GetNext() : NULL;
-		}
-	}	
+	}
 }
 

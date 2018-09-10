@@ -8,7 +8,7 @@
 # including commercial applications, and to alter it and redistribute it
 # freely.
 
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.10.0)
 
 
 #Urho3D Overrides
@@ -100,6 +100,7 @@ add_dependencies (newton dgCore dgPhysics dTimeTracker)
 add_dependencies (dAnimation dMath dContainers dTimeTracker)
 add_dependencies (dCustomJoints dMath dContainers dTimeTracker)
 add_dependencies (dNewton newton dMath dContainers dCustomJoints dTimeTracker)
+add_dependencies (dVehicle newton dMath dContainers dCustomJoints dTimeTracker)
 
 
 

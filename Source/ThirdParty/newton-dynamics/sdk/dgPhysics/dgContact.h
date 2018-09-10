@@ -43,13 +43,13 @@ class dgContactList: public dgList<dgContact*>
 	public:
 	dgContactList(dgMemoryAllocator* const allocator)
 		:dgList<dgContact*>(allocator)
-		,m_activeContacts(0)
 		,m_deadContactsCount(0)
+		,m_activeContactsCount(0)
 	{
 	}
 
-	dgInt32 m_activeContacts;
 	dgInt32 m_deadContactsCount;
+	dgInt32 m_activeContactsCount;
 	dgContactList::dgListNode* m_deadContacts[128];
 };
 
@@ -224,7 +224,6 @@ class dgContact: public dgConstraint, public dgList<dgContactMaterial>
 	dgFloat32 m_closestDistance;
 	dgFloat32 m_separationDistance;
 	dgFloat32 m_timeOfImpact;
-//	dgWorld* m_world;
 	const dgContactMaterial* m_material;
 	dgContactList::dgListNode* m_contactNode;
 	dgFloat32 m_contactPruningTolereance;

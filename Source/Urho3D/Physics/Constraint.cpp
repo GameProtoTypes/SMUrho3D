@@ -39,14 +39,17 @@ namespace Urho3D {
            
             if (otherBody_) {
                 Vector3 midPoint = (otherBody_->GetNode()->LocalToWorld(otherPosition_) + ownBody_->GetNode()->LocalToWorld(position_))*0.5f;
-                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), midPoint, Color::BLACK, false);
-                debug->AddLine(midPoint, otherBody_->GetNode()->LocalToWorld(otherPosition_), Color::GRAY, false);
+                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), midPoint, Color::BLACK, depthTest);
+                debug->AddLine(midPoint, otherBody_->GetNode()->LocalToWorld(otherPosition_), Color::GRAY, depthTest);
+
+                //also add line from node center to node center - to make it clear that bodies are connected via joint in cases wheras the 2 world frames do not differ in world cordinates.
+                debug->AddLine(ownBody_->GetNode()->GetWorldPosition(), otherBody_->GetNode()->GetWorldPosition(), Color::MAGENTA, depthTest);
             }
             else
             {   //draw from own body frame to world.
                 Vector3 midPoint = (otherPosition_ + ownBody_->GetNode()->LocalToWorld(position_))*0.5f;
-                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), midPoint, Color::BLACK, false);
-                debug->AddLine(midPoint, otherPosition_, Color::GRAY, false);
+                debug->AddLine(ownBody_->GetNode()->LocalToWorld(position_), midPoint, Color::BLACK, depthTest);
+                debug->AddLine(midPoint, otherPosition_, Color::GRAY, depthTest);
             }
         }
 

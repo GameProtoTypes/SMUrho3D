@@ -55,10 +55,6 @@
 	#include <crtdbg.h>
 #endif
 
-#include <stdio.h>
-#include <assert.h>
-#endif
-
 #include <new>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,6 +80,4 @@
 #include <dCustomPlayerControllerManager.h>
 #include <dCustomVehicleControllerManager.h>
 
-
-
-
+#endif
