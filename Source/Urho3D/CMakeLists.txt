@@ -168,7 +168,7 @@ set (THIRD_PARTY_DEPENDENCIES
     LibCpuId
     GLEW
     MojoShader
-    fcontext
+    sc
     cr
     yaml-cpp
     nativefiledialog
