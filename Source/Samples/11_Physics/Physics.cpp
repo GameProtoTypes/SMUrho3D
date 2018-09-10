@@ -53,6 +53,7 @@
 #include "Urho3D/Physics/PhysicsMaterial.h"
 #include "Urho3D/Physics/BallAndSocketConstraint.h"
 #include "Urho3D/Physics/NewtonKinematicsJoint.h"
+#include "Urho3D/Physics/FullyFixedConstraint.h"
 
 
 
@@ -587,7 +588,7 @@ void Physics::SpawnDecompCompound(const Vector3& worldPos)
 void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
 {
     //lets joint spheres together with a distance limiting joint.
-    const float dist = 5.0f;
+    const float dist = 10.0f;
 
     const int numSpheres = 25;
 
@@ -595,7 +596,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
     //make lots of spheres
     for (int i = 0; i < numSpheres; i++)
     {
-        Node* node = SpawnSamplePhysicsSphere(scene_, worldPosition - Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f) * (Vector3::FORWARD*dist));
+        Node* node = SpawnSamplePhysicsSphere(scene_, worldPosition  + Vector3(0,dist*0.5f,0) - Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f) * (Vector3::FORWARD*dist));
       
         nodes += node;
         
@@ -607,7 +608,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
     {
         for (Node* node2 : nodes)
         {
-            if (node2 == node)
+            if (node == nodes[0])
                 continue;
 
             FixedDistanceConstraint* constraint = node->CreateComponent<FixedDistanceConstraint>();
@@ -618,6 +619,38 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
         }
     }
 }
+
+void Physics::SpawnGlueJointedObject(Vector3 worldPosition)
+{
+    //lets joint spheres together with a distance limiting joint.
+    const float dist = 10.0f;
+
+    const int numSpheres = 25;
+
+    PODVector<Node*> nodes;
+    //make lots of spheres
+    for (int i = 0; i < numSpheres; i++)
+    {
+        Node* node = SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0, dist*0.5f, 0) - Quaternion(Random()*360.0f, Random()*360.0f, Random()*360.0f) * (Vector3::FORWARD*dist));
+
+        nodes += node;
+
+    }
+
+
+    //connect them all O(n*n) joints
+    for (Node* node : nodes)
+    {
+        if (node == nodes[0])
+            continue;
+
+        FullyFixedConstraint* constraint = node->CreateComponent<FullyFixedConstraint>();
+        constraint->SetOtherBody(nodes[0]->GetComponent<RigidBody>());
+        constraint->SetOtherPosition(Vector3(0.0, 0, 0));
+
+    }
+}
+
 
 
 void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
@@ -1086,7 +1119,7 @@ void Physics::CreatePickTargetNodeOnPhysics()
         KinematicsControllerConstraint* constraint = pickPullNode->CreateComponent<KinematicsControllerConstraint>();
         constraint->SetPosition(res.node_->GetChild("PickPullSurfaceNode")->GetPosition());
         constraint->SetRotation(pickPullCameraStartOrientation.Inverse()*res.node_->GetChild("PickPullSurfaceNode")->GetRotation());
-        constraint->SetConstrainRotation(false);
+        constraint->SetConstrainRotation(true);
     }
 }
 
@@ -1123,8 +1156,8 @@ void Physics::UpdatePickPull()
     if (!pickSource)
         return;
 
-    pickPullNode->GetComponent<KinematicsControllerConstraint>()->SetTargetPosition(pickTarget->GetWorldPosition());
-    pickPullNode->GetComponent<KinematicsControllerConstraint>()->SetTargetRotation(cameraNode_->GetWorldRotation() );
+    pickPullNode->GetComponent<KinematicsControllerConstraint>()->SetOtherPosition(pickTarget->GetWorldPosition());
+    pickPullNode->GetComponent<KinematicsControllerConstraint>()->SetOtherRotation(cameraNode_->GetWorldRotation() );
 
 
 

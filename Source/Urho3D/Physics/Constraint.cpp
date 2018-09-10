@@ -7,6 +7,7 @@
 
 #include "Scene/Scene.h"
 #include "dCustomFixDistance.h"
+#include "Newton.h"
 namespace Urho3D {
     Constraint::Constraint(Context* context) : Component(context)
     {
@@ -44,7 +45,7 @@ namespace Urho3D {
         }
 
 
-        //draw frames themselves.
+        //draw the frames.
         const float axisLengths = 0.5f;
         Vector3 xAxis, yAxis, zAxis;
         xAxis = Vector3(axisLengths, 0, 0);
@@ -60,10 +61,17 @@ namespace Urho3D {
         Vector3 zAxisOther = zAxis;
 
         if (otherBody_) {
-            xAxisOther = (otherBody_->GetNode()->GetWorldRotation() * rotation_) * xAxis;
-            yAxisOther = (otherBody_->GetNode()->GetWorldRotation() * rotation_) * yAxis;
-            zAxisOther = (otherBody_->GetNode()->GetWorldRotation() * rotation_) * zAxis;
+            xAxisOther = (otherBody_->GetNode()->GetWorldRotation() * otherRotation_) * xAxis;
+            yAxisOther = (otherBody_->GetNode()->GetWorldRotation() * otherRotation_) * yAxis;
+            zAxisOther = (otherBody_->GetNode()->GetWorldRotation() * otherRotation_) * zAxis;
         }
+        else
+        {
+            xAxisOther = (otherRotation_) * xAxis;
+            yAxisOther = (otherRotation_) * yAxis;
+            zAxisOther = (otherRotation_) * zAxis;
+        }
+
         Vector3 ownPosWorld = ownBody_->GetNode()->LocalToWorld(position_);
         Vector3 otherPosWorld;
         if (otherBody_)
@@ -146,6 +154,29 @@ namespace Urho3D {
         MarkDirty();
     }
 
+
+    NewtonBody* Constraint::GetOwnNewtonBody() const
+    {
+        return ownBody_->GetNewtonBody();
+    }
+
+    NewtonBody* Constraint::GetOtherNewtonBody() const
+    {
+        if (otherBody_) return otherBody_->GetNewtonBody(); else return nullptr;
+    }
+
+    Urho3D::Matrix3x4 Constraint::GetOwnWorldFrame() const
+    {
+        return node_->LocalToWorld(Matrix3x4(position_, rotation_, 1.0f));
+    }
+
+    Urho3D::Matrix3x4 Constraint::GetOtherWorldFrame() const
+    {
+        if (otherBody_)
+            return otherBody_->GetNode()->LocalToWorld(Matrix3x4(otherPosition_, otherRotation_, 1.0f));
+        else
+            return Matrix3x4(otherPosition_, otherRotation_, 1.0f);
+    }
 
     void Constraint::OnSetEnabled()
     {

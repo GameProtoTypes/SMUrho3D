@@ -6,6 +6,7 @@
 #include "RigidBody.h"
 #include "UrhoNewtonConversions.h"
 #include "Graphics/DebugRenderer.h"
+#include "IO/Log.h"
 
 
 
@@ -31,13 +32,7 @@ namespace Urho3D {
 
     void KinematicsControllerConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
-        if (!ownBody_)
-            return;
-
-        if (!ownBody_->GetNewtonBody())
-            return;
-
-        debug->AddLine(ownBody_->GetCenterOfMassPosition(), currentTargetPos_, Color::GRAY, false);
+        Constraint::DrawDebugGeometry(debug, depthTest);
     }
 
     void KinematicsControllerConstraint::SetLinearFrictionalAcceleration(float friction)
@@ -78,26 +73,33 @@ namespace Urho3D {
         }
     }
 
-    void KinematicsControllerConstraint::SetTargetPosition(Vector3 worldPos)
+
+
+    void KinematicsControllerConstraint::SetOtherBody(RigidBody* body)
     {
-        currentTargetPos_ = worldPos;
-        updateTarget();
+        URHO3D_LOGWARNING("KinematicsControllerConstraint Does not support an other body.");
+        return;
     }
 
-    void KinematicsControllerConstraint::SetTargetRotation(Quaternion worldOrientation)
+    void KinematicsControllerConstraint::SetOtherPosition(const Vector3& position)
     {
-        currentTargetRotation_ = worldOrientation;
+        otherPosition_ = position;
         updateTarget();
+        //dont dirty because otherPosition_ is used for target frame
+    }
+
+    void KinematicsControllerConstraint::SetOtherRotation(const Quaternion& rotation)
+    {
+        otherRotation_ = rotation;
+        updateTarget();
+        //dont dirty because otherRotation_ is used for target frame
     }
 
     void KinematicsControllerConstraint::buildConstraint()
     {
-        //get own body transform.
-        dMatrix matrix0;
-        NewtonBodyGetMatrix(ownBody_->GetNewtonBody(), &matrix0[0][0]);
 
 
-        newtonJoint_ = new dCustomKinematicController(ownBody_->GetNewtonBody(), UrhoToNewton(ownBody_->GetNode()->LocalToWorld(Matrix3x4(position_, rotation_, 1.0f))));
+        newtonJoint_ = new dCustomKinematicController(ownBody_->GetNewtonBody(), UrhoToNewton(GetOwnWorldFrame()));
         static_cast<dCustomKinematicController*>(newtonJoint_)->SetPickMode(constrainRotation_);
         updateFrictions();
         static_cast<dCustomKinematicController*>(newtonJoint_)->SetLimitRotationVelocity(limitRotationalVelocity_);
@@ -109,9 +111,7 @@ namespace Urho3D {
     void KinematicsControllerConstraint::updateTarget()
     {
         if (newtonJoint_) {
-
-            static_cast<dCustomKinematicController*>(newtonJoint_)->SetTargetPosit(UrhoToNewton(currentTargetPos_));
-            static_cast<dCustomKinematicController*>(newtonJoint_)->SetTargetRotation(UrhoToNewton(currentTargetRotation_));
+            static_cast<dCustomKinematicController*>(newtonJoint_)->SetTargetMatrix(UrhoToNewton(GetOtherWorldFrame()));
         }
     }
 

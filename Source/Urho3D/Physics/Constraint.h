@@ -3,6 +3,7 @@
 
 
 class dCustomJoint;
+class NewtonBody;
 namespace Urho3D {
 
     class Context;
@@ -35,7 +36,7 @@ namespace Urho3D {
         void SetDisableCollision(bool disable);
 
         /// Set other body to connect to. Set to null to connect to the static world.
-        void SetOtherBody(RigidBody* body);
+        virtual void SetOtherBody(RigidBody* body);
 
         void SetOtherBodyById(unsigned bodyId);
 
@@ -51,9 +52,9 @@ namespace Urho3D {
         Quaternion GetRotation() const { return rotation_; }
 
         /// Set constraint position in local cordinates relative to the other body. If connected to the static world, is a world space position.
-        void SetOtherPosition(const Vector3& position);
+        virtual void SetOtherPosition(const Vector3& position);
         /// set the rotational frame to use on other body. If connected to the static world, is a world space position.
-        void SetOtherRotation(const Quaternion& rotation);
+        virtual void SetOtherRotation(const Quaternion& rotation);
 
         /// Return physics world.
         PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
@@ -61,16 +62,24 @@ namespace Urho3D {
         /// Return rigid body in own scene node.
         RigidBody* GetOwnBody() const { return ownBody_; }
 
+        NewtonBody* GetOwnNewtonBody() const;
+
         /// Return the other rigid body. May be null if connected to the static world.
         RigidBody* GetOtherBody() const { return otherBody_; }
 
+        NewtonBody* GetOtherNewtonBody() const;
+
         unsigned GetOtherBodyId() const { return otherBodyId_; }
+
 
         Vector3 GetOtherPosition() const { return otherPosition_; }
 
         Quaternion GetOtherRotation() const { return otherRotation_; }
 
 
+        Matrix3x4 GetOwnWorldFrame() const;
+
+        Matrix3x4 GetOtherWorldFrame() const;
 
 
         dCustomJoint* GetNewtonJoint() const {

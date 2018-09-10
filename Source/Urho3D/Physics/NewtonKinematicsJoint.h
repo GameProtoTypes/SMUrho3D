@@ -33,12 +33,15 @@ namespace Urho3D {
         /// Limit the rotation velocity to minimize instability. default true.
         void SetLimitRotationalVelocity(bool enable);
 
-        /// Set the target position the contraint will move the reference frame on the own body to.
-        void SetTargetPosition(Vector3 worldPos);
-        /// Set the target rotation the constraint will move the reference frame of the own body to.
-        void SetTargetRotation(Quaternion worldOrientation);
 
-        
+
+        virtual void SetOtherBody(RigidBody* body) override;
+
+
+        virtual void SetOtherPosition(const Vector3& position) override;
+
+
+        virtual void SetOtherRotation(const Quaternion& rotation) override;
 
     protected:
 
@@ -48,10 +51,6 @@ namespace Urho3D {
 
         void updateFrictions();
 
-        ///Target Position the joint will pull the body towards.
-        Vector3 currentTargetPos_;
-        ///Target orientation the joint will torque the body towards.
-        Quaternion currentTargetRotation_;
 
         ///If enabled the constraint will force orientation to the current target orientation.
         bool constrainRotation_ = true;

@@ -30,6 +30,7 @@
 #include "dgMatrix.h"
 #include "dCustomJoint.h"
 #include "Graphics/DebugRenderer.h"
+#include "FullyFixedConstraint.h"
 
 namespace Urho3D {
 
@@ -667,6 +668,7 @@ namespace Urho3D {
         Constraint::RegisterObject(context);
         FixedDistanceConstraint::RegisterObject(context);
         BallAndSocketConstraint::RegisterObject(context);
+        FullyFixedConstraint::RegisterObject(context);
         KinematicsControllerConstraint::RegisterObject(context);
         RigidBodyContactEntry::RegisterObject(context);
 
