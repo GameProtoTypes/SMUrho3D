@@ -144,7 +144,7 @@ void Physics::CreateScene()
     //SpawnSamplePhysicsSphere(scene_, Vector3(2, 0, 0));
 
     //SpawnMaterialsTest(Vector3(0,0,30));
-    SpawnBallSocketTest(Vector3(0, 10, 0));
+    //SpawnBallSocketTest(Vector3(0, 10, 0));
 
     //CreatePyramids(Vector3(0,0,0));
 
@@ -155,9 +155,13 @@ void Physics::CreateScene()
     //    SpawnConvexHull(Vector3(0, 1 * i, i + 10));
 
 
-    SpawnLinearJointedObject(Vector3(10,1,10));
+    //for (int i = 0; i < 10; i++) {
+       // SpawnLinearJointedObject(1.0f, Vector3(10 , 2, 10));
+        SpawnLinearJointedObject(0.5f, Vector3(10, 2, 10));
+    //}
+
     ////
-    SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
+    //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
 
     //SpawnCompoundedRectTest(Vector3(20, 10, 10));
 
@@ -653,21 +657,24 @@ void Physics::SpawnGlueJointedObject(Vector3 worldPosition)
 
 
 
-void Physics::SpawnLinearJointedObject(Vector3 worldPosition)
+void Physics::SpawnLinearJointedObject(float size, Vector3 worldPosition)
 {
     //lets joint spheres together with a distance limiting joint.
-    const float dist = 0.5f;
+    const float dist = size;
 
-    const int numSpheres = 25;
+    const int numSpheres = 2;
 
     PODVector<Node*> nodes;
     //make lots of spheres
     for (int i = 0; i < numSpheres; i++)
     {
-        nodes += SpawnSamplePhysicsBox(scene_, worldPosition + Vector3(0,i*dist,0), Vector3(dist, dist, dist)*0.5f);
+        nodes += SpawnSamplePhysicsBox(scene_, worldPosition + Vector3(0,i*dist,0), Vector3(dist, dist, dist));
 
         if (i > 0) {
-            FixedDistanceConstraint* constraint = nodes[i - 1]->CreateComponent<FixedDistanceConstraint>();
+            BallAndSocketConstraint* constraint = nodes[i - 1]->CreateComponent<BallAndSocketConstraint>();
+
+            //constraint->SetOtherPosition(-Vector3(0, dist, 0)*0.49f);
+            //constraint->SetPosition(Vector3(0, dist, 0)*0.49f);
             constraint->SetOtherBody(nodes[i]->GetComponent<RigidBody>());
         }
     }

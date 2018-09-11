@@ -47,14 +47,22 @@ namespace Urho3D {
         /// set the rotational frame to use on own node 
         void SetRotation(const Quaternion& rotation);
 
+        void SetWorldPosition(const Vector3& worldPosition);
+
+        void SetWorldRotation(const Quaternion& worldRotation);
+
+
         Vector3 GetPosition() const { return position_; }
 
         Quaternion GetRotation() const { return rotation_; }
+
+
 
         /// Set constraint position in local cordinates relative to the other body. If connected to the static world, is a world space position.
         virtual void SetOtherPosition(const Vector3& position);
         /// set the rotational frame to use on other body. If connected to the static world, is a world space position.
         virtual void SetOtherRotation(const Quaternion& rotation);
+
 
         /// Return physics world.
         PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
@@ -105,6 +113,7 @@ namespace Urho3D {
         Vector3 otherPosition_;
         Quaternion otherRotation_;
 
+
         /// Constraint position.
         Vector3 position_;
         Quaternion rotation_;
@@ -128,6 +137,7 @@ namespace Urho3D {
 
         virtual void OnNodeSet(Node* node) override;
         virtual void OnNodeSetEnabled(Node* node) override;
+
 
     };
 }

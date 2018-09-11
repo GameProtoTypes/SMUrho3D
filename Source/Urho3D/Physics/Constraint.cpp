@@ -131,6 +131,7 @@ namespace Urho3D {
             else
                 otherBodyId_ = body->GetID();
 
+
             MarkDirty();
         }
     }
@@ -156,6 +157,18 @@ namespace Urho3D {
         MarkDirty();
     }
 
+
+    void Constraint::SetWorldPosition(const Vector3& worldPosition)
+    {
+        position_ = node_->WorldToLocal(worldPosition);
+        MarkDirty();
+    }
+
+    void Constraint::SetWorldRotation(const Quaternion& worldRotation)
+    {
+        rotation_ = node_->WorldToLocal(worldRotation);
+        MarkDirty();
+    }
 
     void Constraint::SetOtherPosition(const Vector3& position)
     {
@@ -212,11 +225,18 @@ namespace Urho3D {
             freeInternal();
             buildConstraint();
             NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
+
         }
         else//we dont have own body so free the joint..
         {
             freeInternal();
         }
+
+
+
+
+
+
         MarkDirty(false);
     }
 
