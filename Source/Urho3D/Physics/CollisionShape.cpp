@@ -79,6 +79,8 @@ namespace Urho3D {
     {
         if (shapeNeedsRebuilt_ != dirty) {
             shapeNeedsRebuilt_ = dirty;
+
+            // alsways mark the rigid body dirty as well.
             if(dirty)
                 MarkRigidBodyDirty();
         }

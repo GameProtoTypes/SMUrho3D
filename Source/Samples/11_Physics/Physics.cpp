@@ -401,10 +401,10 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cone.mdl"));
         stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml"));
         stMdl->SetCastShadows(true);
-       // if (i != 0) {
+       if (i == 0) {
             RigidBody* rigBody = curNode->CreateComponent<RigidBody>();
             rigBody->SetMassScale(1.0f);
-        //}
+        }
         CollisionShape* colShape = curNode->CreateComponent<CollisionShape_Cone>();
         colShape->SetRotationOffset(Quaternion(0, 0, 90));
 
@@ -749,7 +749,7 @@ void Physics::FireSmallBall()
         else if (ran == 1)
             node = SpawnSamplePhysicsBox(scene_, cameraNode_->GetWorldPosition() + posOffset, Vector3::ONE);
         else
-            node = SpawnSamplePhysicsCylinder(scene_, cameraNode_->GetWorldPosition() + posOffset, Sqrt(2));
+            node = SpawnSamplePhysicsCylinder(scene_, cameraNode_->GetWorldPosition() + posOffset, 0.5f);
 
 
         node->GetComponent<RigidBody>()->SetLinearVelocity(cameraNode_->GetWorldDirection() * 10.0f);

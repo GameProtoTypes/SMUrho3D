@@ -247,24 +247,13 @@ namespace Urho3D {
 
         //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
         PODVector<CollisionShape*> childCollisionShapes;
-        node_->GetDerivedComponents<CollisionShape>(childCollisionShapes, true, true);//includes this node.
-        
+
+        GetAloneCollisionShapes(childCollisionShapes, node_, true);
+
+
         PODVector<CollisionShape*> filteredList;
-        //if scene root body - filter out shapes with no root rigid body (except the scene root of course)
-        if (sceneRootBodyMode_)
-        {
-            for (CollisionShape* col : childCollisionShapes)
-            {
-                PODVector<RigidBody*> parentRigBodies;
-                GetRootRigidBodies(parentRigBodies, col->GetNode(), false);
-                if (parentRigBodies.Size() == 0)
-                    filteredList += col;
-            }
-            childCollisionShapes = filteredList;
-        }
 
         //filter out shapes that are not enabled.
-        filteredList.Clear();
         for (CollisionShape* col : childCollisionShapes)
         {
             if (col->IsEnabledEffective())
@@ -301,9 +290,9 @@ namespace Urho3D {
                 NewtonCollision* usedCollision = nullptr;
 
 
-                //check if there is a rigid body on the same node as colComp - if so (and it isnt this RigidBody) free the internal body of it.
-                if (colComp->GetNode() != node_ && colComp->GetNode()->HasComponent<RigidBody>())
-                    colComp->GetComponent<RigidBody>()->freeBody();
+                ////check if there is a rigid body on the same node as colComp - if so (and it isnt this RigidBody) free the internal body of it.
+                //if (colComp->GetNode() != node_ && colComp->GetNode()->HasComponent<RigidBody>())
+                //    colComp->GetComponent<RigidBody>()->freeBody();
 
 
                 if (compoundNeeded)
@@ -457,16 +446,11 @@ namespace Urho3D {
             }
 
 
-            //mark imediate child rigid bodies as dirty so they are rebuilt for sure.
-            PODVector<RigidBody*> childBodies;
-            GetNextChildRigidBodies(childBodies, prevNode_);
-            for (RigidBody* rigBody : childBodies)
-                rigBody->MarkDirty();
-
-
 
             freeBody();
             UnsubscribeFromEvent(E_NODETRANSFORMCHANGE);
+
+            prevNode_ = nullptr;
         }
 
     }

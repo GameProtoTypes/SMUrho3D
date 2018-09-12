@@ -225,7 +225,7 @@ private:
 
     void URHO3D_API GetRootRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node, bool includeScene);
     void URHO3D_API GetNextChildRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node);
-    void URHO3D_API GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
+    void URHO3D_API GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode, bool includeStartingNodeShapes);
 
     void URHO3D_API RebuildPhysicsNodeTree(Node* node);
 
