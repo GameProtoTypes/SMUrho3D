@@ -33,7 +33,7 @@ Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition,
 {
     Node* sphere1 = parentNode->CreateChild("SamplePhysicsCylinder");
     Node* sphereVis = sphere1->CreateChild();
-    sphereVis->SetScale(Vector3(radius, height, radius));
+    sphereVis->SetScale(Vector3(radius*2.0f, height, radius*2.0f));
 
     Model* sphereMdl = parentNode->GSS<ResourceCache>()->GetResource<Model>("Models/Cylinder.mdl");
     Material* sphereMat = parentNode->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
@@ -46,7 +46,10 @@ Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition,
     RigidBody* s1RigBody = sphere1->CreateComponent<RigidBody>();
 
     CollisionShape_Cylinder* s1ColShape = sphere1->CreateComponent<CollisionShape_Cylinder>();
-    s1ColShape->SetScaleFactor(Vector3(radius, height, radius));
+    s1ColShape->SetRadius1(radius);
+    s1ColShape->SetRadius2(radius);
+    s1ColShape->SetLength(height);
+    s1ColShape->SetRotationOffset(Quaternion(0, 0, 90));
     sphere1->SetWorldPosition(worldPosition);
 
     s1RigBody->SetMassScale(1.0f);

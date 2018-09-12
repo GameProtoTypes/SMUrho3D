@@ -2,8 +2,8 @@
 
 #include "Urho3D/Urho3DAll.h"
 
-Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition, float radius = 1.0f, float height = 1.0f);
-Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, float radius = 1.0f);
+Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition, float radius = 0.5f, float height = 1.0f);
+Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, float radius = 0.5f);
 Node* SpawnSamplePhysicsBox(Node* parentNode, const Vector3& worldPosition, const Vector3& size);
 
 

@@ -486,24 +486,12 @@ namespace Urho3D {
             if (!rigBody->GetDirty())
                 continue;
 
-            if (rigBody == sceneBody_)//special case scene
-            {
-                rigBody->reBuildBody();
-                rigBody->MarkDirty(false);
-                continue;
-            }
 
-
-            //trigger a rebuild on the root of the new tree.
-            PODVector<RigidBody*> rigBodies;
-            GetRootRigidBodies(rigBodies, rigBody->GetNode(), false);
-            RigidBody* mostRootRigBody = rigBodies.Back();
-            if (mostRootRigBody->needsRebuilt_){
-                mostRootRigBody->reBuildBody();
-                mostRootRigBody->MarkDirty(false);
-            }
+            rigBody->reBuildBody();
+            rigBody->MarkDirty(false);
         }
 
+        //apply deferred actions (like impulses/velocity sets etc.) that were waiting for a real body to be built.
         for (RigidBody* rigBody : rigidBodyComponentList)
         {
             rigBody->applyDefferedActions();
@@ -642,47 +630,36 @@ namespace Urho3D {
     }
 
     //recurses up the scene tree starting a node and continuing up every branch adding collision shapes to the array until a rigid body is encountered in which case the algorithm stops traversing that branch.
-    void GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode, bool recurse)
+    void GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode, bool includeStartingNodeShapes)
     {
-        PODVector<CollisionShape*> colList;
-        if (includeStartingNode)
+
+        if (includeStartingNodeShapes)
         {
-            if (startingNode_->HasComponent<RigidBody>())
+            CollisionShape* shape = startingNode->GetDerivedComponent<CollisionShape>();
+            if (shape) {
+                colShapes += shape;
+            }
+        }
+
+
+
+        PODVector<Node*> immediateChildren;
+        startingNode->GetChildren(immediateChildren, false);
+
+        for (Node* child : immediateChildren) {
+            if (child->HasComponent<RigidBody>())
                 return;
+            else
+            {
+                CollisionShape* shape = child->GetDerivedComponent<CollisionShape>();
+                if (shape) {
+                    colShapes += shape;
+                }
 
-            if ((!startingNode_->HasComponent<RigidBody>()) && startingNode_->GetDerivedComponent<CollisionShape>()) {
+                GetAloneCollisionShapes(colShapes, child, false);
 
-                PODVector<CollisionShape*> compsOnNode;
-                startingNode_->GetDerivedComponents(compsOnNode, false, true);
-                colList += compsOnNode;
             }
 
-        }
-
-        PODVector<Node*> childrenWithCollisionShapes;
-        startingNode_->GetChildrenWithDerivedComponent<CollisionShape>(childrenWithCollisionShapes, false);
-
-
-        //trim out the children with rigid bodies from the list
-        for (Node* node : childrenWithCollisionShapes)
-        {
-            if (!node->HasComponent<RigidBody>())
-            {
-                PODVector<CollisionShape*> compsOnNode;
-                node->GetDerivedComponents(compsOnNode, false, true);
-                colList += compsOnNode;
-            }          
-        }
-
-        //add to final list
-        colShapes += colList;
-
-        if (recurse) {
-            for (CollisionShape* col : colList)
-            {
-                if(col->GetNode() != startingNode_)
-                    GetAloneCollisionShapes(colShapes, col->GetNode(), false, true);
-            }
         }
     }
 
