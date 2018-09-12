@@ -41,20 +41,26 @@ namespace Urho3D {
         void SetOtherBodyById(unsigned bodyId);
 
 
+        ///set the world position of both frames on both bodies
+        void SetWorldPosition(const Vector3& position);
+        ///set the world rotation of both frames on both bodies
+        void SetWorldRotation(const Quaternion& rotation);
+
+
 
         /// Set constraint position in local cordinates to node.
-        void SetPosition(const Vector3& position);
+        void SetOwnPosition(const Vector3& position);
         /// set the rotational frame to use on own node 
-        void SetRotation(const Quaternion& rotation);
+        void SetOwnRotation(const Quaternion& rotation);
 
-        void SetWorldPosition(const Vector3& worldPosition);
+        void SetOwnWorldPosition(const Vector3& worldPosition);
 
-        void SetWorldRotation(const Quaternion& worldRotation);
+        void SetOwnWorldRotation(const Quaternion& worldRotation);
 
 
-        Vector3 GetPosition() const { return position_; }
+        Vector3 GetOwnPosition() const { return position_; }
 
-        Quaternion GetRotation() const { return rotation_; }
+        Quaternion GetOwnRotation() const { return rotation_; }
 
 
 

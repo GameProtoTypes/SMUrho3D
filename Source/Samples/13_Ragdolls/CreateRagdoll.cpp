@@ -31,6 +31,8 @@
 #include "Urho3D/Physics/CollisionShapesDerived.h"
 #include "Urho3D/Physics/BallAndSocketConstraint.h"
 #include "Urho3D/Physics/HingeConstraint.h"
+#include "Urho3D/Physics/FixedDistanceConstraint.h"
+#include "Urho3D/Physics/FullyFixedConstraint.h"
 
 CreateRagdoll::CreateRagdoll(Context* context) :
     Component(context)
@@ -172,7 +174,7 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
 
     Constraint* constraint = nullptr;
     if (constraintType == BallAndSocketConstraint::GetTypeNameStatic()) {
-        constraint = boneNode->CreateComponent<BallAndSocketConstraint>();
+        constraint = boneNode->CreateComponent<FullyFixedConstraint>();
 
         //static_cast<BallAndSocketConstraint*>(constraint)->SetConeAngle(20.0f);
 
@@ -184,7 +186,7 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
     }
     else if (constraintType == HingeConstraint::GetTypeNameStatic())
     {
-        constraint = boneNode->CreateComponent<HingeConstraint>();
+        constraint = boneNode->CreateComponent<FullyFixedConstraint>();
         //static_cast<HingeConstraint*>(constraint)->Set;
 
     }
@@ -197,7 +199,7 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
 
     // Position the constraint at the child bone we are connecting
     constraint->SetWorldPosition(boneNode->GetWorldPosition());
-    constraint->SetOtherWorldPosition(boneNode->GetWorldPosition());
+
 
 
 

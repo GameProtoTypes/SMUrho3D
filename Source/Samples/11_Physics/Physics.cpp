@@ -619,7 +619,7 @@ void Physics::SpawnNSquaredJointedObject(Vector3 worldPosition)
                 continue;
 
             FixedDistanceConstraint* constraint = node->CreateComponent<FixedDistanceConstraint>();
-            constraint->SetRotation(Quaternion(45, 45, 45));
+            constraint->SetOwnRotation(Quaternion(45, 45, 45));
             //constraint->SetOtherRotation(Quaternion(45, 0, 0));
             constraint->SetOtherBody(node2->GetComponent<RigidBody>());
             constraint->SetOtherPosition(Vector3(0.0, 0, 0));
@@ -677,8 +677,8 @@ void Physics::SpawnLinearJointedObject(float size, Vector3 worldPosition)
             BallAndSocketConstraint* constraint = nodes[i - 1]->CreateComponent<BallAndSocketConstraint>();
             constraint->SetOtherBody(nodes[i]->GetComponent<RigidBody>());
             constraint->SetOtherWorldPosition(worldPosition + Vector3(0, i*dist, 0) - Vector3(0, dist, 0)*0.5f);
-            constraint->SetWorldPosition(worldPosition + Vector3(0, i*dist, 0) - Vector3(0, dist, 0)*0.5f);
-            constraint->SetRotation(Quaternion(0, 0, -90));
+            constraint->SetOwnWorldPosition(worldPosition + Vector3(0, i*dist, 0) - Vector3(0, dist, 0)*0.5f);
+            constraint->SetOwnRotation(Quaternion(0, 0, -90));
             constraint->SetOtherRotation(Quaternion(0,0,-90));
             constraint->SetTwistLimitsEnabled(true);
             
@@ -1152,8 +1152,8 @@ void Physics::CreatePickTargetNodeOnPhysics()
 
         //make a kinematics joint
         KinematicsControllerConstraint* constraint = pickPullNode->CreateComponent<KinematicsControllerConstraint>();
-        constraint->SetPosition(pickPullNode->GetChild("PickPullSurfaceNode")->GetPosition());
-        constraint->SetRotation(pickPullCameraStartOrientation.Inverse()*pickPullNode->GetChild("PickPullSurfaceNode")->GetRotation());
+        constraint->SetOwnPosition(pickPullNode->GetChild("PickPullSurfaceNode")->GetPosition());
+        constraint->SetOwnRotation(pickPullCameraStartOrientation.Inverse()*pickPullNode->GetChild("PickPullSurfaceNode")->GetRotation());
         constraint->SetConstrainRotation(false);
     }
 }

@@ -28,8 +28,8 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body ID", GetOtherBodyId, SetOtherBodyById, unsigned, 0, AM_DEFAULT | AM_COMPONENTID);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Position", GetOtherPosition, SetOtherPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Rotation", GetOtherRotation, SetOtherRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
-        URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Position", GetPosition, SetPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
-        URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Rotation", GetRotation, SetRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Position", GetOwnPosition, SetOwnPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Rotation", GetOwnRotation, SetOwnRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
 
     }
 
@@ -145,27 +145,39 @@ namespace Urho3D {
         MarkDirty();
     }
 
-    void Constraint::SetPosition(const Vector3& position)
+    void Constraint::SetWorldPosition(const Vector3& position)
+    {
+        SetOwnWorldPosition(position);
+        SetOtherWorldPosition(position);
+    }
+
+    void Constraint::SetWorldRotation(const Quaternion& rotation)
+    {
+        SetOwnWorldRotation(rotation);
+        SetOtherWorldRotation(rotation);
+    }
+
+    void Constraint::SetOwnPosition(const Vector3& position)
     {
         position_ = position;
         MarkDirty();
     }
 
 
-    void Constraint::SetRotation(const Quaternion& rotation)
+    void Constraint::SetOwnRotation(const Quaternion& rotation)
     {
         rotation_ = rotation;
         MarkDirty();
     }
 
 
-    void Constraint::SetWorldPosition(const Vector3& worldPosition)
+    void Constraint::SetOwnWorldPosition(const Vector3& worldPosition)
     {
         position_ = node_->WorldToLocal(worldPosition);
         MarkDirty();
     }
 
-    void Constraint::SetWorldRotation(const Quaternion& worldRotation)
+    void Constraint::SetOwnWorldRotation(const Quaternion& worldRotation)
     {
         rotation_ = node_->WorldToLocal(worldRotation);
         MarkDirty();
