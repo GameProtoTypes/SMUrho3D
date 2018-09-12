@@ -31,6 +31,7 @@
 #include "dCustomJoint.h"
 #include "Graphics/DebugRenderer.h"
 #include "FullyFixedConstraint.h"
+#include "HingeConstraint.h"
 
 namespace Urho3D {
 
@@ -327,21 +328,65 @@ namespace Urho3D {
         {
             eventData[PhysicsCollisionStart::P_BODYA] = it->second_->body0;
             eventData[PhysicsCollisionStart::P_BODYB] = it->second_->body1;
+            
             eventData[PhysicsCollisionStart::P_CONTACT_DATA] = it->second_;
 
-            if (it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//begin contact
+            if (!it->second_->body0.Refs() || !it->second_->body1.Refs())//check expired
+            {
+                removeKeys += it->second_->hashKey_;
+            }
+            else if (it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//begin contact
             {
                 it->second_->inContact_ = true;
                 SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
+
+                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
+                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
+                it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
+
+                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
+                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
+                it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
+
+
+                //also send the E_NODECOLLISION event
+                SendEvent(E_PHYSICSCOLLISION, eventData);
+
+                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
+                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
+                it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+
+                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
+                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
+                it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+
+
+
             }
             else if (!it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//end contact
             {
                 it->second_->inContact_ = false;
                 SendEvent(E_PHYSICSCOLLISIONEND, eventData);
+
+                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
+                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
+                it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
+
+                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
+                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
+                it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
             }
             else if(it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//continued contact
             {
                 SendEvent(E_PHYSICSCOLLISION, eventData);
+
+                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
+                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
+                it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+
+                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
+                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
+                it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
             }
             else if (!it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//no contact for one update. (mark for removal from the map)
             {
@@ -668,6 +713,7 @@ namespace Urho3D {
         Constraint::RegisterObject(context);
         FixedDistanceConstraint::RegisterObject(context);
         BallAndSocketConstraint::RegisterObject(context);
+        HingeConstraint::RegisterObject(context);
         FullyFixedConstraint::RegisterObject(context);
         KinematicsControllerConstraint::RegisterObject(context);
         RigidBodyContactEntry::RegisterObject(context);

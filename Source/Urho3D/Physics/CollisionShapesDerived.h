@@ -61,6 +61,7 @@ namespace Urho3D {
 
         static void RegisterObject(Context* context);
 
+        void SetLength(float length) { length_ = length; MarkDirty(true); }
 
         void SetRadius1(float radius) { radius1_ = radius; MarkDirty(true); }
         float GetRadius1() const { return radius1_; }

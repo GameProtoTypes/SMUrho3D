@@ -74,7 +74,7 @@ URHO3D_EVENT(E_NODECOLLISIONSTART, NodeCollisionStart)
     URHO3D_PARAM(P_OTHERNODE, OtherNode);          // Node pointer
     URHO3D_PARAM(P_OTHERBODY, OtherBody);          // RigidBody pointer
     URHO3D_PARAM(P_TRIGGER, Trigger);              // bool
-    URHO3D_PARAM(P_CONTACTS, Contacts);            // Buffer containing position (Vector3), normal (Vector3), distance (float), impulse (float) for each contact
+    URHO3D_PARAM(P_CONTACT_DATA, Contacts);            // Buffer containing position (Vector3), normal (Vector3), distance (float), impulse (float) for each contact
 }
 
 /// Node's physics collision ongoing. Sent by scene nodes participating in a collision.
@@ -84,7 +84,7 @@ URHO3D_EVENT(E_NODECOLLISION, NodeCollision)
     URHO3D_PARAM(P_OTHERNODE, OtherNode);          // Node pointer
     URHO3D_PARAM(P_OTHERBODY, OtherBody);          // RigidBody pointer
     URHO3D_PARAM(P_TRIGGER, Trigger);              // bool
-    URHO3D_PARAM(P_CONTACTS, Contacts);            // Buffer containing position (Vector3), normal (Vector3), distance (float), impulse (float) for each contact
+    URHO3D_PARAM(P_CONTACT_DATA, Contacts);            // Buffer containing position (Vector3), normal (Vector3), distance (float), impulse (float) for each contact
 }
 
 /// Node's physics collision ended. Sent by scene nodes participating in a collision.

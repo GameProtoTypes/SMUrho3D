@@ -318,7 +318,7 @@ namespace Urho3D {
                 Matrix3x4 thisLocalTransformNoScale = Matrix3x4(node_->GetPosition(), node_->GetRotation(), 1.0f);
 
 
-                Matrix3x4 colLocalOffsetTransform = colComp->getInternalOffsetMatrix()*colComp->GetOffsetMatrix();
+                Matrix3x4 colLocalOffsetTransform = colComp->GetOffsetMatrix();
 
                 Matrix3x4 colWorldOffset = colWorldTransformNoScale * colLocalOffsetTransform;
                 Matrix3x4 colLocalToThisNode = thisWorldTransformNoScale.Inverse()*colWorldOffset;
@@ -334,7 +334,7 @@ namespace Urho3D {
                     Vector3 scale = colComp->GetNode()->GetWorldScale();
                     Vector3 shapeScale = colComp->GetScaleFactor();
 
-                    scale = (colComp->internalRotOffset_*colComp->GetRotationOffset()).Inverse()*scale*shapeScale;
+                    scale = (colComp->GetRotationOffset()).Inverse()*scale*shapeScale;
 
 
                     NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.

@@ -348,9 +348,6 @@ namespace Urho3D {
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
         newtonCollision_ = NewtonCreateCylinder(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
 
-        //set the internal offset correction
-        internalRotOffset_ = Quaternion(0, 0, 90);
-
 
     }
 
@@ -364,12 +361,13 @@ namespace Urho3D {
 
     void CollisionShape_Capsule::RegisterObject(Context* context)
     {
-        context->RegisterFactory<CollisionShape_Cylinder>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_Capsule>(DEF_PHYSICS_CATEGORY.CString());
     }
 
     void CollisionShape_Capsule::buildNewtonCollision()
     {
         newtonCollision_ = NewtonCreateCapsule(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
+
     }
 
     CollisionShape_Cone::CollisionShape_Cone(Context* context) : CollisionShape(context)
@@ -444,7 +442,7 @@ namespace Urho3D {
             
 
             //set the internal offset correction to match where HeightmapTerrain renders
-            internalPosOffset_ = -Vector3(float(size*spacing.x_)*0.5f - spacing.x_*0.5f, 0, float(size*spacing.z_)*0.5f - spacing.z_*0.5f);
+            position_ = -Vector3(float(size*spacing.x_)*0.5f - spacing.x_*0.5f, 0, float(size*spacing.z_)*0.5f - spacing.z_*0.5f);
 
         }
 
