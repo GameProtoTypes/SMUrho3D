@@ -81,6 +81,8 @@ URHO3D_BINARY_COMPATIBLE_TYPE(Matrix4);
 URHO3D_BINARY_COMPATIBLE_TYPE(Quaternion);
 URHO3D_BINARY_COMPATIBLE_TYPE(Plane);
 URHO3D_BINARY_COMPATIBLE_TYPE(BoundingBox);
+URHO3D_BINARY_COMPATIBLE_TYPE(Sphere);
+URHO3D_BINARY_COMPATIBLE_TYPE(Frustum);
 
 }
 
@@ -116,11 +118,16 @@ URHO3D_BINARY_COMPATIBLE_TYPE(BoundingBox);
 %apply float *INOUT        { float& sin, float& cos, float& accumulator };
 %apply unsigned int* INOUT { unsigned int* randomRef, unsigned int* nearestRef }
 
+// ref global::System.IntPtr
+%typemap(ctype, out="void *")                 void*& "void *"
+%typemap(imtype, out="global::System.IntPtr") void*& "ref global::System.IntPtr"
+%typemap(cstype, out="$csclassname")          void*& "ref global::System.IntPtr"
+%typemap(csin)                                void*& "ref $csinput"
+%typemap(in)                                  void*& %{ $1 = ($1_ltype)$input; %}
+%typecheck(SWIG_TYPECHECK_CHAR_PTR)           void*& ""
 
 %include "Urho3D/Math/MathDefs.h"
 %include "Urho3D/Math/Ray.h"
-%include "Urho3D/Math/Frustum.h"
-%include "Urho3D/Math/Sphere.h"
 
 // ---------------------------------------  ---------------------------------------
 

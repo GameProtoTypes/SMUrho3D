@@ -23,35 +23,41 @@
 #pragma once
 
 
-#include <Toolbox/SystemUI/ResourceBrowser.h>
-#include "Assets/Inspector/ResourceInspector.h"
-#include "Tabs/Tab.h"
+#include <Urho3D/Core/CoreEvents.h>
+#include <Urho3D/Core/Object.h>
+#include <Urho3D/SystemUI/SystemUI.h>
+#include "ToolboxAPI.h"
 
 
 namespace Urho3D
 {
 
-class ResourceTab : public Tab, public IInspectorProvider
+class URHO3D_TOOLBOX_API AutoColumn : public Object
 {
-    URHO3D_OBJECT(ResourceTab, Tab)
+    URHO3D_OBJECT(AutoColumn, Object);
 public:
-    explicit ResourceTab(Context* context);
+    /// Construct.
+    explicit AutoColumn(Context* context) : Object(context)
+    {
+        SubscribeToEvent(E_ENDFRAME, [this](StringHash, VariantMap&) {
+            lastMaxWidth_ = currentMaxWidth_;
+            currentMaxWidth_ = 0;
+        });
+    }
 
-    bool RenderWindowContent() override;
-
-    /// Render inspector window.
-    virtual void RenderInspector();
+    /// Automatically creates two columns where first column is as wide as longest label.
+    void NextColumn()
+    {
+        ui::SameLine();
+        currentMaxWidth_ = Max(currentMaxWidth_, ui::GetCursorPosX());
+        ui::SameLine(lastMaxWidth_);
+    }
 
 protected:
-    String GetNewResourcePath(const String& name);
-    template<typename TInspector, typename TResource>
-    void OpenResourceInspector(const String& resourcePath);
-
-    String resourcePath_;
-    String resourceSelection_;
-    ResourceBrowserFlags flags_{RBF_NONE};
-    HashMap<StringHash, SharedPtr<ResourceInspector>> inspectors_;
-    StringHash currentInspector_;
+    /// Max width of attribute label.
+    int lastMaxWidth_ = 0;
+    /// Max width of attribute label.
+    int currentMaxWidth_ = 0;
 };
 
 }
