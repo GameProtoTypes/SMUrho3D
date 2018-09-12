@@ -198,7 +198,7 @@ namespace Urho3D
         /// flag indicating collision shape should be additionally sized based on node scale.
         bool inheritCollisionNodeScales_ = true;
 
-
+        Node* prevNode_ = nullptr;
 
         ///Net Force in local cordinates
         Vector3 netForce_;

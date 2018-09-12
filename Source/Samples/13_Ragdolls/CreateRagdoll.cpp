@@ -174,7 +174,7 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
     if (constraintType == BallAndSocketConstraint::GetTypeNameStatic()) {
         constraint = boneNode->CreateComponent<BallAndSocketConstraint>();
 
-
+        //static_cast<BallAndSocketConstraint*>(constraint)->SetConeAngle(20.0f);
 
         //// Configure axes and limits
         //constraint->SetAxis(axis);
@@ -185,6 +185,7 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
     else if (constraintType == HingeConstraint::GetTypeNameStatic())
     {
         constraint = boneNode->CreateComponent<HingeConstraint>();
+        //static_cast<HingeConstraint*>(constraint)->Set;
 
     }
 

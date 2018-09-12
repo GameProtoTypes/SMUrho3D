@@ -148,5 +148,5 @@ private:
     PODVector<float> worldPosHistory2_;
 
     void CreateScenery(Vector3 worldPosition);
-    void RemovePickNode();
+    void RemovePickNode(bool removeRigidBodyOnly = false);
 };

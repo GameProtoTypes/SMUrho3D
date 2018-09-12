@@ -166,7 +166,7 @@ void Physics::CreateScene()
     //SpawnCompoundedRectTest(Vector3(20, 10, 10));
 
     //////create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
     //CreateTowerOfLiar(Vector3(0, 0, 20));
 
 
@@ -316,7 +316,10 @@ void Physics::MoveCamera(float timeStep)
         RecomposePhysicsTree();
 
     if (input->GetKeyPress(KEY_DELETE))
-        RemovePickNode();
+    {
+        //if()
+        RemovePickNode(input->GetKeyDown(KEY_SHIFT));
+    }
 
 
 
@@ -398,7 +401,7 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         stMdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cone.mdl"));
         stMdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml"));
         stMdl->SetCastShadows(true);
-        //if (i == 0) {
+       // if (i != 0) {
             RigidBody* rigBody = curNode->CreateComponent<RigidBody>();
             rigBody->SetMassScale(1.0f);
         //}
@@ -1088,11 +1091,20 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 }
 
-void Physics::RemovePickNode()
+void Physics::RemovePickNode(bool removeRigidBodyOnly /*= false*/)
 {
     RayQueryResult res = GetCameraPickNode();
     if (res.node_) {
-        res.node_->Remove();
+        if (removeRigidBodyOnly)
+        {
+            RigidBody* rigBody = res.node_->GetComponent<RigidBody>();
+            if (rigBody)
+                rigBody->Remove();
+        }
+        else
+        {
+            res.node_->Remove();
+        }
     }
 }
 
@@ -1106,11 +1118,14 @@ void Physics::CreatePickTargetNodeOnPhysics()
         //get the most root rigid body
         PODVector<RigidBody*> bodies;
         GetRootRigidBodies(bodies, res.node_, false);
+        RigidBody* candidateBody = nullptr;
+        if (bodies.Size()) {
+            candidateBody = bodies.Back();
 
-        RigidBody* candidateBody = bodies.Back();
-
-        if (!candidateBody)
-            return;
+            if (!candidateBody)
+                return;
+        }
+        else return;
 
 
         //remember the node

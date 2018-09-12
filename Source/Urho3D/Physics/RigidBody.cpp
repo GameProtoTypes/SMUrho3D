@@ -442,6 +442,8 @@ namespace Urho3D {
                 SetPhysicsMaterial(physicsWorld_->defaultPhysicsMaterial_);
 
             SubscribeToEvent(node, E_NODETRANSFORMCHANGE, URHO3D_HANDLER(RigidBody, HandleNodeTransformChange));
+
+            prevNode_ = node;
         }
         else
         {
@@ -453,6 +455,15 @@ namespace Urho3D {
             for (Constraint* constraint : connectedConstraints_) {
                 constraint->Remove();
             }
+
+
+            //mark imediate child rigid bodies as dirty so they are rebuilt for sure.
+            PODVector<RigidBody*> childBodies;
+            GetNextChildRigidBodies(childBodies, prevNode_);
+            for (RigidBody* rigBody : childBodies)
+                rigBody->MarkDirty();
+
+
 
             freeBody();
             UnsubscribeFromEvent(E_NODETRANSFORMCHANGE);

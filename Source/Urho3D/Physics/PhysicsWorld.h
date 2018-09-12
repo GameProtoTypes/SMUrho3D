@@ -224,6 +224,7 @@ private:
     int Newton_AABBOverlapCallback(const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex);
 
     void URHO3D_API GetRootRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node, bool includeScene);
+    void URHO3D_API GetNextChildRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node);
     void URHO3D_API GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode = false, bool recurse = true);
 
     void URHO3D_API RebuildPhysicsNodeTree(Node* node);

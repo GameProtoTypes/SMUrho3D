@@ -625,6 +625,21 @@ namespace Urho3D {
     }
 
 
+    //returns first occuring child rigid bodies.
+    void URHO3D_API GetNextChildRigidBodies(PODVector<RigidBody*>& rigidBodies, Node* node)
+    {
+
+        PODVector<Node*> immediateChildren;
+        node->GetChildren(immediateChildren, false);
+
+        for (Node* child : immediateChildren) {
+            if (child->HasComponent<RigidBody>())
+                rigidBodies += child->GetComponent<RigidBody>();
+            else
+                GetNextChildRigidBodies(rigidBodies, child);
+        }
+
+    }
 
     //recurses up the scene tree starting a node and continuing up every branch adding collision shapes to the array until a rigid body is encountered in which case the algorithm stops traversing that branch.
     void GetAloneCollisionShapes(PODVector<CollisionShape*>& colShapes, Node* startingNode_, bool includeStartingNode, bool recurse)
