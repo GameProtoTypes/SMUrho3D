@@ -4,12 +4,13 @@
 Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, float radius)
 {
         Node* sphere1 = parentNode->CreateChild("SamplePhysicsSphere");
-
+        Node* sphereVis = sphere1->CreateChild();
+        sphereVis->SetScale(Vector3(radius, radius, radius)*2.0f);
 
         Model* sphereMdl = parentNode->GSS<ResourceCache>()->GetResource<Model>("Models/Sphere.mdl");
         Material* sphereMat = parentNode->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
         
-        StaticModel* sphere1StMdl = sphere1->CreateComponent<StaticModel>();
+        StaticModel* sphere1StMdl = sphereVis->CreateComponent<StaticModel>();
         sphere1StMdl->SetCastShadows(true);
         sphere1StMdl->SetModel(sphereMdl);
         sphere1StMdl->SetMaterial(sphereMat);
@@ -17,13 +18,13 @@ Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, f
         RigidBody* s1RigBody = sphere1->CreateComponent<RigidBody>();
 
         CollisionShape_Sphere* s1ColShape = sphere1->CreateComponent<CollisionShape_Sphere>();
-
+        s1ColShape->SetScaleFactor(Vector3(radius*2.0f, radius*2.0f, radius*2.0f));
 
         sphere1->SetWorldPosition(worldPosition);
 
         s1RigBody->SetMassScale(1.0f);
 
-        sphere1->SetScale(radius);
+        
 
         return sphere1;
 }
@@ -31,12 +32,13 @@ Node* SpawnSamplePhysicsSphere(Node* parentNode, const Vector3& worldPosition, f
 Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition, float radius, float height)
 {
     Node* sphere1 = parentNode->CreateChild("SamplePhysicsCylinder");
-
+    Node* sphereVis = sphere1->CreateChild();
+    sphereVis->SetScale(Vector3(radius, height, radius));
 
     Model* sphereMdl = parentNode->GSS<ResourceCache>()->GetResource<Model>("Models/Cylinder.mdl");
     Material* sphereMat = parentNode->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
 
-    StaticModel* sphere1StMdl = sphere1->CreateComponent<StaticModel>();
+    StaticModel* sphere1StMdl = sphereVis->CreateComponent<StaticModel>();
     sphere1StMdl->SetCastShadows(true);
     sphere1StMdl->SetModel(sphereMdl);
     sphere1StMdl->SetMaterial(sphereMat);
@@ -44,13 +46,11 @@ Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition,
     RigidBody* s1RigBody = sphere1->CreateComponent<RigidBody>();
 
     CollisionShape_Cylinder* s1ColShape = sphere1->CreateComponent<CollisionShape_Cylinder>();
-
+    s1ColShape->SetScaleFactor(Vector3(radius, height, radius));
     sphere1->SetWorldPosition(worldPosition);
 
     s1RigBody->SetMassScale(1.0f);
 
-
-    sphere1->SetScale(Vector3(radius, height, radius));
 
     return sphere1;
 }
@@ -58,14 +58,14 @@ Node* SpawnSamplePhysicsCylinder(Node* parentNode, const Vector3& worldPosition,
 
 Node* SpawnSamplePhysicsBox(Node* parentNode, const Vector3& worldPosition, const Vector3& size)
 {
-
     Node* box = parentNode->CreateChild();
-    box->SetScale(size);
+    Node* boxVis = box->CreateChild();
+    boxVis->SetScale(size);
 
     Model* sphereMdl = parentNode->GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
     Material* sphereMat = parentNode->GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
 
-    StaticModel* sphere1StMdl = box->CreateComponent<StaticModel>();
+    StaticModel* sphere1StMdl = boxVis->CreateComponent<StaticModel>();
     sphere1StMdl->SetCastShadows(true);
     sphere1StMdl->SetModel(sphereMdl);
     sphere1StMdl->SetMaterial(sphereMat);
@@ -75,7 +75,7 @@ Node* SpawnSamplePhysicsBox(Node* parentNode, const Vector3& worldPosition, cons
     //s1RigBody->SetPhysicsMaterial(parentNode->GSS<ResourceCache>()->GetResource<PhysicsMaterial>("PhysicsMaterials/dummyPhysicsMaterial.xml"));
 
     CollisionShape_Box* s1ColShape = box->CreateComponent<CollisionShape_Box>();
-
+    s1ColShape->SetScaleFactor(size);
 
     box->SetWorldPosition(worldPosition);
 

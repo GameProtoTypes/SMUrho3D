@@ -95,6 +95,16 @@ namespace Urho3D {
         //dont dirty because otherRotation_ is used for target frame
     }
 
+    void KinematicsControllerConstraint::SetOtherWorldPosition(const Vector3& position)
+    {
+        SetOtherPosition(position);
+    }
+
+    void KinematicsControllerConstraint::SetOtherWorldRotation(const Quaternion& rotation)
+    {
+        SetOtherRotation(rotation);
+    }
+
     void KinematicsControllerConstraint::buildConstraint()
     {
 

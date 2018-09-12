@@ -43,6 +43,12 @@ namespace Urho3D {
 
         virtual void SetOtherRotation(const Quaternion& rotation) override;
 
+
+        virtual void SetOtherWorldPosition(const Vector3& position) override;
+
+
+        virtual void SetOtherWorldRotation(const Quaternion& rotation) override;
+
     protected:
 
         virtual void buildConstraint() override;

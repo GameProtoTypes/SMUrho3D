@@ -40,9 +40,10 @@ namespace Urho3D {
         // Create a dCustomBallAndSocket
         newtonJoint_ = new dCustomBallAndSocket(UrhoToNewton(GetOwnWorldFrame()), UrhoToNewton(GetOtherWorldFrame()), GetOwnNewtonBody(), GetOtherNewtonBody());
 
-        static_cast<dCustomBallAndSocket*>(newtonJoint_)->SetConeLimits(10.0f * dDegreeToRad);
-        static_cast<dCustomBallAndSocket*>(newtonJoint_)->EnableCone(true);
-
+        static_cast<dCustomBallAndSocket*>(newtonJoint_)->SetConeLimits(coneAngle_ * dDegreeToRad);
+        static_cast<dCustomBallAndSocket*>(newtonJoint_)->EnableCone(coneEnabled_);
+        static_cast<dCustomBallAndSocket*>(newtonJoint_)->EnableTwist(twistLimitsEnabled_);
+        static_cast<dCustomBallAndSocket*>(newtonJoint_)->SetTwistLimits(twistMinAngle_* dDegreeToRad, twistMaxAngle_ * dDegreeToRad);
 
     }
 

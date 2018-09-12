@@ -155,10 +155,10 @@ void Physics::CreateScene()
     //    SpawnConvexHull(Vector3(0, 1 * i, i + 10));
 
 
-    //for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
        // SpawnLinearJointedObject(1.0f, Vector3(10 , 2, 10));
-        SpawnLinearJointedObject(0.5f, Vector3(10, 2, 10));
-    //}
+        SpawnLinearJointedObject(0.5f*(i+1), Vector3(10+i*i, 10, 10));
+    }
 
     ////
     //SpawnNSquaredJointedObject(Vector3(-10, 10, 10));
@@ -668,14 +668,17 @@ void Physics::SpawnLinearJointedObject(float size, Vector3 worldPosition)
     //make lots of spheres
     for (int i = 0; i < numSpheres; i++)
     {
-        nodes += SpawnSamplePhysicsBox(scene_, worldPosition + Vector3(0,i*dist,0), Vector3(dist, dist, dist));
+        nodes += SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,i*dist,0), dist*0.5f);
 
         if (i > 0) {
             BallAndSocketConstraint* constraint = nodes[i - 1]->CreateComponent<BallAndSocketConstraint>();
-
-            //constraint->SetOtherPosition(-Vector3(0, dist, 0)*0.49f);
-            //constraint->SetPosition(Vector3(0, dist, 0)*0.49f);
             constraint->SetOtherBody(nodes[i]->GetComponent<RigidBody>());
+            constraint->SetOtherWorldPosition(worldPosition + Vector3(0, i*dist, 0) - Vector3(0, dist, 0)*0.5f);
+            constraint->SetWorldPosition(worldPosition + Vector3(0, i*dist, 0) - Vector3(0, dist, 0)*0.5f);
+            constraint->SetRotation(Quaternion(0, 0, -90));
+            constraint->SetOtherRotation(Quaternion(0,0,-90));
+            constraint->SetTwistLimitsEnabled(true);
+            
         }
     }
 }
@@ -1076,6 +1079,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
 
+    //create rotation test.
 
 
 
@@ -1098,11 +1102,19 @@ void Physics::CreatePickTargetNodeOnPhysics()
     if (res.node_) {
         if (res.node_->GetName() == "Floor")
             return;
-        if (!res.node_->HasComponent<RigidBody>())
+
+        //get the most root rigid body
+        PODVector<RigidBody*> bodies;
+        GetRootRigidBodies(bodies, res.node_, false);
+
+        RigidBody* candidateBody = bodies.Back();
+
+        if (!candidateBody)
             return;
 
+
         //remember the node
-        pickPullNode = res.node_;
+        pickPullNode = candidateBody->GetNode();
 
 
         //create "PickTarget" on the hit surface, parented to the camera.
@@ -1110,14 +1122,14 @@ void Physics::CreatePickTargetNodeOnPhysics()
         pickTarget->SetWorldPosition(res.position_);
         
         //create/update node that is on the surface of the node.
-        if (res.node_->GetChild("PickPullSurfaceNode"))
+        if (pickPullNode->GetChild("PickPullSurfaceNode"))
         {
-            res.node_->GetChild("PickPullSurfaceNode")->SetWorldPosition(res.position_);
+            pickPullNode->GetChild("PickPullSurfaceNode")->SetWorldPosition(res.position_);
         }
         else
         {
-            res.node_->CreateChild("PickPullSurfaceNode");
-            res.node_->GetChild("PickPullSurfaceNode")->SetWorldPosition(res.position_);
+            pickPullNode->CreateChild("PickPullSurfaceNode");
+            pickPullNode->GetChild("PickPullSurfaceNode")->SetWorldPosition(res.position_);
         }
 
         pickPullCameraStartOrientation = cameraNode_->GetWorldRotation();
@@ -1125,8 +1137,8 @@ void Physics::CreatePickTargetNodeOnPhysics()
 
         //make a kinematics joint
         KinematicsControllerConstraint* constraint = pickPullNode->CreateComponent<KinematicsControllerConstraint>();
-        constraint->SetPosition(res.node_->GetChild("PickPullSurfaceNode")->GetPosition());
-        constraint->SetRotation(pickPullCameraStartOrientation.Inverse()*res.node_->GetChild("PickPullSurfaceNode")->GetRotation());
+        constraint->SetPosition(pickPullNode->GetChild("PickPullSurfaceNode")->GetPosition());
+        constraint->SetRotation(pickPullCameraStartOrientation.Inverse()*pickPullNode->GetChild("PickPullSurfaceNode")->GetRotation());
         constraint->SetConstrainRotation(false);
     }
 }

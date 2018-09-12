@@ -40,14 +40,23 @@ namespace Urho3D
         /// Set the positional offset of the shape in local space to the node.
         void SetPositionOffset(Vector3 position) { position_ = position; MarkDirty(true); }
 
+        /// Set the scale factor to apply to this shape.
+        void SetScaleFactor(Vector3 scale) { scale_ = scale; MarkDirty(true); }
+
         /// Set the rotational offset of the shape in local space to the node.
         void SetRotationOffset(Quaternion rotation) { rotation_ = rotation; MarkDirty(true); }
 
         /// Get the positional offset of the shape in local space to the node.
         Vector3 GetPositionOffset() const { return position_;}
 
+        /// Get the scale factor of the shape that is applied on top of node.
+        Vector3 GetScaleFactor() const { return scale_; }
+
         /// Get the rotational offset of the shape in local space to the node.
         Quaternion GetRotationOffset() const { return rotation_; }
+
+
+
 
         /// get local offset matrix.
         Matrix3x4 GetOffsetMatrix()
@@ -91,6 +100,8 @@ namespace Urho3D
 
         /// Offset position.
         Vector3 position_;
+        /// Scale Factor
+        Vector3 scale_ = Vector3::ONE;
         /// Offset rotation.
         Quaternion rotation_;
 

@@ -9,6 +9,7 @@
 #include "dCustomFixDistance.h"
 #include "Newton.h"
 #include "NewtonDebugDrawing.h"
+#include "IO/Log.h"
 namespace Urho3D {
     Constraint::Constraint(Context* context) : Component(context)
     {
@@ -184,6 +185,30 @@ namespace Urho3D {
     }
 
 
+    void Constraint::SetOtherWorldPosition(const Vector3& position)
+    {
+        if (otherBody_)
+        {
+            otherPosition_ = otherBody_->GetNode()->WorldToLocal(position);
+        }
+        else
+            otherPosition_ = position;
+
+        MarkDirty();
+    }
+
+    void Constraint::SetOtherWorldRotation(const Quaternion& rotation)
+    {
+        if (otherBody_)
+        {
+            otherRotation_ = otherBody_->GetNode()->WorldToLocal(rotation);
+        }
+        else
+            otherRotation_ = rotation;
+
+        MarkDirty();
+    }
+
     NewtonBody* Constraint::GetOwnNewtonBody() const
     {
         return ownBody_->GetNewtonBody();
@@ -191,18 +216,31 @@ namespace Urho3D {
 
     NewtonBody* Constraint::GetOtherNewtonBody() const
     {
-        if (otherBody_) return otherBody_->GetNewtonBody(); else return nullptr;
+        if (otherBody_)
+            return otherBody_->GetNewtonBody();
+        else
+            return nullptr;
     }
 
     Urho3D::Matrix3x4 Constraint::GetOwnWorldFrame() const
     {
-        return node_->LocalToWorld(Matrix3x4(position_, rotation_, 1.0f));
+        Vector3 nodeScale = node_->GetScale();
+
+        Matrix3x4 frame = node_->LocalToWorld(Matrix3x4(position_, rotation_, 1.0f));
+
+        return frame;
     }
 
     Urho3D::Matrix3x4 Constraint::GetOtherWorldFrame() const
     {
-        if (otherBody_)
-            return otherBody_->GetNode()->LocalToWorld(Matrix3x4(otherPosition_, otherRotation_, 1.0f));
+        if (otherBody_) {
+
+            Node* otherNode = otherBody_->GetNode();
+            Matrix3x4 frame = otherNode->LocalToWorld(Matrix3x4(otherPosition_, otherRotation_, 1.0f));
+
+
+            return frame;
+        }
         else
             return Matrix3x4(otherPosition_, otherRotation_, 1.0f);
     }
@@ -217,6 +255,10 @@ namespace Urho3D {
         //resolve other body id to component
         otherBody_ = static_cast<RigidBody*>(GetScene()->GetComponent(otherBodyId_));
 
+        if(otherBody_)
+            LogNodeScaleWarning(otherBody_->GetNode());
+
+        LogNodeScaleWarning(node_);
 
         if (!IsEnabledEffective()) {
             freeInternal();
@@ -224,7 +266,12 @@ namespace Urho3D {
         else if (ownBody_ && ownBody_->GetNode() && ownBody_->GetNewtonBody()) {
             freeInternal();
             buildConstraint();
+
+
             NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
+            //NewtonJointSetStiffness((NewtonJoint*)newtonJoint_, stiffness_);
+            newtonJoint_->SetStiffness(stiffness_);
+            newtonJoint_->SetSolverModel(solverIterations_);
 
         }
         else//we dont have own body so free the joint..
@@ -293,7 +340,6 @@ namespace Urho3D {
             AddJointReferenceToBody(ownBody_);
 
             node->AddListener(this);
-
         }
         else
         {
@@ -312,6 +358,16 @@ namespace Urho3D {
     void Constraint::OnNodeSetEnabled(Node* node)
     {
         MarkDirty();
+    }
+
+    void Constraint::LogNodeScaleWarning(Node* node)
+    {
+
+        if ((node->GetWorldScale() - Vector3::ONE).Length() > M_LARGE_EPSILON*100.0f) {
+
+            URHO3D_LOGWARNING("Contraints Do Not Support contraining Rigid Bodies with node world scales other than 1");
+        }
+
     }
 
 }
