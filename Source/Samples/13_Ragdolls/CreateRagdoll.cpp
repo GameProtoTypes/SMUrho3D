@@ -85,26 +85,61 @@ void CreateRagdoll::HandleNodeCollision(StringHash eventType, VariantMap& eventD
             Quaternion(0.0f, 0.0f, 90.0f));
 
         // Create Constraints between bones
-        CreateRagdollConstraint("Bip01_L_Thigh", "Bip01_Pelvis", BallAndSocketConstraint::GetTypeNameStatic(), Vector3::BACK, Vector3::FORWARD,
-            Vector2(45.0f, 45.0f), Vector2::ZERO);
-        CreateRagdollConstraint("Bip01_R_Thigh", "Bip01_Pelvis", BallAndSocketConstraint::GetTypeNameStatic(), Vector3::BACK, Vector3::FORWARD,
-            Vector2(45.0f, 45.0f), Vector2::ZERO);
-        CreateRagdollConstraint("Bip01_L_Calf", "Bip01_L_Thigh", HingeConstraint::GetTypeNameStatic(), Vector3::BACK, Vector3::BACK,
-            Vector2(90.0f, 0.0f), Vector2::ZERO);
-        CreateRagdollConstraint("Bip01_R_Calf", "Bip01_R_Thigh", HingeConstraint::GetTypeNameStatic(), Vector3::BACK, Vector3::BACK,
-            Vector2(90.0f, 0.0f), Vector2::ZERO);
-        CreateRagdollConstraint("Bip01_Spine1", "Bip01_Pelvis", HingeConstraint::GetTypeNameStatic(), Vector3::FORWARD, Vector3::FORWARD,
-            Vector2(45.0f, 0.0f), Vector2(-10.0f, 0.0f));
-        CreateRagdollConstraint("Bip01_Head", "Bip01_Spine1", BallAndSocketConstraint::GetTypeNameStatic(), Vector3::LEFT, Vector3::LEFT,
-            Vector2(0.0f, 30.0f), Vector2::ZERO);
-        CreateRagdollConstraint("Bip01_L_UpperArm", "Bip01_Spine1", BallAndSocketConstraint::GetTypeNameStatic(), Vector3::DOWN, Vector3::UP,
-            Vector2(45.0f, 45.0f), Vector2::ZERO, false);
-        CreateRagdollConstraint("Bip01_R_UpperArm", "Bip01_Spine1", BallAndSocketConstraint::GetTypeNameStatic(), Vector3::DOWN, Vector3::UP,
-            Vector2(45.0f, 45.0f), Vector2::ZERO, false);
-        CreateRagdollConstraint("Bip01_L_Forearm", "Bip01_L_UpperArm", HingeConstraint::GetTypeNameStatic(), Vector3::BACK, Vector3::BACK,
-            Vector2(90.0f, 0.0f), Vector2::ZERO);
-        CreateRagdollConstraint("Bip01_R_Forearm", "Bip01_R_UpperArm", HingeConstraint::GetTypeNameStatic(), Vector3::BACK, Vector3::BACK,
-            Vector2(90.0f, 0.0f), Vector2::ZERO);
+
+        Quaternion jointOrientation;
+
+        jointOrientation = Quaternion::IDENTITY;
+        jointOrientation = Quaternion(0, 0, -75) * jointOrientation;
+        CreateRagdollConstraint("Bip01_L_Thigh", "Bip01_Pelvis", BallAndSocketConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(45.0f, 45.0f), Vector2(-20,20));
+
+
+        jointOrientation = Quaternion::IDENTITY;
+        jointOrientation = Quaternion(0, 0, 180+75 ) * jointOrientation;
+        CreateRagdollConstraint("Bip01_R_Thigh", "Bip01_Pelvis", BallAndSocketConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(45.0f, 45.0f), Vector2(-20, 20));
+
+
+
+        jointOrientation = Quaternion::IDENTITY;
+        CreateRagdollConstraint("Bip01_L_Calf", "Bip01_L_Thigh", HingeConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(-90.0f, 0.0f), Vector2::ZERO);
+
+
+        jointOrientation = Quaternion::IDENTITY;
+        CreateRagdollConstraint("Bip01_R_Calf", "Bip01_R_Thigh", HingeConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(-90.0f, 0.0f), Vector2::ZERO);
+
+
+        jointOrientation = Quaternion::IDENTITY;
+        CreateRagdollConstraint("Bip01_Spine1", "Bip01_Pelvis", HingeConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(-45.0f, 45.0f), Vector2::ZERO);
+
+
+
+        jointOrientation = Quaternion::IDENTITY;
+        jointOrientation.FromAxes(Vector3::UP, Vector3::LEFT, Vector3::FORWARD);
+        jointOrientation = Quaternion(-15, 0, 0) * jointOrientation ;
+        CreateRagdollConstraint("Bip01_Head", "Bip01_Spine1", BallAndSocketConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(30.0f, 30.0f), Vector2(-20, 20));
+
+        jointOrientation = Quaternion::IDENTITY;
+        jointOrientation = Quaternion(0, 0, -50) * jointOrientation;
+        CreateRagdollConstraint("Bip01_L_UpperArm", "Bip01_Spine1", BallAndSocketConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(45.0f, 45.0f), Vector2(-20, 20), false);
+
+        jointOrientation = Quaternion::IDENTITY;
+        jointOrientation = Quaternion(0, 0, 50+180) * jointOrientation;
+        CreateRagdollConstraint("Bip01_R_UpperArm", "Bip01_Spine1", BallAndSocketConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(45.0f, 45.0f), Vector2(-20, 20), false);
+
+        jointOrientation = Quaternion::IDENTITY;
+        CreateRagdollConstraint("Bip01_L_Forearm", "Bip01_L_UpperArm", HingeConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(0.0f, 45.0f), Vector2::ZERO);
+
+        jointOrientation = Quaternion::IDENTITY;
+        CreateRagdollConstraint("Bip01_R_Forearm", "Bip01_R_UpperArm", HingeConstraint::GetTypeNameStatic(), jointOrientation,
+            Vector2(0.0f, 45.0f), Vector2::ZERO);
 
         // Disable keyframe animation from all bones so that they will not interfere with the ragdoll
         auto* model = GetComponent<AnimatedModel>();
@@ -156,7 +191,7 @@ void CreateRagdoll::CreateRagdollBone(const String& boneName, StringHash collisi
 }
 
 void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String& parentName, StringHash constraintType,
-    const Vector3& axis, const Vector3& parentAxis, const Vector2& highLimit, const Vector2& lowLimit,
+    const Quaternion& orientation, const Vector2& angleLimits, const Vector2& twistLimits,
     bool disableCollision)
 {
     Node* boneNode = node_->GetChild(boneName, true);
@@ -174,33 +209,40 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
 
     Constraint* constraint = nullptr;
     if (constraintType == BallAndSocketConstraint::GetTypeNameStatic()) {
-        constraint = boneNode->CreateComponent<FullyFixedConstraint>();
+        constraint = boneNode->CreateComponent<BallAndSocketConstraint>();
+        // The connected body must be specified before setting the world position
+        constraint->SetOtherBody(parentNode->GetComponent<RigidBody>());
 
-        //static_cast<BallAndSocketConstraint*>(constraint)->SetConeAngle(20.0f);
-
-        //// Configure axes and limits
-        //constraint->SetAxis(axis);
-        //constraint->SetOtherAxis(parentAxis);
-        //constraint->SetHighLimit(highLimit);
-        //constraint->SetLowLimit(lowLimit);
+        static_cast<BallAndSocketConstraint*>(constraint)->SetConeAngle(Max(angleLimits.x_, angleLimits.y_)*0.5f);
+        static_cast<BallAndSocketConstraint*>(constraint)->SetTwistLimitsEnabled(true);
+        static_cast<BallAndSocketConstraint*>(constraint)->SetTwistLimits(twistLimits.x_, twistLimits.y_);
+        static_cast<BallAndSocketConstraint*>(constraint)->SetWorldRotation(orientation);
     }
     else if (constraintType == HingeConstraint::GetTypeNameStatic())
     {
-        constraint = boneNode->CreateComponent<FullyFixedConstraint>();
-        //static_cast<HingeConstraint*>(constraint)->Set;
+
+
+        constraint = boneNode->CreateComponent<HingeConstraint>();
+
+        // The connected body must be specified before setting the world position
+        constraint->SetOtherBody(parentNode->GetComponent<RigidBody>());
+
+        static_cast<HingeConstraint*>(constraint)->SetMinAngle(angleLimits.x_);
+        static_cast<HingeConstraint*>(constraint)->SetMaxAngle(angleLimits.y_);
+        static_cast<HingeConstraint*>(constraint)->SetWorldRotation(orientation);
 
     }
 
 
     // Most of the constraints in the ragdoll will work better when the connected bodies don't collide against each other
     constraint->SetDisableCollision(disableCollision);
-    // The connected body must be specified before setting the world position
-    constraint->SetOtherBody(parentNode->GetComponent<RigidBody>());
+
 
     // Position the constraint at the child bone we are connecting
     constraint->SetWorldPosition(boneNode->GetWorldPosition());
 
-
-
+    //ragdolls are soft things - so loosen up the constraints purposefully.
+    constraint->SetSolverIterations(0);
+    constraint->SetStiffness(0.1f);
 
 }
