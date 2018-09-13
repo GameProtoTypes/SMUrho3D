@@ -604,7 +604,7 @@ void Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation
     {
         localPosition = parent_->GetWorldTransform().Inverse() * position;
         localRotation = parent_->GetWorldRotation().Inverse() * rotation;
-        localScale = (Vector3::ONE / scale) * parent_->GetWorldScale();
+        localScale = (scale) / parent_->GetWorldScale();
     }
 
     SetTransform(localPosition, localRotation, localScale);
@@ -2184,6 +2184,7 @@ void Node::UpdateWorldTransform() const
     {
         worldTransform_ = transform;
         worldRotation_ = rotation_;
+        
     }
     else
     {
