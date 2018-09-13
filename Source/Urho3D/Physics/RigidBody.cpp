@@ -730,10 +730,10 @@ namespace Urho3D {
         if(enableTEvents)
             node_->SetEnableTransformEvents(false);
 
-        Vector3 worldScale = node_->GetWorldScale();
-        node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat), worldScale);
-       // node_->SetWorldPosition(NewtonToUrhoVec3(pos));
-        //node_->SetWorldRotation(NewtonToUrhoQuat(quat));
+        Vector3 localScale = node_->GetScale();
+        node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat));
+        node_->SetScale(localScale);//not sure why I have to restore this - without it, the worldscale of the node approaches infinity over time (some precision error in the matrix code)
+
 
         node_->SetEnableTransformEvents(enableTEvents);
     }
