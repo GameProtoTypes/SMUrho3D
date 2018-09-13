@@ -168,9 +168,8 @@ void CreateRagdoll::CreateRagdollBone(const String& boneName, StringHash collisi
     body->SetMassScale(1.0f);
     // Set damping parameters to smooth out the motion
     body->SetLinearDamping(1.0f);
-    body->SetAngularDamping(.85f*1.0f);
-   // body->SetInternalLinearDamping(1.0f);
-    //body->SetInternalAngularDamping(Vector3(.85f, .85f, .85f)*10.0f);
+    body->SetAngularDamping(.85f);
+
 
     CollisionShape* shape = nullptr;
     // We use either a box or a capsule shape for all of the bones
@@ -233,7 +232,6 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
         static_cast<HingeConstraint*>(constraint)->SetMinAngle(angleLimits.x_);
         static_cast<HingeConstraint*>(constraint)->SetMaxAngle(angleLimits.y_);
         static_cast<HingeConstraint*>(constraint)->SetWorldRotation(orientation);
-        //static_cast<HingeConstraint*>(constraint)->SetFriction(0.05f);
     }
 
 

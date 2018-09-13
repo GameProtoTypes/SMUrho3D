@@ -44,7 +44,7 @@ class dQuaternion
 	dQuaternion operator+ (const dQuaternion &B) const; 
 	dQuaternion operator- (const dQuaternion &B) const; 
 
-	dFloat m_q0;
+	dFloat m_q0;//scalar part
 	dFloat m_q1;
 	dFloat m_q2;
 	dFloat m_q3;
