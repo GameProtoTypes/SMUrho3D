@@ -62,16 +62,18 @@ namespace Urho3D
 
         float GetLinearDamping() const { return linearDampening_; }
 
-        /// Set Angular Damping factor (0.0 to 1.0) for angle component. default is 0 damping is in world space
-        void SetAngularDamping(const Vector3& angularDamping);
+        /// Set Angular Damping factor (0.0 to 1.0) for angle component. default is 0
+        void SetAngularDamping(float angularDamping);
 
-        Vector3 GetAngularDamping() const { return angularDampening_; }
+        float GetAngularDamping() const { return angularDampening_; }
 
-        /// Set the internal linear damping - this is used internally by the newton solver to bring bodies to sleep more effectively.(0.0 to 1.0) default is zero
+        /// Set the internal linear damping - this is used internally by the newton solver to bring bodies to sleep more effectively.
+        /// Be Aware that this parameter will show different behalvior with different solver iteration rates. (0.0 to 1.0) default is zero
         void SetInternalLinearDamping(float damping);
 
-        /// Set the internal angular damping - this is used internally by the newton solver to bring bodies to sleep more effectively. (0.0 to 1.0) default is zero
-        void SetInternalAngularDamping(const Vector3& angularDamping);
+        /// Set the internal angular damping - this is used internally by the newton solver to bring bodies to sleep more effectively.
+        /// Be Aware that this parameter will show different behalvior with different solver iteration rates. (0.0 to 1.0) default is zero
+        void SetInternalAngularDamping(float angularDamping);
 
 
         /// Set whether the collision size should be effected by the node scale.
@@ -205,7 +207,7 @@ namespace Urho3D
         ///Net Torque in local cordinates
         Vector3 netTorque_;
         ///angular dampending
-        Vector3 angularDampening_;
+        float angularDampening_ = 0.0f;
         ///linera dampening
         float linearDampening_ = 0.0f;
         ///angular dampending

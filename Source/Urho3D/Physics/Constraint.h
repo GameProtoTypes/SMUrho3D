@@ -10,6 +10,11 @@ namespace Urho3D {
     class RigidBody;
     class PhysicsWorld;
 
+    enum CONSTRAINT_SOLVE_MODE {
+        SOLVE_MODE_DEFAULT = 0,           //the best option
+        SOLVE_MODE_ITERATIVE = 2,         //faster and less accurate.
+        SOLVE_MODE_KINEMATIC_LOOP = 1    //use this to specify a joint that is a connecting joint in a loop of joints. Only one joint should neeed to be in this solve mode.
+    };
     ///Base class for newton constraints.
     class URHO3D_API Constraint : public Component
     {
@@ -20,6 +25,8 @@ namespace Urho3D {
 
         friend class PhysicsWorld;
         friend class RigidBody;
+
+
         /// Construct.
         Constraint(Context* context);
         /// Destruct. Free the rigid body and geometries.
@@ -77,13 +84,18 @@ namespace Urho3D {
         virtual void SetOtherWorldRotation(const Quaternion& rotation);
 
 
-        void SetSolverIterations(int iterations) {
-            if (solverIterations_ != iterations) {
-                solverIterations_ = iterations;
+        void SetSolveMode(CONSTRAINT_SOLVE_MODE mode) {
+            if (solveMode_ != mode) {
+                solveMode_ = mode;
                 MarkDirty();
             }
         }
-        int GetSolverIterations() const { return solverIterations_; }
+        void SetSolveMode(int mode) {
+            SetSolveMode(CONSTRAINT_SOLVE_MODE(mode));
+        }
+
+        CONSTRAINT_SOLVE_MODE GetSolveMode() const { return solveMode_; }
+
 
         void SetStiffness(float stiffness) {
             if (stiffness_ != stiffness) {
@@ -146,7 +158,7 @@ namespace Urho3D {
 
         float stiffness_ = 0.7f;
 
-        int solverIterations_ = 16;
+        CONSTRAINT_SOLVE_MODE solveMode_ = SOLVE_MODE_DEFAULT;
 
         /// Constraint position.
         Vector3 position_;

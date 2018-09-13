@@ -59,6 +59,8 @@ namespace Urho3D {
         static_cast<dCustomBallAndSocket*>(newtonJoint_)->SetTwistLimits(twistMinAngle_* dDegreeToRad, twistMaxAngle_ * dDegreeToRad);
         static_cast<dCustomBallAndSocket*>(newtonJoint_)->SetConeFriction(coneFriction_);
         static_cast<dCustomBallAndSocket*>(newtonJoint_)->SetTwistFriction(twistFriction_);
+
+        
     }
 
 

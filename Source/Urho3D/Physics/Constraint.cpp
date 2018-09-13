@@ -11,6 +11,17 @@
 #include "NewtonDebugDrawing.h"
 #include "IO/Log.h"
 namespace Urho3D {
+
+
+    const char* solveModeNames[] =
+    {
+        "SOLVE_MODE_DEFAULT",
+        "SOLVE_MODE_ITERATIVE",
+        "SOLVE_MODE_KINEMATIC_LOOP",
+        nullptr
+    };
+
+
     Constraint::Constraint(Context* context) : Component(context)
     {
 
@@ -25,7 +36,7 @@ namespace Urho3D {
         context->RegisterFactory<Constraint>(DEF_PHYSICS_CATEGORY.CString());
         URHO3D_COPY_BASE_ATTRIBUTES(Component);
 
-        URHO3D_ACCESSOR_ATTRIBUTE("Solver Iterations", GetSolverIterations, SetSolverIterations, int, 16, AM_DEFAULT);
+        URHO3D_ENUM_ACCESSOR_ATTRIBUTE("Solver Iterations", GetSolveMode, SetSolveMode, CONSTRAINT_SOLVE_MODE, solveModeNames, SOLVE_MODE_DEFAULT, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Stiffness", GetStiffness, SetStiffness, float, 0.7f, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body ID", GetOtherBodyId, SetOtherBodyById, unsigned, 0, AM_DEFAULT | AM_COMPONENTID);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Position", GetOtherPosition, SetOtherPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
@@ -305,7 +316,7 @@ namespace Urho3D {
                 NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
                 //NewtonJointSetStiffness((NewtonJoint*)newtonJoint_, stiffness_);
                 newtonJoint_->SetStiffness(stiffness_);
-                newtonJoint_->SetSolverModel(solverIterations_);
+                newtonJoint_->SetSolverModel(solveMode_);
             }
         }
         else//we dont have own body so free the joint..

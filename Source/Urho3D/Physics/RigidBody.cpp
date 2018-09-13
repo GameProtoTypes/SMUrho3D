@@ -52,7 +52,7 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Inherit Collision Node Scales", GetInheritNodeScale, SetInheritNodeScale, bool, true, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Continuous Collision", GetContinuousCollision, SetContinuousCollision, bool, false, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Linear Damping", GetLinearDamping, SetLinearDamping, float, 0.0f, AM_DEFAULT);
-        URHO3D_ACCESSOR_ATTRIBUTE("Angular Damping", GetAngularDamping, SetAngularDamping, Vector3, Vector3::ZERO, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Angular Damping", GetAngularDamping, SetAngularDamping, float, 0.0f, AM_DEFAULT);
         URHO3D_ATTRIBUTE("Net Force", Vector3, netForce_, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ATTRIBUTE("Net Torque", Vector3, netTorque_, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ATTRIBUTE("Is Scene Root Body", bool, sceneRootBodyMode_, false, AM_DEFAULT);
@@ -111,13 +111,17 @@ namespace Urho3D {
 
     void RigidBody::SetLinearDamping(float dampingFactor)
     {
+        dampingFactor = Urho3D::Clamp<float>(dampingFactor, 0.0f, dampingFactor);
+
         if (linearDampening_ != dampingFactor) {
             linearDampening_ = dampingFactor;
         }
     }
 
-    void RigidBody::SetAngularDamping(const Vector3& angularDamping)
+    void RigidBody::SetAngularDamping(float angularDamping)
     {
+        angularDamping = Urho3D::Clamp(angularDamping, 0.0f, angularDamping);
+
         if (angularDamping != angularDamping) {
             angularDampening_ = angularDamping;
         }
@@ -132,15 +136,23 @@ namespace Urho3D {
             {
                 NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
             }
+            else
+            {
+                MarkDirty();
+            }
         }
     }
 
-    void RigidBody::SetInternalAngularDamping(const Vector3& angularDamping)
+    void RigidBody::SetInternalAngularDamping(float angularDamping)
     {
-        angularDampeningInternal_ = angularDamping;
+        angularDampeningInternal_ = Vector3(angularDamping, angularDamping, angularDamping);
         if (newtonBody_)
         {
             NewtonBodySetAngularDamping(newtonBody_, &UrhoToNewton(angularDampeningInternal_)[0]);
+        }
+        else
+        {
+            MarkDirty();
         }
     }
 
@@ -718,10 +730,10 @@ namespace Urho3D {
         if(enableTEvents)
             node_->SetEnableTransformEvents(false);
 
-        //Vector3 worldScale = node_->GetWorldScale();
-        //node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat), worldScale);
-        node_->SetWorldPosition(NewtonToUrhoVec3(pos));
-        node_->SetWorldRotation(NewtonToUrhoQuat(quat));
+        Vector3 worldScale = node_->GetWorldScale();
+        node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat), worldScale);
+       // node_->SetWorldPosition(NewtonToUrhoVec3(pos));
+        //node_->SetWorldRotation(NewtonToUrhoQuat(quat));
 
         node_->SetEnableTransformEvents(enableTEvents);
     }
@@ -732,18 +744,21 @@ namespace Urho3D {
         URHO3D_PROFILE("GetForceAndTorque");
 
 
-        //basic damping forces (clamp to some reasonable values)
-        float linearDampingClamped = Urho3D::Clamp<float>(linearDampening_, 0.0f, 0.3f);
-        Vector3 angularDampingClamped = Urho3D::VectorClamp(angularDampening_, Vector3::ZERO, Vector3::ONE * 0.3f);
-
-
         //basic velocity damping forces
-        Vector3 velocity = GetLinearVelocity();
-        Vector3 linearDampingForce = -velocity.Normalized()*(velocity.LengthSquared())*linearDampingClamped * mass_;
+        Vector3 velocity = GetLinearVelocity(TS_WORLD);
+        Vector3 linearDampingForce = -velocity.Normalized()*(velocity.LengthSquared())*linearDampening_ * mass_;
+
+        if (linearDampingForce.Length() <= M_EPSILON)
+            linearDampingForce = Vector3::ZERO;
+
 
         //basic angular damping forces
-        Vector3 angularVelocity = GetAngularVelocity();
-        Vector3 angularDampingTorque = Vector3::ZERO;// -angularVelocity.Normalized()*(angularVelocity.LengthSquared())*angularDampingClamped * mass_;
+        Vector3 angularVelocity = GetAngularVelocity(TS_WORLD);
+        Vector3 angularDampingTorque = -angularVelocity.Normalized()*(angularVelocity.LengthSquared())*angularDampening_ * mass_;
+
+        if (angularVelocity.Length() <= M_EPSILON)
+            angularDampingTorque = Vector3::ZERO;
+
 
         force = linearDampingForce + netForce_;
         torque = angularDampingTorque + netTorque_;
