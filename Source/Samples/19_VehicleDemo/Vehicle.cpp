@@ -33,6 +33,7 @@
 #include <Urho3D/Scene/Scene.h>
 
 #include "Vehicle.h"
+#include "Urho3D/Physics/CollisionShapesDerived.h"
 
 Vehicle::Vehicle(Context* context) :
     LogicComponent(context)
@@ -101,21 +102,21 @@ void Vehicle::FixedUpdate(float timeStep)
     frontLeftAxis_->SetOtherAxis(steeringRot * Vector3::LEFT);
     frontRightAxis_->SetOtherAxis(steeringRot * Vector3::RIGHT);
 
-    Quaternion hullRot = hullBody_->GetRotation();
+    Quaternion hullRot = hullBody_->GetNode()->GetRotation();
     if (accelerator != 0.0f)
     {
         // Torques are applied in world space, so need to take the vehicle & wheel rotation into account
         Vector3 torqueVec = Vector3(ENGINE_POWER * accelerator, 0.0f, 0.0f);
 
-        frontLeftBody_->ApplyTorque(hullRot * steeringRot * torqueVec);
-        frontRightBody_->ApplyTorque(hullRot * steeringRot * torqueVec);
-        rearLeftBody_->ApplyTorque(hullRot * torqueVec);
-        rearRightBody_->ApplyTorque(hullRot * torqueVec);
+        frontLeftBody_->AddWorldTorque(hullRot * steeringRot * torqueVec);
+        frontRightBody_->AddWorldTorque(hullRot * steeringRot * torqueVec);
+        rearLeftBody_->AddWorldTorque(hullRot * torqueVec);
+        rearRightBody_->AddWorldTorque(hullRot * torqueVec);
     }
 
     // Apply downforce proportional to velocity
     Vector3 localVelocity = hullRot.Inverse() * hullBody_->GetLinearVelocity();
-    hullBody_->ApplyForce(hullRot * Vector3::DOWN * Abs(localVelocity.z_) * DOWN_FORCE);
+    hullBody_->AddWorldTorque(hullRot * Vector3::DOWN * Abs(localVelocity.z_) * DOWN_FORCE);
 }
 
 void Vehicle::Init()
@@ -125,14 +126,13 @@ void Vehicle::Init()
 
     auto* hullObject = node_->CreateComponent<StaticModel>();
     hullBody_ = node_->CreateComponent<RigidBody>();
-    auto* hullShape = node_->CreateComponent<CollisionShape>();
+    auto* hullShape = node_->CreateComponent<CollisionShape_Box>();
 
     node_->SetScale(Vector3(1.5f, 1.0f, 3.0f));
     hullObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     hullObject->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
     hullObject->SetCastShadows(true);
-    hullShape->SetBox(Vector3::ONE);
-    hullBody_->SetMass(4.0f);
+    hullBody_->SetMassScale(4.0f);
     hullBody_->SetLinearDamping(0.2f); // Some air resistance
     hullBody_->SetAngularDamping(0.5f);
     hullBody_->SetCollisionLayer(1);

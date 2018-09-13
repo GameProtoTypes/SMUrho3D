@@ -141,7 +141,31 @@ namespace Urho3D {
     {
         URHO3D_PROFILE_THREAD(NewtonThreadProfilerString(threadIndex).CString());
         URHO3D_PROFILE_FUNCTION();
-        return 1;
+
+
+        const NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
+        const NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
+
+        RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
+        RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
+
+
+        unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
+
+        PhysicsWorld* physicsWorld = rigBody0->GetPhysicsWorld();
+
+        if (physicsWorld == nullptr)
+            return 1;//scene is being destroyed.
+
+
+        if (rigBody0->GetCollisionLayer() == rigBody1->GetCollisionLayer())
+        {
+            return 1;
+        }
+        else
+            return 0;
+
+
     }
 
 

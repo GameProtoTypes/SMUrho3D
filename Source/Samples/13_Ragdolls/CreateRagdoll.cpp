@@ -189,7 +189,6 @@ void CreateRagdoll::CreateRagdollBone(const String& boneName, StringHash collisi
         static_cast<CollisionShape_Capsule*>(shape)->SetRadius1(size.x_*0.5f);
         static_cast<CollisionShape_Capsule*>(shape)->SetRadius2(size.x_*0.5f);
     }
-
 }
 
 void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String& parentName, StringHash constraintType,

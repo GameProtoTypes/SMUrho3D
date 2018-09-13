@@ -242,8 +242,8 @@ namespace Urho3D {
                 newPair->SetMaterials(mat1, mat2);//compute.
 
                 NewtonMaterialSetCallbackUserData(newtonWorld_, mat1->newtonGroupId, mat2->newtonGroupId, (void*)newPair);
-                NewtonMaterialSetCollisionCallback(newtonWorld_, newPair->newtonGroupId0, newPair->newtonGroupId1, nullptr, Newton_ProcessContactsCallback);
-
+                NewtonMaterialSetCollisionCallback(newtonWorld_, newPair->newtonGroupId0, newPair->newtonGroupId1, Newton_AABBOverlapCallback, Newton_ProcessContactsCallback);
+                
 
                 physMaterialPairList.Insert(0, newPair);
             }

@@ -50,6 +50,13 @@ namespace Urho3D
         /// get the mass of the rigid body 
         float GetEffectiveMass() { return mass_; }
 
+        void SetCollisionLayer(unsigned layer)
+        {
+            collisionLayer_ = layer;
+        }
+        unsigned GetCollisionLayer() const { return collisionLayer_; }
+
+
         /// Set linear velocity in world cordinates.
         void SetLinearVelocity(const Vector3& velocity);
 
@@ -93,6 +100,10 @@ namespace Urho3D
 
         bool GetAutoSleep() const { return autoSleep_; }
 
+        /// force the body to be awake
+        void Activate();
+        /// force the body to sleep
+        void DeActivate();
 
         /// Setting this to true will make the rigid body act as a root scene body with Inifite mass.
         void SetIsSceneRootBody(bool enable);
@@ -230,6 +241,7 @@ namespace Urho3D
 
         bool autoSleep_ = true;
 
+        unsigned collisionLayer_ = 0;
 
         ///dirty flag
         bool needsRebuilt_ = true;
@@ -264,7 +276,8 @@ namespace Urho3D
         Vector3 nextLinearVelocity_;
         bool nextAngularVelocityNeeded_ = false;
         Vector3 nextAngularVelocity_;
-
+        bool nextSleepStateNeeded_ = false;
+        bool nextSleepState_ = false;
 
 
         virtual void OnNodeSetEnabled(Node* node) override;

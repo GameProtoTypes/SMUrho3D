@@ -184,8 +184,33 @@ namespace Urho3D {
             if (newtonBody_)
             {
                 NewtonBodySetAutoSleep(newtonBody_, autoSleep_);
-                NewtonBodySetSleepState(newtonBody_, !autoSleep_);
             }
+        }
+    }
+
+    void RigidBody::Activate()
+    {
+        if (newtonBody_)
+        {
+            NewtonBodySetSleepState(newtonBody_, false);
+        }
+        else
+        {
+            nextSleepStateNeeded_ = true;
+            nextSleepState_ = false;
+        }
+    }
+
+    void RigidBody::DeActivate()
+    {
+        if (newtonBody_)
+        {
+            NewtonBodySetSleepState(newtonBody_, true);
+        }
+        else
+        {
+            nextSleepStateNeeded_ = true;
+            nextSleepState_ = true;
         }
     }
 
@@ -227,7 +252,13 @@ namespace Urho3D {
 
     void RigidBody::OnSetEnabled()
     {
-        MarkDirty(true);
+        if (IsEnabledEffective()) {
+            MarkDirty(true);//rebuild
+        }
+        else
+        {
+            freeBody();
+        }
     }
 
     void RigidBody::freeBody()
@@ -302,11 +333,6 @@ namespace Urho3D {
                 NewtonCollision* usedCollision = nullptr;
 
 
-                ////check if there is a rigid body on the same node as colComp - if so (and it isnt this RigidBody) free the internal body of it.
-                //if (colComp->GetNode() != node_ && colComp->GetNode()->HasComponent<RigidBody>())
-                //    colComp->GetComponent<RigidBody>()->freeBody();
-
-
                 if (compoundNeeded)
                     usedCollision = NewtonCollisionCreateInstance(curNewtCollision);
                 else
@@ -329,17 +355,20 @@ namespace Urho3D {
                 dMatrix localTransform = UrhoToNewton(colLocalToThisNode);
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
 
+
+                    
+                Vector3 scale;
                 if (inheritCollisionNodeScales_)
                 {
-                    
-                    Vector3 scale = colComp->GetNode()->GetWorldScale();
-                    Vector3 shapeScale = colComp->GetScaleFactor();
-
-                    scale = (colComp->GetRotationOffset()).Inverse()*scale*shapeScale;
-
-
-                    NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
+                    scale = colComp->GetNode()->GetWorldScale();
                 }
+                Vector3 shapeScale = colComp->GetScaleFactor();
+
+                scale = (colComp->GetRotationOffset()).Inverse()*scale*shapeScale;
+
+
+                NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
+
                 float vol = NewtonConvexCollisionCalculateVolume(usedCollision);
                 accumMass += vol*1.0f;//#todo 1.0f should be mass density of material attached to collision shape.
 
@@ -402,9 +431,9 @@ namespace Urho3D {
             NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
             NewtonBodySetAngularDamping(newtonBody_, &UrhoToNewton(angularDampeningInternal_)[0]);
 
-            //set sleep state.
+            //set auto sleep mode.
             NewtonBodySetAutoSleep(newtonBody_, autoSleep_);
-            NewtonBodySetSleepState(newtonBody_, !autoSleep_);
+
 
             //assign material
             if(physicsMaterial_)
@@ -510,12 +539,15 @@ namespace Urho3D {
         RigidBody* parentRigidBody = node_->GetParentComponent<RigidBody>(true);
         if (newtonBody_ && !parentRigidBody) {
             //the node's transform has explictly been changed.  set the rigid body transform to the same transform.
-            //Ignore scale.
             Matrix3x4 mat(eventData[NodeTransformChange::P_NEW_POSITION].GetVector3(),
                 eventData[NodeTransformChange::P_NEW_ORIENTATION].GetQuaternion(),
                 Vector3::ONE);
 
-            NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
+            //if the scale changed - we need to rebuild - else just set the transform directly.
+            if (eventData[NodeTransformChange::P_NEW_SCALE].GetVector3() != eventData[NodeTransformChange::P_OLD_SCALE].GetVector3())
+                MarkDirty(true);
+            else
+                NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(mat.ToMatrix4())[0][0]);
         }
         else
         {
@@ -547,7 +579,14 @@ namespace Urho3D {
             }
             nextAngularVelocityNeeded_ = false;
         }
+        if (nextSleepStateNeeded_) {
 
+            if (newtonBody_)
+            {
+                NewtonBodySetSleepState(newtonBody_, nextSleepState_);
+            }
+            nextSleepStateNeeded_ = false;
+        }
 
 
     }
@@ -556,7 +595,13 @@ namespace Urho3D {
     {
         if (node == node_)
         {
-            MarkDirty(true);
+            if (IsEnabledEffective()) {
+                MarkDirty(true);//rebuild
+            }
+            else
+            {
+                freeBody();
+            }
         }
     }
 
@@ -731,8 +776,8 @@ namespace Urho3D {
             node_->SetEnableTransformEvents(false);
 
         Vector3 localScale = node_->GetScale();
-        node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat));
-        node_->SetScale(localScale);//not sure why I have to restore this - without it, the worldscale of the node approaches infinity over time (some precision error in the matrix code)
+        node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat).Normalized());
+        node_->SetScale(localScale);//not sure why I have to restore this - without it, the worldscale of the node approaches infinity over time (some precision error in the matrix code?)
 
 
         node_->SetEnableTransformEvents(enableTEvents);
@@ -742,7 +787,6 @@ namespace Urho3D {
     void RigidBody::GetForceAndTorque(Vector3& force, Vector3& torque)
     {
         URHO3D_PROFILE("GetForceAndTorque");
-
 
         //basic velocity damping forces
         Vector3 velocity = GetLinearVelocity(TS_WORLD);
