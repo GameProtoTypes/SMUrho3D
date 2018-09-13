@@ -167,8 +167,10 @@ void CreateRagdoll::CreateRagdollBone(const String& boneName, StringHash collisi
     // Set mass to make movable
     body->SetMassScale(1.0f);
     // Set damping parameters to smooth out the motion
-    //body->SetLinearDamping(0.05f);
-    //body->SetAngularDamping(0.85f);
+    body->SetLinearDamping(1.0f);
+    body->SetAngularDamping(.85f*1.0f);
+   // body->SetInternalLinearDamping(1.0f);
+    //body->SetInternalAngularDamping(Vector3(.85f, .85f, .85f)*10.0f);
 
     CollisionShape* shape = nullptr;
     // We use either a box or a capsule shape for all of the bones
@@ -217,6 +219,8 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
         static_cast<BallAndSocketConstraint*>(constraint)->SetTwistLimitsEnabled(true);
         static_cast<BallAndSocketConstraint*>(constraint)->SetTwistLimits(twistLimits.x_, twistLimits.y_);
         static_cast<BallAndSocketConstraint*>(constraint)->SetWorldRotation(orientation);
+
+        //static_cast<BallAndSocketConstraint*>(constraint)->SetConeFriction(0.01f);
     }
     else if (constraintType == HingeConstraint::GetTypeNameStatic())
     {
@@ -230,7 +234,7 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
         static_cast<HingeConstraint*>(constraint)->SetMinAngle(angleLimits.x_);
         static_cast<HingeConstraint*>(constraint)->SetMaxAngle(angleLimits.y_);
         static_cast<HingeConstraint*>(constraint)->SetWorldRotation(orientation);
-
+        //static_cast<HingeConstraint*>(constraint)->SetFriction(0.05f);
     }
 
 
@@ -242,7 +246,8 @@ void CreateRagdoll::CreateRagdollConstraint(const String& boneName, const String
     constraint->SetWorldPosition(boneNode->GetWorldPosition());
 
     //ragdolls are soft things - so loosen up the constraints purposefully.
-    constraint->SetSolverIterations(0);
-    constraint->SetStiffness(0.1f);
+    constraint->SetSolveMode(SOLVE_MODE_DEFAULT);
+    constraint->SetStiffness(0.0f);
+    
 
 }
