@@ -54,6 +54,7 @@
 #include "Urho3D/Physics/BallAndSocketConstraint.h"
 #include "Urho3D/Physics/NewtonKinematicsJoint.h"
 #include "Urho3D/Physics/FullyFixedConstraint.h"
+#include "Urho3D/Physics/HingeConstraint.h"
 
 
 
@@ -674,13 +675,12 @@ void Physics::SpawnLinearJointedObject(float size, Vector3 worldPosition)
         nodes += SpawnSamplePhysicsSphere(scene_, worldPosition + Vector3(0,i*dist,0), dist*0.5f);
 
         if (i > 0) {
-            BallAndSocketConstraint* constraint = nodes[i - 1]->CreateComponent<BallAndSocketConstraint>();
+            HingeConstraint* constraint = nodes[i - 1]->CreateComponent<HingeConstraint>();
             constraint->SetOtherBody(nodes[i]->GetComponent<RigidBody>());
-            constraint->SetOtherWorldPosition(worldPosition + Vector3(0, i*dist, 0) - Vector3(0, dist, 0)*0.5f);
-            constraint->SetOwnWorldPosition(worldPosition + Vector3(0, i*dist, 0) - Vector3(0, dist, 0)*0.5f);
-            constraint->SetOwnRotation(Quaternion(0, 0, -90));
-            constraint->SetOtherRotation(Quaternion(0,0,-90));
-            constraint->SetTwistLimitsEnabled(true);
+            constraint->SetWorldPosition(worldPosition + Vector3(0, i*dist, 0) - Vector3(0, dist, 0)*0.5f);
+            //constraint->SetOwnRotation(Quaternion(0, 0, -90));
+           // constraint->SetOtherRotation(Quaternion(0,0,-90));
+           // constraint->SetTwistLimitsEnabled(true);
             
         }
     }
