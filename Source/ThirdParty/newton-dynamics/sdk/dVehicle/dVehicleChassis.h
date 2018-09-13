@@ -14,6 +14,8 @@
 #define __D_VEHICLE_CHASSIS_H__
 
 #include "dStdafxVehicle.h"
+#include "dVehicleInterface.h"
+#include "dVehicleTireInterface.h"
 
 
 class dVehicleChassis: public dCustomControllerBase
@@ -118,13 +120,18 @@ class dVehicleChassis: public dCustomControllerBase
 	friend class dVehicleChassisManager;
 */
 
-	void Init(NewtonBody* const body, const dMatrix& localFrame, NewtonApplyForceAndTorque forceAndTorque, dFloat gravityMag);
-	void Init(NewtonCollision* const chassisShape, dFloat mass, const dMatrix& localFrame, NewtonApplyForceAndTorque forceAndTorque, dFloat gravityMag);
+	public:
+	DVEHICLE_API dVehicleTireInterface* AddTire (const dMatrix& locationInGlobalSpace, const dVehicleTireInterface::dTireInfo& tireInfo);
 
 	protected:
 	DVEHICLE_API virtual void PreUpdate(dFloat timestep, int threadIndex);
 	virtual void PostUpdate(dFloat timestep, int threadIndex) {};
 
+	void Init(NewtonBody* const body, const dMatrix& localFrame, NewtonApplyForceAndTorque forceAndTorque, dFloat gravityMag);
+	void Init(NewtonCollision* const chassisShape, dFloat mass, const dMatrix& localFrame, NewtonApplyForceAndTorque forceAndTorque, dFloat gravityMag);
+	void Cleanup();
+
+	dVehicleInterface* m_vehicle;
 	friend class dVehicleManager;
 };
 

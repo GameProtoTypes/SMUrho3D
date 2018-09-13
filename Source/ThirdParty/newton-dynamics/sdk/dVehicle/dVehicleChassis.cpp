@@ -12,7 +12,7 @@
 #include "dStdafxVehicle.h"
 #include "dVehicleManager.h"
 #include "dVehicleChassis.h"
-
+#include "dVehicleSingleBody.h"
 
 void dVehicleChassis::Init(NewtonCollision* const chassisShape, dFloat mass, const dMatrix& localFrame, NewtonApplyForceAndTorque forceAndTorque, dFloat gravityMag)
 {
@@ -34,6 +34,7 @@ void dVehicleChassis::Init(NewtonBody* const body, const dMatrix& localFrame, Ne
 {
 	m_body = body;
 	NewtonBodySetForceAndTorqueCallback(m_body, forceAndTorque);
+	m_vehicle = new dVehicleSingleBody(this);
 /*
 	m_speed = 0.0f;
 	m_sideSlip = 0.0f;
@@ -86,10 +87,20 @@ void dVehicleChassis::Init(NewtonBody* const body, const dMatrix& localFrame, Ne
 */
 }
 
+void dVehicleChassis::Cleanup()
+{
+	if (m_vehicle) {
+		delete m_vehicle;
+	}
+}
 
 
 void dVehicleChassis::PreUpdate(dFloat timestep, int threadIndex)
 {
+//	dAssert (0);
 }
 
-
+dVehicleTireInterface* dVehicleChassis::AddTire (const dMatrix& locationInGlobalSpace, const dVehicleTireInterface::dTireInfo& tireInfo)
+{
+	return m_vehicle->AddTire(locationInGlobalSpace, tireInfo);
+}

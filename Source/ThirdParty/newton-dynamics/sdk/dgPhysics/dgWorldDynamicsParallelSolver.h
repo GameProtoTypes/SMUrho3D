@@ -60,18 +60,46 @@ class dgWorkGroupFloat
 	{
 	}
 
+	DG_INLINE dgInt32 GetInt(dgInt32 i) const
+	{
+		dgAssert (i >= 0);
+		dgAssert(i < DG_WORK_GROUP_SIZE);
+		#ifdef _NEWTON_USE_DOUBLE
+		const dgInt64* const ptr = &m_low.m_i[0];
+		#else
+		const dgInt32* const ptr = &m_low.m_i[0];
+		#endif
+		return dgInt32 (ptr[i]);
+	}
+
+	DG_INLINE void SetInt(dgInt32 i, dgInt32 value)
+	{
+		dgAssert(i >= 0);
+		dgAssert(i < DG_WORK_GROUP_SIZE);
+
+		#ifdef _NEWTON_USE_DOUBLE
+		dgInt64* const ptr = &m_low.m_i[0];
+		#else
+		dgInt32* const ptr = &m_low.m_i[0];
+		#endif
+		ptr[i] = value;
+	}
+
+
 	DG_INLINE dgFloat32& operator[] (dgInt32 i)
 	{
-		dgAssert(i < DG_WORK_GROUP_SIZE);
 		dgAssert(i >= 0);
-		return m_f[i];
+		dgAssert(i < DG_WORK_GROUP_SIZE);
+		dgFloat32* const ptr = &m_low[0];
+		return ptr[i];
 	}
 
 	DG_INLINE const dgFloat32& operator[] (dgInt32 i) const
 	{
-		dgAssert(i < DG_WORK_GROUP_SIZE);
 		dgAssert(i >= 0);
-		return m_f[i];
+		dgAssert(i < DG_WORK_GROUP_SIZE);
+		const dgFloat32* const ptr = &m_low[0];
+		return ptr[i];
 	}
 
 	DG_INLINE dgWorkGroupFloat operator+ (const dgWorkGroupFloat& A) const
@@ -139,15 +167,8 @@ class dgWorkGroupFloat
 		return (m_low.GetMax(m_high)).GetMax();
 	}
 
-	union {
-		dgFloat32 m_f[DG_WORK_GROUP_SIZE];
-		dgInt32 m_i[DG_WORK_GROUP_SIZE];
-		struct {
-			dgVector m_low;
-			dgVector m_high;
-		};
-	};
-
+	dgVector m_low;
+	dgVector m_high;
 	static dgWorkGroupFloat m_one;
 	static dgWorkGroupFloat m_zero;
 } DG_GCC_VECTOR_ALIGMENT;
