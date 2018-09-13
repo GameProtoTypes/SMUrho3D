@@ -555,12 +555,12 @@ void Node::SetTransform(const Matrix3x4& matrix)
 
 void Node::SetWorldPosition(const Vector3& position)
 {
-    SetWorldTransform(position, GetWorldRotation(), GetWorldScale());
+    SetWorldTransform(position, GetWorldRotation());
 }
 
 void Node::SetWorldRotation(const Quaternion& rotation)
 {
-    SetWorldTransform(GetWorldPosition(), rotation, GetWorldScale());
+    SetWorldTransform(GetWorldPosition(), rotation);
 }
 
 void Node::SetWorldDirection(const Vector3& direction)
@@ -569,47 +569,28 @@ void Node::SetWorldDirection(const Vector3& direction)
     SetRotation(Quaternion(Vector3::FORWARD, localDirection));
 }
 
-void Node::SetWorldScale(float scale)
-{
-    SetWorldTransform(GetWorldPosition(), GetWorldRotation(), Vector3(scale,scale,scale));
-}
 
-void Node::SetWorldScale(const Vector3& scale)
-{
-    SetWorldTransform(GetWorldPosition(), GetWorldRotation(), scale);
-}
 
 void Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation)
 {
-    SetWorldTransform(position, rotation, GetWorldScale());
-}
-
-void Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation, float scale)
-{
-    SetWorldTransform(position, rotation, Vector3(scale, scale, scale));
-}
-
-void Node::SetWorldTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale)
-{
     Vector3 localPosition;
     Quaternion localRotation;
-    Vector3 localScale;
 
     if (parent_ == scene_ || !parent_) {
         localPosition = position;
         localRotation = rotation;
-        localScale = scale;
     }
     else
     {
         localPosition = parent_->GetWorldTransform().Inverse() * position;
         localRotation = parent_->GetWorldRotation().Inverse() * rotation;
-        localScale = (scale) / parent_->GetWorldScale();
     }
 
-    SetTransform(localPosition, localRotation, localScale);
+
+    SetTransform(localPosition, localRotation);
 
 }
+
 
 void Node::Translate(const Vector3& delta, TransformSpace space)
 {

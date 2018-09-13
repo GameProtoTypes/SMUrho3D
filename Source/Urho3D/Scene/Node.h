@@ -206,23 +206,10 @@ public:
 
     /// Set forward direction in world space.
     void SetWorldDirection(const Vector3& direction);
-    /// Set uniform scale in world space.
-    void SetWorldScale(float scale);
-    /// Set scale in world space.
-    void SetWorldScale(const Vector3& scale);
 
-    /// Set scale in world space (for Urho2D).
-    void SetWorldScale2D(const Vector2& scale) { return SetWorldScale(Vector3(scale, 1.0f)); }
-
-    /// Set scale in world space (for Urho2D).
-    void SetWorldScale2D(float x, float y) { return SetWorldScale(Vector3(x, y, 1.0f)); }
 
     /// Set both position and rotation in world space as an atomic operation.
     void SetWorldTransform(const Vector3& position, const Quaternion& rotation);
-    /// Set both position, rotation and uniform scale in world space as an atomic operation.
-    void SetWorldTransform(const Vector3& position, const Quaternion& rotation, float scale);
-    /// Set both position, rotation and scale in world space as an atomic opration.
-    void SetWorldTransform(const Vector3& position, const Quaternion& rotation, const Vector3& scale);
 
     /// Set both position and rotation in world space as an atomic operation (for Urho2D).
     void SetWorldTransform2D(const Vector2& position, float rotation)
@@ -230,17 +217,7 @@ public:
         SetWorldTransform(Vector3(position), Quaternion(rotation));
     }
 
-    /// Set both position, rotation and uniform scale in world space as an atomic operation (for Urho2D).
-    void SetWorldTransform2D(const Vector2& position, float rotation, float scale)
-    {
-        SetWorldTransform(Vector3(position), Quaternion(rotation), scale);
-    }
 
-    /// Set both position, rotation and scale in world space as an atomic opration (for Urho2D).
-    void SetWorldTransform2D(const Vector2& position, float rotation, const Vector2& scale)
-    {
-        SetWorldTransform(Vector3(position), Quaternion(rotation), Vector3(scale, 1.0f));
-    }
 
     /// Move the scene node in the chosen transform space.
     void Translate(const Vector3& delta, TransformSpace space = TS_LOCAL);
