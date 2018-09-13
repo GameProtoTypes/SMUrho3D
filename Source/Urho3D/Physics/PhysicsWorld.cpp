@@ -340,22 +340,27 @@ namespace Urho3D {
                 it->second_->inContact_ = true;
                 SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
 
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+
                 eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
                 eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
                 it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
 
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
                 eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
                 eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
                 it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
 
-
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
                 //also send the E_NODECOLLISION event
                 SendEvent(E_PHYSICSCOLLISION, eventData);
 
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
                 eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
                 eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
                 it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
 
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
                 eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
                 eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
                 it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
@@ -368,10 +373,12 @@ namespace Urho3D {
                 it->second_->inContact_ = false;
                 SendEvent(E_PHYSICSCOLLISIONEND, eventData);
 
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
                 eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
                 eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
                 it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
 
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
                 eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
                 eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
                 it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
@@ -380,10 +387,12 @@ namespace Urho3D {
             {
                 SendEvent(E_PHYSICSCOLLISION, eventData);
 
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
                 eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
                 eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
                 it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
 
+                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
                 eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
                 eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
                 it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);

@@ -718,8 +718,10 @@ namespace Urho3D {
         if(enableTEvents)
             node_->SetEnableTransformEvents(false);
 
-
-        node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat));
+        //Vector3 worldScale = node_->GetWorldScale();
+        //node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat), worldScale);
+        node_->SetWorldPosition(NewtonToUrhoVec3(pos));
+        node_->SetWorldRotation(NewtonToUrhoQuat(quat));
 
         node_->SetEnableTransformEvents(enableTEvents);
     }

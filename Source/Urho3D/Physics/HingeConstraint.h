@@ -54,6 +54,7 @@ namespace Urho3D {
 
 
         float friction_ = 0.0f;
+        bool  enableLimits_ = true;
         float minAngle_ = -45.0f;
         float maxAngle_ = 45.0f;
 

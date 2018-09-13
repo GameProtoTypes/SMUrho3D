@@ -41,12 +41,12 @@ namespace Urho3D {
         void SetOtherBodyById(unsigned bodyId);
 
 
-        ///set the world position of both frames on both bodies
+        ///set the world position of both frames on both bodies. make sure you set other body before calling this function
         void SetWorldPosition(const Vector3& position);
-        ///set the world rotation of both frames on both bodies
+        ///set the world rotation of both frames on both bodies. make sure you set other body before calling this function
         void SetWorldRotation(const Quaternion& rotation);
 
-
+        
 
         /// Set constraint position in local cordinates to node.
         void SetOwnPosition(const Vector3& position);
@@ -65,14 +65,33 @@ namespace Urho3D {
 
 
         /// Set constraint position in local cordinates relative to the other body. If connected to the static world, is a world space position.
+        /// Make sure you set other body before calling this function
         virtual void SetOtherPosition(const Vector3& position);
         /// set the rotational frame to use on other body. If connected to the static world, is a world space position.
+        /// Make sure you set other body before calling this function
         virtual void SetOtherRotation(const Quaternion& rotation);
 
         /// Set constraint position in local cordinates relative to the other body. If connected to the static world, is a world space position.
         virtual void SetOtherWorldPosition(const Vector3& position);
         /// set the rotational frame to use on other body. If connected to the static world, is a world space position.
         virtual void SetOtherWorldRotation(const Quaternion& rotation);
+
+
+        void SetSolverIterations(int iterations) {
+            if (solverIterations_ != iterations) {
+                solverIterations_ = iterations;
+                MarkDirty();
+            }
+        }
+        int GetSolverIterations() const { return solverIterations_; }
+
+        void SetStiffness(float stiffness) {
+            if (stiffness_ != stiffness) {
+                stiffness_ = stiffness;
+                MarkDirty();
+            }
+        }
+        float GetStiffness() const { return stiffness_; }
 
 
         /// Return physics world.

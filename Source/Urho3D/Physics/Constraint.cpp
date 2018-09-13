@@ -25,6 +25,8 @@ namespace Urho3D {
         context->RegisterFactory<Constraint>(DEF_PHYSICS_CATEGORY.CString());
         URHO3D_COPY_BASE_ATTRIBUTES(Component);
 
+        URHO3D_ACCESSOR_ATTRIBUTE("Solver Iterations", GetSolverIterations, SetSolverIterations, int, 16, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Stiffness", GetStiffness, SetStiffness, float, 0.7f, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body ID", GetOtherBodyId, SetOtherBodyById, unsigned, 0, AM_DEFAULT | AM_COMPONENTID);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Position", GetOtherPosition, SetOtherPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Rotation", GetOtherRotation, SetOtherRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
@@ -277,14 +279,34 @@ namespace Urho3D {
         }
         else if (ownBody_ && ownBody_->GetNode() && ownBody_->GetNewtonBody()) {
             freeInternal();
-            buildConstraint();
 
+            bool goodToBuild = true;
+            if (otherBody_)
+            {
+                if (otherBody_->GetEffectiveMass() <= 0.0f && ownBody_->GetEffectiveMass() <= 0.0f)
+                    goodToBuild = false;
 
-            NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
-            //NewtonJointSetStiffness((NewtonJoint*)newtonJoint_, stiffness_);
-            newtonJoint_->SetStiffness(stiffness_);
-            newtonJoint_->SetSolverModel(solverIterations_);
+            }
+            else
+            {
+                if (ownBody_->GetEffectiveMass() <= 0.0f)
+                    goodToBuild = false;
+            }
 
+            if (goodToBuild) {
+                buildConstraint();
+            }
+            else
+            {
+                URHO3D_LOGWARNING("Contraint must connect to at least 1 Rigid Body with mass greater than 0.");
+            }
+
+            if (newtonJoint_ != nullptr) {
+                NewtonJointSetCollisionState((NewtonJoint*)newtonJoint_, enableBodyCollision_);
+                //NewtonJointSetStiffness((NewtonJoint*)newtonJoint_, stiffness_);
+                newtonJoint_->SetStiffness(stiffness_);
+                newtonJoint_->SetSolverModel(solverIterations_);
+            }
         }
         else//we dont have own body so free the joint..
         {
