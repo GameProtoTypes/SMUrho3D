@@ -34,6 +34,7 @@
 
 #include "Vehicle.h"
 #include "Urho3D/Physics/CollisionShapesDerived.h"
+#include "Urho3D/Physics/HingeConstraint.h"
 
 Vehicle::Vehicle(Context* context) :
     LogicComponent(context)
@@ -99,8 +100,8 @@ void Vehicle::FixedUpdate(float timeStep)
 
     // Set front wheel angles
     Quaternion steeringRot(0, steering_ * MAX_WHEEL_ANGLE, 0);
-    frontLeftAxis_->SetOtherAxis(steeringRot * Vector3::LEFT);
-    frontRightAxis_->SetOtherAxis(steeringRot * Vector3::RIGHT);
+    //frontLeftAxis_->SetOtherAxis(steeringRot * Vector3::LEFT);
+    //frontRightAxis_->SetOtherAxis(steeringRot * Vector3::RIGHT);
 
     Quaternion hullRot = hullBody_->GetNode()->GetRotation();
     if (accelerator != 0.0f)
@@ -161,25 +162,22 @@ void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>
 
     auto* wheelObject = wheelNode->CreateComponent<StaticModel>();
     auto* wheelBody = wheelNode->CreateComponent<RigidBody>();
-    auto* wheelShape = wheelNode->CreateComponent<CollisionShape>();
-    auto* wheelConstraint = wheelNode->CreateComponent<Constraint>();
+    auto* wheelShape = wheelNode->CreateComponent<CollisionShape_Sphere>();
+    auto* wheelConstraint = wheelNode->CreateComponent<HingeConstraint>();
 
     wheelObject->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
     wheelObject->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
     wheelObject->SetCastShadows(true);
-    wheelShape->SetSphere(1.0f);
-    wheelBody->SetFriction(1.0f);
-    wheelBody->SetMass(1.0f);
+    wheelBody->SetMassScale(1.0f);
     wheelBody->SetLinearDamping(0.2f); // Some air resistance
     wheelBody->SetAngularDamping(0.75f); // Could also use rolling friction
     wheelBody->SetCollisionLayer(1);
-    wheelConstraint->SetConstraintType(CONSTRAINT_HINGE);
+
     wheelConstraint->SetOtherBody(GetComponent<RigidBody>()); // Connect to the hull body
     wheelConstraint->SetWorldPosition(wheelNode->GetPosition()); // Set constraint's both ends at wheel's location
-    wheelConstraint->SetAxis(Vector3::UP); // Wheel rotates around its local Y-axis
-    wheelConstraint->SetOtherAxis(offset.x_ >= 0.0 ? Vector3::RIGHT : Vector3::LEFT); // Wheel's hull axis points either left or right
-    wheelConstraint->SetLowLimit(Vector2(-180.0f, 0.0f)); // Let the wheel rotate freely around the axis
-    wheelConstraint->SetHighLimit(Vector2(180.0f, 0.0f));
+    //wheelConstraint->SetAxis(Vector3::UP); // Wheel rotates around its local Y-axis
+    //wheelConstraint->SetOtherAxis(offset.x_ >= 0.0 ? Vector3::RIGHT : Vector3::LEFT); // Wheel's hull axis points either left or right
+    wheelConstraint->SetEnableLimits(false);//allow free spin
     wheelConstraint->SetDisableCollision(true); // Let the wheel intersect the vehicle hull
 }
 

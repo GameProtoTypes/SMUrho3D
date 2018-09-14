@@ -48,6 +48,7 @@
 #include "VehicleDemo.h"
 
 #include <Urho3D/DebugNew.h>
+#include "Urho3D/Physics/CollisionShapesDerived.h"
 
 const float CAMERA_DISTANCE = 10.0f;
 
@@ -120,7 +121,7 @@ void VehicleDemo::CreateScene()
     // Create heightmap terrain with collision
     Node* terrainNode = scene_->CreateChild("Terrain");
     terrainNode->SetPosition(Vector3::ZERO);
-    auto* terrain = terrainNode->CreateComponent<Terrain>();
+    auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
     terrain->SetPatchSize(64);
     terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
     terrain->SetSmoothing(true);
@@ -132,8 +133,8 @@ void VehicleDemo::CreateScene()
 
     auto* body = terrainNode->CreateComponent<RigidBody>();
     body->SetCollisionLayer(2); // Use layer bitmask 2 for static geometry
-    auto* shape = terrainNode->CreateComponent<CollisionShape>();
-    shape->SetTerrain();
+    auto* shape = terrainNode->CreateComponent<CollisionShape_HeightmapTerrain>();
+
 
     // Create 1000 mushrooms in the terrain. Always face outward along the terrain normal
     const unsigned NUM_MUSHROOMS = 1000;
@@ -153,8 +154,8 @@ void VehicleDemo::CreateScene()
 
         auto* body = objectNode->CreateComponent<RigidBody>();
         body->SetCollisionLayer(2);
-        auto* shape = objectNode->CreateComponent<CollisionShape>();
-        shape->SetTriangleMesh(object->GetModel(), 0);
+        auto* shape = objectNode->CreateComponent<CollisionShape_ConvexHullCompound>();
+        shape->SetModel(object->GetModel());
     }
 }
 
@@ -288,10 +289,10 @@ void VehicleDemo::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
     // and move it closer to the vehicle if something in between
     Ray cameraRay(cameraStartPos, cameraTargetPos - cameraStartPos);
     float cameraRayLength = (cameraTargetPos - cameraStartPos).Length();
-    PhysicsRaycastResult result;
-    scene_->GetComponent<PhysicsWorld>()->RaycastSingle(result, cameraRay, cameraRayLength, 2);
-    if (result.body_)
-        cameraTargetPos = cameraStartPos + cameraRay.direction_ * (result.distance_ - 0.5f);
+    //PhysicsRaycastResult result;
+    //scene_->GetComponent<PhysicsWorld>()->RaycastSingle(result, cameraRay, cameraRayLength, 2);
+    //if (result.body_)
+    //    cameraTargetPos = cameraStartPos + cameraRay.direction_ * (result.distance_ - 0.5f);
 
     cameraNode_->SetPosition(cameraTargetPos);
     cameraNode_->SetRotation(dir);
