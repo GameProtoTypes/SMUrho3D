@@ -402,22 +402,22 @@ namespace Urho3D {
 
 
 
-    NewtonCollisionShape_HeightmapTerrain::NewtonCollisionShape_HeightmapTerrain(Context* context) : CollisionShape(context)
+    CollisionShape_HeightmapTerrain::CollisionShape_HeightmapTerrain(Context* context) : CollisionShape(context)
     {
 
     }
 
-    NewtonCollisionShape_HeightmapTerrain::~NewtonCollisionShape_HeightmapTerrain()
+    CollisionShape_HeightmapTerrain::~CollisionShape_HeightmapTerrain()
     {
 
     }
 
-    void NewtonCollisionShape_HeightmapTerrain::RegisterObject(Context* context)
+    void CollisionShape_HeightmapTerrain::RegisterObject(Context* context)
     {
-        context->RegisterFactory<NewtonCollisionShape_HeightmapTerrain>(DEF_PHYSICS_CATEGORY.CString());
+        context->RegisterFactory<CollisionShape_HeightmapTerrain>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void NewtonCollisionShape_HeightmapTerrain::buildNewtonCollision()
+    void CollisionShape_HeightmapTerrain::buildNewtonCollision()
     {
 
 

@@ -707,7 +707,7 @@ namespace Urho3D {
         CollisionShape_ConvexHull::RegisterObject(context);
         CollisionShape_ConvexHullCompound::RegisterObject(context);
         CollisionShape_ConvexDecompositionCompound::RegisterObject(context);
-        NewtonCollisionShape_HeightmapTerrain::RegisterObject(context);
+        CollisionShape_HeightmapTerrain::RegisterObject(context);
 
         RigidBody::RegisterObject(context);
         NewtonMeshObject::RegisterObject(context);

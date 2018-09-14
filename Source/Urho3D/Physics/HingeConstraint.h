@@ -39,6 +39,15 @@ namespace Urho3D {
         }
         float GetMaxAngle() const { return maxAngle_; }
 
+        void SetEnableLimits(bool enable) {
+            if (enableLimits_ != enable) {
+                enableLimits_ = enable;
+                MarkDirty();
+            }
+        }
+        bool GetLimitsEnabled() const { return enableLimits_; }
+
+
         void SetFriction(float friction) {
             if (friction_ != friction) {
                 friction_ = friction;

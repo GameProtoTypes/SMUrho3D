@@ -243,13 +243,13 @@ namespace Urho3D {
 
 
 
-    class URHO3D_API NewtonCollisionShape_HeightmapTerrain : public CollisionShape {
+    class URHO3D_API CollisionShape_HeightmapTerrain : public CollisionShape {
 
-        URHO3D_OBJECT(NewtonCollisionShape_HeightmapTerrain, CollisionShape);
+        URHO3D_OBJECT(CollisionShape_HeightmapTerrain, CollisionShape);
 
     public:
-        NewtonCollisionShape_HeightmapTerrain(Context* context);
-        virtual ~NewtonCollisionShape_HeightmapTerrain();
+        CollisionShape_HeightmapTerrain(Context* context);
+        virtual ~CollisionShape_HeightmapTerrain();
 
         static void RegisterObject(Context* context);
 
