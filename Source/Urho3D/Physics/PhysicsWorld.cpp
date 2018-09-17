@@ -644,10 +644,7 @@ namespace Urho3D {
 
         if (includeStartingNodeShapes)
         {
-            CollisionShape* shape = startingNode->GetDerivedComponent<CollisionShape>();
-            if (shape) {
-                colShapes += shape;
-            }
+            startingNode->GetDerivedComponents<CollisionShape>(colShapes, false, false);
         }
 
 
@@ -657,14 +654,10 @@ namespace Urho3D {
 
         for (Node* child : immediateChildren) {
             if (child->HasComponent<RigidBody>())
-                return;
+                continue;
             else
             {
-                CollisionShape* shape = child->GetDerivedComponent<CollisionShape>();
-                if (shape) {
-                    colShapes += shape;
-                }
-
+                child->GetDerivedComponents<CollisionShape>(colShapes, false, false);
                 GetAloneCollisionShapes(colShapes, child, false);
 
             }
