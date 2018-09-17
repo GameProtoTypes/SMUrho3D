@@ -395,7 +395,6 @@ void Physics::SpawnSceneCompoundTest(const Vector3& worldPos)
         curNode->AddTag("scaleTestCube");
         float rotDelta =  Random(-20.0f, 20.0f);
         curNode->Rotate(Quaternion(rotDelta, rotDelta, rotDelta));
-        curNode->SetWorldScale(Vector3(Random(0.5f,1.5f), Random(0.5f, 1.5f), Random(0.5f, 1.5f)));// this will make things crash.
         curNode->Translate(Vector3(Random(0.5f, 2.0f), Random(0.5f,2.0f), Random(0.5f, 2.0f)));
 
         StaticModel* stMdl = curNode->CreateComponent<StaticModel>();
@@ -1004,9 +1003,9 @@ void Physics::CreateScenery(Vector3 worldPosition)
     // Make the floor physical by adding RigidBody and NewtonCollisionShape components. The RigidBody's default
     // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
     // in the physics simulation
-    RigidBody* body = floorNode->CreateComponent<RigidBody>();
-    body->SetMassScale(0.0f);
-    auto* shape = floorNode->CreateComponent<CollisionShape_Box>();
+    //RigidBody* body = floorNode->CreateComponent<RigidBody>();
+    //body->SetMassScale(0.0f);
+    //auto* shape = floorNode->CreateComponent<CollisionShape_Box>();
     //body->SetPhysicsMaterial(GSS<ResourceCache>()->GetResource<PhysicsMaterial>("PhysicsMaterials/dummyPhysicsMaterial.xml"));
 
     //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
@@ -1055,6 +1054,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
             stMdl->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
             stMdl->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
             CollisionShape* colShape = scenePart->CreateComponent<CollisionShape_Cylinder>();
+            colShape->SetRotationOffset(Quaternion(0, 0, 90));
         }
         else if (i % 3) {
             stMdl->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
