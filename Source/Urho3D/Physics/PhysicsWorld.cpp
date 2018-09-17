@@ -442,7 +442,7 @@ namespace Urho3D {
             for (RigidBody* rigBody : rigidBodyComponentList)
             {
                 if (rigBody->GetInternalTransformDirty()) {
-                    rigBody->ApplyTransform();
+                    rigBody->ApplyTransform(timeStep*sceneTimeScale);
 
 
                     if(rigBody->InterpolationWithinRestTolerance())

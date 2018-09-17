@@ -182,7 +182,7 @@ namespace Urho3D
 
 
         ///Apply the current newton body transform to the node.
-        void ApplyTransform();
+        void ApplyTransform(float timestep);
 
         ///Return the net force and torque for newton.
         void GetForceAndTorque(Vector3& force, Vector3& torque);
@@ -300,7 +300,7 @@ namespace Urho3D
 
         //interpolation
 
-        void updateInterpolatedTransform();
+        void updateInterpolatedTransform(float timestep);
         Vector3 targetPos_;
         Quaternion targetRotation_;
         Vector3 interpolatedPos_;

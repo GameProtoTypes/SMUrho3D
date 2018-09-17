@@ -471,15 +471,10 @@ namespace Urho3D {
 
     }
 
-    void RigidBody::updateInterpolatedTransform()
+    void RigidBody::updateInterpolatedTransform(float timestep)
     {
-
-
-
-
-        interpolatedPos_ += (targetPos_ - interpolatedPos_)*interpolationFactor_;
-        interpolatedRotation_ = interpolatedRotation_.Nlerp(targetRotation_, interpolationFactor_, true);
-
+        interpolatedPos_ += (targetPos_ - interpolatedPos_)*interpolationFactor_*(timestep/0.0166667f);
+        interpolatedRotation_ = interpolatedRotation_.Nlerp(targetRotation_, interpolationFactor_*(timestep / 0.0166667f), true);
     }
 
 
@@ -811,8 +806,8 @@ namespace Urho3D {
         return contraints;
     }
 
-    void RigidBody::ApplyTransform()
-    {
+    void RigidBody::ApplyTransform(float timestep)
+{
         if (!newtonBody_)
             return;
 
@@ -827,7 +822,7 @@ namespace Urho3D {
 
         targetPos_ = NewtonToUrhoVec3(pos);
         targetRotation_ = NewtonToUrhoQuat(quat);
-        updateInterpolatedTransform();
+        updateInterpolatedTransform(timestep);
 
 
         node_->SetWorldTransform(interpolatedPos_, interpolatedRotation_);
