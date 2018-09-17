@@ -55,9 +55,9 @@ namespace Urho3D {
 
         
 
-        /// Set constraint position in local cordinates to node.
+        /// Set constraint position in local cordinates to rigidbody.
         void SetOwnPosition(const Vector3& position);
-        /// set the rotational frame to use on own node 
+        /// set the rotational frame to use on own rigidbody 
         void SetOwnRotation(const Quaternion& rotation);
 
         void SetOwnWorldPosition(const Vector3& worldPosition);
@@ -166,6 +166,13 @@ namespace Urho3D {
 
         ///dirty flag.
         bool needsRebuilt_ = true;
+
+
+        bool reEvalOtherBodyFrame_ = false;
+        Vector3 pendingOtherBodyFramePos_;
+
+
+
 
         /// Upper level re-evaulation.
         void reEvalConstraint();

@@ -189,12 +189,13 @@ void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>
     wheelBody->SetLinearDamping(0.2f); // Some air resistance
     wheelBody->SetAngularDamping(0.75f); // Could also use rolling friction
     wheelBody->SetCollisionLayer(1);
-    wheelBody->SetInheritNodeScale(false);
+    //wheelBody->SetInheritNodeScale(false);
 
     wheelShape->SetRotationOffset(Quaternion(0, 0, 90));
 
     wheelConstraint->SetOtherBody(GetComponent<RigidBody>()); // Connect to the hull body
-    wheelConstraint->SetWorldPosition(wheelNode->GetPosition()); // Set constraint's both ends at wheel's location
+    wheelConstraint->SetWorldPosition(wheelNode->GetWorldPosition()); // Set constraint's both ends at wheel's location
+    //wheelConstraint->SetOtherWorldPosition(node_->LocalToWorld(offset));
     wheelConstraint->SetWorldRotation(node_->GetWorldRotation());
     //wheelConstraint->SetAxis(Vector3::UP); // Wheel rotates around its local Y-axis
     //wheelConstraint->SetOtherAxis(offset.x_ >= 0.0 ? Vector3::RIGHT : Vector3::LEFT); // Wheel's hull axis points either left or right

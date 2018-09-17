@@ -473,8 +473,9 @@ namespace Urho3D {
 
     void RigidBody::updateInterpolatedTransform(float timestep)
     {
-        interpolatedPos_ += (targetPos_ - interpolatedPos_)*interpolationFactor_*(timestep/0.0166667f);
-        interpolatedRotation_ = interpolatedRotation_.Nlerp(targetRotation_, interpolationFactor_*(timestep / 0.0166667f), true);
+
+        interpolatedPos_ += (targetPos_ - interpolatedPos_)*interpolationFactor_*(timestep / (1.0f/60.0f));
+        interpolatedRotation_ = interpolatedRotation_.Nlerp(targetRotation_, interpolationFactor_*(timestep / (1.0f / 60.0f)), true);
     }
 
 

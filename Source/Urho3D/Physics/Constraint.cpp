@@ -190,15 +190,17 @@ namespace Urho3D {
 
     void Constraint::SetOwnWorldPosition(const Vector3& worldPosition)
     {
-        position_ = node_->WorldToLocal(worldPosition);
+       // Matrix3x4 worldTransform(ownBody_->GetNode()->GetWorldPosition(), ownBody_->GetNode()->GetWorldRotation(), 1.0f);
+        position_ = ownBody_->GetNode()->GetWorldTransform().Inverse() *  worldPosition;
         MarkDirty();
     }
 
     void Constraint::SetOwnWorldRotation(const Quaternion& worldRotation)
     {
-        rotation_ = node_->WorldToLocal(worldRotation);
+        Quaternion worldRot = ownBody_->GetNode()->GetWorldRotation();
+        rotation_ = worldRot.Inverse() * worldRotation;
         MarkDirty();
-    }
+    } 
 
     void Constraint::SetOtherPosition(const Vector3& position)
     {
@@ -218,7 +220,16 @@ namespace Urho3D {
     {
         if (otherBody_)
         {
-            otherPosition_ = otherBody_->GetNode()->WorldToLocal(position);
+            //if (otherBody_->needsRebuilt_)
+            //{
+               // Matrix3x4 worldTransform(otherBody_->GetNode()->GetWorldPosition(), otherBody_->GetNode()->GetWorldRotation(), 1.0f);
+                otherPosition_ = otherBody_->GetNode()->GetWorldTransform().Inverse() * position;
+            //    
+            //}
+            //else
+            //{
+            //    otherPosition_ = otherBody_->GetPhysicsTransform().Inverse() * position;
+            //}
         }
         else
             otherPosition_ = position;
@@ -230,7 +241,12 @@ namespace Urho3D {
     {
         if (otherBody_)
         {
-            otherRotation_ = otherBody_->GetNode()->WorldToLocal(rotation);
+           // if (otherBody_->needsRebuilt_)
+           // {
+                Quaternion worldRot = otherBody_->GetNode()->GetWorldRotation();
+                otherRotation_ = worldRot.Inverse() * rotation;
+
+           // }
         }
         else
             otherRotation_ = rotation;
@@ -254,7 +270,16 @@ namespace Urho3D {
     Urho3D::Matrix3x4 Constraint::GetOwnWorldFrame() const
     {
 
-        Matrix3x4 frame = ownBody_->GetPhysicsTransform() * Matrix3x4(position_, rotation_, 1.0f);
+        //return a frame with no scale at the position and rotation in node space.
+        Matrix3x4 worldTransform = ownBody_->GetNode()->GetWorldTransform();
+        Matrix3x4 worldTransformNoScale(ownBody_->GetNode()->GetWorldPosition(), ownBody_->GetNode()->GetWorldRotation(),1.0f);
+
+        Vector3 pivotPoint = worldTransform * position_;
+
+        Matrix3x4 frame = worldTransformNoScale * Matrix3x4(position_, rotation_, 1.0f);
+        frame.SetTranslation(pivotPoint);
+
+
 
         return frame;
     }
@@ -263,8 +288,14 @@ namespace Urho3D {
     {
         if (otherBody_) {
 
-            Node* otherNode = otherBody_->GetNode();
-            Matrix3x4 frame = otherBody_->GetPhysicsTransform() * Matrix3x4(otherPosition_, otherRotation_, 1.0f);
+            //return a frame with no scale at the position and rotation in node space.
+            Matrix3x4 worldTransform = otherBody_->GetNode()->GetWorldTransform();
+            Matrix3x4 worldTransformNoScale(otherBody_->GetNode()->GetWorldPosition(), otherBody_->GetNode()->GetWorldRotation(), 1.0f);
+
+            Vector3 pivotPoint = worldTransform * otherPosition_;
+
+            Matrix3x4 frame = worldTransformNoScale * Matrix3x4(otherPosition_, otherRotation_, 1.0f);
+            frame.SetTranslation(pivotPoint);
 
             return frame;
         }
@@ -410,10 +441,10 @@ namespace Urho3D {
     void Constraint::LogNodeScaleWarning(Node* node)
     {
 
-        if ((node->GetWorldScale() - Vector3::ONE).Length() > M_LARGE_EPSILON*100.0f) {
+        //if ((node->GetWorldScale() - Vector3::ONE).Length() > M_LARGE_EPSILON*100.0f) {
 
-            URHO3D_LOGWARNING("Contraints Do Not Support contraining Rigid Bodies with node world scales other than 1");
-        }
+        //    URHO3D_LOGWARNING("Contraints Do Not Support contraining Rigid Bodies with node world scales other than 1");
+        //}
 
     }
 
