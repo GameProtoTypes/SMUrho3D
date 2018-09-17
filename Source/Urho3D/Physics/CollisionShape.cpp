@@ -59,6 +59,9 @@ namespace Urho3D {
 
             //call the derived class createNewtonCollision function.
             buildNewtonCollision();
+
+
+            NewtonCollisionSetUserData(newtonCollision_, (void*)this);
     }
 
     void CollisionShape::buildNewtonCollision()
@@ -80,7 +83,7 @@ namespace Urho3D {
         if (shapeNeedsRebuilt_ != dirty) {
             shapeNeedsRebuilt_ = dirty;
 
-            // alsways mark the rigid body dirty as well.
+            // always mark the rigid body dirty as well if the collision shape is dirty.
             if(dirty)
                 MarkRigidBodyDirty();
         }

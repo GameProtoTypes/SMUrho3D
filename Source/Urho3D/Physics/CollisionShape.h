@@ -72,6 +72,11 @@ namespace Urho3D
         /// Returns the internal newton collision
         NewtonCollision* GetNewtonCollision();
 
+        bool GetDrawNewtonDebugGeometry() {
+            return drawPhysicsDebugCollisionGeometry_;
+        }
+
+        void SetDrawNewtonDebugGeometry(bool enable) { drawPhysicsDebugCollisionGeometry_ = enable; }
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
 
@@ -105,6 +110,7 @@ namespace Urho3D
         /// Offset rotation.
         Quaternion rotation_;
 
+        bool drawPhysicsDebugCollisionGeometry_ = true;
 
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
         void updateBuild();

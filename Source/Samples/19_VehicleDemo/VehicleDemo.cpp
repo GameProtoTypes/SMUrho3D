@@ -49,6 +49,7 @@
 
 #include <Urho3D/DebugNew.h>
 #include "Urho3D/Physics/CollisionShapesDerived.h"
+#include "Urho3D/Graphics/DebugRenderer.h"
 
 const float CAMERA_DISTANCE = 10.0f;
 
@@ -90,6 +91,7 @@ void VehicleDemo::CreateScene()
 
     // Create scene subsystem components
     scene_->CreateComponent<Octree>();
+    scene_->CreateComponent<DebugRenderer>();
     scene_->CreateComponent<PhysicsWorld>();
 
     // Create camera and define viewport. We will be doing load / save, so it's convenient to create the camera outside the scene,
@@ -131,8 +133,8 @@ void VehicleDemo::CreateScene()
     // terrain patches and other objects behind it
     terrain->SetOccluder(true);
 
-    auto* body = terrainNode->CreateComponent<RigidBody>();
-    body->SetCollisionLayer(2); // Use layer bitmask 2 for static geometry
+    //auto* body = terrainNode->CreateComponent<RigidBody>();
+    //body->SetCollisionLayer(2); // Use layer bitmask 2 for static geometry
     auto* shape = terrainNode->CreateComponent<CollisionShape_HeightmapTerrain>();
 
 
@@ -199,6 +201,11 @@ void VehicleDemo::SubscribeToEvents()
     // Subscribe to PostUpdate event for updating the camera position after physics simulation
     SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(VehicleDemo, HandlePostUpdate));
 
+    // Subscribe HandlePostRenderUpdate() function for processing the post-render update event, during which we request
+    // debug geometry
+    SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(VehicleDemo, HandlePostRenderUpdate));
+
+
     // Unsubscribe the SceneUpdate event from base class as the camera node is being controlled in HandlePostUpdate() in this sample
     UnsubscribeFromEvent(E_SCENEUPDATE);
 }
@@ -208,6 +215,10 @@ void VehicleDemo::HandleUpdate(StringHash eventType, VariantMap& eventData)
     using namespace Update;
 
     auto* input = GetSubsystem<Input>();
+
+    // Toggle physics debug geometry with space
+    if (input->GetKeyPress(KEY_SPACE))
+        drawDebug_ = !drawDebug_;
 
     if (vehicle_)
     {
@@ -296,4 +307,12 @@ void VehicleDemo::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
 
     cameraNode_->SetPosition(cameraTargetPos);
     cameraNode_->SetRotation(dir);
+}
+
+void VehicleDemo::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
+{
+    // If draw debug mode is enabled, draw physics debug geometry. Use depth test to make the result easier to interpret
+    if (drawDebug_) {
+        scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(scene_->GetComponent<DebugRenderer>(), false);
+    }
 }

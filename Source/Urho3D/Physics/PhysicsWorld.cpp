@@ -150,7 +150,7 @@ namespace Urho3D {
 
             //draw debug geometry on rigid bodies.
             for (RigidBody* body : rigidBodyComponentList) {
-                body->DrawDebugGeometry(debug, depthTest);
+                body->DrawDebugGeometry(debug, depthTest, false, true, false, false);
             }
 
             //draw debug geometry on static scene.
@@ -421,10 +421,12 @@ namespace Urho3D {
         URHO3D_PROFILE_FUNCTION();
         float timeStep = eventData[Update::P_TARGET_TIMESTEP].GetFloat();
 
+        float sceneTimeScale = GetScene()->GetTimeScale();
+
         //send prestep physics event
         VariantMap sendEventData;
         sendEventData[PhysicsPreStep::P_WORLD] = this;
-        sendEventData[PhysicsPreStep::P_TIMESTEP] = timeStep;
+        sendEventData[PhysicsPreStep::P_TIMESTEP] = timeStep*sceneTimeScale;
         {
             URHO3D_PROFILE("Wait For ASync Update To finish.");
             NewtonWaitForUpdateToFinish(newtonWorld_);
@@ -441,7 +443,10 @@ namespace Urho3D {
             {
                 if (rigBody->GetInternalTransformDirty()) {
                     rigBody->ApplyTransform();
-                    rigBody->MarkInternalTransformDirty(false);
+
+
+                    if(rigBody->InterpolationWithinRestTolerance())
+                        rigBody->MarkInternalTransformDirty(false);
                 }
             }
         }
@@ -462,9 +467,7 @@ namespace Urho3D {
             //use target time step to give newton constant time steps. 
 
             
-            NewtonUpdateAsync(newtonWorld_, timeStep);
-           // NewtonWaitForUpdateToFinish(newtonWorld_);
-
+            NewtonUpdateAsync(newtonWorld_, timeStep*sceneTimeScale);
         }
 
 

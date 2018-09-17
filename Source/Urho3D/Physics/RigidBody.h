@@ -44,6 +44,13 @@ namespace Urho3D
 
         PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
 
+
+        Matrix3x4 GetPhysicsTransform() { return Matrix3x4(targetPos_, targetRotation_, 1.0f); }
+
+        Vector3 GetPhysicsPosition() { return targetPos_; }
+
+        Quaternion GetPhysicsRotation() { return targetRotation_; }
+
         ///Get the mass scale of the rigid body
         float GetMassScale() const { return massScale_; }
 
@@ -82,6 +89,16 @@ namespace Urho3D
         /// Be Aware that this parameter will show different behalvior with different solver iteration rates. (0.0 to 1.0) default is zero
         void SetInternalAngularDamping(float angularDamping);
 
+        /// Set the interpolation duration for applying transform to the scene node. 1.0f is no interpolation, 0.0f is inifinitely slow interpolation.
+        void SetInterpolationFactor(float factor = 0.0f);
+
+        float GetInterpolationFactor() const { return interpolationFactor_; }
+
+        /// returns true if the interpolation is within tolerance of target rigidbody value.
+        bool InterpolationWithinRestTolerance();
+
+        /// snap current interpolated values directly to target values.
+        void SnapInterpolation();
 
         /// Set whether the collision size should be effected by the node scale.
         void SetInheritNodeScale(bool enable = true);
@@ -161,7 +178,7 @@ namespace Urho3D
 
         /// Get Immediately connected contraints to this rigid body.
         void GetConnectedContraints(PODVector<Constraint*>& contraints);
-
+        PODVector<Constraint*> GetConnectedContraints();
 
 
         ///Apply the current newton body transform to the node.
@@ -184,7 +201,7 @@ namespace Urho3D
 
         bool GetInternalTransformDirty();
 
-
+        
 
 
 
@@ -210,6 +227,9 @@ namespace Urho3D
         bool continuousCollision_ = false;
         /// flag indicating collision shape should be additionally sized based on node scale.
         bool inheritCollisionNodeScales_ = true;
+        /// flag indicating debug geometry for the collision should be shown in the debug renderer
+        bool drawPhysicsDebugCollisionGeometry_ = true;
+
 
         Node* prevNode_ = nullptr;
 
@@ -256,8 +276,6 @@ namespace Urho3D
         ///precomputes force and torque for quick pass to newton callback
         void bakeForceAndTorque();
 
-
-
         virtual void OnNodeSet(Node* node) override;
 
         virtual void OnSceneSet(Scene* scene) override;
@@ -278,6 +296,16 @@ namespace Urho3D
         Vector3 nextAngularVelocity_;
         bool nextSleepStateNeeded_ = false;
         bool nextSleepState_ = false;
+
+
+        //interpolation
+
+        void updateInterpolatedTransform();
+        Vector3 targetPos_;
+        Quaternion targetRotation_;
+        Vector3 interpolatedPos_;
+        Quaternion interpolatedRotation_;
+        float interpolationFactor_ = 1.0f;
 
 
         virtual void OnNodeSetEnabled(Node* node) override;

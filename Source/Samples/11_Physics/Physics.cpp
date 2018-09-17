@@ -97,6 +97,8 @@ void Physics::CreateScene()
 
     scene_ = new Scene(context_);
 
+    scene_->SetTimeScale(1.0f);
+
     // Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
     // Create a physics simulation world with default parameters, which will update at 60fps. the Octree must
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
@@ -157,7 +159,7 @@ void Physics::CreateScene()
 
 
     for (int i = 0; i < 1; i++) {
-       // SpawnLinearJointedObject(1.0f, Vector3(10 , 2, 10));
+        SpawnLinearJointedObject(1.0f, Vector3(10 , 2, 10));
         //SpawnLinearJointedObject(0.5f*(i+1), Vector3(10+i*i, 10, 10));
     }
 
@@ -666,7 +668,7 @@ void Physics::SpawnLinearJointedObject(float size, Vector3 worldPosition)
     //lets joint spheres together with a distance limiting joint.
     const float dist = size;
 
-    const int numSpheres = 2;
+    const int numSpheres = 20;
 
     PODVector<Node*> nodes;
     //make lots of spheres
@@ -992,17 +994,17 @@ RayQueryResult Physics::GetCameraPickNode()
 void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
-    // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
-    Node* floorNode = scene_->CreateChild("Floor");
-    floorNode->SetPosition(worldPosition - Vector3(0,0.5f,0));
-    floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
-    auto* floorObject = floorNode->CreateComponent<StaticModel>();
-    floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    //// Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
+    //Node* floorNode = scene_->CreateChild("Floor");
+    //floorNode->SetPosition(worldPosition - Vector3(0,0.5f,0));
+    //floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+    //auto* floorObject = floorNode->CreateComponent<StaticModel>();
+    //floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    //floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-    // Make the floor physical by adding RigidBody and NewtonCollisionShape components. The RigidBody's default
-    // parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
-    // in the physics simulation
+    //// Make the floor physical by adding RigidBody and NewtonCollisionShape components. The RigidBody's default
+    //// parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
+    //// in the physics simulation
     //RigidBody* body = floorNode->CreateComponent<RigidBody>();
     //body->SetMassScale(0.0f);
     //auto* shape = floorNode->CreateComponent<CollisionShape_Box>();
@@ -1016,19 +1018,19 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
     //Create heightmap terrain with collision
-    //Node* terrainNode = scene_->CreateChild("Terrain");
-    //terrainNode->SetPosition(worldPosition);
-    //auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
-    //terrain->SetPatchSize(64);
-    //terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
-    //terrain->SetSmoothing(true);
-    //terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
-    //terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
-    //// The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
-    //// terrain patches and other objects behind it
-    //terrain->SetOccluder(true);
+    Node* terrainNode = scene_->CreateChild("Terrain");
+    terrainNode->SetPosition(worldPosition);
+    auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
+    terrain->SetPatchSize(64);
+    terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
+    terrain->SetSmoothing(true);
+    terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+    terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
+    // The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
+    // terrain patches and other objects behind it
+    terrain->SetOccluder(true);
 
-    //terrainNode->CreateComponent<NewtonCollisionShape_HeightmapTerrain>();
+    terrainNode->CreateComponent<CollisionShape_HeightmapTerrain>();
 
 
 

@@ -5,6 +5,7 @@
 #include "Math/Vector3.h"
 #include "PhysicsWorld.h"
 #include "UrhoNewtonConversions.h"
+#include "CollisionShape.h"
 
 
 namespace Urho3D {
@@ -127,7 +128,10 @@ namespace Urho3D {
         dMatrix matrix;
         NewtonBodyGetMatrix(body, &matrix[0][0]);
 
-        NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
+        NewtonCollision* collision = NewtonBodyGetCollision(body);
+        CollisionShape* colShape = static_cast<CollisionShape*>(NewtonCollisionGetUserData(collision));
+        if (colShape && colShape->GetDrawNewtonDebugGeometry())
+            NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
     }
 
     void NewtonDebug_BodyDrawContactForces(const NewtonBody* const body, float scaleFactor, DebugRenderer* debug, bool depthTest /*= false*/)

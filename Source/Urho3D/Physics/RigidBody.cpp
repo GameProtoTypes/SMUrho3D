@@ -53,9 +53,11 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Continuous Collision", GetContinuousCollision, SetContinuousCollision, bool, false, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Linear Damping", GetLinearDamping, SetLinearDamping, float, 0.0f, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Angular Damping", GetAngularDamping, SetAngularDamping, float, 0.0f, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Interpolation Factor", GetInterpolationFactor, SetInterpolationFactor, float, 1.0f, AM_DEFAULT);
         URHO3D_ATTRIBUTE("Net Force", Vector3, netForce_, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ATTRIBUTE("Net Torque", Vector3, netTorque_, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ATTRIBUTE("Is Scene Root Body", bool, sceneRootBodyMode_, false, AM_DEFAULT);
+
     }
 
 
@@ -156,6 +158,14 @@ namespace Urho3D {
         }
     }
 
+
+
+
+    void RigidBody::SetInterpolationFactor(float factor /*= 0.0f*/)
+    {
+        interpolationFactor_ = Clamp(factor, M_EPSILON, 1.0f);
+    }
+
     void RigidBody::SetInheritNodeScale(bool enable /*= true*/)
     {
         if (inheritCollisionNodeScales_ != enable) {
@@ -237,6 +247,7 @@ namespace Urho3D {
     void RigidBody::MarkDirty(bool dirty)
     {
         needsRebuilt_ = dirty;
+
     }
 
     void RigidBody::MarkInternalTransformDirty(bool dirty)
@@ -357,7 +368,7 @@ namespace Urho3D {
 
 
                     
-                Vector3 scale;
+                Vector3 scale = Vector3::ONE;
                 if (inheritCollisionNodeScales_)
                 {
                     scale = colComp->GetNode()->GetWorldScale();
@@ -402,6 +413,11 @@ namespace Urho3D {
             dMatrix mat = UrhoToNewton(transform);
 
             newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
+
+            targetRotation_ = node_->GetWorldRotation();
+            targetPos_ = node_->GetWorldPosition();
+            SnapInterpolation();
+
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
             dVector inertia;
             dVector com;
@@ -453,6 +469,33 @@ namespace Urho3D {
     void RigidBody::bakeForceAndTorque()
     {
 
+    }
+
+    void RigidBody::updateInterpolatedTransform()
+    {
+
+
+
+
+        interpolatedPos_ += (targetPos_ - interpolatedPos_)*interpolationFactor_;
+        interpolatedRotation_ = interpolatedRotation_.Nlerp(targetRotation_, interpolationFactor_, true);
+
+    }
+
+
+    bool RigidBody::InterpolationWithinRestTolerance()
+    {
+        bool inTolerance = true;
+        inTolerance &= ( (targetPos_ - interpolatedPos_).Length() < M_EPSILON );
+        inTolerance &= ( (targetRotation_ - interpolatedRotation_).Angle() < M_EPSILON);
+
+        return inTolerance;
+    }
+
+    void RigidBody::SnapInterpolation()
+    {
+        interpolatedPos_ = targetPos_;
+        interpolatedRotation_ = targetRotation_;
     }
 
     void RigidBody::OnNodeSet(Node* node)
@@ -761,6 +804,13 @@ namespace Urho3D {
         }
     }
 
+    Urho3D::PODVector<Constraint*> RigidBody::GetConnectedContraints()
+    {
+        PODVector<Constraint*> contraints;
+        GetConnectedContraints(contraints);
+        return contraints;
+    }
+
     void RigidBody::ApplyTransform()
     {
         if (!newtonBody_)
@@ -775,8 +825,12 @@ namespace Urho3D {
         if(enableTEvents)
             node_->SetEnableTransformEvents(false);
 
+        targetPos_ = NewtonToUrhoVec3(pos);
+        targetRotation_ = NewtonToUrhoQuat(quat);
+        updateInterpolatedTransform();
 
-        node_->SetWorldTransform(NewtonToUrhoVec3(pos), NewtonToUrhoQuat(quat));
+
+        node_->SetWorldTransform(interpolatedPos_, interpolatedRotation_);
         node_->SetEnableTransformEvents(enableTEvents);
     }
 

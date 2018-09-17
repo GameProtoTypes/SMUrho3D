@@ -102,20 +102,24 @@ namespace Urho3D {
         else
             otherPosWorld = otherPosition_;
 
+        Color darkRed = Color::RED.Lerp(Color::BLACK, 0.5f);
+        Color darkGreen = Color::GREEN.Lerp(Color::BLACK, 0.5f);
+        Color darkBlue = Color::BLUE.Lerp(Color::BLACK, 0.5f);
+
         debug->AddLine(ownPosWorld, ownPosWorld + xAxisOwn, Color::RED, depthTest);
         debug->AddLine(ownPosWorld, ownPosWorld + yAxisOwn, Color::GREEN, depthTest);
         debug->AddLine(ownPosWorld, ownPosWorld + zAxisOwn, Color::BLUE, depthTest);
 
-        debug->AddLine(otherPosWorld, otherPosWorld + xAxisOther, Color::RED, depthTest);
-        debug->AddLine(otherPosWorld, otherPosWorld + yAxisOther, Color::GREEN, depthTest);
-        debug->AddLine(otherPosWorld, otherPosWorld + zAxisOther, Color::BLUE, depthTest);
+        debug->AddLine(otherPosWorld, otherPosWorld + xAxisOther, darkRed, depthTest);
+        debug->AddLine(otherPosWorld, otherPosWorld + yAxisOther, darkGreen, depthTest);
+        debug->AddLine(otherPosWorld, otherPosWorld + zAxisOther, darkBlue, depthTest);
 
 
         //draw the special joint stuff given to us by newton
         UrhoNewtonDebugDisplay debugDisplay(debug, depthTest);
         if (newtonJoint_)
         {
-            newtonJoint_->Debug(&debugDisplay);
+            newtonJoint_->Debug(&debugDisplay);//#todo this covers up the 2 frames above - maybe alter inside newton instead?
         }
 
     }
@@ -249,9 +253,8 @@ namespace Urho3D {
 
     Urho3D::Matrix3x4 Constraint::GetOwnWorldFrame() const
     {
-        Vector3 nodeScale = node_->GetScale();
 
-        Matrix3x4 frame = node_->LocalToWorld(Matrix3x4(position_, rotation_, 1.0f));
+        Matrix3x4 frame = ownBody_->GetPhysicsTransform() * Matrix3x4(position_, rotation_, 1.0f);
 
         return frame;
     }
@@ -261,8 +264,7 @@ namespace Urho3D {
         if (otherBody_) {
 
             Node* otherNode = otherBody_->GetNode();
-            Matrix3x4 frame = otherNode->LocalToWorld(Matrix3x4(otherPosition_, otherRotation_, 1.0f));
-
+            Matrix3x4 frame = otherBody_->GetPhysicsTransform() * Matrix3x4(otherPosition_, otherRotation_, 1.0f);
 
             return frame;
         }

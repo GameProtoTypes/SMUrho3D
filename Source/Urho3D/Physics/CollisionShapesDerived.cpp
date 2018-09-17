@@ -404,7 +404,7 @@ namespace Urho3D {
 
     CollisionShape_HeightmapTerrain::CollisionShape_HeightmapTerrain(Context* context) : CollisionShape(context)
     {
-
+        drawPhysicsDebugCollisionGeometry_ = false;//default newton debug lines for geometry is too many.
     }
 
     CollisionShape_HeightmapTerrain::~CollisionShape_HeightmapTerrain()

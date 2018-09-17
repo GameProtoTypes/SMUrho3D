@@ -93,31 +93,47 @@ void Vehicle::FixedUpdate(float timeStep)
     {
         frontLeftBody_->Activate();
         frontRightBody_->Activate();
-        steering_ = steering_ * 0.95f + newSteering * 0.05f;
+       // steering_ = steering_ * 0.95f + newSteering * 0.05f;
+        steering_ = newSteering ;
     }
     else
-        steering_ = steering_ * 0.8f + newSteering * 0.2f;
+    {
+        //steering_ = steering_ * 0.8f + newSteering * 0.2f;
+        steering_ =  newSteering;
 
-    // Set front wheel angles
-    Quaternion steeringRot(0, steering_ * MAX_WHEEL_ANGLE, 0);
-    //frontLeftAxis_->SetOtherAxis(steeringRot * Vector3::LEFT);
-    //frontRightAxis_->SetOtherAxis(steeringRot * Vector3::RIGHT);
+    }
 
     Quaternion hullRot = hullBody_->GetNode()->GetRotation();
+
+    // Set front wheel angles
+    Quaternion steeringRot(0, steering_ * MAX_WHEEL_ANGLE,0);
+    frontLeftAxis_->SetOtherWorldRotation( steeringRot);
+    frontRightAxis_->SetOtherWorldRotation( steeringRot);
+
+    
+    frontLeftBody_->ResetForces();
+    frontRightBody_->ResetForces();
+    rearLeftBody_->ResetForces();
+    rearRightBody_->ResetForces();
     if (accelerator != 0.0f)
     {
         // Torques are applied in world space, so need to take the vehicle & wheel rotation into account
         Vector3 torqueVec = Vector3(ENGINE_POWER * accelerator, 0.0f, 0.0f);
 
-        frontLeftBody_->AddWorldTorque(hullRot * steeringRot * torqueVec);
-        frontRightBody_->AddWorldTorque(hullRot * steeringRot * torqueVec);
+
+
+        //frontLeftBody_->AddWorldTorque(hullRot * steeringRot * torqueVec);
+        //frontRightBody_->AddWorldTorque(hullRot * steeringRot * torqueVec);
+
+
+
         rearLeftBody_->AddWorldTorque(hullRot * torqueVec);
         rearRightBody_->AddWorldTorque(hullRot * torqueVec);
     }
 
     // Apply downforce proportional to velocity
     Vector3 localVelocity = hullRot.Inverse() * hullBody_->GetLinearVelocity();
-    hullBody_->AddWorldTorque(hullRot * Vector3::DOWN * Abs(localVelocity.z_) * DOWN_FORCE);
+   // hullBody_->AddWorldTorque(hullRot * Vector3::DOWN * Abs(localVelocity.z_) * DOWN_FORCE);
 }
 
 void Vehicle::Init()
@@ -137,6 +153,7 @@ void Vehicle::Init()
     hullBody_->SetLinearDamping(0.2f); // Some air resistance
     hullBody_->SetAngularDamping(0.5f);
     hullBody_->SetCollisionLayer(1);
+   // hullBody_->SetInheritNodeScale(false);
 
     InitWheel("FrontLeft", Vector3(-0.6f, -0.4f, 0.3f), frontLeft_, frontLeftID_);
     InitWheel("FrontRight", Vector3(0.6f, -0.4f, 0.3f), frontRight_, frontRightID_);
@@ -162,7 +179,7 @@ void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>
 
     auto* wheelObject = wheelNode->CreateComponent<StaticModel>();
     auto* wheelBody = wheelNode->CreateComponent<RigidBody>();
-    auto* wheelShape = wheelNode->CreateComponent<CollisionShape_Sphere>();
+    auto* wheelShape = wheelNode->CreateComponent<CollisionShape_Cylinder>();
     auto* wheelConstraint = wheelNode->CreateComponent<HingeConstraint>();
 
     wheelObject->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
@@ -172,9 +189,13 @@ void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>
     wheelBody->SetLinearDamping(0.2f); // Some air resistance
     wheelBody->SetAngularDamping(0.75f); // Could also use rolling friction
     wheelBody->SetCollisionLayer(1);
+    wheelBody->SetInheritNodeScale(false);
+
+    wheelShape->SetRotationOffset(Quaternion(0, 0, 90));
 
     wheelConstraint->SetOtherBody(GetComponent<RigidBody>()); // Connect to the hull body
     wheelConstraint->SetWorldPosition(wheelNode->GetPosition()); // Set constraint's both ends at wheel's location
+    wheelConstraint->SetWorldRotation(node_->GetWorldRotation());
     //wheelConstraint->SetAxis(Vector3::UP); // Wheel rotates around its local Y-axis
     //wheelConstraint->SetOtherAxis(offset.x_ >= 0.0 ? Vector3::RIGHT : Vector3::LEFT); // Wheel's hull axis points either left or right
     wheelConstraint->SetEnableLimits(false);//allow free spin
@@ -183,8 +204,8 @@ void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>
 
 void Vehicle::GetWheelComponents()
 {
-    frontLeftAxis_ = frontLeft_->GetComponent<Constraint>();
-    frontRightAxis_ = frontRight_->GetComponent<Constraint>();
+    frontLeftAxis_ = frontLeft_->GetDerivedComponent<Constraint>();
+    frontRightAxis_ = frontRight_->GetDerivedComponent<Constraint>();
     frontLeftBody_ = frontLeft_->GetComponent<RigidBody>();
     frontRightBody_ = frontRight_->GetComponent<RigidBody>();
     rearLeftBody_ = rearLeft_->GetComponent<RigidBody>();
