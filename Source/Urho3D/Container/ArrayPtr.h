@@ -50,9 +50,7 @@ public:
     }
 
     /// Move from another shared array pointer.
-    SharedArrayPtr(SharedArrayPtr<T>&& rhs) :
-        ptr_(rhs.ptr_),
-        refCount_(rhs.refCount_)
+    SharedArrayPtr(SharedArrayPtr<T>&& rhs)
     {
         Swap(ptr_, rhs.ptr_);
         Swap(refCount_, rhs.refCount_);
@@ -215,9 +213,9 @@ private:
     }
 
     /// Pointer to the array.
-    T* ptr_;
+    T* ptr_ = nullptr;
     /// Pointer to the RefCount structure.
-    RefCount* refCount_;
+    RefCount* refCount_ = nullptr;
 };
 
 /// Perform a static cast from one shared array pointer type to another.
