@@ -190,8 +190,6 @@ namespace Urho3D {
 
         virtual void OnNodeSet(Node* node) override;
         virtual void OnNodeSetEnabled(Node* node) override;
-
-        void LogNodeScaleWarning(Node* node);
     };
 }
 

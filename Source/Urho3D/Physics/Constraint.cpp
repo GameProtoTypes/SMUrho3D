@@ -313,10 +313,6 @@ namespace Urho3D {
         //resolve other body id to component
         otherBody_ = static_cast<RigidBody*>(GetScene()->GetComponent(otherBodyId_));
 
-        if(otherBody_)
-            LogNodeScaleWarning(otherBody_->GetNode());
-
-        LogNodeScaleWarning(node_);
 
         if (!IsEnabledEffective()) {
             freeInternal();
@@ -438,14 +434,6 @@ namespace Urho3D {
         MarkDirty();
     }
 
-    void Constraint::LogNodeScaleWarning(Node* node)
-    {
 
-        //if ((node->GetWorldScale() - Vector3::ONE).Length() > M_LARGE_EPSILON*100.0f) {
-
-        //    URHO3D_LOGWARNING("Contraints Do Not Support contraining Rigid Bodies with node world scales other than 1");
-        //}
-
-    }
 
 }

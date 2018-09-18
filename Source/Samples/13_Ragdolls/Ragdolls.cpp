@@ -281,6 +281,7 @@ void Ragdolls::SpawnObject()
 
     auto* body = boxNode->CreateComponent<RigidBody>();
     body->SetMassScale(1.0f);
+    body->SetTriggerMode(true);
     //body->SetRollingFriction(0.15f);
     auto* shape = boxNode->CreateComponent<CollisionShape_Sphere>();
     shape->SetRadius(0.5f);

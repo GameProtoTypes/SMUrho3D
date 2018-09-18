@@ -63,6 +63,13 @@ namespace Urho3D
         }
         unsigned GetCollisionLayer() const { return collisionLayer_; }
 
+        void SetTriggerMode(bool enable) {
+            if (triggerMode_ != enable) {
+                triggerMode_ = enable;
+            }
+        }
+        bool GetTriggerMode() const { return triggerMode_; }
+
 
         /// Set linear velocity in world cordinates.
         void SetLinearVelocity(const Vector3& velocity);
@@ -262,6 +269,8 @@ namespace Urho3D
         bool autoSleep_ = true;
 
         unsigned collisionLayer_ = 0;
+
+        bool triggerMode_ = false;
 
         ///dirty flag
         bool needsRebuilt_ = true;

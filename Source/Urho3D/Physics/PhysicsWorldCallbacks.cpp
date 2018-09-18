@@ -76,7 +76,8 @@ namespace Urho3D {
         RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
         RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
 
-        
+
+
 
         unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
 
@@ -100,9 +101,18 @@ namespace Urho3D {
         contactEntry->contactPositions.Resize(contactEntry->numContacts);
         contactEntry->contactNormals.Resize(contactEntry->numContacts);
 
+
+
+
+
         int contactIdx = 0;
         for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
 
+
+            if (rigBody0->GetTriggerMode() || rigBody1->GetTriggerMode()) {
+                NewtonContactJointRemoveContact(contactJoint, contact);
+                continue;
+            }
 
             NewtonMaterial* const material = NewtonContactGetMaterial(contact);
 
