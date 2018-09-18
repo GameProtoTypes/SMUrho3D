@@ -13,6 +13,16 @@ namespace Urho3D
     class CollisionShape;
     class NewtonNodePhysicsGlue;
     class PhysicsMaterial;
+
+    /// Rigid body collision event signaling mode.
+    enum RigidBodyCollisionEventMode
+    {
+        COLLISION_NEVER = 0,
+        //COLLISION_ACTIVE,
+        COLLISION_ALWAYS
+    };
+
+
     class URHO3D_API RigidBody : public Component
     {
         URHO3D_OBJECT(RigidBody, Component);
@@ -62,6 +72,13 @@ namespace Urho3D
             collisionLayer_ = layer;
         }
         unsigned GetCollisionLayer() const { return collisionLayer_; }
+
+        void SetCollisionEventMode(RigidBodyCollisionEventMode mode) {
+            if (collisionEventMode_ != mode) {
+                collisionEventMode_ = mode;
+            }
+        }
+
 
         ///trigger mode will not collide with anything but will still generate contacts and send collision events.
         void SetTriggerMode(bool enable) {
@@ -240,6 +257,9 @@ namespace Urho3D
         bool inheritCollisionNodeScales_ = true;
         /// flag indicating debug geometry for the collision should be shown in the debug renderer
         bool drawPhysicsDebugCollisionGeometry_ = true;
+
+
+        RigidBodyCollisionEventMode collisionEventMode_ = COLLISION_ALWAYS;
 
 
         Node* prevNode_ = nullptr;

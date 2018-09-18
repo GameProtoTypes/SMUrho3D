@@ -239,6 +239,27 @@ namespace Urho3D {
     };
 
 
+    class URHO3D_API CollisionShape_TreeCollision : public CollisionShape_Geometry {
+
+        URHO3D_OBJECT(CollisionShape_TreeCollision, CollisionShape_Geometry);
+
+    public:
+        CollisionShape_TreeCollision(Context* context);
+        virtual ~CollisionShape_TreeCollision();
+
+        static void RegisterObject(Context* context);
+        /// Set the tolerancing for hull creation.
+        void SetHullTolerance(float tolerance = 0.0f) { hullTolerance_ = 0.0f; MarkDirty(); }
+
+    protected:
+
+        virtual void buildNewtonCollision() override;
+        /// Hulling tolerance
+        unsigned hullTolerance_ = 0.0f;
+
+    };
+
+
 
 
 

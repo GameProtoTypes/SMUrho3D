@@ -381,10 +381,10 @@ namespace Urho3D {
                 Matrix3x4 colWorldOffset =  ( colWorldTransformNoScale * colLocalOffsetTransform );
                 Matrix3x4 colLocalToThisNode = thisWorldTransformNoScale.Inverse()*colWorldOffset;
 
-               
+                
                 
 
-                dMatrix localTransform = UrhoToNewton(colLocalToThisNode);//#todo move using physics world scale as well.
+                dMatrix localTransform = UrhoToNewton(colLocalToThisNode);
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
 
 

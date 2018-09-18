@@ -249,6 +249,8 @@ namespace Urho3D {
 
         resolveOrCreateTriangleMesh();
         newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0, 0);
+
+        
     }
 
 
@@ -446,6 +448,31 @@ namespace Urho3D {
 
         }
 
+    }
+
+    CollisionShape_TreeCollision::CollisionShape_TreeCollision(Context* context) : CollisionShape_Geometry(context)
+    {
+
+    }
+
+    CollisionShape_TreeCollision::~CollisionShape_TreeCollision()
+    {
+
+    }
+
+    void CollisionShape_TreeCollision::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<CollisionShape_TreeCollision>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void CollisionShape_TreeCollision::buildNewtonCollision()
+    {
+        CollisionShape_Geometry::buildNewtonCollision();
+
+        NewtonWorld* world = physicsWorld_->GetNewtonWorld();
+
+        //newtonCollision_ = NewtonCreateConvexHullFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0);
+        newtonCollision_ = NewtonCreateTreeCollisionFromMesh(world, newtonMesh_->mesh, 0);
     }
 
 }

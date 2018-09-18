@@ -338,64 +338,104 @@ namespace Urho3D {
             else if (it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//begin contact
             {
                 it->second_->inContact_ = true;
-                SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
+                if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
+                    SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
+                }
 
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                
 
-                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
-                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
-                it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
+                if (it->second_->body0->collisionEventMode_) {
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break; //it is possible someone deleted a body in the previous event.
 
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
-                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
-                it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
-
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                //also send the E_NODECOLLISION event
-                SendEvent(E_PHYSICSCOLLISION, eventData);
-
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
-                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
-                it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
-
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
-                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
-                it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
+                    it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
+                }
 
 
+                if (it->second_->body1->collisionEventMode_) {
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+
+                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
+                    it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
+                }
+
+
+                if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+
+                    //also send the E_NODECOLLISION event
+                    SendEvent(E_PHYSICSCOLLISION, eventData);
+                }
+
+                if (it->second_->body0->collisionEventMode_) {
+
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+
+                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
+                    it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                }
+
+
+                if (it->second_->body1->collisionEventMode_) {
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+
+                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
+                    it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                }
+                
 
             }
             else if (!it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//end contact
             {
                 it->second_->inContact_ = false;
-                SendEvent(E_PHYSICSCOLLISIONEND, eventData);
+                if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
+                    SendEvent(E_PHYSICSCOLLISIONEND, eventData);
+                }
 
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
-                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
-                it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
 
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
-                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
-                it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
+                if (it->second_->body0->collisionEventMode_) {
+
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
+                    it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
+                }
+
+                if (it->second_->body1->collisionEventMode_) {
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
+                    it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
+                }
             }
             else if(it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//continued contact
             {
-                SendEvent(E_PHYSICSCOLLISION, eventData);
+                if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
+                    SendEvent(E_PHYSICSCOLLISION, eventData);
+                }
 
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
-                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
-                it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
 
-                if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
-                eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
-                it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+
+                if (it->second_->body0->collisionEventMode_) {
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+
+                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
+                    it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                }
+
+                if (it->second_->body1->collisionEventMode_) {
+
+                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+
+                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
+                    it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                }
             }
             else if (!it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//no contact for one update. (mark for removal from the map)
             {
@@ -703,6 +743,7 @@ namespace Urho3D {
         CollisionShape_ConvexHull::RegisterObject(context);
         CollisionShape_ConvexHullCompound::RegisterObject(context);
         CollisionShape_ConvexDecompositionCompound::RegisterObject(context);
+        CollisionShape_TreeCollision::RegisterObject(context);
         CollisionShape_HeightmapTerrain::RegisterObject(context);
 
         RigidBody::RegisterObject(context);
