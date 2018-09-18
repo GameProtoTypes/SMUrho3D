@@ -6,6 +6,7 @@
 #include "PhysicsWorld.h"
 #include "UrhoNewtonConversions.h"
 #include "CollisionShape.h"
+#include "RigidBody.h"
 
 
 namespace Urho3D {
@@ -128,14 +129,16 @@ namespace Urho3D {
         dMatrix matrix;
         NewtonBodyGetMatrix(body, &matrix[0][0]);
 
-        NewtonCollision* collision = NewtonBodyGetCollision(body);
-        CollisionShape* colShape = static_cast<CollisionShape*>(NewtonCollisionGetUserData(collision));
-        if (colShape) {
-            if(colShape->GetDrawNewtonDebugGeometry())
-                NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
+        RigidBody* rigBody = static_cast<RigidBody*>(NewtonBodyGetUserData(body));
+        PODVector<CollisionShape*> collisionShapes = rigBody->GetCollisionShapes();
+        
+        for (CollisionShape* colShape : collisionShapes)
+        {
+            if (colShape->GetDrawNewtonDebugGeometry())
+                NewtonCollisionForEachPolygonDo(colShape->GetNewtonCollision(), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
         }
-        else
-            NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
+
+
     }
 
     void NewtonDebug_BodyDrawContactForces(const NewtonBody* const body, float scaleFactor, DebugRenderer* debug, bool depthTest /*= false*/)

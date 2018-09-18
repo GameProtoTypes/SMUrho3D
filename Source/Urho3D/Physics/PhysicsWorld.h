@@ -197,7 +197,7 @@ namespace Urho3D
 
         SharedPtr<PhysicsMaterial> defaultPhysicsMaterial_ = nullptr;
 
-        float physicsScale_ = 0.5f;
+        float physicsScale_ = 0.25f*0.25f;
 
         ///convex casts
         static const int convexCastRetInfoSize_ = 1000;

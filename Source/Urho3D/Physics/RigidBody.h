@@ -188,6 +188,8 @@ namespace Urho3D
         void GetConnectedContraints(PODVector<Constraint*>& contraints);
         PODVector<Constraint*> GetConnectedContraints();
 
+        PODVector<CollisionShape*> GetCollisionShapes() const { return collisionShapes_; }
+
 
         ///Apply the current newton body transform to the node.
         void ApplyTransform(float timestep);
@@ -226,7 +228,8 @@ namespace Urho3D
         NewtonCollision* compoundCollision_ = nullptr;
         /// Physics world.
         WeakPtr<PhysicsWorld> physicsWorld_;
-
+        /// all currently used collision shape components.
+        PODVector<CollisionShape*> collisionShapes_;
         ///reference to physics material resource;
         WeakPtr<PhysicsMaterial> physicsMaterial_ = nullptr;
 

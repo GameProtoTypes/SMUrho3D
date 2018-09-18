@@ -324,6 +324,10 @@ namespace Urho3D {
 
         PODVector<CollisionShape*> filteredList;
 
+        //update member list of shapes.
+        collisionShapes_ = childCollisionShapes;
+
+
         //filter out shapes that are not enabled.
         for (CollisionShape* col : childCollisionShapes)
         {
@@ -423,13 +427,6 @@ namespace Urho3D {
                 
             }
 
-            ////scale the entire shape by the physics world scale.
-            //Vector3 physicsScale;
-            //NewtonCollisionGetScale(resolvedCollision, &physicsScale.x_, &physicsScale.y_, &physicsScale.z_);
-            //physicsScale = physicsScale*Vector3(physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale());
-            //NewtonCollisionSetScale(resolvedCollision, physicsScale.x_, physicsScale.y_, physicsScale.z_);
-
-            //
 
             //create the body at node transform (with physics world scale applied)
             Matrix3x4 worldTransform;
@@ -449,7 +446,7 @@ namespace Urho3D {
             dVector inertia;
             dVector com;
             if (compoundNeeded) {
-                NewtonConvexCollisionCalculateInertialMatrix(resolvedCollision, &inertia[0], &com[0]);
+                NewtonConvexCollisionCalculateInertialMatrix(resolvedCollision, &inertia[0], &com[0]);//#todo check in upstream newton - this inertia calculation still needs fixed.
             }
 
 
@@ -833,6 +830,8 @@ namespace Urho3D {
         GetConnectedContraints(contraints);
         return contraints;
     }
+
+
 
     void RigidBody::ApplyTransform(float timestep)
 {
