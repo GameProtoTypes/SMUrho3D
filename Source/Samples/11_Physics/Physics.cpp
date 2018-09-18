@@ -995,20 +995,20 @@ void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
     //// Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
-    //Node* floorNode = scene_->CreateChild("Floor");
-    //floorNode->SetPosition(worldPosition - Vector3(0,0.5f,0));
-    //floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
-    //auto* floorObject = floorNode->CreateComponent<StaticModel>();
-    //floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    //floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    Node* floorNode = scene_->CreateChild("Floor");
+    floorNode->SetPosition(worldPosition - Vector3(0,0.5f,0));
+    floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+    auto* floorObject = floorNode->CreateComponent<StaticModel>();
+    floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
     //// Make the floor physical by adding RigidBody and NewtonCollisionShape components. The RigidBody's default
     //// parameters make the object static (zero mass.) Note that a NewtonCollisionShape by itself will not participate
     //// in the physics simulation
-    //RigidBody* body = floorNode->CreateComponent<RigidBody>();
-    //body->SetMassScale(0.0f);
-    //auto* shape = floorNode->CreateComponent<CollisionShape_Box>();
-    //body->SetPhysicsMaterial(GSS<ResourceCache>()->GetResource<PhysicsMaterial>("PhysicsMaterials/dummyPhysicsMaterial.xml"));
+    RigidBody* body = floorNode->CreateComponent<RigidBody>();
+    body->SetMassScale(0.0f);
+    auto* shape = floorNode->CreateComponent<CollisionShape_Box>();
+   // body->SetPhysicsMaterial(GSS<ResourceCache>()->GetResource<PhysicsMaterial>("PhysicsMaterials/dummyPhysicsMaterial.xml"));
 
     //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
    // shape->SetPositionOffset(Vector3(1, 0, 0));
@@ -1018,19 +1018,19 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
     //Create heightmap terrain with collision
-    Node* terrainNode = scene_->CreateChild("Terrain");
-    terrainNode->SetPosition(worldPosition);
-    auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
-    terrain->SetPatchSize(64);
-    terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
-    terrain->SetSmoothing(true);
-    terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
-    terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
-    // The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
-    // terrain patches and other objects behind it
-    terrain->SetOccluder(true);
+    //Node* terrainNode = scene_->CreateChild("Terrain");
+    //terrainNode->SetPosition(worldPosition);
+    //auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
+    //terrain->SetPatchSize(64);
+    //terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
+    //terrain->SetSmoothing(true);
+    //terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+    //terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
+    //// The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
+    //// terrain patches and other objects behind it
+    //terrain->SetOccluder(true);
 
-    terrainNode->CreateComponent<CollisionShape_HeightmapTerrain>();
+    //terrainNode->CreateComponent<CollisionShape_HeightmapTerrain>();
 
 
 

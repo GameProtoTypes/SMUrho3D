@@ -45,11 +45,11 @@ namespace Urho3D
         PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
 
 
-        Matrix3x4 GetPhysicsTransform() { return Matrix3x4(targetPos_, targetRotation_, 1.0f); }
+        Matrix3x4 GetPhysicsTransform(bool scaledPhysicsWorldFrame = false);
 
-        Vector3 GetPhysicsPosition() { return targetPos_; }
+        Vector3 GetPhysicsPosition(bool scaledPhysicsWorldFrame = false);
 
-        Quaternion GetPhysicsRotation() { return targetRotation_; }
+        Quaternion GetPhysicsRotation() { return targetNodeRotation_; }
 
         ///Get the mass scale of the rigid body
         float GetMassScale() const { return massScale_; }
@@ -311,10 +311,10 @@ namespace Urho3D
         //interpolation
 
         void updateInterpolatedTransform(float timestep);
-        Vector3 targetPos_;
-        Quaternion targetRotation_;
-        Vector3 interpolatedPos_;
-        Quaternion interpolatedRotation_;
+        Vector3 targetNodePos_;
+        Quaternion targetNodeRotation_;
+        Vector3 interpolatedNodePos_;
+        Quaternion interpolatedNodeRotation_;
         float interpolationFactor_ = 1.0f;
 
 

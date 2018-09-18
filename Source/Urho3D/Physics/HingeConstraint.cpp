@@ -44,7 +44,7 @@ void Urho3D::HingeConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depth
 void Urho3D::HingeConstraint::buildConstraint()
 {
     // Create a dCustomHinge
-    newtonJoint_ = new dCustomHinge(UrhoToNewton(GetOwnWorldFrame()), UrhoToNewton(GetOtherWorldFrame()), GetOwnNewtonBody(), GetOtherNewtonBody());
+    newtonJoint_ = new dCustomHinge(UrhoToNewton(GetOwnWorldFrame(true)), UrhoToNewton(GetOtherWorldFrame(true)), GetOwnNewtonBody(), GetOtherNewtonBody());
     static_cast<dCustomHinge*>(newtonJoint_)->EnableLimits(enableLimits_);
     static_cast<dCustomHinge*>(newtonJoint_)->SetLimits(minAngle_ * dDegreeToRad, maxAngle_ * dDegreeToRad);
     static_cast<dCustomHinge*>(newtonJoint_)->SetFriction(friction_);

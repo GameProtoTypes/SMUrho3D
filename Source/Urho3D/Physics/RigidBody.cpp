@@ -99,6 +99,22 @@ namespace Urho3D {
         return GetResourceRef(physicsMaterial_, PhysicsMaterial::GetTypeStatic());
     }
 
+    Urho3D::Matrix3x4 RigidBody::GetPhysicsTransform(bool scaledPhysicsWorldFrame)
+    {
+        if(scaledPhysicsWorldFrame)
+            return Matrix3x4((physicsWorld_->GetPhysicsScale())*targetNodePos_, targetNodeRotation_, 1.0f);
+        else
+            return Matrix3x4(targetNodePos_, targetNodeRotation_, 1.0f);
+    }
+
+    Urho3D::Vector3 RigidBody::GetPhysicsPosition(bool scaledPhysicsWorldFrame /*= false*/)
+    {
+        if (scaledPhysicsWorldFrame)
+            return (physicsWorld_->GetPhysicsScale())*targetNodePos_;
+        else
+            return targetNodePos_;
+    }
+
     void RigidBody::SetLinearVelocity(const Vector3& velocity)
     {
         nextLinearVelocity_ = velocity;
@@ -316,6 +332,7 @@ namespace Urho3D {
         }
         childCollisionShapes = filteredList;
 
+        Matrix3x4 physicsWorldFrame(Vector3::ZERO, Quaternion::IDENTITY, physicsWorld_->GetPhysicsScale());
 
         if (childCollisionShapes.Size())
         {  
@@ -364,7 +381,7 @@ namespace Urho3D {
 
 
 
-                dMatrix localTransform = UrhoToNewton(colLocalToThisNode);
+                dMatrix localTransform = UrhoToNewton(colLocalToThisNode);//#todo move using physics world scale as well.
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
 
 
@@ -377,7 +394,7 @@ namespace Urho3D {
                 Vector3 shapeScale = colComp->GetScaleFactor();
 
                 scale = (colComp->GetRotationOffset()).Inverse()*scale*shapeScale;
-
+                scale *= physicsWorld_->GetPhysicsScale();
 
                 NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
 
@@ -403,20 +420,24 @@ namespace Urho3D {
                 NewtonCompoundCollisionEndAddRemove(compoundCollision_);
 
                 resolvedCollision = compoundCollision_;
+
+                
             }
 
             
 
             //create the body at node transform
-            Matrix4 transform;
-            transform.SetTranslation(node_->GetWorldPosition());
-            transform.SetRotation(node_->GetWorldRotation().RotationMatrix());
-            dMatrix mat = UrhoToNewton(transform);
+            Matrix3x4 worldTransform;
+            
 
-            newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &mat[0][0]);
+            worldTransform.SetTranslation(physicsWorldFrame * node_->GetWorldPosition());
+            worldTransform.SetRotation(node_->GetWorldRotation().RotationMatrix());
 
-            targetRotation_ = node_->GetWorldRotation();
-            targetPos_ = node_->GetWorldPosition();
+
+            newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &UrhoToNewton(worldTransform)[0][0]);
+
+            targetNodeRotation_ = node_->GetWorldRotation();
+            targetNodePos_ = node_->GetWorldPosition();
             SnapInterpolation();
 
             NewtonBodySetCollision(newtonBody_, resolvedCollision);
@@ -475,24 +496,24 @@ namespace Urho3D {
     void RigidBody::updateInterpolatedTransform(float timestep)
     {
 
-        interpolatedPos_ += (targetPos_ - interpolatedPos_)*interpolationFactor_*(timestep / (1.0f/60.0f));
-        interpolatedRotation_ = interpolatedRotation_.Nlerp(targetRotation_, interpolationFactor_*(timestep / (1.0f / 60.0f)), true);
+        interpolatedNodePos_ += (targetNodePos_ - interpolatedNodePos_)*interpolationFactor_*(timestep / (1.0f/60.0f));
+        interpolatedNodeRotation_ = interpolatedNodeRotation_.Nlerp(targetNodeRotation_, interpolationFactor_*(timestep / (1.0f / 60.0f)), true);
     }
 
 
     bool RigidBody::InterpolationWithinRestTolerance()
     {
         bool inTolerance = true;
-        inTolerance &= ( (targetPos_ - interpolatedPos_).Length() < M_EPSILON );
-        inTolerance &= ( (targetRotation_ - interpolatedRotation_).Angle() < M_EPSILON);
+        inTolerance &= ( (targetNodePos_ - interpolatedNodePos_).Length() < M_EPSILON );
+        inTolerance &= ( (targetNodeRotation_ - interpolatedNodeRotation_).Angle() < M_EPSILON);
 
         return inTolerance;
     }
 
     void RigidBody::SnapInterpolation()
     {
-        interpolatedPos_ = targetPos_;
-        interpolatedRotation_ = targetRotation_;
+        interpolatedNodePos_ = targetNodePos_;
+        interpolatedNodeRotation_ = targetNodeRotation_;
     }
 
     void RigidBody::OnNodeSet(Node* node)
@@ -822,12 +843,16 @@ namespace Urho3D {
         if(enableTEvents)
             node_->SetEnableTransformEvents(false);
 
-        targetPos_ = NewtonToUrhoVec3(pos);
-        targetRotation_ = NewtonToUrhoQuat(quat);
+
+
+        targetNodePos_ = (1.0f/physicsWorld_->GetPhysicsScale())*NewtonToUrhoVec3(pos);
+        targetNodeRotation_ = NewtonToUrhoQuat(quat);
+
+
         updateInterpolatedTransform(timestep);
 
 
-        node_->SetWorldTransform(interpolatedPos_, interpolatedRotation_);
+        node_->SetWorldTransform(interpolatedNodePos_, interpolatedNodeRotation_);
         node_->SetEnableTransformEvents(enableTEvents);
     }
 

@@ -104,6 +104,14 @@ namespace Urho3D
         void SetGravity(const Vector3& force);
         ///return global force acting on all rigid bodies
         Vector3 GetGravity();
+
+        ///set the physics scale of the world
+        void SetPhysicsScale(float scale) { physicsScale_ = scale; }
+
+        float GetPhysicsScale() const {
+            return physicsScale_;
+        }
+
         /// set how many iterations newton will run.
         void SetIterationCount(int numIterations);
 
@@ -186,6 +194,8 @@ namespace Urho3D
         RigidBody* sceneBody_ = nullptr;
 
         SharedPtr<PhysicsMaterial> defaultPhysicsMaterial_ = nullptr;
+
+        float physicsScale_ = 0.5f;
 
         ///convex casts
         static const int convexCastRetInfoSize_ = 1000;

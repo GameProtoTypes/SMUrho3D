@@ -267,24 +267,32 @@ namespace Urho3D {
             return nullptr;
     }
 
-    Urho3D::Matrix3x4 Constraint::GetOwnWorldFrame() const
+    Urho3D::Vector3 Constraint::GetOtherPosition(bool scaledPhysicsWorldFrame /*= false*/) const
+    {
+        return otherPosition_;
+    }
+
+    Urho3D::Matrix3x4 Constraint::GetOwnWorldFrame(bool scaledPhysicsWorldFrame) const
     {
 
         //return a frame with no scale at the position and rotation in node space.
         Matrix3x4 worldTransform = ownBody_->GetNode()->GetWorldTransform();
         Matrix3x4 worldTransformNoScale(ownBody_->GetNode()->GetWorldPosition(), ownBody_->GetNode()->GetWorldRotation(),1.0f);
 
-        Vector3 pivotPoint = worldTransform * position_;
+        Vector3 pivotPoint;
+        if (scaledPhysicsWorldFrame)
+            pivotPoint = physicsWorld_->GetPhysicsScale() * (worldTransform * position_);
+        else
+            pivotPoint = (worldTransform * position_);
 
         Matrix3x4 frame = worldTransformNoScale * Matrix3x4(position_, rotation_, 1.0f);
         frame.SetTranslation(pivotPoint);
 
 
-
         return frame;
     }
 
-    Urho3D::Matrix3x4 Constraint::GetOtherWorldFrame() const
+    Urho3D::Matrix3x4 Constraint::GetOtherWorldFrame(bool scaledPhysicsWorldFrame) const
     {
         if (otherBody_) {
 
@@ -292,7 +300,11 @@ namespace Urho3D {
             Matrix3x4 worldTransform = otherBody_->GetNode()->GetWorldTransform();
             Matrix3x4 worldTransformNoScale(otherBody_->GetNode()->GetWorldPosition(), otherBody_->GetNode()->GetWorldRotation(), 1.0f);
 
-            Vector3 pivotPoint = worldTransform * otherPosition_;
+            Vector3 pivotPoint;
+            if (scaledPhysicsWorldFrame)
+                pivotPoint = physicsWorld_->GetPhysicsScale() * (worldTransform * otherPosition_);
+            else
+                pivotPoint = (worldTransform * otherPosition_);
 
             Matrix3x4 frame = worldTransformNoScale * Matrix3x4(otherPosition_, otherRotation_, 1.0f);
             frame.SetTranslation(pivotPoint);
