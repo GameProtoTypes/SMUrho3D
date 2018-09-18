@@ -155,15 +155,16 @@ void Ragdolls::CreateScene()
             auto* body = modelNode->CreateComponent<RigidBody>();
             // The Trigger mode makes the rigid body only detect collisions, but impart no forces on the
             // colliding objects
-            //body->SetTrigger(true);
+            body->SetTriggerMode(true);
+            body->SetMassScale(0.0f);
             auto* shape = modelNode->CreateComponent<CollisionShape_Capsule>();
             // Create the capsule shape with an offset so that it is correctly aligned with the model, which
             // has its origin at the feet
             shape->SetPositionOffset(Vector3(0.0f, 1.0f, 0.0f));
             shape->SetRotationOffset(Quaternion(0, 0, 90));
-            //shape->SetLength(0.7f);
-            //shape->SetRadius1(2.0f);
-            //shape->SetRadius2(2.0f);
+            shape->SetLength(1.4f);
+            shape->SetRadius1(0.4f);
+            shape->SetRadius2(0.4f);
             
 
             // Create a custom component that reacts to collisions and creates the ragdoll
@@ -281,7 +282,7 @@ void Ragdolls::SpawnObject()
 
     auto* body = boxNode->CreateComponent<RigidBody>();
     body->SetMassScale(1.0f);
-    body->SetTriggerMode(true);
+
     //body->SetRollingFriction(0.15f);
     auto* shape = boxNode->CreateComponent<CollisionShape_Sphere>();
     shape->SetRadius(0.5f);

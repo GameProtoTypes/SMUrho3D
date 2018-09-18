@@ -63,6 +63,7 @@ namespace Urho3D
         }
         unsigned GetCollisionLayer() const { return collisionLayer_; }
 
+        ///trigger mode will not collide with anything but will still generate contacts and send collision events.
         void SetTriggerMode(bool enable) {
             if (triggerMode_ != enable) {
                 triggerMode_ = enable;

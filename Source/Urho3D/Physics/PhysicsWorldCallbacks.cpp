@@ -109,10 +109,7 @@ namespace Urho3D {
         for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
 
 
-            if (rigBody0->GetTriggerMode() || rigBody1->GetTriggerMode()) {
-                NewtonContactJointRemoveContact(contactJoint, contact);
-                continue;
-            }
+
 
             NewtonMaterial* const material = NewtonContactGetMaterial(contact);
 
@@ -133,6 +130,11 @@ namespace Urho3D {
 
 
             contactIdx++;
+
+            if (rigBody0->GetTriggerMode() || rigBody1->GetTriggerMode()) {
+                NewtonContactJointRemoveContact(contactJoint, contact);
+                continue;
+            }
         }
 
 
