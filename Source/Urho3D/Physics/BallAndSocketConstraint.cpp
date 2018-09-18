@@ -50,7 +50,7 @@ namespace Urho3D {
     void Urho3D::BallAndSocketConstraint::buildConstraint()
     {
         // Create a dCustomBallAndSocket
-        newtonJoint_ = new dCustomBallAndSocket(UrhoToNewton(GetOwnWorldFrame()), UrhoToNewton(GetOtherWorldFrame()), GetOwnNewtonBody(), GetOtherNewtonBody());
+        newtonJoint_ = new dCustomBallAndSocket(UrhoToNewton(GetOwnPhysicsWorldFrame()), UrhoToNewton(GetOtherPhysicsWorldFrame()), GetOwnNewtonBody(), GetOtherNewtonBody());
 
 
         static_cast<dCustomBallAndSocket*>(newtonJoint_)->SetConeLimits(coneAngle_ * dDegreeToRad);

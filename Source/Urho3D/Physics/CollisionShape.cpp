@@ -65,7 +65,7 @@ namespace Urho3D {
     }
 
     void CollisionShape::buildNewtonCollision()
-    {
+{
 
     }
 

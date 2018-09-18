@@ -220,16 +220,7 @@ namespace Urho3D {
     {
         if (otherBody_)
         {
-            //if (otherBody_->needsRebuilt_)
-            //{
-               // Matrix3x4 worldTransform(otherBody_->GetNode()->GetWorldPosition(), otherBody_->GetNode()->GetWorldRotation(), 1.0f);
-                otherPosition_ = otherBody_->GetNode()->GetWorldTransform().Inverse() * position;
-            //    
-            //}
-            //else
-            //{
-            //    otherPosition_ = otherBody_->GetPhysicsTransform().Inverse() * position;
-            //}
+            otherPosition_ = otherBody_->GetNode()->GetWorldTransform().Inverse() * position;
         }
         else
             otherPosition_ = position;
@@ -241,12 +232,8 @@ namespace Urho3D {
     {
         if (otherBody_)
         {
-           // if (otherBody_->needsRebuilt_)
-           // {
-                Quaternion worldRot = otherBody_->GetNode()->GetWorldRotation();
-                otherRotation_ = worldRot.Inverse() * rotation;
-
-           // }
+              Quaternion worldRot = otherBody_->GetNode()->GetWorldRotation();
+              otherRotation_ = worldRot.Inverse() * rotation;
         }
         else
             otherRotation_ = rotation;

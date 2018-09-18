@@ -108,6 +108,8 @@ namespace Urho3D
         ///set the physics scale of the world
         void SetPhysicsScale(float scale) { physicsScale_ = scale; }
 
+        Matrix3x4 GetPhysicsWorldFrame() const { return Matrix3x4(Vector3::ZERO, Quaternion::IDENTITY, physicsScale_); }
+
         float GetPhysicsScale() const {
             return physicsScale_;
         }
@@ -195,7 +197,7 @@ namespace Urho3D
 
         SharedPtr<PhysicsMaterial> defaultPhysicsMaterial_ = nullptr;
 
-        float physicsScale_ = 0.5f;
+        float physicsScale_ = 1.0f;
 
         ///convex casts
         static const int convexCastRetInfoSize_ = 1000;

@@ -128,6 +128,7 @@ namespace Urho3D {
 
         Matrix3x4 GetOwnWorldFrame(bool scaledPhysicsWorldFrame = false) const;
 
+        ///returns the frame on own body in physics world space.
         Matrix3x4 GetOwnPhysicsWorldFrame() const { return GetOwnWorldFrame(true); }
 
         Matrix3x4 GetOtherWorldFrame(bool scaledPhysicsWorldFrame = false) const;

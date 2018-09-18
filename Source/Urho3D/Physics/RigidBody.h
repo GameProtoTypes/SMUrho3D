@@ -44,7 +44,7 @@ namespace Urho3D
 
         PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
 
-
+        /// returns the body transform in scene space or physics world space (they will be the same if PhysicsScale is 1.0f)
         Matrix3x4 GetPhysicsTransform(bool scaledPhysicsWorldFrame = false);
 
         Vector3 GetPhysicsPosition(bool scaledPhysicsWorldFrame = false);

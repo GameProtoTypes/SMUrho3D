@@ -332,7 +332,6 @@ namespace Urho3D {
         }
         childCollisionShapes = filteredList;
 
-        Matrix3x4 physicsWorldFrame(Vector3::ZERO, Quaternion::IDENTITY, physicsWorld_->GetPhysicsScale());
 
         if (childCollisionShapes.Size())
         {  
@@ -376,10 +375,18 @@ namespace Urho3D {
 
                 Matrix3x4 colLocalOffsetTransform = colComp->GetOffsetMatrix();
 
-                Matrix3x4 colWorldOffset = colWorldTransformNoScale * colLocalOffsetTransform;
+                Matrix3x4 colWorldOffset =  ( colWorldTransformNoScale * colLocalOffsetTransform );
                 Matrix3x4 colLocalToThisNode = thisWorldTransformNoScale.Inverse()*colWorldOffset;
 
 
+                //Matrix3x4 colFullLocal = colComp->GetOffsetMatrix();
+                //Matrix3x4 colNodeWorldNoScale(colComp->GetNode()->GetWorldPosition(), colComp->GetNode()->GetWorldRotation(), 1.0f);
+                //Matrix3x4 colWorld = ( colNodeWorldNoScale * colFullLocal );
+                //Matrix3x4 thisNodeWorldTransformNoScale(node_->GetWorldPosition(), node_->GetWorldRotation(), 1.0f);
+                //Matrix3x4 localToThisNode = thisNodeWorldTransformNoScale.Inverse() * colWorld;
+
+
+    
 
                 dMatrix localTransform = UrhoToNewton(colLocalToThisNode);//#todo move using physics world scale as well.
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
@@ -423,6 +430,9 @@ namespace Urho3D {
 
                 
             }
+            Vector3 physicsScale(physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale());
+
+            //NewtonCollisionSetScale(resolvedCollision, physicsScale.x_, physicsScale.y_, physicsScale.z_);
 
             
 
@@ -430,7 +440,7 @@ namespace Urho3D {
             Matrix3x4 worldTransform;
             
 
-            worldTransform.SetTranslation(physicsWorldFrame * node_->GetWorldPosition());
+            worldTransform.SetTranslation(physicsWorld_->GetPhysicsWorldFrame() * node_->GetWorldPosition());
             worldTransform.SetRotation(node_->GetWorldRotation().RotationMatrix());
 
 
@@ -628,7 +638,7 @@ namespace Urho3D {
         {
             if (newtonBody_)
             {
-                NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(nextLinearVelocity_)[0]);
+                NewtonBodySetVelocity(newtonBody_, &UrhoToNewton(physicsWorld_->GetPhysicsScale()*nextLinearVelocity_)[0]);
             }
             nextLinearVelocityNeeded_ = false;
         }
@@ -636,7 +646,7 @@ namespace Urho3D {
         {
             if (newtonBody_)
             {
-                NewtonBodySetOmega(newtonBody_, &UrhoToNewton(nextAngularVelocity_)[0]);
+                NewtonBodySetOmega(newtonBody_, &UrhoToNewton(physicsWorld_->GetPhysicsScale()*nextAngularVelocity_)[0]);
             }
             nextAngularVelocityNeeded_ = false;
         }
@@ -709,7 +719,7 @@ namespace Urho3D {
     void RigidBody::AddImpulse(const Vector3& localPosition, const Vector3& targetVelocity)
     {
         if(newtonBody_)
-            NewtonBodyAddImpulse(newtonBody_, &UrhoToNewton(targetVelocity)[0], &UrhoToNewton(node_->LocalToWorld(localPosition))[0], GSS<Engine>()->GetUpdateTimeGoalMs()*0.001f);
+            NewtonBodyAddImpulse(newtonBody_, &UrhoToNewton(physicsWorld_->GetPhysicsScale()*targetVelocity)[0], &UrhoToNewton(node_->LocalToWorld(localPosition))[0], GSS<Engine>()->GetUpdateTimeGoalMs()*0.001f);
 
         
     }
