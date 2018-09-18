@@ -370,23 +370,16 @@ namespace Urho3D {
 
                 Matrix3x4 colWorldTransformNoScale = Matrix3x4(colComp->GetNode()->GetWorldPosition(), colComp->GetNode()->GetWorldRotation(), 1.0f);
                 Matrix3x4 thisWorldTransformNoScale = Matrix3x4(node_->GetWorldPosition(), node_->GetWorldRotation(), 1.0f);
-                Matrix3x4 thisLocalTransformNoScale = Matrix3x4(node_->GetPosition(), node_->GetRotation(), 1.0f);
 
 
-                Matrix3x4 colLocalOffsetTransform = colComp->GetOffsetMatrix();
+                Matrix3x4 colLocalOffsetTransform = Matrix3x4(physicsWorld_->GetPhysicsScale()*colComp->GetPositionOffset(), colComp->GetRotationOffset(), 1.0f);
 
                 Matrix3x4 colWorldOffset =  ( colWorldTransformNoScale * colLocalOffsetTransform );
                 Matrix3x4 colLocalToThisNode = thisWorldTransformNoScale.Inverse()*colWorldOffset;
 
 
-                //Matrix3x4 colFullLocal = colComp->GetOffsetMatrix();
-                //Matrix3x4 colNodeWorldNoScale(colComp->GetNode()->GetWorldPosition(), colComp->GetNode()->GetWorldRotation(), 1.0f);
-                //Matrix3x4 colWorld = ( colNodeWorldNoScale * colFullLocal );
-                //Matrix3x4 thisNodeWorldTransformNoScale(node_->GetWorldPosition(), node_->GetWorldRotation(), 1.0f);
-                //Matrix3x4 localToThisNode = thisNodeWorldTransformNoScale.Inverse() * colWorld;
 
-
-    
+                
 
                 dMatrix localTransform = UrhoToNewton(colLocalToThisNode);//#todo move using physics world scale as well.
                 NewtonCollisionSetMatrix(usedCollision, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
@@ -401,7 +394,7 @@ namespace Urho3D {
                 Vector3 shapeScale = colComp->GetScaleFactor();
 
                 scale = (colComp->GetRotationOffset()).Inverse()*scale*shapeScale;
-                scale *= physicsWorld_->GetPhysicsScale();
+
 
                 NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
 
@@ -430,18 +423,21 @@ namespace Urho3D {
 
                 
             }
-            Vector3 physicsScale(physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale());
 
-            //NewtonCollisionSetScale(resolvedCollision, physicsScale.x_, physicsScale.y_, physicsScale.z_);
+            //scale the entire shape by the physics world scale.
+            Vector3 physicsScale;
+            NewtonCollisionGetScale(resolvedCollision, &physicsScale.x_, &physicsScale.y_, &physicsScale.z_);
+            physicsScale = physicsScale*Vector3(physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale());
+            NewtonCollisionSetScale(resolvedCollision, physicsScale.x_, physicsScale.y_, physicsScale.z_);
 
             
 
-            //create the body at node transform
+            //create the body at node transform (with physics world scale applied)
             Matrix3x4 worldTransform;
-            
 
-            worldTransform.SetTranslation(physicsWorld_->GetPhysicsWorldFrame() * node_->GetWorldPosition());
+            worldTransform.SetTranslation(physicsWorld_->GetPhysicsScale() * node_->GetWorldPosition());
             worldTransform.SetRotation(node_->GetWorldRotation().RotationMatrix());
+
 
 
             newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &UrhoToNewton(worldTransform)[0][0]);
