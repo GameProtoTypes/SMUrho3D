@@ -159,7 +159,7 @@ void Physics::CreateScene()
 
 
     for (int i = 0; i < 1; i++) {
-        //SpawnLinearJointedObject(1.0f, Vector3(10 , 2, 10));
+        SpawnLinearJointedObject(1.0f, Vector3(10 , 2, 10));
         //SpawnLinearJointedObject(0.5f*(i+1), Vector3(10+i*i, 10, 10));
     }
 
@@ -169,8 +169,8 @@ void Physics::CreateScene()
     //SpawnCompoundedRectTest(Vector3(20, 10, 10));
 
     //////create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 10, 10));
-    CreateTowerOfLiar(Vector3(0, 0, 20));
+    SpawnSceneCompoundTest(Vector3(-20, 10, 10));
+    //CreateTowerOfLiar(Vector3(0, 0, 20));
 
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
@@ -1010,10 +1010,6 @@ void Physics::CreateScenery(Vector3 worldPosition)
     auto* shape = floorNode->CreateComponent<CollisionShape_Box>();
    // body->SetPhysicsMaterial(GSS<ResourceCache>()->GetResource<PhysicsMaterial>("PhysicsMaterials/dummyPhysicsMaterial.xml"));
 
-    //shape = floorNode->CreateComponent<NewtonCollisionShape_Box>();
-   // shape->SetPositionOffset(Vector3(1, 0, 0));
-    // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
-    // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
 
 
 

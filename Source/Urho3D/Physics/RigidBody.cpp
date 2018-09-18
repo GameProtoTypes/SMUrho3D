@@ -368,8 +368,8 @@ namespace Urho3D {
 
 
 
-                Matrix3x4 colWorldTransformNoScale = Matrix3x4(colComp->GetNode()->GetWorldPosition(), colComp->GetNode()->GetWorldRotation(), 1.0f);
-                Matrix3x4 thisWorldTransformNoScale = Matrix3x4(node_->GetWorldPosition(), node_->GetWorldRotation(), 1.0f);
+                Matrix3x4 colWorldTransformNoScale = Matrix3x4(physicsWorld_->GetPhysicsScale() * colComp->GetNode()->GetWorldPosition(), colComp->GetNode()->GetWorldRotation(), 1.0f);
+                Matrix3x4 thisWorldTransformNoScale = Matrix3x4(physicsWorld_->GetPhysicsScale() *  node_->GetWorldPosition(), node_->GetWorldRotation(), 1.0f);
 
 
                 Matrix3x4 colLocalOffsetTransform = Matrix3x4(physicsWorld_->GetPhysicsScale()*colComp->GetPositionOffset(), colComp->GetRotationOffset(), 1.0f);
@@ -377,8 +377,7 @@ namespace Urho3D {
                 Matrix3x4 colWorldOffset =  ( colWorldTransformNoScale * colLocalOffsetTransform );
                 Matrix3x4 colLocalToThisNode = thisWorldTransformNoScale.Inverse()*colWorldOffset;
 
-
-
+               
                 
 
                 dMatrix localTransform = UrhoToNewton(colLocalToThisNode);//#todo move using physics world scale as well.
@@ -394,7 +393,7 @@ namespace Urho3D {
                 Vector3 shapeScale = colComp->GetScaleFactor();
 
                 scale = (colComp->GetRotationOffset()).Inverse()*scale*shapeScale;
-
+                scale *= physicsWorld_->GetPhysicsScale();
 
                 NewtonCollisionSetScale(usedCollision, scale.x_, scale.y_, scale.z_);//then scale.
 
@@ -424,13 +423,13 @@ namespace Urho3D {
                 
             }
 
-            //scale the entire shape by the physics world scale.
-            Vector3 physicsScale;
-            NewtonCollisionGetScale(resolvedCollision, &physicsScale.x_, &physicsScale.y_, &physicsScale.z_);
-            physicsScale = physicsScale*Vector3(physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale());
-            NewtonCollisionSetScale(resolvedCollision, physicsScale.x_, physicsScale.y_, physicsScale.z_);
+            ////scale the entire shape by the physics world scale.
+            //Vector3 physicsScale;
+            //NewtonCollisionGetScale(resolvedCollision, &physicsScale.x_, &physicsScale.y_, &physicsScale.z_);
+            //physicsScale = physicsScale*Vector3(physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale(), physicsWorld_->GetPhysicsScale());
+            //NewtonCollisionSetScale(resolvedCollision, physicsScale.x_, physicsScale.y_, physicsScale.z_);
 
-            
+            //
 
             //create the body at node transform (with physics world scale applied)
             Matrix3x4 worldTransform;

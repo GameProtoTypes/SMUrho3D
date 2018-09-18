@@ -130,7 +130,11 @@ namespace Urho3D {
 
         NewtonCollision* collision = NewtonBodyGetCollision(body);
         CollisionShape* colShape = static_cast<CollisionShape*>(NewtonCollisionGetUserData(collision));
-        if (colShape && colShape->GetDrawNewtonDebugGeometry())
+        if (colShape) {
+            if(colShape->GetDrawNewtonDebugGeometry())
+                NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
+        }
+        else
             NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
     }
 

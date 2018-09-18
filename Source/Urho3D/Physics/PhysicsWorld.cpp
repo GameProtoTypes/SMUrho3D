@@ -150,7 +150,7 @@ namespace Urho3D {
 
             //draw debug geometry on rigid bodies.
             for (RigidBody* body : rigidBodyComponentList) {
-                body->DrawDebugGeometry(debug, depthTest, false, true, false, false);
+                body->DrawDebugGeometry(debug, depthTest);
             }
 
             //draw debug geometry on static scene.
