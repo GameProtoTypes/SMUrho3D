@@ -54,7 +54,6 @@ namespace Urho3D {
         void SetWorldRotation(const Quaternion& rotation);
 
         
-
         /// Set constraint position in local cordinates to rigidbody.
         void SetOwnPosition(const Vector3& position);
         /// set the rotational frame to use on own rigidbody 
@@ -65,9 +64,9 @@ namespace Urho3D {
         void SetOwnWorldRotation(const Quaternion& worldRotation);
 
 
-        Vector3 GetOwnPosition(bool scaledPhysicsWorldFrame = false) const { return position_; }
+        Vector3 GetOwnPosition() const { return position_; }
 
-        Quaternion GetOwnRotation(bool scaledPhysicsWorldFrame = false) const { return rotation_; }
+        Quaternion GetOwnRotation() const { return rotation_; }
 
 
 
@@ -122,15 +121,18 @@ namespace Urho3D {
         unsigned GetOtherBodyId() const { return otherBodyId_; }
 
 
-        Vector3 GetOtherPosition(bool scaledPhysicsWorldFrame = false) const;
+        Vector3 GetOtherPosition() const;
 
-        Quaternion GetOtherRotation() const { return otherRotation_; }
+        Quaternion GetOtherRotation() const;
 
 
         Matrix3x4 GetOwnWorldFrame(bool scaledPhysicsWorldFrame = false) const;
 
+        Matrix3x4 GetOwnPhysicsWorldFrame() const { return GetOwnWorldFrame(true); }
+
         Matrix3x4 GetOtherWorldFrame(bool scaledPhysicsWorldFrame = false) const;
 
+        Matrix3x4 GetOtherPhysicsWorldFrame() const { return GetOtherWorldFrame(true); }
 
         dCustomJoint* GetNewtonJoint() const {
             return  newtonJoint_;

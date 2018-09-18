@@ -33,8 +33,8 @@ namespace Urho3D {
     void FullyFixedConstraint::buildConstraint()
     {
 
-        Matrix3x4 ownFrame = GetOwnWorldFrame();
-        Matrix3x4 otherFrame = GetOwnWorldFrame();
+        Matrix3x4 ownFrame = GetOwnPhysicsWorldFrame();
+        Matrix3x4 otherFrame = GetOtherPhysicsWorldFrame();
 
         newtonJoint_ = new dCustom6dof(UrhoToNewton(ownFrame), UrhoToNewton(otherFrame), GetOwnNewtonBody(), GetOtherNewtonBody());
 

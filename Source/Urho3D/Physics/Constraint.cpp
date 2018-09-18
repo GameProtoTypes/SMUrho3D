@@ -267,15 +267,22 @@ namespace Urho3D {
             return nullptr;
     }
 
-    Urho3D::Vector3 Constraint::GetOtherPosition(bool scaledPhysicsWorldFrame /*= false*/) const
+    Urho3D::Vector3 Constraint::GetOtherPosition() const
     {
-        return otherPosition_;
+
+       return otherPosition_;
+
+    }
+
+    Urho3D::Quaternion Constraint::GetOtherRotation() const
+    {
+        return otherRotation_;
     }
 
     Urho3D::Matrix3x4 Constraint::GetOwnWorldFrame(bool scaledPhysicsWorldFrame) const
     {
 
-        //return a frame with no scale at the position and rotation in node space.
+        //return a frame with no scale at the position and rotation in node space (or physics world space if scaledPhysicsWorldFrame is true)
         Matrix3x4 worldTransform = ownBody_->GetNode()->GetWorldTransform();
         Matrix3x4 worldTransformNoScale(ownBody_->GetNode()->GetWorldPosition(), ownBody_->GetNode()->GetWorldRotation(),1.0f);
 
@@ -312,7 +319,13 @@ namespace Urho3D {
             return frame;
         }
         else
-            return Matrix3x4(otherPosition_, otherRotation_, 1.0f);
+        {
+            if(scaledPhysicsWorldFrame)
+                return Matrix3x4(scaledPhysicsWorldFrame*otherPosition_, otherRotation_, 1.0f);
+            else
+                return Matrix3x4(otherPosition_, otherRotation_, 1.0f);
+
+        }
     }
 
     void Constraint::OnSetEnabled()
