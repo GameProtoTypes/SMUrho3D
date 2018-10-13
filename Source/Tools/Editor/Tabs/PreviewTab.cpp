@@ -209,7 +209,7 @@ void PreviewTab::RenderButtons()
     switch (simulationStatus_)
     {
     case SCENE_SIMULATION_RUNNING:
-        sceneTab_->GetScene()->Update(GetTime()->GetTimeStep());
+        sceneTab_->GetScene()->Update(GetSubsystem<Engine>()->GetUpdateTimeGoalMs()/1000.0f);
     case SCENE_SIMULATION_PAUSED:
     {
         if (GetInput()->GetKeyPress(KEY_ESCAPE))

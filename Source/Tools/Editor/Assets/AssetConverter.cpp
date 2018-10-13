@@ -33,9 +33,7 @@ namespace Urho3D
 AssetConverter::AssetConverter(Context* context)
     : Object(context)
 {
-    assetImporters_.Push(SharedPtr<ImportAssimp>(new ImportAssimp(context_)));
-
-    SubscribeToEvent(E_ENDFRAME, std::bind(&AssetConverter::DispatchChangedAssets, this));
+    SubscribeToEvent(E_POSTUPDATE, std::bind(&AssetConverter::DispatchChangedAssets, this));
     SubscribeToEvent(E_CONSOLECOMMAND, std::bind(&AssetConverter::OnConsoleCommand, this, _2));
 }
 

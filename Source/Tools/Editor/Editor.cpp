@@ -45,7 +45,11 @@
 #include "Tabs/PreviewTab.h"
 #include "Assets/AssetConverter.h"
 #include "Assets/Inspector/MaterialInspector.h"
+#include "Urho3D/Misc/FreeFunctions.h"
 
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 
 URHO3D_DEFINE_APPLICATION_MAIN(Editor);
@@ -94,6 +98,9 @@ void Editor::Setup()
             }
         }
     }
+
+
+    //engineResourcePaths_ = { "Data", "CoreData", "EditorData"};
 
     engineParameters_[EP_WINDOW_TITLE] = GetTypeName();
     engineParameters_[EP_HEADLESS] = false;
@@ -152,7 +159,7 @@ void Editor::Start()
         tabs_.Clear();
     });
 
-    SubscribeToEvent(E_ENDFRAME, [this](StringHash, VariantMap&) {
+    SubscribeToEvent(E_POSTUPDATE, [this](StringHash, VariantMap&) {
         // Opening a new project must be done at the point when SystemUI is not in use. End of the frame is a good
         // candidate. This subsystem will be recreated.
         if (!pendingOpenProject_.Empty())

@@ -355,7 +355,7 @@ void ParticleEmitter2D::Update(float timeStep)
 
     sourceBatchesDirty_ = true;
 
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
 }
 
 bool ParticleEmitter2D::EmitParticle(const Vector3& worldPosition, float worldAngle, float worldScale)

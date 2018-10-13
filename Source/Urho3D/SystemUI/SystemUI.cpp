@@ -90,8 +90,9 @@ SystemUI::SystemUI(Urho3D::Context* context)
     SubscribeToEvent(E_SDLRAWINPUT, std::bind(&SystemUI::OnRawEvent, this, _2));
     SubscribeToEvent(E_SCREENMODE, std::bind(&SystemUI::UpdateProjectionMatrix, this));
     SubscribeToEvent(E_INPUTEND, [&](StringHash, VariantMap&) {
-        float timeStep = GetTime()->GetTimeStep();
-        ImGui::GetIO().DeltaTime = timeStep > 0.0f ? timeStep : 1.0f / 60.0f;
+            float timeStep = GSS<Engine>()->GetUpdateTimeGoalMs() * 0.001f;
+            ImGui::GetIO().DeltaTime = timeStep > 0.0f ? timeStep : 1.0f / 60.0f;
+            ImGui::EndFrame();
         ImGui::NewFrame();
         ImGuizmo::BeginFrame();
     });

@@ -104,9 +104,7 @@ private:
     /// Current shown-element mode.
     DebugHudModeFlags mode_;
     /// FPS timer.
-    Timer fpsTimer_;
-    /// Calculated fps
-    unsigned fps_;
+    Timer updateFpsTimer_;
     /// DebugHud extents that data will be rendered in.
     IntRect extents_;
     /// Cached position (bottom-left corner) of mode information.

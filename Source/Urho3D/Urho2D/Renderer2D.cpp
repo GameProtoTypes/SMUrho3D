@@ -112,7 +112,7 @@ void Renderer2D::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQuery
         Sort(results.Begin() + resultSize, results.End(), CompareRayQueryResults);
 }
 
-void Renderer2D::UpdateBatches(const FrameInfo& frame)
+void Renderer2D::UpdateBatches(const RenderFrameInfo& frame)
 {
     unsigned count = batches_.Size();
 
@@ -124,7 +124,7 @@ void Renderer2D::UpdateBatches(const FrameInfo& frame)
     }
 }
 
-void Renderer2D::UpdateGeometry(const FrameInfo& frame)
+void Renderer2D::UpdateGeometry(const RenderFrameInfo& frame)
 {
     unsigned indexCount = 0;
     for (HashMap<Camera*, ViewBatchInfo2D>::ConstIterator i = viewBatchInfos_.Begin(); i != viewBatchInfos_.End(); ++i)
@@ -303,7 +303,7 @@ SharedPtr<Material> Renderer2D::CreateMaterial(Texture2D* texture, BlendMode ble
 
 void CheckDrawableVisibilityWork(const WorkItem* item, unsigned threadIndex)
 {
-    URHO3D_PROFILE("CheckDrawableVisibilityWork");
+    URHO3D_PROFILE_FUNCTION();
     auto* renderer = reinterpret_cast<Renderer2D*>(item->aux_);
     auto** start = reinterpret_cast<Drawable2D**>(item->start_);
     auto** end = reinterpret_cast<Drawable2D**>(item->end_);

@@ -584,7 +584,7 @@ void RigidBody2D::OnSceneSet(Scene* scene)
     }
 }
 
-void RigidBody2D::OnMarkedDirty(Node* node)
+void RigidBody2D::OnNodeMarkedDirty(Node* node)
 {
     if (physicsWorld_ && physicsWorld_->IsApplyingTransforms())
         return;

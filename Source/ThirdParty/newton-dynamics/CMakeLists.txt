@@ -1,0 +1,108 @@
+# Copyright (c) <2014-2017> <Newton Game Dynamics>
+#
+# This software is provided 'as-is', without any express or implied
+# warranty. In no event will the authors be held liable for any damages
+# arising from the use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely.
+
+cmake_minimum_required(VERSION 3.10.0)
+
+
+#Urho3D Overrides
+if(URHO3D_THIRDPARTY_SHARED_LIBS)
+	set(NEWTON_GENERATE_DLL ON CACHE BOOL "build dll libraries")
+	set(NEWTON_STATIC_RUNTIME_LIBRARIES OFF CACHE BOOL "use windows system static libraries")
+else ()
+	set(NEWTON_GENERATE_DLL OFF CACHE BOOL "build dll libraries")
+	set(NEWTON_STATIC_RUNTIME_LIBRARIES ON CACHE BOOL "use windows system static libraries")
+endif ()
+
+
+
+
+option("NEWTON_GENERATE_DLL" "build dll libraries" ON)
+option("NEWTON_BUILD_SANDBOX_DEMOS" "generates demos projects" OFF)
+option("NEWTON_DOUBLE_PRECISION" "Generate double precision" OFF)
+option("NEWTON_STATIC_RUNTIME_LIBRARIES" "use windows system static libraries" OFF)
+option("NEWTON_WITH_AVX_PLUGIN" "adding avx parallel solver" ON)
+option("NEWTON_WITH_AVX2_PLUGIN" "adding avx2 parallel solver" ON)
+option("NEWTON_WITH_SSE_PLUGIN" "adding sse parallel solver" ON)
+option("NEWTON_WITH_SSE4_PLUGIN" "adding sse4 parallel solver" ON)
+option("NEWTON_WITH_DX12_PLUGIN" "adding direct compute 12 parallel solver" OFF)
+
+
+set(CMAKE_CONFIGURATION_TYPES Debug Release RelWithDebInfo)
+
+#Urho Doesnt Do "_d"'s
+#set(CMAKE_DEBUG_POSTFIX "_d")
+
+
+project(NewtonSDK)
+
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+if (NEWTON_DOUBLE_PRECISION)
+	add_definitions(-D_NEWTON_USE_DOUBLE)
+endif ()
+
+if (MSVC)
+	#message ("build newton visual studio projects")
+
+	if(CMAKE_CL_64)
+		message ("build 64 bit")
+		add_definitions(-D_WIN_64_VER)
+	else()
+		message ("build 32 bit")
+		add_definitions(-D_WIN_32_VER)
+	endif()
+
+	if(NEWTON_STATIC_RUNTIME_LIBRARIES)
+		#message ("newton link to static runtime libraries")
+		set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
+		set(CMAKE_CXX_FLAGS_RELEASE "/MT")
+		set(CMAKE_C_FLAGS_DEBUG "/MTd")
+		set(CMAKE_C_FLAGS_RELEASE "/MT")
+		set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
+		set(CMAKE_CXX_FLAGS_RELEASE "/MT")
+	else()
+		#message ("newton link to dynamic runtime libraries")
+		set(CMAKE_C_FLAGS_DEBUG "/MDd")
+		set(CMAKE_C_FLAGS_RELEASE "/MD")
+		set(CMAKE_CXX_FLAGS_DEBUG "/MDd")
+		set(CMAKE_CXX_FLAGS_RELEASE "/MD")
+	endif()
+
+	if(CMAKE_CL_64)
+		message ("build 64 bit")
+		add_definitions(-D_WIN_64_VER)
+	else()
+		message ("build 32 bit")
+		add_definitions(-D_WIN_32_VER)
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /arch:SSE2")
+	endif()
+
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /W4 /Od")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi /W4 /Ox /Oi /Ot /Ob2 /fp:fast")
+
+	message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
+	message("CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}")
+endif()
+
+set (dllPath "${PROJECT_BINARY_DIR}/build/bin")
+set (libraryPath "${PROJECT_BINARY_DIR}/build/lib")
+set (includePath "${PROJECT_BINARY_DIR}/build/include")
+
+
+add_subdirectory(sdk)
+
+
+add_dependencies (dgPhysics dgCore)
+add_dependencies (dContainers dMath dTimeTracker)
+add_dependencies (newton dgCore dgPhysics dTimeTracker)
+add_dependencies (dAnimation dMath dContainers dTimeTracker)
+add_dependencies (dCustomJoints dMath dContainers dTimeTracker)
+add_dependencies (dNewton newton dMath dContainers dCustomJoints dTimeTracker)
+add_dependencies (dVehicle newton dMath dContainers dCustomJoints dTimeTracker)
+

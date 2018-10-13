@@ -112,7 +112,7 @@ void Text3D::ApplyAttributes()
     UpdateTextMaterials();
 }
 
-void Text3D::UpdateBatches(const FrameInfo& frame)
+void Text3D::UpdateBatches(const RenderFrameInfo& frame)
 {
     distance_ = frame.camera_->GetDistance(GetWorldBoundingBox().Center());
 
@@ -135,7 +135,7 @@ void Text3D::UpdateBatches(const FrameInfo& frame)
     }
 }
 
-void Text3D::UpdateGeometry(const FrameInfo& frame)
+void Text3D::UpdateGeometry(const RenderFrameInfo& frame)
 {
     if (fontDataLost_)
     {
@@ -363,7 +363,7 @@ void Text3D::SetFixedScreenSize(bool enable)
         fixedScreenSize_ = enable;
 
         // Bounding box must be recalculated
-        OnMarkedDirty(node_);
+        OnNodeMarkedDirty(node_);
         MarkNetworkUpdate();
     }
 }
@@ -375,7 +375,7 @@ void Text3D::SetFaceCameraMode(FaceCameraMode mode)
         faceCameraMode_ = mode;
 
         // Bounding box must be recalculated
-        OnMarkedDirty(node_);
+        OnNodeMarkedDirty(node_);
         MarkNetworkUpdate();
     }
 }
@@ -532,7 +532,7 @@ void Text3D::MarkTextDirty()
 {
     textDirty_ = true;
 
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
@@ -732,7 +732,7 @@ void Text3D::UpdateTextMaterials(bool forceUpdate)
     }
 }
 
-void Text3D::CalculateFixedScreenSize(const FrameInfo& frame)
+void Text3D::CalculateFixedScreenSize(const RenderFrameInfo& frame)
 {
     Vector3 worldPosition = node_->GetWorldPosition();
     Vector3 worldScale = node_->GetWorldScale();
