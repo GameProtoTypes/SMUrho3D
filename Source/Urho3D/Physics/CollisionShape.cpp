@@ -293,6 +293,8 @@ namespace Urho3D {
         {
             return rootRigidBodies.Back();//return scene rigid body.
         }
+
+        return nullptr;
     }
 
     void CollisionShape::MarkRigidBodyDirty()
