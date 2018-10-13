@@ -141,8 +141,6 @@ void Editor::Start()
     context_->RegisterSubsystem(this);
     SceneSettings::RegisterObject(context_);
 
-    SetupSystemUI();
-
     GetCache()->SetAutoReloadResources(true);
 
     SubscribeToEvent(E_UPDATE, std::bind(&Editor::OnUpdate, this, _2));
@@ -186,6 +184,8 @@ void Editor::Start()
 
     if (!defaultProjectPath.empty())
         pendingOpenProject_ = defaultProjectPath.c_str();
+    else
+        SetupSystemUI();
 }
 
 void Editor::Stop()
@@ -218,19 +218,13 @@ void Editor::OnUpdate(VariantMap& args)
     {
         if (tab->RenderWindow())
         {
-            if (tab->IsRendered())
+            // Only active window may override another active window
+            if (activeTab_ != tab && tab->IsActive())
             {
-                if (activeTab_ != tab)
-                {
-                    // Only active window may override another active window
-                    if (tab->IsActive())
-                    {
-                        activeTab_ = tab;
-                        if (SceneTab* sceneTab = tab->Cast<SceneTab>())
-                            lastActiveScene_ = sceneTab;
-                        tab->OnFocused();
-                    }
-                }
+                activeTab_ = tab;
+                if (SceneTab* sceneTab = tab->Cast<SceneTab>())
+                    lastActiveScene_ = sceneTab;
+                tab->OnFocused();
             }
         }
         else if (!tab->IsUtility())
@@ -563,9 +557,12 @@ Tab* Editor::GetTab(StringHash type, const String& resourceName)
 
 void Editor::SetupSystemUI()
 {
+    static ImWchar fontAwesomeIconRanges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     GetSystemUI()->ApplyStyleDefault(true, 1.0f);
-    GetSystemUI()->AddFont("Fonts/NotoSans-Regular.ttf", {}, 16.f);
-    GetSystemUI()->AddFont("Fonts/" FONT_ICON_FILE_NAME_FAS, {ICON_MIN_FA, ICON_MAX_FA, 0}, 0, true);
+    GetSystemUI()->AddFont("Fonts/NotoSans-Regular.ttf", nullptr, 16.f);
+    GetSystemUI()->AddFont("Fonts/" FONT_ICON_FILE_NAME_FAS, fontAwesomeIconRanges, 0, true);
+    monoFont_ = GetSystemUI()->AddFont("Fonts/NotoMono-Regular.ttf", nullptr, 14.f);
+    GetSystemUI()->AddFont("Fonts/" FONT_ICON_FILE_NAME_FAS, fontAwesomeIconRanges, 0, true);
     ui::GetStyle().WindowRounding = 3;
     // Disable imgui saving ui settings on it's own. These should be serialized to project file.
     ui::GetIO().IniFilename = nullptr;

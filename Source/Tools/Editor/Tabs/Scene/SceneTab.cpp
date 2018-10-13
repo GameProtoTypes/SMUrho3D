@@ -32,6 +32,7 @@
 #include "Editor.h"
 #include "Widgets.h"
 #include "SceneSettings.h"
+#include "Tabs/HierarchyTab.h"
 #include "Tabs/InspectorTab.h"
 #include "Tabs/PreviewTab.h"
 #include "Assets/Inspector/MaterialInspector.h"
@@ -157,8 +158,12 @@ bool SceneTab::RenderWindowContent()
     RenderToolbarButtons();
 
     IntRect tabRect = UpdateViewRect();
+    // Correct content rect to not overlap buttons. Ideally this should be in Tab.cpp but for some reason it creates
+    // unused space at the bottom of PreviewTab.
+    tabRect.top_ += static_cast<int>(ui::GetCursorPosY());
 
     ui::SetCursorScreenPos(ToImGui(tabRect.Min()));
+    ui::BeginChild("Scene view");
     ui::Image(view_.GetTexture(), ToImGui(tabRect.Size()));
     gizmo_.ManipulateSelection(view_.GetCamera());
 
@@ -209,33 +214,51 @@ bool SceneTab::RenderWindowContent()
             GetScene()->GetComponent<Octree>()->RaycastSingle(query2);
         }
 
-        if (results.Size())
+        if (results.Size() && results[0].drawable_->GetNode() != nullptr)
         {
+            StringHash componentType;
             WeakPtr<Node> clickNode(results[0].drawable_->GetNode());
-            // Temporary nodes can not be selected.
+
+            if (clickNode->HasTag("DebugIcon"))
+                componentType = clickNode->GetVar("ComponentType").GetStringHash();
+
             while (!clickNode.Expired() && clickNode->HasTag("__EDITOR_OBJECT__"))
                 clickNode = clickNode->GetParent();
 
-            if (!clickNode.Expired())
+            if (isClickedLeft)
             {
-                if (isClickedLeft)
+                if (!GetInput()->GetKeyDown(KEY_CTRL))
+                    UnselectAll();
+
+                if (clickNode == GetScene())
                 {
-                    if (!GetInput()->GetKeyDown(KEY_CTRL))
+                    if (componentType != StringHash::ZERO)
+                        ToggleSelection(clickNode->GetComponent(componentType));
+                }
+                else
+                    ToggleSelection(clickNode);
+            }
+            else if (isClickedRight)
+            {
+                if (clickNode == GetScene())
+                {
+                    if (componentType != StringHash::ZERO)
                     {
-                        UnselectAll();
+                        Component* component = clickNode->GetComponent(componentType);
+                        if (!IsSelected(component))
+                        {
+                            UnselectAll();
+                            ToggleSelection(component);
+                        }
                     }
+                }
+                else if (!IsSelected(clickNode))
+                {
+                    UnselectAll();
                     ToggleSelection(clickNode);
                 }
-                else if (isClickedRight)
-                {
-                    if (!IsSelected(clickNode))
-                    {
-                        UnselectAll();
-                        ToggleSelection(clickNode);
-                    }
-                    if (undo_.IsTrackingEnabled())
-                        ui::OpenPopupEx(ui::GetID("Node context menu"));
-                }
+                if (undo_.IsTrackingEnabled())
+                    ui::OpenPopupEx(ui::GetID("Node context menu"));
             }
         }
         else
@@ -243,6 +266,8 @@ bool SceneTab::RenderWindowContent()
     }
 
     RenderNodeContextMenu();
+
+    ui::EndChild(); // Scene view
 
     return open;
 }
@@ -471,7 +496,7 @@ void SceneTab::RenderToolbarButtons()
 {
     ui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
 
-    ui::SetCursorPos({4_dpx, 4_dpy});
+    ui::SetCursorPos(ui::GetCursorPos() + ImVec2{4_dpx, 4_dpy});
 
     if (ui::EditorToolbarButton(ICON_FA_SAVE, "Save"))
         SaveResource();
@@ -496,7 +521,9 @@ void SceneTab::RenderToolbarButtons()
 
     SendEvent(E_EDITORTOOLBARBUTTONS);
 
-    ui::NewLine();
+    ui::SameLine(0, 3.f);
+    ui::SetCursorPosY(ui::GetCursorPosY() + 4_dpx);
+
     ui::PopStyleVar();
 }
 
@@ -524,18 +551,31 @@ void SceneTab::OnNodeSelectionChanged()
 
 void SceneTab::RenderInspector(const char* filter)
 {
+    const auto& selection = GetSelection();
+    bool singleNodeMode = selection.Size() == 1 && selectedComponents_.Empty();
     for (auto& node : GetSelection())
     {
         if (node.Expired())
             continue;
         RenderAttributes(node.Get(), filter, &inspector_);
+        if (singleNodeMode)
+        {
+            for (auto& component : node->GetComponents())
+            {
+                if (!component->IsTemporary())
+                    RenderAttributes(component.Get(), filter, &inspector_);
+            }
+        }
     }
 
-    for (auto& component : selectedComponents_)
+    if (!singleNodeMode)
     {
-        if (component.Expired())
-            continue;
-        RenderAttributes(component.Get(), filter, &inspector_);
+        for (auto& component : selectedComponents_)
+        {
+            if (component.Expired())
+                continue;
+            RenderAttributes(component.Get(), filter, &inspector_);
+        }
     }
 }
 
@@ -723,21 +763,6 @@ void SceneTab::OnSaveProject(JSONValue& tab)
 
 void SceneTab::OnActiveUpdate()
 {
-    if (!ui::IsAnyItemActive() && undo_.IsTrackingEnabled())
-    {
-        // Global view hotkeys
-        if (GetInput()->GetKeyPress(KEY_DELETE))
-            RemoveSelection();
-        else if (GetInput()->GetKeyDown(KEY_CTRL))
-        {
-            if (GetInput()->GetKeyPress(KEY_C))
-                CopySelection();
-            else if (GetInput()->GetKeyPress(KEY_V))
-                PasteToSelection();
-        }
-        else if (GetInput()->GetKeyPress(KEY_ESCAPE))
-            UnselectAll();
-    }
 }
 
 void SceneTab::RemoveSelection()
@@ -773,6 +798,29 @@ void SceneTab::OnUpdate(VariantMap& args)
     {
         if (mouseHoversViewport_)
             component->Update(timeStep);
+    }
+
+    if (Tab* tab = GetSubsystem<Editor>()->GetActiveTab())
+    {
+        StringHash activeTabType = tab->GetType();
+        if (activeTabType == GetType() || activeTabType == HierarchyTab::GetTypeStatic())
+        {
+            if (!ui::IsAnyItemActive() && undo_.IsTrackingEnabled())
+            {
+                // Global view hotkeys
+                if (GetInput()->GetKeyPress(KEY_DELETE))
+                    RemoveSelection();
+                else if (GetInput()->GetKeyDown(KEY_CTRL))
+                {
+                    if (GetInput()->GetKeyPress(KEY_C))
+                        CopySelection();
+                    else if (GetInput()->GetKeyPress(KEY_V))
+                        PasteToSelection();
+                }
+                else if (GetInput()->GetKeyPress(KEY_ESCAPE))
+                    UnselectAll();
+            }
+        }
     }
 
     // Render editor camera rotation guide
@@ -960,6 +1008,7 @@ void SceneTab::OnComponentAdded(VariantMap& args)
             node->AddTag("DebugIcon");
             node->AddTag("DebugIcon" + component->GetTypeName());
             node->AddTag("__EDITOR_OBJECT__");
+            node->SetVar("ComponentType", component->GetType());
             node->SetTemporary(true);
 
             auto* billboard = node->CreateComponent<BillboardSet>();
