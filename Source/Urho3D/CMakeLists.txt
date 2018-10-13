@@ -50,7 +50,7 @@ macro (define_engine_source_files)
 endmacro()
 
 define_engine_source_files (NORECURSE . Graphics)
-define_engine_source_files (Audio Container Core Engine Input IO Math Resource Scene UI)
+define_engine_source_files (Audio Container Core Engine Input IO Math Resource Scene UI Tweeks Misc)
 
 if (URHO3D_OPENGL)
     define_engine_source_files (Graphics/OpenGL)
@@ -148,7 +148,22 @@ set (THIRD_PARTY_DEPENDENCIES
     Recast
     Box2D
     WebP
-    Bullet
+    
+    dAnimation
+    dContainers
+    dCustomJoints
+    dgCore
+    dgNewtonAvx
+    dgNewtonAvx2
+    dgNewtonSse4.2
+    dgPhysics
+    dNewton
+    dMath
+    newton
+    dScene
+    dTimeTracker
+    tinyxml
+    
     ImGui
     LibCpuId
     GLEW

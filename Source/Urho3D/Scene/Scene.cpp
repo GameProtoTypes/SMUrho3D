@@ -44,8 +44,13 @@
 #include "../Scene/SplinePath.h"
 #include "../Scene/UnknownComponent.h"
 #include "../Scene/ValueAnimation.h"
-
+#include "../Scene/ASyncNodeLoader.h"
+#include "../Scene/ASyncNodeRemover.h"
+#include "../Scene/ASyncNodeSaver.h"
 #include "../DebugNew.h"
+
+
+
 
 namespace Urho3D
 {
@@ -830,7 +835,7 @@ void Scene::EndThreadedUpdate()
         URHO3D_PROFILE("EndThreadedUpdate");
 
         for (PODVector<Component*>::ConstIterator i = delayedDirtyComponents_.Begin(); i != delayedDirtyComponents_.End(); ++i)
-            (*i)->OnMarkedDirty((*i)->GetNode());
+            (*i)->OnNodeMarkedDirty((*i)->GetNode());
         delayedDirtyComponents_.Clear();
     }
 }
@@ -1168,8 +1173,7 @@ void Scene::HandleUpdate(StringHash eventType, VariantMap& eventData)
     if (!updateEnabled_)
         return;
 
-    using namespace Update;
-    Update(eventData[P_TIMESTEP].GetFloat());
+    Update(eventData[Update::P_TIMESTEP].GetFloat());
 }
 
 void Scene::HandleResourceBackgroundLoaded(StringHash eventType, VariantMap& eventData)
@@ -1540,6 +1544,9 @@ void RegisterSceneLibrary(Context* context)
     SplinePath::RegisterObject(context);
     SceneMetadata::RegisterObject(context);
     CameraViewport::RegisterObject(context);
+	ASyncNodeLoader::RegisterObject(context);
+	ASyncNodeSaver::RegisterObject(context);
+	ASyncNodeRemover::RegisterObject(context);
 }
 
 }

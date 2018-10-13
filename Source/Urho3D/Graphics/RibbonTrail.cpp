@@ -198,7 +198,7 @@ void RibbonTrail::HandleScenePostUpdate(StringHash eventType, VariantMap& eventD
     }
 }
 
-void RibbonTrail::Update(const FrameInfo &frame)
+void RibbonTrail::Update(const RenderFrameInfo &frame)
 {
     Drawable::Update(frame);
 
@@ -206,7 +206,7 @@ void RibbonTrail::Update(const FrameInfo &frame)
         return;
 
     UpdateTail(frame.timeStep_);
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     needUpdate_ = false;
 }
 
@@ -348,7 +348,7 @@ void RibbonTrail::SetEmitting(bool emitting)
         bufferSizeDirty_ = true;
     }
 
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
@@ -366,12 +366,12 @@ void RibbonTrail::SetTailColumn(unsigned tailColumn)
     else
         tailColumn_ = tailColumn;
 
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     bufferSizeDirty_ = true;
     MarkNetworkUpdate();
 }
 
-void RibbonTrail::UpdateBatches(const FrameInfo& frame)
+void RibbonTrail::UpdateBatches(const RenderFrameInfo& frame)
 {
     // Update information for renderer about this drawable
     distance_ = frame.camera_->GetDistance(GetWorldBoundingBox().Center());
@@ -394,7 +394,7 @@ void RibbonTrail::UpdateBatches(const FrameInfo& frame)
     }
 }
 
-void RibbonTrail::UpdateGeometry(const FrameInfo& frame)
+void RibbonTrail::UpdateGeometry(const RenderFrameInfo& frame)
 {
     if (bufferSizeDirty_ || indexBuffer_->IsDataLost())
         UpdateBufferSize();
@@ -520,7 +520,7 @@ void RibbonTrail::UpdateBufferSize()
     indexBuffer_->ClearDataLost();
 }
 
-void RibbonTrail::UpdateVertexBuffer(const FrameInfo& frame)
+void RibbonTrail::UpdateVertexBuffer(const RenderFrameInfo& frame)
 {
     // If using animation LOD, accumulate time and see if it is time to update
     if (animationLodBias_ > 0.0f && lodDistance_ > 0.0f)
@@ -851,7 +851,7 @@ void RibbonTrail::SetTrailType(TrailType type)
     }
 
     trailType_ = type;
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     bufferSizeDirty_ = true;
     MarkNetworkUpdate();
 }
@@ -894,7 +894,7 @@ void RibbonTrail::Commit()
 
 void RibbonTrail::MarkPositionsDirty()
 {
-    Drawable::OnMarkedDirty(node_);
+    Drawable::OnNodeMarkedDirty(node_);
     bufferDirty_ = true;
 }
 

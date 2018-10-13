@@ -72,6 +72,32 @@ public:
     {
     }
 
+		Color(double r, double g, double b, double a) noexcept :
+		    r_(float(r)),
+			g_(float(g)),
+			b_(float(b)),
+			a_(float(a))
+		{
+		}
+		Color(double r, double g, double b) noexcept :
+			r_(float(r)),
+			g_(float(g)),
+			b_(float(b)),
+			a_(1.0f)
+		{
+		}
+		/// Construct from 8 bit components
+		explicit Color(int r, int g, int b, int a = 255) noexcept :
+		    r_(float(r)),
+			g_(float(g)),
+			b_(float(b)),
+			a_(float(a))
+		{
+			r_ = Clamp(r, 0, 255) / 255.0f;
+			g_ = Clamp(g, 0, 255) / 255.0f;
+			b_ = Clamp(b, 0, 255) / 255.0f;
+			a_ = Clamp(a, 0, 255) / 255.0f;
+		}
     /// Construct from a float array.
     explicit Color(const float* data) noexcept :
         r_(data[0]),

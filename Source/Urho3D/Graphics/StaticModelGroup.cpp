@@ -100,7 +100,7 @@ void StaticModelGroup::ApplyAttributes()
     numWorldTransforms_ = 0; // Correct amount will be found during world bounding box update
     nodesDirty_ = false;
 
-    OnMarkedDirty(GetNode());
+    OnNodeMarkedDirty(GetNode());
 }
 
 void StaticModelGroup::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQueryResult>& results)
@@ -166,7 +166,7 @@ void StaticModelGroup::ProcessRayQuery(const RayOctreeQuery& query, PODVector<Ra
     }
 }
 
-void StaticModelGroup::UpdateBatches(const FrameInfo& frame)
+void StaticModelGroup::UpdateBatches(const RenderFrameInfo& frame)
 {
     // Getting the world bounding box ensures the transforms are updated
     const BoundingBox& worldBoundingBox = GetWorldBoundingBox();
@@ -362,7 +362,7 @@ const VariantVector& StaticModelGroup::GetNodeIDsAttr() const
 
 void StaticModelGroup::OnNodeSetEnabled(Node* node)
 {
-    Drawable::OnMarkedDirty(node);
+    Drawable::OnNodeMarkedDirty(node);
 }
 
 void StaticModelGroup::OnWorldBoundingBoxUpdate()
@@ -396,7 +396,7 @@ void StaticModelGroup::UpdateNumTransforms()
     numWorldTransforms_ = 0; // Correct amount will be during world bounding box update
     nodeIDsDirty_ = true;
 
-    OnMarkedDirty(GetNode());
+    OnNodeMarkedDirty(GetNode());
     MarkNetworkUpdate();
 }
 

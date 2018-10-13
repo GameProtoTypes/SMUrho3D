@@ -99,7 +99,7 @@ void Zone::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
 void Zone::SetBoundingBox(const BoundingBox& box)
 {
     boundingBox_ = box;
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
@@ -226,7 +226,7 @@ ResourceRef Zone::GetZoneTextureAttr() const
     return GetResourceRef(zoneTexture_, TextureCube::GetTypeStatic());
 }
 
-void Zone::OnMarkedDirty(Node* node)
+void Zone::OnNodeMarkedDirty(Node* node)
 {
     // Due to the octree query and weak pointer manipulation, is not safe from worker threads
     Scene* scene = GetScene();
@@ -236,7 +236,7 @@ void Zone::OnMarkedDirty(Node* node)
         return;
     }
 
-    Drawable::OnMarkedDirty(node);
+    Drawable::OnNodeMarkedDirty(node);
 
     // Clear zone reference from all drawables inside the bounding box, and mark gradient dirty in neighbor zones
     ClearDrawablesZone();

@@ -129,7 +129,7 @@ void StaticModel::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQuer
     }
 }
 
-void StaticModel::UpdateBatches(const FrameInfo& frame)
+void StaticModel::UpdateBatches(const RenderFrameInfo& frame)
 {
     const BoundingBox& worldBoundingBox = GetWorldBoundingBox();
     distance_ = frame.camera_->GetDistance(worldBoundingBox.Center());
@@ -359,7 +359,7 @@ bool StaticModel::IsInsideLocal(const Vector3& point) const
 void StaticModel::SetBoundingBox(const BoundingBox& box)
 {
     boundingBox_ = box;
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
 }
 
 void StaticModel::SetNumGeometries(unsigned num)

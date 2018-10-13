@@ -29,17 +29,60 @@
 namespace Urho3D
 {
 
-void SinCos(float angle, float& sin, float& cos)
-{
-    float angleRadians = angle * M_DEGTORAD;
+    int Wrap(int value, int min, int max)
+    {
+        int range = max - min;
+
+        if (value < min) {
+            value = 1 + (max - (min - value) % (range));
+        }
+        else if (value > max) {
+            value = (-1 + min + (value - min) % (range));
+        }
+        return value;
+    }
+
+    float Wrap(float value, float min, float max)
+    {
+        float range = max - min;
+
+        if (value < min) {
+            float delta = (min - value);
+            value = max - ((delta / range) - delta);
+        }
+        else if (value > max) {
+            float delta = (value - min);
+            value = min + ((delta / range) - delta);
+        }
+        return value;
+    }
+
+    double Wrap(double value, double min, double max)
+    {
+        double range = max - min;
+
+        if (value < min) {
+            double delta = (min - value);
+            value = max - ((delta / range) - delta);
+        }
+        else if (value > max) {
+            double delta = (value - min);
+            value = min + ((delta / range) - delta);
+        }
+        return value;
+    }
+
+    void SinCos(float angle, float& sin, float& cos)
+    {
+        float angleRadians = angle * M_DEGTORAD;
 #if defined(HAVE_SINCOSF)
-    sincosf(angleRadians, &sin, &cos);
+        sincosf(angleRadians, &sin, &cos);
 #elif defined(HAVE___SINCOSF)
-    __sincosf(angleRadians, &sin, &cos);
+        __sincosf(angleRadians, &sin, &cos);
 #else
-    sin = sinf(angleRadians);
-    cos = cosf(angleRadians);
+        sin = sinf(angleRadians);
+        cos = cosf(angleRadians);
 #endif
-}
+    }
 
 }

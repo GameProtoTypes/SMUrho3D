@@ -254,9 +254,6 @@ public:
     int GetMouseMoveY() const;
     /// Return mouse wheel movement since last frame.
     int GetMouseMoveWheel() const { return mouseMoveWheel_; }
-    /// Return input coordinate scaling. Should return non-unity on High DPI display.
-    Vector2 GetInputScale() const { return inputScale_; }
-
     /// Return number of active finger touches.
     unsigned GetNumTouches() const { return touches_.Size(); }
     /// Return active finger touch by index.
@@ -343,7 +340,7 @@ private:
     /// Handle screen mode event.
     void HandleScreenMode(StringHash eventType, VariantMap& eventData);
     /// Handle frame start event.
-    void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
+    void HandleUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle touch events from the controls of screen joystick(s).
     void HandleScreenJoystickTouch(StringHash eventType, VariantMap& eventData);
     /// Handle SDL event.
@@ -362,7 +359,7 @@ private:
     /// SetMouseMode  (Emscripten platform only).
     void SetMouseModeEmscripten(MouseMode mode, bool suppressEvent);
     /// Handle frame end event.
-    void HandleEndFrame(StringHash eventType, VariantMap& eventData);
+    void HandleUpdate(StringHash eventType, VariantMap& eventData);
 #endif
 
     /// Graphics subsystem.
@@ -403,8 +400,6 @@ private:
     IntVector2 mouseMove_;
     /// Mouse wheel movement since last frame.
     int mouseMoveWheel_;
-    /// Input coordinate scaling. Non-unity when window and backbuffer have different sizes (e.g. Retina display.)
-    Vector2 inputScale_;
     /// SDL window ID.
     unsigned windowID_;
     /// Fullscreen toggle flag.

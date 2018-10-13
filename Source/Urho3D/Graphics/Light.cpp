@@ -199,7 +199,7 @@ void Light::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQueryResul
     results.Push(result);
 }
 
-void Light::UpdateBatches(const FrameInfo& frame)
+void Light::UpdateBatches(const RenderFrameInfo& frame)
 {
     switch (lightType_)
     {
@@ -252,7 +252,7 @@ void Light::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
 void Light::SetLightType(LightType type)
 {
     lightType_ = type;
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
@@ -307,21 +307,21 @@ void Light::SetBrightness(float brightness)
 void Light::SetRange(float range)
 {
     range_ = Max(range, 0.0f);
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
 void Light::SetFov(float fov)
 {
     fov_ = Clamp(fov, 0.0f, M_MAX_FOV);
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
 void Light::SetAspectRatio(float aspectRatio)
 {
     aspectRatio_ = Max(aspectRatio, M_EPSILON);
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 

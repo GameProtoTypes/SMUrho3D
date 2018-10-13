@@ -189,7 +189,7 @@ void BackgroundLoader::WaitForResource(StringHash type, StringHash nameHash)
             for (;;)
             {
                 unsigned numDeps = i->second_.dependencies_.Size();
-                AsyncLoadState state = resource->GetAsyncLoadState();
+                ResourceAsyncLoadState state = resource->GetAsyncLoadState();
                 if (numDeps > 0 || state == ASYNC_QUEUED || state == ASYNC_LOADING)
                 {
                     didWait = true;
@@ -228,7 +228,7 @@ void BackgroundLoader::FinishResources(int maxMs)
         {
             Resource* resource = i->second_.resource_;
             unsigned numDeps = i->second_.dependencies_.Size();
-            AsyncLoadState state = resource->GetAsyncLoadState();
+            ResourceAsyncLoadState state = resource->GetAsyncLoadState();
             if (numDeps > 0 || state == ASYNC_QUEUED || state == ASYNC_LOADING)
                 ++i;
             else

@@ -274,7 +274,7 @@ int CrowdAgent::AddAgentToCrowd(bool force)
 
     if (force || !IsInCrowd())
     {
-        URHO3D_PROFILE("AddAgentToCrowd");
+        URHO3D_PROFILE_FUNCTION();
 
         agentCrowdId_ = crowdManager_->AddAgent(this, node_->GetWorldPosition());
         if (agentCrowdId_ == -1)
@@ -619,7 +619,7 @@ void CrowdAgent::OnSceneSet(Scene* scene)
         RemoveAgentFromCrowd();
 }
 
-void CrowdAgent::OnMarkedDirty(Node* node)
+void CrowdAgent::OnNodeMarkedDirty(Node* node)
 {
     if (!ignoreTransformChanges_ && IsEnabledEffective())
     {

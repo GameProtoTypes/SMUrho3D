@@ -522,7 +522,7 @@ public:
         m22_ = rotation.m22_;
     }
 
-    /// Set scaling elements.
+    /// Set scaling elements and overwrite any previous rotation information.
     void SetScale(const Vector3& scale)
     {
         m00_ = scale.x_;
@@ -530,7 +530,7 @@ public:
         m22_ = scale.z_;
     }
 
-    /// Set uniform scaling elements.
+    /// Set uniform scaling elements and overwrite any previous rotation information.
     void SetScale(float scale)
     {
         m00_ = scale;
@@ -652,6 +652,11 @@ public:
 
     /// Return inverse.
     Matrix3x4 Inverse() const;
+
+    /// return true if the matrix is a skewing matrix.
+    bool IsSkewed() const;
+
+
 
     /// Return float data.
     const float* Data() const { return &m00_; }

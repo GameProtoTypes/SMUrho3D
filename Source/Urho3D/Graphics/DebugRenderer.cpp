@@ -55,7 +55,7 @@ DebugRenderer::DebugRenderer(Context* context) :
 {
     vertexBuffer_ = new VertexBuffer(context_);
 
-    SubscribeToEvent(E_ENDFRAME, URHO3D_HANDLER(DebugRenderer, HandleEndFrame));
+    SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(DebugRenderer, HandlePostRenderUpdate));
 }
 
 DebugRenderer::~DebugRenderer() = default;
@@ -520,6 +520,23 @@ void DebugRenderer::AddQuad(const Vector3& center, float width, float height, co
     AddLine(v3, v0, uintColor, depthTest);
 }
 
+void DebugRenderer::AddFrame(const Matrix3x4& worldTransform, float scale, Color colorX, Color colorY, Color colorZ, bool depthTest)
+{
+    Vector3 origin = Vector3::ZERO;
+    Vector3 x = Vector3(1.0f, 0, 0) * scale;
+    Vector3 y = Vector3(0, 1.0f, 0) * scale;
+    Vector3 z = Vector3(0, 0, 1.0f) * scale;
+
+    origin = worldTransform * origin;
+    x = worldTransform * x;
+    y = worldTransform * y;
+    z = worldTransform * z;
+
+    AddLine(origin, x, colorX, depthTest);
+    AddLine(origin, y, colorY, depthTest);
+    AddLine(origin, z, colorZ, depthTest);
+}
+
 void DebugRenderer::Render()
 {
     if (!HasContent())
@@ -683,7 +700,7 @@ bool DebugRenderer::HasContent() const
     return !(lines_.Empty() && noDepthLines_.Empty() && triangles_.Empty() && noDepthTriangles_.Empty());
 }
 
-void DebugRenderer::HandleEndFrame(StringHash eventType, VariantMap& eventData)
+void DebugRenderer::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
 {
     // When the amount of debug geometry is reduced, release memory
     unsigned linesSize = lines_.Size();

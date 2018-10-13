@@ -227,6 +227,8 @@ public:
     {
     }
 
+
+
     /// Construct from two-dimensional coordinates (for Urho2D).
     Vector3(float x, float y) noexcept :
         x_(x),
@@ -509,6 +511,12 @@ inline IntVector3 VectorMin(const IntVector3& lhs, const IntVector3& rhs) { retu
 
 /// Per-component max of two 3-vectors.
 inline IntVector3 VectorMax(const IntVector3& lhs, const IntVector3& rhs) { return IntVector3(Max(lhs.x_, rhs.x_), Max(lhs.y_, rhs.y_), Max(lhs.z_, rhs.z_)); }
+
+/// Per-component clamp between 2-vectors
+inline Vector3 VectorClamp(const Vector3& value, const Vector3& min, const Vector3& max)
+{
+    return Vector3(Clamp<float>(value.x_, min.x_, max.x_), Clamp<float>(value.y_, min.y_, max.y_), Clamp<float>(value.z_, min.z_, max.z_));
+}
 
 /// Return a random value from [0, 1) from 3-vector seed.
 inline float StableRandom(const Vector3& seed) { return StableRandom(Vector2(StableRandom(Vector2(seed.x_, seed.y_)), seed.z_)); }

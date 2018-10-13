@@ -29,7 +29,7 @@
 #include "../Graphics/Geometry.h"
 #include "../Graphics/Model.h"
 #include "../Graphics/StaticModel.h"
-#include "../Graphics/TerrainPatch.h"
+#include "../Graphics/HeightmapTerrainPatch.h"
 #include "../Graphics/VertexBuffer.h"
 #include "../IO/Log.h"
 #include "../IO/MemoryBuffer.h"
@@ -54,6 +54,7 @@
 #include <Recast/Recast.h>
 
 #include "../DebugNew.h"
+#include "Physics/CollisionShape.h"
 
 namespace Urho3D
 {
@@ -1017,6 +1018,7 @@ void NavigationMesh::CollectGeometries(Vector<NavigationGeometryInfo>& geometryL
 
     Matrix3x4 inverse = node_->GetWorldTransform().Inverse();
 
+#if 0 //#todo make compatable with newton changes.
 #ifdef URHO3D_PHYSICS
     // Prefer compatible physics collision shapes (triangle mesh, convex hull, box) if found.
     // Then fallback to visible geometry
@@ -1031,7 +1033,7 @@ void NavigationMesh::CollectGeometries(Vector<NavigationGeometryInfo>& geometryL
             continue;
 
         ShapeType type = shape->GetShapeType();
-        if ((type == SHAPE_BOX || type == SHAPE_TRIANGLEMESH || type == SHAPE_CONVEXHULL) && shape->GetCollisionShape())
+        if ((type == SHAPE_BOX || type == SHAPE_TRIANGLEMESH || type == SHAPE_CONVEXHULL) /*&& shape->GetCollisionShape()*/)
         {
             Matrix3x4 shapeTransform(shape->GetPosition(), shape->GetRotation(), shape->GetSize());
 
@@ -1046,6 +1048,8 @@ void NavigationMesh::CollectGeometries(Vector<NavigationGeometryInfo>& geometryL
     }
     if (!collisionShapeFound)
 #endif
+#endif
+
     {
         PODVector<Drawable*> drawables;
         node->GetDerivedComponents<Drawable>(drawables);
@@ -1061,7 +1065,7 @@ void NavigationMesh::CollectGeometries(Vector<NavigationGeometryInfo>& geometryL
 
             if (drawable->GetType() == StaticModel::GetTypeStatic())
                 info.lodLevel_ = static_cast<StaticModel*>(drawable)->GetOcclusionLodLevel();
-            else if (drawable->GetType() == TerrainPatch::GetTypeStatic())
+            else if (drawable->GetType() == HeightmapTerrainPatch::GetTypeStatic())
                 info.lodLevel_ = 0;
             else
                 continue;
@@ -1115,7 +1119,7 @@ void NavigationMesh::GetTileGeometry(NavBuildData* build, Vector<NavigationGeome
                 build->navAreas_.Push(stub);
                 continue;
             }
-
+#if 0 //#todo make compatable with newton changes.
 #ifdef URHO3D_PHYSICS
             auto* shape = dynamic_cast<CollisionShape*>(geometryList[i].component_);
             if (shape)
@@ -1181,6 +1185,7 @@ void NavigationMesh::GetTileGeometry(NavBuildData* build, Vector<NavigationGeome
 
                 continue;
             }
+#endif
 #endif
             auto* drawable = dynamic_cast<Drawable*>(geometryList[i].component_);
             if (drawable)

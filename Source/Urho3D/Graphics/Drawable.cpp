@@ -131,7 +131,7 @@ void Drawable::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQueryRe
     }
 }
 
-void Drawable::UpdateBatches(const FrameInfo& frame)
+void Drawable::UpdateBatches(const RenderFrameInfo& frame)
 {
     const BoundingBox& worldBoundingBox = GetWorldBoundingBox();
     const Matrix3x4& worldTransform = node_->GetWorldTransform();
@@ -210,7 +210,7 @@ void Drawable::SetZoneMask(unsigned mask)
 {
     zoneMask_ = mask;
     // Mark dirty to reset cached zone
-    OnMarkedDirty(node_);
+    OnNodeMarkedDirty(node_);
     MarkNetworkUpdate();
 }
 
@@ -275,7 +275,7 @@ bool Drawable::IsInView(Camera* camera) const
     return renderer && viewFrameNumber_ == renderer->GetFrameInfo().frameNumber_ && (!camera || viewCameras_.Contains(camera));
 }
 
-bool Drawable::IsInView(const FrameInfo& frame, bool anyCamera) const
+bool Drawable::IsInView(const RenderFrameInfo& frame, bool anyCamera) const
 {
     return viewFrameNumber_ == frame.frameNumber_ && (anyCamera || viewCameras_.Contains(frame.camera_));
 }
@@ -293,7 +293,7 @@ void Drawable::SetSortValue(float value)
     sortValue_ = value;
 }
 
-void Drawable::MarkInView(const FrameInfo& frame)
+void Drawable::MarkInView(const RenderFrameInfo& frame)
 {
     if (frame.frameNumber_ != viewFrameNumber_)
     {
@@ -371,7 +371,7 @@ void Drawable::OnSceneSet(Scene* scene)
         RemoveFromOctree();
 }
 
-void Drawable::OnMarkedDirty(Node* node)
+void Drawable::OnNodeMarkedDirty(Node* node)
 {
     worldBoundingBoxDirty_ = true;
     if (!updateQueued_ && octant_)

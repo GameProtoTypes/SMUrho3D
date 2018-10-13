@@ -38,6 +38,7 @@ const Matrix3x4 Matrix3x4::ZERO(
 
 const Matrix3x4 Matrix3x4::IDENTITY;
 
+//#todo catigorize into what kindof decomposition this is (there are many eg EigenValue..etc)
 void Matrix3x4::Decompose(Vector3& translation, Quaternion& rotation, Vector3& scale) const
 {
     translation.x_ = m03_;
@@ -78,6 +79,21 @@ Matrix3x4 Matrix3x4::Inverse() const
     ret.m23_ = -(m03_ * ret.m20_ + m13_ * ret.m21_ + m23_ * ret.m22_);
 
     return ret;
+}
+
+bool Matrix3x4::IsSkewed() const
+{
+    Vector3 x = operator*(Vector3::RIGHT);
+    Vector3 y = operator*(Vector3::UP);
+    Vector3 z = operator*(Vector3::FORWARD);
+
+    Vector3 origin = Translation();
+
+    //check if the angles between transformed axis' are orthogonal.
+    if (((z - origin).Normalized() - (x-origin).CrossProduct(y - origin).Normalized()).LengthSquared() > M_EPSILON)
+        return true;
+    else
+        return false;
 }
 
 String Matrix3x4::ToString() const

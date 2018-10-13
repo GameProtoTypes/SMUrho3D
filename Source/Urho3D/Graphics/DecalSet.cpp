@@ -212,7 +212,7 @@ void DecalSet::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQueryRe
     // Do not return raycast hits
 }
 
-void DecalSet::UpdateBatches(const FrameInfo& frame)
+void DecalSet::UpdateBatches(const RenderFrameInfo& frame)
 {
     const BoundingBox& worldBoundingBox = GetWorldBoundingBox();
     const Matrix3x4& worldTransform = node_->GetWorldTransform();
@@ -226,7 +226,7 @@ void DecalSet::UpdateBatches(const FrameInfo& frame)
         batches_[0].worldTransform_ = &worldTransform;
 }
 
-void DecalSet::UpdateGeometry(const FrameInfo& frame)
+void DecalSet::UpdateGeometry(const RenderFrameInfo& frame)
 {
     if (bufferDirty_ || vertexBuffer_->IsDataLost() || indexBuffer_->IsDataLost())
         UpdateBuffers();
@@ -302,7 +302,7 @@ bool DecalSet::AddDecal(Drawable* target, const Vector3& worldPosition, const Qu
     float aspectRatio, float depth, const Vector2& topLeftUV, const Vector2& bottomRightUV, float timeToLive, float normalCutoff,
     unsigned subGeometry)
 {
-    URHO3D_PROFILE("AddDecal");
+    URHO3D_PROFILE_FUNCTION();
 
     // Do not add decals in headless mode
     if (!node_ || !GetSubsystem<Graphics>())
@@ -651,9 +651,9 @@ PODVector<unsigned char> DecalSet::GetDecalsAttr() const
     return ret.GetBuffer();
 }
 
-void DecalSet::OnMarkedDirty(Node* node)
+void DecalSet::OnNodeMarkedDirty(Node* node)
 {
-    Drawable::OnMarkedDirty(node);
+    Drawable::OnNodeMarkedDirty(node);
 
     if (skinned_)
     {
@@ -994,7 +994,7 @@ void DecalSet::MarkDecalsDirty()
     if (!boundingBoxDirty_)
     {
         boundingBoxDirty_ = true;
-        OnMarkedDirty(node_);
+        OnNodeMarkedDirty(node_);
     }
     bufferDirty_ = true;
 }
