@@ -18,7 +18,7 @@ namespace Urho3D {
 
     KinematicsControllerConstraint::KinematicsControllerConstraint(Context* context) : Constraint(context)
     {
-
+        SetSolveMode(SOLVE_MODE_ITERATIVE);
     }
 
     KinematicsControllerConstraint::~KinematicsControllerConstraint()
