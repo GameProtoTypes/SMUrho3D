@@ -31,6 +31,8 @@ namespace Urho3D
         URHO3D_OBJECT(RigidBodyContactEntry, Object);
     public:
 
+        friend class PhysicsWorld;
+
         RigidBodyContactEntry(Context* context);
         virtual ~RigidBodyContactEntry() override;
 
@@ -46,12 +48,20 @@ namespace Urho3D
         Vector<CollisionShape*> shapes0;
         Vector<CollisionShape*> shapes1;
 
+
+        int numContacts = 0;
+
+        PODVector<Vector3> contactForces;    //net forces.
+        PODVector<Vector3> contactPositions; //global space
+        PODVector<Vector3> contactNormals;   //normal relative to body0
+        PODVector<Vector3> contactTangent0;  //tangent force in the 1st dimention.
+        PODVector<Vector3> contactTangent1;  //tangent force in the 2nd dimention.
+
+    protected:
         bool wakeFlag_ = false;
         bool wakeFlagPrev_ = false;
         bool inContact_ = false;
-        int numContacts = 0;
-        PODVector<Vector3> contactPositions; //global space
-        PODVector<Vector3> contactNormals;   //normal relative to body0
+
     };
 
     struct PhysicsRayCastIntersection {
@@ -171,7 +181,7 @@ namespace Urho3D
         void SetIterationCount(int numIterations);
 
         int GetIterationCount() const;
-        /// set how many substeps newton will run per iteration (slightly different effect that changing Iteration Count)
+        /// set how many substeps newton will run per iteration (slightly different effect that changing Iteration Count) (warning! raising this may result in missed contacts)
         void SetSubstepCount(int numSubsteps);
 
         int GetSubstepCount() const;
@@ -191,9 +201,9 @@ namespace Urho3D
         /// number of thread to allow newton to use
         int newtonThreadCount_ = 4;
         /// number of iterations newton will internally use.
-        int iterationCount_ = 4;
-        /// number of substeps per iteration.
-        int numSubsteps_ = 2;
+        int iterationCount_ = 8;
+        /// number of substeps per iteration. 
+        int numSubsteps_ = 1;
 
 
         virtual void OnSceneSet(Scene* scene) override;

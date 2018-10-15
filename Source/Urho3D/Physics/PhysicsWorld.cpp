@@ -346,6 +346,7 @@ namespace Urho3D {
             NewtonJoint* curJoint = NewtonBodyGetFirstContactJoint(newtonBody);
             while (curJoint) {
 
+
                 NewtonBody* body0 = NewtonJointGetBody0(curJoint);
                 NewtonBody* body1 = NewtonJointGetBody1(curJoint);
 
@@ -354,24 +355,29 @@ namespace Urho3D {
 
                 unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
                 SharedPtr<RigidBodyContactEntry> contactEntry = nullptr;
+
+
+
                 contactEntry = GetCreateBodyContactEntry(key);
 
                 contactEntry->body0 = rigBody0;
                 contactEntry->body1 = rigBody1;
                 contactEntry->wakeFlag_ = true;
+                contactEntry->inContact_ = NewtonJointIsActive(curJoint);
                 contactEntry->numContacts = NewtonContactJointGetContactCount(curJoint);
                 contactEntry->contactNormals.Resize(contactEntry->numContacts);
                 contactEntry->contactPositions.Resize(contactEntry->numContacts);
+                contactEntry->contactForces.Resize(contactEntry->numContacts);
+                contactEntry->contactTangent0.Resize(contactEntry->numContacts);
+                contactEntry->contactTangent1.Resize(contactEntry->numContacts);
                 contactEntry->shapes0.Resize(contactEntry->numContacts);
                 contactEntry->shapes1.Resize(contactEntry->numContacts);
-
 
 
                 int contactIdx = 0;
                 for (void* contact = NewtonContactJointGetFirstContact(curJoint); contact; contact = NewtonContactJointGetNextContact(curJoint, contact))
                 {
-
-
+                    
                     NewtonMaterial* const material = NewtonContactGetMaterial(contact);
 
                     NewtonCollision* shape0 = NewtonMaterialGetBodyCollidingShape(material, body0);
@@ -385,10 +391,19 @@ namespace Urho3D {
 
 
                     //get contact geometric info for the contact struct
-                    dVector pos, norm;
+                    dVector pos, force, norm, tan0, tan1;
                     NewtonMaterialGetContactPositionAndNormal(material, body0, &pos[0], &norm[0]);
+                    NewtonMaterialGetContactTangentDirections(material, body0, &tan0[0], &tan1[0]);
+                    NewtonMaterialGetContactForce(material, body0, &force[0]);
+
+
                     contactEntry->contactNormals[contactIdx] = PhysicsToScene_Domain(NewtonToUrhoVec3(norm));
                     contactEntry->contactPositions[contactIdx] = PhysicsToScene_Domain(NewtonToUrhoVec3(pos));
+                    contactEntry->contactTangent0[contactIdx] = PhysicsToScene_Domain(NewtonToUrhoVec3(tan0));
+                    contactEntry->contactTangent1[contactIdx] = PhysicsToScene_Domain(NewtonToUrhoVec3(tan1));
+                    contactEntry->contactForces[contactIdx] = PhysicsToScene_Domain(NewtonToUrhoVec3(force));
+
+
                     contactEntry->shapes0[contactIdx] = colShape0;
                     contactEntry->shapes1[contactIdx] = colShape1;
 
@@ -418,6 +433,10 @@ namespace Urho3D {
             eventData[PhysicsCollisionStart::P_CONTACT_DATA] = it->second_;
 
             if (!it->second_->body0.Refs() || !it->second_->body1.Refs())//check expired
+            {
+                removeKeys += it->second_->hashKey_;
+            }
+            else if (!it->second_->inContact_)
             {
                 removeKeys += it->second_->hashKey_;
             }
@@ -546,7 +565,6 @@ namespace Urho3D {
     {
         URHO3D_PROFILE_FUNCTION();
         float timeStep = eventData[SceneSubsystemUpdate::P_TIMESTEP].GetFloat();
-
 
 
         //Resolve the root rigid body component if it needs created:

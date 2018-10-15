@@ -11,9 +11,10 @@ namespace Urho3D {
     class PhysicsWorld;
 
     enum CONSTRAINT_SOLVE_MODE {
-        SOLVE_MODE_DEFAULT = 0,           //the best option
-        SOLVE_MODE_ITERATIVE = 2,         //faster and less accurate.
-        SOLVE_MODE_KINEMATIC_LOOP = 1    //use this to specify a joint that is a connecting joint in a loop of joints. Only one joint should neeed to be in this solve mode.
+        SOLVE_MODE_JOINT_DEFAULT = 0,     //Usually the best option - uses whatever solver mode newton has for the internal joint.
+        SOLVE_MODE_EXACT = 1,             //Always use exact solving.
+        SOLVE_MODE_ITERATIVE = 2,         //iterative solving use for a joint that forms a loop.
+        SOLVE_MODE_KINEMATIC_LOOP = 3     //use this to specify a joint that is a connecting joint in a loop of joints. Only one joint should neeed to be in this solve mode.
     };
     ///Base class for newton constraints.
     class URHO3D_API Constraint : public Component
@@ -157,7 +158,7 @@ namespace Urho3D {
 
         float stiffness_ = 0.7f;
 
-        CONSTRAINT_SOLVE_MODE solveMode_ = SOLVE_MODE_DEFAULT;
+        CONSTRAINT_SOLVE_MODE solveMode_ = SOLVE_MODE_JOINT_DEFAULT;
 
         /// Constraint position.
         Vector3 position_;
