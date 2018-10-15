@@ -104,27 +104,8 @@ namespace Urho3D {
         if (physicsWorld == nullptr)
             return;//scene is being destroyed.
 
-        SharedPtr<RigidBodyContactEntry> contactEntry = nullptr;
-
-        //get/create the struct into the physicsWorld body contact state map
-        NewtonWorldCriticalSectionLock(physicsWorld->GetNewtonWorld(), threadIndex);
-            contactEntry = physicsWorld->GetCreateBodyContactEntry(key);
-        NewtonWorldCriticalSectionUnlock(physicsWorld->GetNewtonWorld());
 
 
-        contactEntry->body0 = rigBody0;
-        contactEntry->body1 = rigBody1;
-        contactEntry->wakeFlag_ = true;
-        contactEntry->numContacts = NewtonContactJointGetContactCount(contactJoint);
-        contactEntry->contactPositions.Resize(contactEntry->numContacts);
-        contactEntry->contactNormals.Resize(contactEntry->numContacts);
-        contactEntry->shapes0.Resize(contactEntry->numContacts);
-        contactEntry->shapes1.Resize(contactEntry->numContacts);
-
-
-
-
-        int contactIdx = 0;
         for (void* contact = NewtonContactJointGetFirstContact(contactJoint); contact; contact = NewtonContactJointGetNextContact(contactJoint, contact)) {
 
 
@@ -161,21 +142,6 @@ namespace Urho3D {
             NewtonMaterialSetContactFrictionCoef(material, finalStaticFriction, finalKineticFriction, 0);
             NewtonMaterialSetContactElasticity(material, finalElasticity);
             NewtonMaterialSetContactSoftness(material, finalSoftness);
-
-
-
-            //get contact geometric info for the contact struct
-            dVector pos, norm;
-            NewtonMaterialGetContactPositionAndNormal(material, body0, &pos[0], &norm[0]);
-            contactEntry->contactNormals[contactIdx] = physicsWorld->PhysicsToScene_Domain(NewtonToUrhoVec3(norm));
-            contactEntry->contactPositions[contactIdx] = physicsWorld->PhysicsToScene_Domain(NewtonToUrhoVec3(pos));
-            contactEntry->shapes0[contactIdx] = colShape0;
-            contactEntry->shapes1[contactIdx] = colShape1;
-
-
-
-
-            contactIdx++;
 
             if (rigBody0->GetTriggerMode() || rigBody1->GetTriggerMode()) {
                 NewtonContactJointRemoveContact(contactJoint, contact);

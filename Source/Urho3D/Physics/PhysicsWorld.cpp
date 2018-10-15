@@ -333,8 +333,80 @@ namespace Urho3D {
         NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
     }
 
-    void PhysicsWorld::parseBodyContactMap()
+    void PhysicsWorld::processContacts()
     {
+
+        for (RigidBody* rigBody : rigidBodyComponentList)
+        {
+            NewtonBody* newtonBody = rigBody->GetNewtonBody();
+            if(!newtonBody)
+                continue;
+
+
+            NewtonJoint* curJoint = NewtonBodyGetFirstContactJoint(newtonBody);
+            while (curJoint) {
+
+                NewtonBody* body0 = NewtonJointGetBody0(curJoint);
+                NewtonBody* body1 = NewtonJointGetBody1(curJoint);
+
+                RigidBody* rigBody0 = (RigidBody*)NewtonBodyGetUserData(body0);
+                RigidBody* rigBody1 = (RigidBody*)NewtonBodyGetUserData(body1);
+
+                unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
+                SharedPtr<RigidBodyContactEntry> contactEntry = nullptr;
+                contactEntry = GetCreateBodyContactEntry(key);
+
+                contactEntry->body0 = rigBody0;
+                contactEntry->body1 = rigBody1;
+                contactEntry->wakeFlag_ = true;
+                contactEntry->numContacts = NewtonContactJointGetContactCount(curJoint);
+                contactEntry->contactNormals.Resize(contactEntry->numContacts);
+                contactEntry->contactPositions.Resize(contactEntry->numContacts);
+                contactEntry->shapes0.Resize(contactEntry->numContacts);
+                contactEntry->shapes1.Resize(contactEntry->numContacts);
+
+
+
+                int contactIdx = 0;
+                for (void* contact = NewtonContactJointGetFirstContact(curJoint); contact; contact = NewtonContactJointGetNextContact(curJoint, contact))
+                {
+
+
+                    NewtonMaterial* const material = NewtonContactGetMaterial(contact);
+
+                    NewtonCollision* shape0 = NewtonMaterialGetBodyCollidingShape(material, body0);
+                    NewtonCollision* shape1 = NewtonMaterialGetBodyCollidingShape(material, body1);
+
+
+                    CollisionShape* colShape0 = static_cast<CollisionShape*>(NewtonCollisionGetUserData(shape0));
+                    CollisionShape* colShape1 = static_cast<CollisionShape*>(NewtonCollisionGetUserData(shape1));
+
+
+
+
+                    //get contact geometric info for the contact struct
+                    dVector pos, norm;
+                    NewtonMaterialGetContactPositionAndNormal(material, body0, &pos[0], &norm[0]);
+                    contactEntry->contactNormals[contactIdx] = PhysicsToScene_Domain(NewtonToUrhoVec3(norm));
+                    contactEntry->contactPositions[contactIdx] = PhysicsToScene_Domain(NewtonToUrhoVec3(pos));
+                    contactEntry->shapes0[contactIdx] = colShape0;
+                    contactEntry->shapes1[contactIdx] = colShape1;
+
+                    contactIdx++;
+                }
+
+                curJoint = NewtonBodyGetNextContactJoint(newtonBody, curJoint);
+            }
+
+        }
+
+
+
+
+
+
+
+
         PODVector<unsigned int> removeKeys;
         VariantMap eventData;
         eventData[PhysicsCollisionStart::P_WORLD] = this;
@@ -532,7 +604,7 @@ namespace Urho3D {
         //rebuild collision shapes from child nodes to root nodes.
         rebuildDirtyPhysicsComponents();
 
-        parseBodyContactMap();
+        processContacts();
 
         freePhysicsInternals();
 

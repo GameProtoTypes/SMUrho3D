@@ -104,8 +104,8 @@ void Physics::CreateScene()
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
     PhysicsWorld* newtonWorld = scene_->CreateComponent<PhysicsWorld>();
-    newtonWorld->SetGravity(Vector3(0, 0, 0));
-    newtonWorld->SetPhysicsScale(1.0f);
+    newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
+    newtonWorld->SetPhysicsScale(0.5f);
     //scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
@@ -148,7 +148,7 @@ void Physics::CreateScene()
     //SpawnBallSocketTest(Vector3(50, 10, 0));
     //SpawnHingeActuatorTest(Vector3(52, 10, 0));
 
-    //CreatePyramids(Vector3(0,0,0));
+    CreatePyramids(Vector3(0,0,0));
 
 
     SpawnCompound(Vector3(-2, 1 , 10));
