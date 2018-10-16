@@ -160,8 +160,6 @@ void Character::SetCameraNode(Node* cameraNode)
 
 void Character::HandleNodeCollision(StringHash eventType, VariantMap& eventData)
 {
-
-    URHO3D_LOGINFO("Collision");
     // Check collision contacts and see if character is standing on ground (look for a contact that has near vertical normal)
     using namespace NodeCollision;
 
