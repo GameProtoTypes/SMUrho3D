@@ -9,7 +9,6 @@
 * freely
 */
 
-
 #ifndef __D_SINGLE_BODY_VEHICLE_H__
 #define __D_SINGLE_BODY_VEHICLE_H__
 
@@ -24,10 +23,22 @@ class dVehicleSingleBody: public dVehicleInterface
 	DVEHICLE_API virtual ~dVehicleSingleBody();
 
 	DVEHICLE_API dMatrix GetMatrix () const;
-	DVEHICLE_API dVehicleTireInterface* AddTire (const dMatrix& locationInGlobalSpace, const dVehicleTireInterface::dTireInfo& tireInfo);
+	DVEHICLE_API dVehicleTireInterface* AddTire (const dMatrix& locationInGlobalSpace, const dVehicleTireInterface::dTireInfo& tireInfo, const dMatrix& localFrame);
 
 	protected:
-	void InitRigiBody(dFloat timestep);
+	void RigidBodyToStates();
+	void ApplyExternalForce();
+//	void Integrate(dFloat timestep);
+	void StatestoRigidBody(dFloat timestep);
+	int GetKinematicLoops(dKinematicLoopJoint** const jointArray);
+	void CalculateNodeAABB(const dMatrix& matrix, dVector& minP, dVector& maxP) const;
+
+	dVector m_gravity;
+	dVehicleNode m_groundNode;
+	NewtonBody* m_newtonBody;
+
+	friend class dVehicleChassis;
+	friend class dVehicleVirtualTire;
 };
 
 

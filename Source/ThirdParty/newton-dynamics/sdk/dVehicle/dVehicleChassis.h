@@ -21,6 +21,19 @@
 
 class dVehicleChassis: public dCustomControllerBase
 {
+	class dCollectCollidingBodies
+	{
+		public:
+		dCollectCollidingBodies(NewtonBody* const me)
+			:m_exclude(me)
+			,m_count(0)
+		{
+		}
+
+		NewtonBody* m_exclude;
+		int m_count;
+		NewtonBody* m_array[16];
+	};
 /*
 	class dTireFilter;
 	public:
@@ -137,12 +150,21 @@ class dVehicleChassis: public dCustomControllerBase
 	void Init(NewtonCollision* const chassisShape, dFloat mass, const dMatrix& localFrame, NewtonApplyForceAndTorque forceAndTorque, dFloat gravityMag);
 	void Cleanup();
 
-	void InitRigiBody(dFloat timestep);
+	void ApplyExternalForces(dFloat timestep);
+	void CalculateTireContacts(dFloat timestep);
+	void CalculateSuspensionForces(dFloat timestep);
+	int GetKinematicLoops(dKinematicLoopJoint** const jointArray);
+
+//	void OnAABBOverlap(const NewtonBody * const body);
+	static int OnAABBOverlap(const NewtonBody * const body, void* const me);
 	
 	dMatrix m_localFrame;
 	dVehicleSolver m_solver;
 	dVehicleInterface* m_vehicle;
-	dList<dComplentaritySolver::dBilateralJoint*> m_loopJoints;
+	
+	dVector m_gravity;
+	dVector m_obbSize;
+	dVector m_obbOrigin;
 
 	friend class dVehicleSolver;
 	friend class dVehicleManager;

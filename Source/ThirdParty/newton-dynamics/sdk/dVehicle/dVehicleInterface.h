@@ -9,7 +9,6 @@
 * freely
 */
 
-
 #ifndef __D_VEHICLE_INTERFACE_H__
 #define __D_VEHICLE_INTERFACE_H__
 
@@ -25,15 +24,14 @@ class dVehicleInterface: public dVehicleNode
 	public:
 	DVEHICLE_API dVehicleInterface(dVehicleChassis* const chassis);
 	DVEHICLE_API virtual ~dVehicleInterface();
-
-	virtual dMatrix GetMatrix () const = 0;
-	virtual dVehicleTireInterface* AddTire (const dMatrix& locationInGlobalSpace, const dVehicleTireInterface::dTireInfo& tireInfo) = 0;
-
-	DVEHICLE_API dVehicleChassis* GetChassis() const;
 	DVEHICLE_API virtual dVehicleInterface* GetAsVehicle() const {return (dVehicleInterface*)this;} 
 
+	virtual dMatrix GetMatrix() const = 0;
+
 	protected:
-	dVehicleChassis* m_chassis;
+	virtual dVehicleTireInterface* AddTire(const dMatrix& locationInGlobalSpace, const dVehicleTireInterface::dTireInfo& tireInfo, const dMatrix& localFrame) = 0;
+
+	friend class dVehicleChassis;
 };
 
 

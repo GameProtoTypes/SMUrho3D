@@ -11,35 +11,51 @@
 
 
 #ifndef __D_VEHICLE_VIRTUAL_TIRE_H__
-#define __D_VEHICLE_VIRTUAL__TIRE_H__
+#define __D_VEHICLE_VIRTUAL_TIRE_H__
 
 #include "dStdafxVehicle.h"
+#include "dVehicleVirtualJoints.h"
 #include "dVehicleTireInterface.h"
 
 class dVehicleVirtualTire: public dVehicleTireInterface
 {
 	public:
-	DVEHICLE_API dVehicleVirtualTire(dVehicleNode* const parent, const dMatrix& locationInGlobalSpace, const dTireInfo& info);
+	DVEHICLE_API dVehicleVirtualTire(dVehicleNode* const parent, const dMatrix& locationInGlobalSpace, const dTireInfo& info, const dMatrix& localFrame);
 	DVEHICLE_API virtual ~dVehicleVirtualTire();
 
 	DVEHICLE_API dMatrix GetLocalMatrix () const;
 	DVEHICLE_API virtual dMatrix GetGlobalMatrix () const;
 	DVEHICLE_API virtual NewtonCollision* GetCollisionShape() const;
-
+	DVEHICLE_API virtual void SetSteeringAngle(dFloat steeringAngle);
 	DVEHICLE_API void Debug(dCustomJoint::dDebugDisplay* const debugContext) const;
 
-	static void RenderDebugTire(void* userData, int vertexCount, const dFloat* const faceVertec, int id);
-
 	protected:
-	void InitRigiBody(dFloat timestep);
+	void ApplyExternalForce();
+	void Integrate(dFloat timestep);
+	dComplementaritySolver::dBilateralJoint* GetJoint();
+	dMatrix GetHardpointMatrix (dFloat param) const;
+	int GetKinematicLoops(dKinematicLoopJoint** const jointArray);
+	void CalculateNodeAABB(const dMatrix& matrix, dVector& minP, dVector& maxP) const;
+	void CalculateContacts(const dVehicleChassis::dCollectCollidingBodies& bodyArray, dFloat timestep);
+
+	static void RenderDebugTire(void* userData, int vertexCount, const dFloat* const faceVertec, int id);
 
 	dTireInfo m_info;
 	dMatrix m_matrix;
 	dMatrix m_bindingRotation;
+	dTireJoint m_joint;
+	dVehicleNode m_dynamicContactBodyNode;
+	dTireContact m_contactsJoints[3];
 	NewtonCollision* m_tireShape;
-	dFloat m_tireOmega;
+	dFloat m_omega;
+	dFloat m_speed;
+	dFloat m_position;
+	dFloat m_tireLoad;
 	dFloat m_tireAngle;
 	dFloat m_steeringAngle;
+	dFloat m_invSuspensionLength;
+
+	friend class dVehicleChassis;
 };
 
 

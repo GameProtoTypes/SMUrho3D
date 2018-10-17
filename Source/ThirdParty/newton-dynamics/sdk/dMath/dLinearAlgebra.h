@@ -26,6 +26,9 @@
 
 #define D_MAX_PRAM_INFO_SIZE		16 
 #define D_MAX_PLACEMENT_CONTACTS	128
+#define D_COMPLEMENTARITY_MAX_FRICTION_BOUND	dFloat(1.0e15f)
+#define D_COMPLEMENTARITY_MIN_FRICTION_BOUND	(-D_COMPLEMENTARITY_MAX_FRICTION_BOUND)
+
 
 class dSymmetricBiconjugateGradientSolve
 {
@@ -45,12 +48,11 @@ class dSymmetricBiconjugateGradientSolve
 	void Sub (int size, dFloat64* const a, const dFloat64* const b, const dFloat64* const c) const;
 };
 
-class dComplentaritySolver 
+class dComplementaritySolver 
 {
 	public:
 	class dBodyState;
 	class dBilateralJoint;
-
 
 	class dContact
 	{
@@ -74,6 +76,12 @@ class dComplentaritySolver
 		{
 		}
 
+		dJacobian (const dVector& linear, const dVector& angular)
+			:m_linear(linear)
+			,m_angular(angular)
+		{
+		}
+
 		dVector m_linear;
 		dVector m_angular;
 	};
@@ -81,8 +89,8 @@ class dComplentaritySolver
 	class dJacobianPair
 	{
 		public:
-		dJacobian m_jacobian_IM0;
-		dJacobian m_jacobian_IM1;
+		dJacobian m_jacobian_J01;
+		dJacobian m_jacobian_J10;
 	};
 
 	class dJacobianColum
@@ -116,23 +124,19 @@ class dComplentaritySolver
 			:m_r0(0.0f)
 			,m_posit0(0.0f)
 			,m_veloc0(0.0f)
-			,m_centripetal0(0.0f)
 			,m_r1(0.0f)
 			,m_posit1(0.0f)
 			,m_veloc1(0.0f)
-			,m_centripetal1(0.0f)
 		{
 		}
 
 		dVector m_r0;
 		dVector m_posit0;
 		dVector m_veloc0;
-		dVector m_centripetal0;
 
 		dVector m_r1;
 		dVector m_posit1;
 		dVector m_veloc1;
-		dVector m_centripetal1;
 	};
 
 	class dJointAccelerationDecriptor
@@ -160,27 +164,33 @@ class dComplentaritySolver
 
 		virtual void Init (dBodyState* const state0, dBodyState* const state1);
 
-		protected:
+		//protected:
 		virtual void JacobianDerivative (dParamInfo* const constraintParams) = 0; 
 		virtual void UpdateSolverForces (const dJacobianPair* const jacobians) const = 0; 
 		virtual void JointAccelerations (dJointAccelerationDecriptor* const accelParam);
 
 		void InitPointParam (dPointDerivativeParam& param, const dVector& pivot) const;
-		void AddAngularRowJacobian (dParamInfo* const constraintParams, const dVector& dir, dFloat jointAngle);
-		void AddLinearRowJacobian (dParamInfo* const constraintParams, const dVector& pivot, const dVector& dir);
-		void AddAngularRowJacobian (dParamInfo* const constraintParams, const dVector& dir0, const dVector& dir1, dFloat ratio);
-		void CalculatePointDerivative (dParamInfo* const constraintParams, const dVector& dir, const dPointDerivativeParam& param);
+		void AddAngularRowJacobian (dParamInfo* const constraintParams, const dVector& dir, const dVector& dirOmega, dFloat jointAngle);
+		void AddLinearRowJacobian (dParamInfo* const constraintParams, const dVector& pivot, const dVector& dir, const dVector& dirOmega);
+		//void AddAngularRowJacobian (dParamInfo* const constraintParams, const dVector& dir0, const dVector& dir1, dFloat ratio);
+		void CalculatePointDerivative (dParamInfo* const constraintParams, const dVector& dir, const dVector& dirOmega, const dPointDerivativeParam& param);
 
 		dFloat m_motorAcceleration[D_MAX_PRAM_INFO_SIZE];
 		dFloat m_jointFeebackForce[D_MAX_PRAM_INFO_SIZE];
 		int m_rowIsMotor[D_MAX_PRAM_INFO_SIZE];
 		dBodyState* m_state0;
 		dBodyState* m_state1;
+		union
+		{
+			long long m_ordinals;
+			char m_sourceJacobianIndex[8];
+		};
 		int m_start;
 		int m_count;
+		int m_dof;
 
 		friend class dBodyState;
-		friend class dComplentaritySolver;
+		friend class dComplementaritySolver;
 	};
 
 	class dFrictionLessContactJoint: public dBilateralJoint
@@ -208,7 +218,6 @@ class dComplentaritySolver
 		int m_count;
 	};
 
-
 	class dBodyState
 	{
 		public:
@@ -223,10 +232,14 @@ class dComplentaritySolver
 		void SetInertia (dFloat Ixx, dFloat Iyy, dFloat Izz);
 		void GetInertia (dFloat& Ixx, dFloat& Iyy, dFloat& Izz) const;
 
+		const dMatrix& GetInertia() const; 
+		const dMatrix& GetInvInertia() const; 
+
 		void SetVeloc (const dVector& veloc);
 		void SetOmega (const dVector& omega);
 		const dVector& GetOmega() const; 
 		const dVector& GetVelocity() const; 
+		dVector CalculatePointVelocity (const dVector& point) const;
 
 		void UpdateInertia();
 
@@ -241,12 +254,12 @@ class dComplentaritySolver
 		const dVector& GetForce () const;
 		const dVector& GetTorque () const;
 
-		const dVector& GetCenterOfMass () const;
+		const dVector& GetCOM () const;
 
 		void IntegrateVelocity (dFloat timestep);
+		void IntegrateForce (dFloat timestep, const dVector& force, const dVector& torque);
 
 		protected:
-		virtual void IntegrateForce (dFloat timestep, const dVector& force, const dVector& torque);
 		virtual void ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega);
 
 		dMatrix m_matrix;
@@ -268,14 +281,14 @@ class dComplentaritySolver
 		int m_myIndex;
 
 		friend class dBilateralJoint;
-		friend class dComplentaritySolver;
+		friend class dComplementaritySolver;
 	};
 
 
 
 	public:
-	dComplentaritySolver() {};
-	virtual ~dComplentaritySolver() {};
+	dComplementaritySolver() {};
+	virtual ~dComplementaritySolver() {};
 
 	virtual int GetActiveJoints (dBilateralJoint** const jointArray, int bufferSize)
 	{

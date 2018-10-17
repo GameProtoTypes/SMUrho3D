@@ -125,22 +125,22 @@ void dCustomSliderActuator::SubmitAngularRow(const dMatrix& matrix0, const dMatr
 {
 	dCustomSlider::SubmitAngularRow(matrix0, matrix1, timestep);
 
-	dFloat invTimeStep = 1.0f / timestep;
+	dAssert(m_linearRate >= 0.0f);
 	dFloat posit = GetJointPosit();
 	dFloat targetPosit = m_targetPosit;
+
+	dFloat invTimeStep = 1.0f / timestep;
+	dFloat step = m_linearRate * timestep;
 	dFloat currentSpeed = 0.0f;
-	if (posit > targetPosit) {
-		currentSpeed = -m_linearRate;
-		dFloat predictPosit = posit + currentSpeed * timestep;
-		if (predictPosit < targetPosit) {
-			currentSpeed = 0.5f * (predictPosit - posit) * invTimeStep;
-		}
-	} else if (posit < targetPosit) {
+	
+	if (posit < (targetPosit - step)) {
 		currentSpeed = m_linearRate;
-		dFloat predictPosit = posit + currentSpeed * timestep;
-		if (predictPosit > targetPosit) {
-			currentSpeed = 0.5f * (predictPosit - posit) * invTimeStep;
-		}
+	} else if (posit < targetPosit) {
+		currentSpeed = 0.3f * (targetPosit - posit) * invTimeStep;
+	} else if (posit > (targetPosit + step)) {
+		currentSpeed = -m_linearRate;
+	} else if (posit > targetPosit) {
+		currentSpeed = 0.3f * (targetPosit - posit) * invTimeStep;
 	}
 
 	NewtonUserJointAddLinearRow(m_joint, &matrix0.m_posit[0], &matrix1.m_posit[0], &matrix1.m_front[0]);
