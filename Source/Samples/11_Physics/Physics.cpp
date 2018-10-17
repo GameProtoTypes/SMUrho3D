@@ -951,7 +951,7 @@ void Physics::SpawnVehicle(Vector3 worldPosition)
     PhysicsVehicle* vehicle = vehicleNode->CreateComponent<PhysicsVehicle>();
 
 
-
+    vehicle->AddTire(Matrix3x4(worldPosition + Vector3(-2,0,0), Quaternion::IDENTITY, 1.0f));
     
 
 

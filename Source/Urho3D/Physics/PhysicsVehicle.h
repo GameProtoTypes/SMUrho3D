@@ -1,12 +1,16 @@
 #pragma once
 #include "../Scene/Component.h"
 
+
 class dVehicleChassis;
+
 namespace Urho3D {
 
     class RigidBody;
     class CollisionShape;
     class PhysicsWorld;
+    class VehicleTire;
+
 
     /// component for creations of specialized physics vehicle.
     class URHO3D_API PhysicsVehicle : public Component
@@ -26,9 +30,8 @@ namespace Urho3D {
 
         void MarkDirty(bool dirty = true) { isDirty_ = dirty; }
 
-
-
-
+        //add a tire with suspension.
+        VehicleTire* AddTire(Matrix3x4 worldTransform);
 
 
 
@@ -42,6 +45,8 @@ namespace Urho3D {
 
         void updateBuild();
 
+        void applyTransforms();
+
 
         WeakPtr<RigidBody> rigidBody_;
 
@@ -52,6 +57,8 @@ namespace Urho3D {
         bool isDirty_ = true;
 
         dVehicleChassis* vehicleChassis_ = nullptr;
+
+        Vector<SharedPtr<VehicleTire>> tires_;
 
     };
 

@@ -36,6 +36,7 @@
 #include "6DOFConstraint.h"
 #include "../dVehicle/dVehicleManager.h"
 #include "PhysicsVehicle.h"
+#include "VehicleTire.h"
 
 namespace Urho3D {
 
@@ -311,11 +312,15 @@ namespace Urho3D {
         }
         rigidBodyComponentList.Clear();
 
+
+        vehicleList.Clear();
+
         //free meshes in mesh cache
         newtonMeshCache_.Clear();
 
         //free the actual memory
         freePhysicsInternals();
+
 
 
         //destroy newton world.
@@ -324,11 +329,7 @@ namespace Urho3D {
             newtonWorld_ = nullptr;
         }
 
-        if (vehicleManager_ != nullptr)
-        {
-            delete vehicleManager_;
-            vehicleManager_ = nullptr;
-        }
+
     }
 
 
@@ -637,6 +638,13 @@ namespace Urho3D {
                         rigBody->MarkInternalTransformDirty(false);
                 }
             }
+
+            //tell vehilces to update the nodes for the tires.
+            for (PhysicsVehicle* vehicle : vehicleList)
+            {
+                vehicle->applyTransforms();
+            }
+
         }
 
 
@@ -920,7 +928,7 @@ namespace Urho3D {
         RigidBodyContactEntry::RegisterObject(context);
 
         PhysicsVehicle::RegisterObject(context);
-
+        VehicleTire::RegisterObject(context);
 
     }
 
