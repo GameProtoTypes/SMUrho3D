@@ -10,6 +10,8 @@
 class NewtonWorld;
 class dMatrix;
 class dCustomJoint;
+class dVehicleManager;
+
 namespace Urho3D
 {
     class Component;
@@ -21,6 +23,7 @@ namespace Urho3D
     class BoundingBox;
     class NewtonMeshObject;
     class Context;
+    class PhysicsVehicle;
 
     static const Vector3 DEF_GRAVITY = Vector3(0, -9.81, 0);
     static const String DEF_PHYSICS_CATEGORY = "Physics";
@@ -93,6 +96,7 @@ namespace Urho3D
         friend class NewtonCollisionShape_SceneCollision;
         friend class RigidBody;
         friend class Constraint;
+        friend class PhysicsVehicle;
 
         /// Construct.
         PhysicsWorld(Context* context);
@@ -217,6 +221,9 @@ namespace Urho3D
         void addConstraint(Constraint* constraint);
         void removeConstraint(Constraint* constraint);
 
+        void addVehicle(PhysicsVehicle* vehicle);
+        void removeVehicle(PhysicsVehicle* vehicle);
+
 
         void markRigidBodiesNeedSorted() { rigidBodyListNeedsSorted = true; }
         bool rigidBodyListNeedsSorted = true;
@@ -224,7 +231,7 @@ namespace Urho3D
         Vector<WeakPtr<CollisionShape>> collisionComponentList;
         Vector<WeakPtr<RigidBody>> rigidBodyComponentList;
         Vector<WeakPtr<Constraint>> constraintList;
-
+        Vector<WeakPtr<PhysicsVehicle>> vehicleList;
 
 
         void freeWorld();
@@ -254,6 +261,9 @@ namespace Urho3D
 
         /// Internal newton world
         NewtonWorld* newtonWorld_ = nullptr;
+
+        ///vehicle manager for instantiating vehicles.
+        dVehicleManager* vehicleManager_ = nullptr;
 
         RigidBody* sceneBody_ = nullptr;
 

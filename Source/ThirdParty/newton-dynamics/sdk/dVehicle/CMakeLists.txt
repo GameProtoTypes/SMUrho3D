@@ -41,7 +41,14 @@ if (MSVC)
 	set_source_files_properties(dStdafxVehicle.cpp PROPERTIES COMPILE_FLAGS "/YcdStdafxVehicle.h")
 endif(MSVC)
 
-file(GLOB includes *.h)
-install(FILES ${includes} DESTINATION "${includePath}/${projectName}")
+target_include_directories(${projectName} PUBLIC 
+$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+$<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk> 
+)
 
-install(TARGETS ${projectName} ARCHIVE DESTINATION ${libraryPath})
+
+install (TARGETS ${projectName} EXPORT Urho3D
+    LIBRARY DESTINATION ${DEST_LIBRARY_DIR}
+    RUNTIME DESTINATION ${DEST_BIN_DIR}
+    ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR}
+)

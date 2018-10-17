@@ -54,6 +54,7 @@
 #include "Urho3D/Physics/NewtonKinematicsJoint.h"
 #include "Urho3D/Physics/FullyFixedConstraint.h"
 #include "Urho3D/Physics/HingeConstraint.h"
+#include "Urho3D/Physics/PhysicsVehicle.h"
 
 
 
@@ -153,6 +154,8 @@ void Physics::CreateScene()
 
     SpawnCompound(Vector3(-2, 1 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
+
+    SpawnVehicle(Vector3(0, 10, 0));
 
     //SpawnCollisionExceptionsTest(Vector3(0, 1, 0));
     //SpawnSliderTest(Vector3(0, 1, 0));
@@ -934,6 +937,23 @@ void Physics::SpawnCompoundedRectTest(Vector3 worldPosition)
 
 
     box1->SetPositionOffset(Vector3(0, 0, 1));
+
+}
+
+void Physics::SpawnVehicle(Vector3 worldPosition)
+{
+    Node* vehicleNode = SpawnSamplePhysicsBox(scene_, worldPosition, Vector3(5, 2, 2));
+    vehicleNode->SetWorldPosition(worldPosition);
+
+
+
+
+    PhysicsVehicle* vehicle = vehicleNode->CreateComponent<PhysicsVehicle>();
+
+
+
+    
+
 
 }
 

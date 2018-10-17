@@ -8,6 +8,7 @@ class NewtonBody;
 
 namespace Urho3D
 {
+
     class Component;
     class PhysicsWorld;
     class CollisionShape;

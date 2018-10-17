@@ -34,6 +34,8 @@
 #include "Scene/SceneEvents.h"
 #include "SliderConstraint.h"
 #include "6DOFConstraint.h"
+#include "../dVehicle/dVehicleManager.h"
+#include "PhysicsVehicle.h"
 
 namespace Urho3D {
 
@@ -222,6 +224,12 @@ namespace Urho3D {
 
                 NewtonMaterialSetCollisionCallback(newtonWorld_, 0, 0, Newton_AABBOverlapCallback, Newton_ProcessContactsCallback);
                 //NewtonMaterialSetCompoundCollisionCallback(newtonWorld_, 0, 0, Newton_AABBCompoundOverlapCallback);
+
+
+
+                //make the vehicle manager
+                vehicleManager_ = new dVehicleManager(newtonWorld_);
+
             }
         }
         else
@@ -264,6 +272,16 @@ namespace Urho3D {
     }
 
 
+    void PhysicsWorld::addVehicle(PhysicsVehicle* vehicle)
+    {
+        vehicleList.Insert(0, WeakPtr<PhysicsVehicle>(vehicle));
+    }
+
+    void PhysicsWorld::removeVehicle(PhysicsVehicle* vehicle)
+    {
+        vehicleList.Remove(WeakPtr<PhysicsVehicle>(vehicle));
+    }
+
     void PhysicsWorld::freeWorld()
     {
 
@@ -304,6 +322,12 @@ namespace Urho3D {
         if (newtonWorld_ != nullptr) {
             NewtonDestroy(newtonWorld_);
             newtonWorld_ = nullptr;
+        }
+
+        if (vehicleManager_ != nullptr)
+        {
+            delete vehicleManager_;
+            vehicleManager_ = nullptr;
         }
     }
 
@@ -681,6 +705,14 @@ namespace Urho3D {
             if (constraint->needsRebuilt_)
                 constraint->reEvalConstraint();
         }
+
+        //rebuild vehicles if they need rebuilt
+        for (PhysicsVehicle* vehicle : vehicleList)
+        {
+            if (vehicle->isDirty_) {
+                vehicle->updateBuild();
+            }
+        }
     }
 
 
@@ -887,6 +919,7 @@ namespace Urho3D {
         KinematicsControllerConstraint::RegisterObject(context);
         RigidBodyContactEntry::RegisterObject(context);
 
+        PhysicsVehicle::RegisterObject(context);
 
 
     }
