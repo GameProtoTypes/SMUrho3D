@@ -26,9 +26,21 @@ endif ()
 
 file (GLOB_RECURSE SOURCE_FILES *.cpp *.h *.hpp)
 
-if (NOT URHO3D_WIN32_CONSOLE)
-	set (TARGET_TYPE WIN32)
+if (URHO3D_CSHARP AND URHO3D_PLUGINS)
+    # Use C# executable to host .net runtime and load editor.
+    set (CMAKE_SHARED_LIBRARY_PREFIX lib)
+    add_library (Editor SHARED ${SOURCE_FILES})
+    add_target_csharp(EditorHost ${CMAKE_CURRENT_SOURCE_DIR}/EditorHost/EditorHost.csproj Urho3DNet)
+    configure_file(EditorHost/AssemblyInfo.cs.in ${CMAKE_CURRENT_BINARY_DIR}/AssemblyInfo.cs @ONLY)
+else ()
+    # No C# or pugins support, editor can be a true native executable.
+    if (NOT URHO3D_WIN32_CONSOLE)
+        set (TARGET_TYPE WIN32)
+    endif ()
+    add_executable (Editor ${TARGET_TYPE} ${SOURCE_FILES})
 endif ()
-add_executable (Editor ${TARGET_TYPE} ${SOURCE_FILES})
 target_link_libraries (Editor Toolbox Urho3D)
-install(TARGETS Editor RUNTIME DESTINATION ${DEST_TOOLS_DIR})
+install(TARGETS Editor
+    RUNTIME DESTINATION ${DEST_TOOLS_DIR}
+    LIBRARY DESTINATION ${DEST_TOOLS_DIR}
+)

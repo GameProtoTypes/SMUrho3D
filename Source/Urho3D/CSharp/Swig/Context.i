@@ -41,6 +41,7 @@
 %inheritable(Urho3D, Animatable);
 %inheritable(Urho3D, Component);
 %inheritable(Urho3D, LogicComponent);
+%inheritable(Urho3D, PluginApplication);
 
 %wrapper %{  }  // end of RegisterDirectorFactories%}
 
@@ -52,5 +53,4 @@
         System.GC.KeepAlive(newObject.Wrapper);
         return newObject.Handle;
     }
-    private static CreateObjectDelegate CreateObjectDelegateInstance = new CreateObjectDelegate(CreateObject);
 }%}

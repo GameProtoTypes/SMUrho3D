@@ -20,8 +20,8 @@
 # THE SOFTWARE.
 #
 
-if (NOT URHO3D_URHO2D)
+if (NOT URHO3D_CSHARP)
     return ()
 endif ()
 
-add_sample (TARGET 33_Urho2DSpriterAnimation)
+add_sample (TARGET 104_CSharpPlugin LANG CSHARP TYPE SHARED)
