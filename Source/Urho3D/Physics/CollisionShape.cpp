@@ -70,34 +70,37 @@ namespace Urho3D {
             freeInternalCollision();
 
             //call the derived class createNewtonCollision function.
-            buildNewtonCollision();
+            if (buildNewtonCollision())
+            {
 
-            //determine if the built collision is a compound.
-            int numSubShapes = 0;
-            void* curSubColNode = NewtonCompoundCollisionGetFirstNode(newtonCollision_);
-            while (curSubColNode) {
-                numSubShapes++;
 
-                //set user data on each part.
-                NewtonCollisionSetUserData(NewtonCompoundCollisionGetCollisionFromNode(newtonCollision_, curSubColNode), (void*)this);
+                //determine if the built collision is a compound.
+                int numSubShapes = 0;
+                void* curSubColNode = NewtonCompoundCollisionGetFirstNode(newtonCollision_);
+                while (curSubColNode) {
+                    numSubShapes++;
 
-                curSubColNode = NewtonCompoundCollisionGetNextNode(newtonCollision_, curSubColNode);
+                    //set user data on each part.
+                    NewtonCollisionSetUserData(NewtonCompoundCollisionGetCollisionFromNode(newtonCollision_, curSubColNode), (void*)this);
 
-               
+                    curSubColNode = NewtonCompoundCollisionGetNextNode(newtonCollision_, curSubColNode);
+
+
+                }
+
+                if (numSubShapes > 1)
+                    isCompound_ = true;
+                else
+                    isCompound_ = false;
+
+
+                NewtonCollisionSetUserData(newtonCollision_, (void*)this);
             }
-
-            if (numSubShapes > 1)
-                isCompound_ = true;
-            else
-                isCompound_ = false;
-
-
-            NewtonCollisionSetUserData(newtonCollision_, (void*)this);
     }
 
-    void CollisionShape::buildNewtonCollision()
-{
-
+    bool CollisionShape::buildNewtonCollision()
+    {
+        return true;
     }
 
     void CollisionShape::freeInternalCollision()

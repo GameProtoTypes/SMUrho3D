@@ -154,7 +154,7 @@ namespace Urho3D
         /// updates the intenal newton collision pointer to reference the appropriate collision instance from the newton cache based on current parameters.
         void updateBuild();
         /// implement this in subclasses to create the internal newton collision
-        virtual void buildNewtonCollision();
+        virtual bool buildNewtonCollision();
         /// Frees the internal collision shape and mesh;
         void freeInternalCollision();
 

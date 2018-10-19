@@ -29,7 +29,7 @@ namespace Urho3D {
     protected:
         Vector3 size_ = Vector3::ONE;
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
     };
 
@@ -51,7 +51,7 @@ namespace Urho3D {
     protected:
         float radius_ = 0.5f;
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
     };
 
@@ -83,7 +83,7 @@ namespace Urho3D {
         float radius1_ = 0.5f;
         float radius2_ = 0.5f;
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
     };
 
@@ -108,7 +108,7 @@ namespace Urho3D {
         float radius_ = 0.5f;
 
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
     };
 
@@ -146,7 +146,7 @@ namespace Urho3D {
         float radius2_ = 0.5f;
         float length_ = 1.0f;
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
     };
 
@@ -192,7 +192,7 @@ namespace Urho3D {
         /// Hulling tolerance
         unsigned hullTolerance_ = 0.0f;
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
         void autoSetModel();
 
@@ -218,7 +218,7 @@ namespace Urho3D {
 
     protected:
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
 
     };
@@ -238,7 +238,7 @@ namespace Urho3D {
     protected:
         NewtonMeshObject* meshDecomposition_ = nullptr;
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
     };
 
@@ -255,7 +255,7 @@ namespace Urho3D {
 
     protected:
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
     };
 
@@ -274,7 +274,7 @@ namespace Urho3D {
 
     protected:
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
 
     };
@@ -299,7 +299,7 @@ namespace Urho3D {
     protected:
 
 
-        virtual void buildNewtonCollision() override;
+        virtual bool buildNewtonCollision() override;
 
     };
 

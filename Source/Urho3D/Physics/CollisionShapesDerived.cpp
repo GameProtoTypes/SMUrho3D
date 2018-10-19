@@ -50,12 +50,14 @@ namespace Urho3D {
 
     }
 
-    void CollisionShape_Box::buildNewtonCollision()
+    bool CollisionShape_Box::buildNewtonCollision()
     {
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
         newtonCollision_ = NewtonCreateBox(physicsWorld_->GetNewtonWorld(), size_.x_,
             size_.y_,
             size_.z_, 0, nullptr);
+
+        return true;
     }
 
 
@@ -81,10 +83,11 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Radius", GetRadius, SetRadius, float, 0.5f, AM_DEFAULT);
     }
 
-    void CollisionShape_Sphere::buildNewtonCollision()
-    {
+    bool CollisionShape_Sphere::buildNewtonCollision()
+{
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
         newtonCollision_ = NewtonCreateSphere(physicsWorld_->GetNewtonWorld(), radius_, 0, nullptr);
+        return true;
     }
 
 
@@ -234,9 +237,9 @@ namespace Urho3D {
             autoSetModel();
     }
 
-    void CollisionShape_Geometry::buildNewtonCollision()
-    {
-        resolveOrCreateTriangleMeshFromModel();
+    bool CollisionShape_Geometry::buildNewtonCollision()
+{
+        return resolveOrCreateTriangleMeshFromModel();
     }
 
 
@@ -272,12 +275,14 @@ namespace Urho3D {
     }
 
 
-    void CollisionShape_ConvexHullCompound::buildNewtonCollision()
-    {
+    bool CollisionShape_ConvexHullCompound::buildNewtonCollision()
+{
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
         resolveOrCreateTriangleMeshFromModel();
         newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0, 0);
+
+        return true;
     }
 
 
@@ -304,9 +309,9 @@ namespace Urho3D {
         URHO3D_COPY_BASE_ATTRIBUTES(CollisionShape_Geometry);
     }
 
-    void CollisionShape_ConvexDecompositionCompound::buildNewtonCollision()
+    bool CollisionShape_ConvexDecompositionCompound::buildNewtonCollision()
     {
-        CollisionShape_Geometry::buildNewtonCollision();
+        return CollisionShape_Geometry::buildNewtonCollision();
 
         //NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
@@ -346,9 +351,10 @@ namespace Urho3D {
         URHO3D_COPY_BASE_ATTRIBUTES(CollisionShape_Geometry);
     }
 
-    void CollisionShape_ConvexHull::buildNewtonCollision()
+    bool CollisionShape_ConvexHull::buildNewtonCollision()
     {
-        CollisionShape_Geometry::buildNewtonCollision();
+        if (!CollisionShape_Geometry::buildNewtonCollision())
+            return false;
 
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
@@ -362,7 +368,7 @@ namespace Urho3D {
 
         //offset by model geometry center (#todo this may be a quirk of newton - CompoundHulling does not need this.)
         position_ += NewtonToUrhoVec3(offsetMat.m_posit);//model_->GetGeometryCenter(modelLodLevel_);
-
+        return true;
     }
 
 
@@ -388,12 +394,12 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Length", GetLength, SetLength, float, 1.0f, AM_DEFAULT);
     }
 
-    void CollisionShape_Cylinder::buildNewtonCollision()
+    bool CollisionShape_Cylinder::buildNewtonCollision()
     {
         // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
         newtonCollision_ = NewtonCreateCylinder(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
 
-
+        return true;
     }
 
     CollisionShape_Capsule::CollisionShape_Capsule(Context* context) : CollisionShape(context)
@@ -413,10 +419,10 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Length", GetLength, SetLength, float, 1.0f, AM_DEFAULT);
     }
 
-    void CollisionShape_Capsule::buildNewtonCollision()
-    {
+    bool CollisionShape_Capsule::buildNewtonCollision()
+{
         newtonCollision_ = NewtonCreateCapsule(physicsWorld_->GetNewtonWorld(), radius1_, radius2_, length_, 0, nullptr);
-
+        return true;
     }
 
     CollisionShape_Cone::CollisionShape_Cone(Context* context) : CollisionShape(context)
@@ -436,9 +442,10 @@ namespace Urho3D {
 
     }
 
-    void CollisionShape_Cone::buildNewtonCollision()
-    {
+    bool CollisionShape_Cone::buildNewtonCollision()
+{
         newtonCollision_ = NewtonCreateCone(physicsWorld_->GetNewtonWorld(), radius_, length_, 0, nullptr);
+        return true;
     }
 
 
@@ -472,7 +479,7 @@ namespace Urho3D {
 
     }
 
-    void CollisionShape_HeightmapTerrain::buildNewtonCollision()
+    bool CollisionShape_HeightmapTerrain::buildNewtonCollision()
     {
 
 
@@ -498,18 +505,10 @@ namespace Urho3D {
 
             ////set the internal offset correction to match where HeightmapTerrain renders
             position_ = -Vector3(float(size*spacing.x_)*0.5f - spacing.x_*0.5f, 0, float(size*spacing.z_)*0.5f - spacing.z_*0.5f);
-
-
-
-
-
-
-
-
-
-
+            return false;
         }
-
+        else
+            return false;
     }
 
     CollisionShape_TreeCollision::CollisionShape_TreeCollision(Context* context) : CollisionShape_Geometry(context)
@@ -528,14 +527,16 @@ namespace Urho3D {
         URHO3D_COPY_BASE_ATTRIBUTES(CollisionShape_Geometry);
     }
 
-    void CollisionShape_TreeCollision::buildNewtonCollision()
+    bool CollisionShape_TreeCollision::buildNewtonCollision()
     {
-        CollisionShape_Geometry::buildNewtonCollision();
+        if (!CollisionShape_Geometry::buildNewtonCollision())
+            return false;
 
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
         //newtonCollision_ = NewtonCreateConvexHullFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0);
         newtonCollision_ = NewtonCreateTreeCollisionFromMesh(world, newtonMesh_->mesh, 0);
+        return true;
     }
 
 }

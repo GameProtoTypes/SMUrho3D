@@ -442,7 +442,7 @@ namespace Urho3D {
         //filter out shapes that are not enabled.
         for (CollisionShape* col : childCollisionShapes)
         {
-            if (col->IsEnabledEffective())
+            if (col->IsEnabledEffective() && col->GetNewtonCollision())
                 filteredList += col;
         }
         childCollisionShapes = filteredList;
