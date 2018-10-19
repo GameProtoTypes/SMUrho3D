@@ -24,6 +24,7 @@
 
 #define CR_HOST
 
+#include <atomic>
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Core/Thread.h>
 #include <Urho3D/Engine/PluginApplication.h>
@@ -32,9 +33,24 @@
 #include <Urho3D/IO/Log.h>
 #include <EditorEvents.h>
 #include "Editor.h"
-#include "PluginManager.h"
-#include "EditorEventsPrivate.h"
-
+#include "Plugins/PluginManager.h"
+#if !_WIN32
+#   include "Plugins/PE.h"
+#endif
+#if __linux__
+#   include <elf.h>
+#   if URHO3D_64BIT
+using Elf_Ehdr = Elf64_Ehdr;
+using Elf_Phdr = Elf64_Phdr;
+using Elf_Shdr = Elf64_Shdr;
+using Elf_Sym = Elf64_Sym;
+#   else
+using Elf_Ehdr = Elf32_Ehdr;
+using Elf_Phdr = Elf32_Phdr;
+using Elf_Shdr = Elf32_Shdr;
+using Elf_Sym = Elf32_Sym;
+#   endif
+#endif
 
 namespace Urho3D
 {
@@ -57,47 +73,23 @@ struct DomainManagerInterface
     bool(*LoadPlugin)(void* handle, const char* path);
     void(*SetReloading)(void* handle, bool reloading);
     bool(*GetReloading)(void* handle);
+    bool(*IsPlugin)(void* handle, const char* path);
 };
 
-static Mutex managedInterfaceLock;
+static std::atomic_bool managedInterfaceSet{false};
 static DomainManagerInterface managedInterface_;
 
-/// A native thread that will run editor when it is started from a .net loader executable.
-class EditorMainThread : public Thread
-{
-public:
-    EditorMainThread()
-    {
-        context_ = new Urho3D::Context();
-    }
+///
+extern "C" URHO3D_EXPORT_API void ParseArgumentsC(int argc, char** argv) { ParseArguments(argc, argv); }
 
-    void ThreadFunction() override
-    {
-        Thread::SetMainThread();
-        Urho3D::SharedPtr<Editor> application(new Editor(context_));
-        int exitCode = application->Run();
-        application = nullptr;
-        context_ = nullptr;
-        exit(exitCode);
-    }
-
-    Urho3D::SharedPtr<Urho3D::Context> context_;
-};
-
-/// Kick off editor main thread. Should be called only once.
-extern "C" URHO3D_EXPORT_API Context* StartMainThread(int argc, char** argv)
-{
-    Urho3D::ParseArguments(argc, argv);
-    static EditorMainThread mainThread;
-    mainThread.Run();
-    return mainThread.context_;
-}
+///
+extern "C" URHO3D_EXPORT_API Application* CreateEditorApplication(Context* context) { return new Editor(context); }
 
 /// Update a pointer to a struct that facilitates interop between native code and a .net runtime manager object. Will be called every time .net code is reloaded.
 extern "C" URHO3D_EXPORT_API void SetManagedRuntimeInterface(DomainManagerInterface* managedInterface)
 {
-    MutexLock lock(managedInterfaceLock);
     managedInterface_ = *managedInterface;
+    managedInterfaceSet = true;
 }
 
 #endif
@@ -105,6 +97,33 @@ extern "C" URHO3D_EXPORT_API void SetManagedRuntimeInterface(DomainManagerInterf
 Plugin::Plugin(Context* context)
     : Object(context)
 {
+}
+
+bool Plugin::Unload()
+{
+    if (type_ == PLUGIN_NATIVE)
+    {
+        cr_plugin_close(nativeContext_);
+        nativeContext_.userdata = nullptr;
+        return true;
+    }
+#if URHO3D_CSHARP
+    else if (type_ == PLUGIN_MANAGED)
+    {
+        // Managed plugin unloading requires to tear down entire AppDomain and recreate it. Instruct main .net thread to
+        // do that and wait.
+        managedInterfaceSet = false;
+        managedInterface_.SetReloading(managedInterface_.handle, true);
+        managedInterface_.handle = nullptr;
+
+        // Wait for AppDomain reload.
+        while (!managedInterfaceSet)
+            Time::Sleep(0);
+
+        return true;
+    }
+#endif
+    return false;
 }
 
 PluginManager::PluginManager(Context* context)
@@ -130,58 +149,133 @@ PluginManager::PluginManager(Context* context)
 
 PluginType PluginManager::GetPluginType(const String& path)
 {
-    File file(context_);
-    if (!file.Open(path, FILE_READ))
-        return PLUGIN_INVALID;
-
+#if URHO3D_PLUGINS
     // This function implements a naive check for plugin validity. Proper check would parse executable headers and look
     // for relevant exported function names.
-
+    Context* context = reinterpret_cast<SystemUI*>(ui::GetIO().UserData)->GetContext();
 #if __linux__
     // ELF magic
     if (path.EndsWith(".so"))
     {
-        if (file.ReadUInt() == 0x464C457F)
+        File file(context);
+        if (!file.Open(path, FILE_READ))
+            return PLUGIN_INVALID;
+
+        String buf{};
+        buf.Resize(file.GetSize());
+        file.Seek(0);
+        file.Read(&buf[0], file.GetSize());
+        file.Close();
+
+        // Elf header parsing code based on elfdump by Owen Klan.
+        const auto base = reinterpret_cast<const char*>(buf.CString());
+        const auto hdr = reinterpret_cast<const Elf_Ehdr*>(base);
+        if (strncmp(reinterpret_cast<const char*>(hdr->e_ident), ELFMAG, SELFMAG) != 0)
+            // Not elf.
+            return PLUGIN_INVALID;
+
+        if (hdr->e_type != ET_DYN)
+            return PLUGIN_INVALID;
+
+        // Find symbol name table
+        const char* symNameTable = nullptr;
         {
-            file.Seek(0);
-            String buf{ };
-            buf.Resize(file.GetSize());
-            file.Read(&buf[0], file.GetSize());
-            auto pos = buf.Find("cr_main");
-            // Function names are preceeded with 0 in elf files.
-            if (pos != String::NPOS && buf[pos - 1] == 0)
-                return PLUGIN_NATIVE;
+            const Elf_Shdr* ptr = reinterpret_cast<const Elf_Shdr*>(base + hdr->e_shoff);
+
+            for (int i = 0; i < hdr->e_shstrndx; i++)
+                ptr++;
+
+            const char* nameTable = base + ptr->sh_offset;
+
+            ptr = reinterpret_cast<const Elf_Shdr*>(base + hdr->e_shoff);
+            for (auto i = 0; i < hdr->e_shnum; i++)
+            {
+                if (strncmp((nameTable + ptr->sh_name), ".strtab", 7) == 0)
+                {
+                    symNameTable = base + ptr->sh_offset;
+                    break;
+                }
+                else
+                    ptr++;
+            }
+        }
+
+        if (symNameTable == nullptr)
+            return PLUGIN_INVALID;
+
+        // Find cr_main symbol
+        {
+            const Elf_Shdr* sectab = reinterpret_cast<const Elf_Shdr*>(base + hdr->e_shoff);
+            const Elf_Shdr* ptr = sectab;
+            while (ptr->sh_type != SHT_SYMTAB)
+                ptr++;
+            const Elf_Shdr* sym_tab = reinterpret_cast<const Elf_Shdr*>(base + ptr->sh_offset);
+            const Elf_Sym* symbol = reinterpret_cast<const Elf_Sym*>(sym_tab);
+            auto num = ptr->sh_size / ptr->sh_entsize;
+            for (auto i = 0; i < num; i++)
+            {
+                const char* name = symNameTable + symbol->st_name;
+                if (strncmp(name, "cr_main", 7) == 0)
+                    return PLUGIN_NATIVE;
+                symbol++;
+            }
         }
     }
 #endif
-    file.Seek(0);
     if (path.EndsWith(".dll"))
     {
-        if (file.ReadShort() == 0x5A4D)
+        File file(context);
+        if (!file.Open(path, FILE_READ))
+            return PLUGIN_INVALID;
+
+        if (file.ReadShort() == IMAGE_DOS_SIGNATURE)
         {
-#if _WIN32
-            // But only on windows we check if PE file is a native plugin
-            file.Seek(0);
             String buf{};
             buf.Resize(file.GetSize());
+            file.Seek(0);
             file.Read(&buf[0], file.GetSize());
-            auto pos = buf.Find("cr_main");
-            // Function names are preceeded with 2 byte hint which is preceeded with 0 in PE files.
-            if (pos != String::NPOS && buf[pos - 3] == 0)
-                return PLUGIN_NATIVE;
-#endif
-            // PE files are handled on all platforms because managed executables are PE files.
-            file.Seek(0x3C);
-            auto e_lfanew = file.ReadUInt();
-#if URHO3D_64BIT
-            const auto netMetadataRvaOffset = 0xF8;
-#else
-            const auto netMetadataRvaOffset = 0xE8;
-#endif
-            file.Seek(e_lfanew + netMetadataRvaOffset);  // Seek to .net metadata directory rva
+            file.Close();
 
-            if (file.ReadUInt() != 0)
-                return PLUGIN_MANAGED;
+            const auto base = reinterpret_cast<const char*>(buf.CString());
+            const auto dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+            const auto nt = reinterpret_cast<const IMAGE_NT_HEADERS*>(base + dos->e_lfanew);
+
+            if (nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR_MAGIC)
+                return PLUGIN_INVALID;
+
+            const auto& eatDir = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+            const auto& netDir = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR];
+            if (netDir.VirtualAddress != 0)
+            {
+#if URHO3D_CSHARP
+                // Verify that plugin has a class that inherits from PluginApplication.
+                if (managedInterface_.IsPlugin(managedInterface_.handle, path.CString()))
+                    return PLUGIN_MANAGED;
+#endif
+            }
+            else if (eatDir.VirtualAddress > 0)
+            {
+                // Verify that plugin has exported function named cr_main.
+                // Find section that contains EAT.
+                const auto* section = IMAGE_FIRST_SECTION(nt);
+                uint32_t eatModifier = 0;
+                for (auto i = 0; i < nt->FileHeader.NumberOfSections; i++, section++)
+                {
+                    if (eatDir.VirtualAddress >= section->VirtualAddress && eatDir.VirtualAddress < (section->VirtualAddress + section->SizeOfRawData))
+                    {
+                        eatModifier = section->VirtualAddress - section->PointerToRawData;
+                        break;
+                    }
+                }
+
+                const auto eat = reinterpret_cast<const IMAGE_EXPORT_DIRECTORY*>(base + eatDir.VirtualAddress - eatModifier);
+                const auto names = reinterpret_cast<const uint32_t*>(base + eat->AddressOfNames - eatModifier);
+                for (auto i = 0; i < eat->NumberOfFunctions; i++)
+                {
+                    if (strcmp(base + names[i] - eatModifier, "cr_main") == 0)
+                        return PLUGIN_NATIVE;
+                }
+            }
         }
     }
 
@@ -189,7 +283,7 @@ PluginType PluginManager::GetPluginType(const String& path)
     {
         // TODO: MachO file support.
     }
-
+#endif
     return PLUGIN_INVALID;
 }
 
@@ -249,15 +343,6 @@ void PluginManager::Unload(Plugin* plugin)
         return;
     }
 
-#if URHO3D_WITH_MONO
-    // Managed plugin unloading/reloading is not supported due to https://github.com/mono/mono/issues/11170
-    if (plugin->type_ == PLUGIN_MANAGED)
-    {
-        URHO3D_LOGERROR("Unloading of managed plugins is not supported due to mono bug 11170.");
-        return;
-    }
-#endif
-
     plugin->unloading_ = true;
 }
 
@@ -271,30 +356,11 @@ void PluginManager::OnEndFrame()
         if (plugin->unloading_)
         {
             SendEvent(E_EDITORUSERCODERELOADSTART);
-            if (plugin->type_ == PLUGIN_NATIVE)
-            {
-                cr_plugin_close(plugin->nativeContext_);
-                plugin->nativeContext_.userdata = nullptr;
-            }
+            // Actual unload
+            plugin->Unload();
 #if URHO3D_CSHARP
-            else if (plugin->type_ == PLUGIN_MANAGED)
+            if (plugin->type_ == PLUGIN_MANAGED)
             {
-                // Managed plugin unloading requires to tear down entire AppDomain and recreate it. Instruct main .net thread to
-                // do that and wait.
-                managedInterfaceLock.Acquire();
-                managedInterface_.SetReloading(managedInterface_.handle, true);
-                managedInterface_.handle = nullptr;
-                managedInterfaceLock.Release();
-
-                // Wait for AppDomain reload.
-                for (;;)
-                {
-                    MutexLock lock(managedInterfaceLock);
-                    if (managedInterface_.handle != nullptr)
-                        break;                          // Reloading is done.
-                    Time::Sleep(30);
-                }
-
                 // Now load back all managed plugins except this one.
                 for (auto& plug : plugins_)
                 {
@@ -408,18 +474,27 @@ String PluginManager::NameToPath(const String& name) const
 
 String PluginManager::PathToName(const String& path)
 {
+#if !_WIN32
     if (path.EndsWith(platformDynamicLibrarySuffix))
     {
         String name = GetFileName(path);
 #if __linux__ || __APPLE__
         if (name.StartsWith("lib"))
             name = name.Substring(3);
-        return name;
 #endif
+        return name;
     }
-    else if (path.EndsWith(".dll"))
+    else
+#endif
+    if (path.EndsWith(".dll"))
         return GetFileName(path);
     return String::EMPTY;
+}
+
+PluginManager::~PluginManager()
+{
+    for (auto& plugin : plugins_)
+        plugin->Unload();
 }
 
 }

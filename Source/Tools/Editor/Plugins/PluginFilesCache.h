@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright (c) 2018 Rokas Kupstys
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,43 +19,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-using System;
-using Urho3DNet;
-using ImGuiNet;
 
-namespace CSharpPlugin
+#pragma once
+
+
+#include <Urho3D/Core/Timer.h>
+
+
+namespace Urho3D
 {
-    // Class can have any name, but it must inherit from PluginApplication.
-    public class SamplePlugin : PluginApplication
-    {
-        public SamplePlugin(Context context) : base(context)
-        {
-        }
 
-        public override void Load()
-        {
-            SubscribeToEvent("EditorApplicationMenu", RenderMenu);
-        }
+/// Class responsible for efficient caching of plugin files list.
+class PluginFilesCache : public Object
+{
+    URHO3D_OBJECT(PluginFilesCache, Object);
+public:
+    ///
+    explicit PluginFilesCache(Context* context);
+    /// Returns list of sorted plugin names.
+    const StringVector& GetPluginNames();
 
-        void RenderMenu(VariantMap args)
-        {
-            if (ImGui.BeginMenu("SamplePlugin"))
-            {
-                ImGui.TextUnformatted("C# says hello");
-                ImGui.EndMenu();
-            }
-        }
+protected:
+    ///
+    Timer updateTimer_;
+    ///
+    StringVector names_;
+    ///
+    HashMap<String, unsigned> modificationTimes_;
+};
 
-        public override void Start()
-        {
-        }
-
-        public override void Stop()
-        {
-        }
-
-        public override void Unload()
-        {
-        }
-    }
 }

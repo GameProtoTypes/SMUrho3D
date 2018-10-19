@@ -54,6 +54,9 @@ public:
     String GetName() const { return name_; }
 
 protected:
+    /// Unload plugin.
+    bool Unload();
+
     /// Base plugin file name.
     String name_;
     /// Path to plugin dynamic library file.
@@ -74,6 +77,8 @@ class PluginManager : public Object
 public:
     /// Construct.
     explicit PluginManager(Context* context);
+    /// Unload all plugins an destruct.
+    ~PluginManager();
     /// Load a plugin and return true if succeeded.
     virtual Plugin* Load(const String& name);
     /// Unload a plugin and return true if succeeded.
@@ -86,10 +91,10 @@ public:
     void OnEndFrame();
     /// Converts relative or absolute plugin path to universal plugin name. Returns empty string on failure.
     static String PathToName(const String& path);
+    /// Checks specified file and recognizes it's plugin type.
+    static PluginType GetPluginType(const String& path);
 
 protected:
-    /// Checks specified file and recognizes it's plugin type.
-    PluginType GetPluginType(const String& path);
     /// Delete temporary files from binary directory.
     void CleanUp(String directory = String::EMPTY);
     /// Converts name to a full plugin file path. Returns empty string on error.

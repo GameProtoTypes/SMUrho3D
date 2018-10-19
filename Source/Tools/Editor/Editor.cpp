@@ -62,6 +62,7 @@ static std::string defaultProjectPath;
 
 Editor::Editor(Context* context)
     : Application(context)
+    , pluginFiles_(context)
 {
 }
 
@@ -191,6 +192,7 @@ void Editor::Start()
 void Editor::Stop()
 {
     CloseProject();
+    context_->RemoveSubsystem<WorkQueue>(); // Prevents deadlock when unloading plugin AppDomain in managed host.
 }
 
 void Editor::OnUpdate(VariantMap& args)
@@ -317,9 +319,9 @@ void Editor::RenderMenuBar()
                 ui::EndMenu();
             }
 
+#if URHO3D_PROFILING
             if (ui::BeginMenu("Tools"))
             {
-#if URHO3D_PROFILING
                 if (ui::MenuItem("Profiler"))
                 {
                     GetFileSystem()->SystemSpawn(GetFileSystem()->GetProgramDir() + "Profiler"
@@ -328,9 +330,9 @@ void Editor::RenderMenuBar()
 #endif
                         , {});
                 }
-#endif
                 ui::EndMenu();
             }
+#endif
         }
 
         SendEvent(E_EDITORAPPLICATIONMENU);
@@ -489,47 +491,28 @@ void Editor::HandleHotkeys()
 
 void Editor::RenderProjectPluginsMenu()
 {
-    unsigned possiblePluginCount = 0;
-    StringVector files;
-    GetFileSystem()->ScanDir(files, GetFileSystem()->GetProgramDir(), "*.*", SCAN_FILES, false);
-    for (auto it = files.Begin(); it != files.End(); ++it)
-    {
-        String baseName = PluginManager::PathToName(*it);
-        if (baseName.Empty())
-            // Definitely not plugin file.
-            continue;
-
-        if (IsDigit(static_cast<unsigned int>(baseName.Back())))
-            // Native plugins will rename main file and append version after base name.
-            continue;
-
-        if (baseName.EndsWith("CSharp") || baseName.EndsWith("Net"))
-            // Libraries for C# interop
-            continue;
-
-        if (baseName == "Urho3D" || baseName == "Toolbox" || baseName == "Editor")
-            // Internal engine libraries
-            continue;
-
-        ++possiblePluginCount;
-
-        PluginManager* plugins = project_->GetPlugins();
-        Plugin* plugin = plugins->GetPlugin(baseName);
-        bool loaded = plugin != nullptr;
-        if (ui::Checkbox(baseName.CString(), &loaded))
-        {
-            if (loaded)
-                plugins->Load(baseName);
-            else
-                plugins->Unload(plugin);
-        }
-    }
-
-    if (possiblePluginCount == 0)
+    const StringVector& pluginNames = pluginFiles_.GetPluginNames();
+    if (pluginNames.Size() == 0)
     {
         ui::TextUnformatted("No available files.");
         ui::SetHelpTooltip("Plugins are shared libraries that have a class inheriting from PluginApplication and "
-                           "define a plugin entry point. Look at Samples/103_GamePlugin for more information.");
+            "define a plugin entry point. Look at Samples/103_GamePlugin for more information.");
+    }
+    else
+    {
+        for (const String& baseName : pluginNames)
+        {
+            PluginManager* plugins = project_->GetPlugins();
+            Plugin* plugin = plugins->GetPlugin(baseName);
+            bool loaded = plugin != nullptr;
+            if (ui::Checkbox(baseName.CString(), &loaded))
+            {
+                if (loaded)
+                    plugins->Load(baseName);
+                else
+                    plugins->Unload(plugin);
+            }
+        }
     }
 }
 

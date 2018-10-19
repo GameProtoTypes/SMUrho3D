@@ -23,8 +23,9 @@
 #pragma once
 
 
-#include <Urho3D/Urho3DAll.h>
+#include <Urho3D/Engine/Application.h>
 #include <Toolbox/SystemUI/AttributeInspector.h>
+#include "Plugins/PluginFilesCache.h"
 #include "Project.h"
 
 using namespace std::placeholders;
@@ -121,6 +122,8 @@ protected:
     WeakPtr<SceneTab> lastActiveScene_;
     ///
     ImFont* monoFont_ = nullptr;
+    ///
+    PluginFilesCache pluginFiles_;
 };
 
 }

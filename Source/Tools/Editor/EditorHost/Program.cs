@@ -46,12 +46,15 @@ namespace EditorHost
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate bool GetReloadingDelegate(IntPtr handle);
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate bool IsPluginDelegate(IntPtr handle, string path);
+
         public IntPtr handle;
 
-        [MarshalAs(UnmanagedType.FunctionPtr)]
-        public LoadPluginDelegate loadPlugin;
-        public SetReloadingDelegate setReloading;
-        public GetReloadingDelegate getReloading;
+        [MarshalAs(UnmanagedType.FunctionPtr)] public LoadPluginDelegate loadPlugin;
+        [MarshalAs(UnmanagedType.FunctionPtr)] public SetReloadingDelegate setReloading;
+        [MarshalAs(UnmanagedType.FunctionPtr)] public GetReloadingDelegate getReloading;
+        [MarshalAs(UnmanagedType.FunctionPtr)] public IsPluginDelegate isPlugin;
     }
 
     /// This class runs in a context of reloadable appdomain.
@@ -69,15 +72,24 @@ namespace EditorHost
             _loadPluginDelegateRef = NLoadPlugin;
             _setReloadingDelegateRef = NSetReloading;
             _getReloadingDelegateRef = NGetReloading;
+            _isPluginDelegateRef = NIsPlugin;
             _interface = new DomainManagerInterface
             {
                 handle = GCHandle.ToIntPtr(GCHandle.Alloc(this)),
                 loadPlugin = _loadPluginDelegateRef,
                 setReloading = _setReloadingDelegateRef,
                 getReloading = _getReloadingDelegateRef,
+                isPlugin = _isPluginDelegateRef,
             };
             SetManagedRuntimeInterface(_interface);
             Urho3DPINVOKE.DelegateRegistry.RefreshDelegatePointers();
+
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (sender, args) =>
+            {
+                return Assembly.ReflectionOnlyLoadFrom(
+                    Path.Combine(Path.GetDirectoryName(args.RequestingAssembly.Location),
+                    args.Name.Substring(0, args.Name.IndexOf(',')) + ".dll"));
+            };
         }
 
         public void Dispose()
@@ -207,6 +219,22 @@ namespace EditorHost
             return true;
         }
 
+        public bool IsPlugin(string path)
+        {
+            var pluginBaseName = typeof(PluginApplication).FullName;
+            try
+            {
+                var assembly = Assembly.ReflectionOnlyLoadFrom(path);
+                var types = assembly.GetTypes();
+                return types.Any(type => type.BaseType?.FullName == pluginBaseName);
+            }
+            catch (Exception _)
+            {
+                return false;
+            }
+            return false;
+        }
+
         #region Interop
 
         [DllImport("libEditor", CallingConvention = CallingConvention.Cdecl)]
@@ -230,43 +258,74 @@ namespace EditorHost
             return ((DomainManager) GCHandle.FromIntPtr(handle).Target).Reloading;
         }
 
+        private readonly DomainManagerInterface.IsPluginDelegate _isPluginDelegateRef;
+        private static bool NIsPlugin(IntPtr handle, [MarshalAs(UnmanagedType.LPUTF8Str)]string path)
+        {
+            return ((DomainManager)GCHandle.FromIntPtr(handle).Target).IsPlugin(path);
+        }
+
         #endregion
     }
 
     internal class Program
     {
-        private IntPtr _contextPtr;
-        public int Version { get; private set; }
+        private HandleRef _contextPtr;
+        private int Version { get; set; }
+        private Thread _mainThread;
 
-        public AppDomain CreateDomain()
+        private AppDomain CreateDomain()
         {
             var domain = AppDomain.CreateDomain(AppDomain.CurrentDomain.FriendlyName.Replace(".", $"{++Version}."));
             return domain;
         }
 
-        public void Run(string[] args)
+        private void CreateMainThread(string[] args)
+        {
+            var argc = args.Length + 1;                 // args + executable path
+            var argv = new string[args.Length + 2];     // args + executable path + null
+            var threadStarted = false;
+
+            // As per C spec first argv item must be a program name and item after the last one must be a null pointer.
+            argv[0] = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
+            args.CopyTo(argv, 1);
+
+            _mainThread = new Thread(() =>
+            {
+                ParseArgumentsC(argc, argv);
+                using (var context = new Context())
+                {
+                    _contextPtr = Context.getCPtr(context);
+                    using (var editor = Application.wrap(CreateEditorApplication(_contextPtr.Handle), true))
+                    {
+                        threadStarted = true;
+                        Environment.ExitCode = editor.Run();
+                    }
+                }
+            });
+            _mainThread.Start();
+            while (!threadStarted)
+                Thread.Sleep(60);
+        }
+
+        private void Run(string[] args)
         {
             var managerType = typeof(DomainManager);
             if (managerType.FullName is null)
                 throw new ArgumentException("DomainManager.FullName is null");
 
-            // As per C spec first argv item must be a program name and item after the last one must be a null pointer.
-            var argv = new string[args.Length + 2];
-            argv[0] = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
-            args.CopyTo(argv, 1);
-            _contextPtr = StartMainThread(args.Length + 1, argv);
+            CreateMainThread(args);
 
-            for (;;)
+            while (_mainThread.IsAlive)
             {
                 var executionDomain = CreateDomain();
                 var manager = executionDomain.CreateInstanceAndUnwrap(managerType.Assembly.FullName,
                     managerType.FullName, false, BindingFlags.Default, null,
-                    new object[]{_contextPtr}, null, null) as DomainManager;
+                    new object[]{_contextPtr.Handle}, null, null) as DomainManager;
 
                 if (manager is null)
                     throw new NullReferenceException($"Failed creating {managerType.FullName}.");
 
-                while (!manager.Reloading)
+                while (!manager.Reloading && _mainThread.IsAlive)
                     Thread.Sleep(100);
 
                 manager.Dispose();
@@ -292,6 +351,10 @@ namespace EditorHost
         }
 
         [DllImport("libEditor", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr StartMainThread(int argc, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)]string[] argv);
+        private static extern IntPtr CreateEditorApplication(IntPtr context);
+
+        [DllImport("libEditor", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void ParseArgumentsC(int argc,
+            [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)]string[] argv);
     }
 }
