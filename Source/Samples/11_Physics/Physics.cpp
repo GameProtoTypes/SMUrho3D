@@ -155,7 +155,7 @@ void Physics::CreateScene()
     SpawnCompound(Vector3(-2, 1 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
-    SpawnVehicle(Vector3(0, 10, 0));
+    //SpawnVehicle(Vector3(0, 10, 0));
 
     //SpawnCollisionExceptionsTest(Vector3(0, 1, 0));
     //SpawnSliderTest(Vector3(0, 1, 0));
