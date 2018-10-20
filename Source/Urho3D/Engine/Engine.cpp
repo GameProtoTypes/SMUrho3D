@@ -745,6 +745,8 @@ void Engine::SendUpdateEvents()
 
         SendEvent(E_ENDFRAME);
 
+        SendEvent(E_ENDFRAMEFINAL);
+
 }
 
 void Engine::Render()

@@ -77,5 +77,10 @@ URHO3D_EVENT(E_POSTRENDERUPDATE, PostRenderUpdate)
 URHO3D_EVENT(E_ENDFRAME, EndFrame)
 {
 }
+/// Frame end event that is sent last.  Meant for internal use.
+URHO3D_EVENT(E_ENDFRAMEFINAL, EndFrameFinal)
+{
+}
+
 
 }
