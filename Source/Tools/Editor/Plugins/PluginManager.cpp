@@ -24,21 +24,26 @@
 
 #define CR_HOST
 
-#include <atomic>
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Core/Thread.h>
 #include <Urho3D/Engine/PluginApplication.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/IO/FileSystem.h>
 #include <Urho3D/IO/Log.h>
+#include <Urho3D/Script/Script.h>
 #include <EditorEvents.h>
 #include "Editor.h"
 #include "Plugins/PluginManager.h"
 #if !_WIN32
 #   include "Plugins/PE.h"
+#include "PluginManager.h"
+
+
 #endif
 #if __linux__
 #   include <elf.h>
+
+
 #   if URHO3D_64BIT
 using Elf_Ehdr = Elf64_Ehdr;
 using Elf_Phdr = Elf64_Phdr;
@@ -55,6 +60,10 @@ using Elf_Sym = Elf32_Sym;
 namespace Urho3D
 {
 
+URHO3D_EVENT(E_ENDFRAMEPRIVATE, EndFramePrivate)
+{
+}
+
 #if __linux__
 static const char* platformDynamicLibrarySuffix = ".so";
 #elif _WIN32
@@ -66,32 +75,8 @@ static const char* platformDynamicLibrarySuffix = ".dylib";
 #endif
 
 #if URHO3D_CSHARP && URHO3D_PLUGINS
-
-struct DomainManagerInterface
-{
-    void* handle;
-    bool(*LoadPlugin)(void* handle, const char* path);
-    void(*SetReloading)(void* handle, bool reloading);
-    bool(*GetReloading)(void* handle);
-    bool(*IsPlugin)(void* handle, const char* path);
-};
-
-static std::atomic_bool managedInterfaceSet{false};
-static DomainManagerInterface managedInterface_;
-
-///
 extern "C" URHO3D_EXPORT_API void ParseArgumentsC(int argc, char** argv) { ParseArguments(argc, argv); }
-
-///
 extern "C" URHO3D_EXPORT_API Application* CreateEditorApplication(Context* context) { return new Editor(context); }
-
-/// Update a pointer to a struct that facilitates interop between native code and a .net runtime manager object. Will be called every time .net code is reloaded.
-extern "C" URHO3D_EXPORT_API void SetManagedRuntimeInterface(DomainManagerInterface* managedInterface)
-{
-    managedInterface_ = *managedInterface;
-    managedInterfaceSet = true;
-}
-
 #endif
 
 Plugin::Plugin(Context* context)
@@ -101,6 +86,7 @@ Plugin::Plugin(Context* context)
 
 bool Plugin::Unload()
 {
+#if URHO3D_PLUGINS
     if (type_ == PLUGIN_NATIVE)
     {
         cr_plugin_close(nativeContext_);
@@ -110,18 +96,12 @@ bool Plugin::Unload()
 #if URHO3D_CSHARP
     else if (type_ == PLUGIN_MANAGED)
     {
-        // Managed plugin unloading requires to tear down entire AppDomain and recreate it. Instruct main .net thread to
-        // do that and wait.
-        managedInterfaceSet = false;
-        managedInterface_.SetReloading(managedInterface_.handle, true);
-        managedInterface_.handle = nullptr;
-
-        // Wait for AppDomain reload.
-        while (!managedInterfaceSet)
-            Time::Sleep(0);
-
+        Script* script = GetSubsystem<Script>();
+        script->UnloadRuntime();        // Destroy plugin AppDomain.
+        script->LoadRuntime();          // Create new empty plugin AppDomain. Caller is responsible for plugin reinitialization.
         return true;
     }
+#endif
 #endif
     return false;
 }
@@ -129,8 +109,9 @@ bool Plugin::Unload()
 PluginManager::PluginManager(Context* context)
     : Object(context)
 {
+#if URHO3D_PLUGINS
     CleanUp();
-    SubscribeToEvent(E_ENDFRAME, [this](StringHash, VariantMap&) { OnEndFrame(); });
+    SubscribeToEvent(E_ENDFRAMEPRIVATE, [this](StringHash, VariantMap&) { OnEndFrame(); });
     SubscribeToEvent(E_SIMULATIONSTART, [this](StringHash, VariantMap&) {
         for (auto& plugin : plugins_)
         {
@@ -145,6 +126,11 @@ PluginManager::PluginManager(Context* context)
                 reinterpret_cast<PluginApplication*>(plugin->nativeContext_.userdata)->Stop();
         }
     });
+#if URHO3D_CSHARP
+    // Initialize AppDomain for managed plugins.
+    GetSubsystem<Script>()->LoadRuntime();
+#endif
+#endif
 }
 
 PluginType PluginManager::GetPluginType(const String& path)
@@ -249,7 +235,7 @@ PluginType PluginManager::GetPluginType(const String& path)
             {
 #if URHO3D_CSHARP
                 // Verify that plugin has a class that inherits from PluginApplication.
-                if (managedInterface_.IsPlugin(managedInterface_.handle, path.CString()))
+                if (context->GetSubsystem<Script>()->VerifyAssembly(path))
                     return PLUGIN_MANAGED;
 #endif
             }
@@ -309,6 +295,7 @@ Plugin* PluginManager::Load(const String& name)
             plugin->nativeContext_.userdata = context_;
             plugin->name_ = name;
             plugin->path_ = pluginPath;
+            plugin->mtime_ = GetFileSystem()->GetLastModifiedTime(pluginPath);
             plugins_.Push(plugin);
             return plugin.Get();
         }
@@ -318,10 +305,11 @@ Plugin* PluginManager::Load(const String& name)
 #if URHO3D_CSHARP
     else if (plugin->type_ == PLUGIN_MANAGED)
     {
-        if (managedInterface_.LoadPlugin(managedInterface_.handle, pluginPath.CString()))
+        if (GetSubsystem<Script>()->LoadAssembly(pluginPath))
         {
             plugin->name_ = name;
             plugin->path_ = pluginPath;
+            plugin->mtime_ = GetFileSystem()->GetLastModifiedTime(pluginPath);
             plugins_.Push(plugin);
             return plugin.Get();
         }
@@ -349,13 +337,45 @@ void PluginManager::Unload(Plugin* plugin)
 void PluginManager::OnEndFrame()
 {
 #if URHO3D_PLUGINS
+#if URHO3D_CSHARP
+    Script* script = GetSubsystem<Script>();
+    // C# plugin auto-reloading.
+    bool reloadManagedRuntime = false;
+    for (auto it = plugins_.Begin(); it != plugins_.End() && !reloadManagedRuntime; it++)
+    {
+        Plugin* plugin = it->Get();
+        reloadManagedRuntime = plugin->type_ == PLUGIN_MANAGED &&
+                               plugin->mtime_ < GetFileSystem()->GetLastModifiedTime(plugin->path_);
+    }
+
+    if (reloadManagedRuntime)
+    {
+        script->UnloadRuntime();
+        script->LoadRuntime();
+        for (auto& plugin : plugins_)
+        {
+            if (plugin->type_ == PLUGIN_MANAGED)
+            {
+                plugin->mtime_ = GetFileSystem()->GetLastModifiedTime(plugin->path_);
+                script->LoadAssembly(plugin->path_);
+            }
+        }
+        URHO3D_LOGINFO("Managed plugins were reloaded.");
+    }
+#endif
+
+    bool eventSent = false;
     for (auto it = plugins_.Begin(); it != plugins_.End();)
     {
         Plugin* plugin = it->Get();
 
         if (plugin->unloading_)
         {
-            SendEvent(E_EDITORUSERCODERELOADSTART);
+            if (!eventSent)
+            {
+                SendEvent(E_EDITORUSERCODERELOADSTART);
+                eventSent = true;
+            }
             // Actual unload
             plugin->Unload();
 #if URHO3D_CSHARP
@@ -366,11 +386,10 @@ void PluginManager::OnEndFrame()
                 {
                     if (plug == plugin || plug->type_ == PLUGIN_NATIVE)
                         continue;
-                    managedInterface_.LoadPlugin(managedInterface_.handle, plug->path_.CString());
+                    script->LoadAssembly(plug->path_);
                 }
             }
 #endif
-            SendEvent(E_EDITORUSERCODERELOADEND);
             URHO3D_LOGINFOF("Plugin %s was unloaded.", plugin->name_.CString());
             it = plugins_.Erase(it);
         }
@@ -378,7 +397,13 @@ void PluginManager::OnEndFrame()
         {
             bool reloading = cr_plugin_changed(plugin->nativeContext_);
             if (reloading)
-                SendEvent(E_EDITORUSERCODERELOADSTART);
+            {
+                if (!eventSent)
+                {
+                    SendEvent(E_EDITORUSERCODERELOADSTART);
+                    eventSent = true;
+                }
+            }
 
             if (cr_plugin_update(plugin->nativeContext_) != 0)
             {
@@ -391,7 +416,6 @@ void PluginManager::OnEndFrame()
 
             if (reloading)
             {
-                SendEvent(E_EDITORUSERCODERELOADEND);
                 if (plugin->nativeContext_.userdata != nullptr)
                 {
                     URHO3D_LOGINFOF("Loaded plugin \"%s\" version %d.",
@@ -404,6 +428,9 @@ void PluginManager::OnEndFrame()
         else
             it++;
     }
+
+    if (eventSent)
+        SendEvent(E_EDITORUSERCODERELOADEND);
 #endif
 }
 
@@ -418,22 +445,15 @@ void PluginManager::CleanUp(String directory)
     StringVector files;
     GetFileSystem()->ScanDir(files, directory, "*.*", SCAN_FILES, false);
 
-    for (const String& file : files)
+    for (const String& fileName : files)
     {
-        bool possiblyPlugin = false;
-#if __linux__
-        possiblyPlugin |= file.EndsWith(".so");
-#endif
-#if __APPLE__
-        possiblyPlugin |= file.EndsWith(".dylib");
-#endif
-        possiblyPlugin |= file.EndsWith(".dll");
-
-        if (possiblyPlugin)
+        String filePath = directory + fileName;
+        String baseName = GetFileName(fileName);
+        if (IsDigit(static_cast<unsigned int>(baseName.Back())) && GetPluginType(filePath) != PLUGIN_INVALID)
         {
-            String name = GetFileName(file);
-            if (IsDigit(static_cast<unsigned int>(name.Back())))
-                GetFileSystem()->Delete(ToString("%s/%s", directory.CString(), file.CString()));
+            GetFileSystem()->Delete(filePath);
+            if (filePath.EndsWith(".dll"))
+                GetFileSystem()->Delete(ReplaceExtension(filePath, ".pdb"));
         }
     }
 }
@@ -494,7 +514,16 @@ String PluginManager::PathToName(const String& path)
 PluginManager::~PluginManager()
 {
     for (auto& plugin : plugins_)
-        plugin->Unload();
+    {
+        if (plugin->type_ == PLUGIN_NATIVE)
+            // Native plugins can be unloaded one by one.
+            plugin->Unload();
+    }
+
+#if URHO3D_CSHARP
+    // Managed plugins can not be unloaded one at a time. Entire plugin AppDomain must be dropped.
+    GetSubsystem<Script>()->UnloadRuntime();
+#endif
 }
 
 }

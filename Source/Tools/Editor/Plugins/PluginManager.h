@@ -25,8 +25,10 @@
 
 #if URHO3D_PLUGINS
 
+#include <atomic>
 #include <cr/cr.h>
 #include <Urho3D/Core/Object.h>
+#include <Urho3D/IO/FileWatcher.h>
 
 namespace Urho3D
 {
@@ -40,6 +42,22 @@ enum PluginType
     PLUGIN_NATIVE,
     /// A managed plugin.
     PLUGIN_MANAGED,
+};
+
+enum class ReloadStatus
+{
+    None,
+    ReloadRequest,
+    Reloading,
+};
+
+struct DomainManagerInterface
+{
+    void* handle;
+    bool(*LoadPlugin)(void* handle, const char* path);
+    void(*SetReloadStatus)(void* handle, ReloadStatus status);
+    ReloadStatus(*GetReloadStatus)(void* handle);
+    bool(*IsPlugin)(void* handle, const char* path);
 };
 
 class Plugin : public Object
@@ -67,6 +85,8 @@ protected:
     cr_plugin nativeContext_{};
     /// Flag indicating that plugin should unload on the end of the frame.
     bool unloading_ = false;
+    /// Last modification time.
+    unsigned mtime_;
 
     friend class PluginManager;
 };
@@ -102,6 +122,8 @@ protected:
 
     /// Loaded plugins.
     Vector<SharedPtr<Plugin>> plugins_;
+
+    friend class Plugin;
 };
 
 }
