@@ -251,7 +251,8 @@ namespace Urho3D
 
         HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>> bodyContactMap_;
         
-        void processContacts();
+        void formContacts();
+        void ParseContacts();
         bool contactMapLocked_ = false;
 
         /// Step the simulation forward.

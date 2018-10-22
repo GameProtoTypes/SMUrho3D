@@ -156,8 +156,8 @@ void Physics::CreateScene()
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
     //SpawnVehicle(Vector3(0, 10, 0));
-    for(int i = 0; i < 10; i++)
-    SpawnTrialBike(Vector3(0, 10, i*2));
+    for(int i = 0; i < 50; i++)
+    SpawnTrialBike(Vector3(0, 10, i*4));
 
 
     //SpawnCollisionExceptionsTest(Vector3(0, 1, 0));

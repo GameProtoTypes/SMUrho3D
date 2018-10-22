@@ -358,8 +358,8 @@ namespace Urho3D {
         NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
     }
 
-    void PhysicsWorld::processContacts()
-    {
+    void PhysicsWorld::formContacts()
+{
 
         for (RigidBody* rigBody : rigidBodyComponentList)
         {
@@ -447,6 +447,11 @@ namespace Urho3D {
 
 
 
+
+    }
+
+    void PhysicsWorld::ParseContacts()
+    {
         PODVector<unsigned int> removeKeys;
         VariantMap eventData;
         eventData[PhysicsCollisionStart::P_WORLD] = this;
@@ -454,7 +459,7 @@ namespace Urho3D {
         {
             eventData[PhysicsCollisionStart::P_BODYA] = it->second_->body0;
             eventData[PhysicsCollisionStart::P_BODYB] = it->second_->body1;
-            
+
             eventData[PhysicsCollisionStart::P_CONTACT_DATA] = it->second_;
 
             if (!it->second_->body0.Refs() || !it->second_->body1.Refs())//check expired
@@ -472,7 +477,7 @@ namespace Urho3D {
                     SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
                 }
 
-                
+
 
                 if (it->second_->body0->collisionEventMode_) {
                     if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break; //it is possible someone deleted a body in the previous event.
@@ -516,7 +521,7 @@ namespace Urho3D {
                     eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
                     it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
                 }
-                
+
 
             }
             else if (!it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//end contact
@@ -542,7 +547,7 @@ namespace Urho3D {
                     it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
                 }
             }
-            else if(it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//continued contact
+            else if (it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//continued contact
             {
                 if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
                     SendEvent(E_PHYSICSCOLLISION, eventData);
@@ -569,7 +574,7 @@ namespace Urho3D {
             }
             else if (!it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//no contact for one update. (mark for removal from the map)
             {
-               removeKeys += it->second_->hashKey_;
+                removeKeys += it->second_->hashKey_;
             }
 
             //move on..
@@ -597,8 +602,6 @@ namespace Urho3D {
             sceneBody_ = GetScene()->GetOrCreateComponent<RigidBody>();
             sceneBody_->SetIsSceneRootBody(true);
         }
-
-
 
 
 
@@ -654,7 +657,9 @@ namespace Urho3D {
         //rebuild collision shapes from child nodes to root nodes.
         rebuildDirtyPhysicsComponents();
 
-        processContacts();
+        formContacts();
+
+        ParseContacts();
 
         freePhysicsInternals();
 
