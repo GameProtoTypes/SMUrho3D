@@ -1035,7 +1035,7 @@ void Physics::SpawnTrialBike(Vector3 worldPosition)
     motor->SetOtherBody(C->GetComponent<RigidBody>());
     motor->SetWorldPosition(worldPosition + backWheelOffset);
     motor->SetWorldRotation(Quaternion(0, 90, 0));
-    motor->SetMotorTargetAngularRate(20);
+    motor->SetMotorTargetAngularRate(50);
     motor->SetMaxTorque(motor->GetMaxTorque()*0.00125f);
 
 
