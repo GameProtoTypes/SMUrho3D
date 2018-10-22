@@ -1035,7 +1035,7 @@ void Physics::SpawnTrialBike(Vector3 worldPosition)
     motor->SetOtherBody(C->GetComponent<RigidBody>());
     motor->SetWorldPosition(worldPosition + backWheelOffset);
     motor->SetWorldRotation(Quaternion(0, 90, 0));
-    motor->SetMotorTargetAngularRate(50);
+    motor->SetMotorTargetAngularRate(30);
     motor->SetMaxTorque(motor->GetMaxTorque()*0.00125f);
 
 
@@ -1086,44 +1086,8 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 
 
 
-    //debug bulletball_linearDamp ball
-    PODVector<Node*> bulletBalls;
-    scene_->GetNodesWithTag(bulletBalls, "bulletball_linearDamp");
-    if (bulletBalls.Size()) {
-        Node* bulletBall = bulletBalls[0];
-
-        float sampleCountFactor = ((1000.0 / 60.0)/(GSS<Engine>()->GetUpdateTimeGoalMs()));
-
-        if(worldPosHistory_.Size() < 128*sampleCountFactor)
-            worldPosHistory_.Push((bulletBall->GetWorldPosition() - cameraNode_->GetWorldPosition()).Length());
 
 
-        ui::PlotLines("bulletball_linearDamp", &worldPosHistory_[0], worldPosHistory_.Size(), 0, nullptr, FLT_MAX, FLT_MAX, ImVec2(400,200));
-    }
-
-    //debug bulletball_linearDamp ball
-   // PODVector<Node*> bulletBalls;
-    scene_->GetNodesWithTag(bulletBalls, "bulletball_customDamp");
-    if (bulletBalls.Size()) {
-        Node* bulletBall = bulletBalls[0];
-
-        Vector3 vel = bulletBall->GetComponent<RigidBody>()->GetLinearVelocity();
-
-            Vector3 dragForce = -vel.Normalized()*(vel.LengthSquared())*0.005f;
-
-
-            bulletBall->GetComponent<RigidBody>()->ResetForces();
-            bulletBall->GetComponent<RigidBody>()->AddWorldForce(dragForce);
-
-
-        float sampleCountFactor = ((1000.0 / 60.0) / (GSS<Engine>()->GetUpdateTimeGoalMs()));
-
-        if (worldPosHistory2_.Size() < 128 * sampleCountFactor)
-            worldPosHistory2_.Push((bulletBall->GetWorldPosition() - cameraNode_->GetWorldPosition()).Length());
-
-
-        ui::PlotLines("bulletball_customDamp", &worldPosHistory2_[0], worldPosHistory2_.Size(), 0, nullptr, FLT_MAX, FLT_MAX, ImVec2(400, 200));
-    }
 
 
     //debug compound

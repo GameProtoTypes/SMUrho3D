@@ -45,7 +45,7 @@ namespace Urho3D {
 
     PhysicsWorld::PhysicsWorld(Context* context) : Component(context)
     {
-        SubscribeToEvent(E_SCENESUBSYSTEMUPDATE, URHO3D_HANDLER(PhysicsWorld, HandleUpdate));
+
 
     }
 
@@ -159,15 +159,15 @@ namespace Urho3D {
         return iterationCount_;
     }
 
-    void PhysicsWorld::SetSubstepCount(int numSubsteps)
+    void PhysicsWorld::SetSubstepFactor(int factor)
     {
-        numSubsteps_ = numSubsteps;
+        subStepFactor = factor;
         applyNewtonWorldSettings();
     }
 
-    int PhysicsWorld::GetSubstepCount() const
+    int PhysicsWorld::GetSubstepFactor() const
     {
-        return numSubsteps_;
+        return subStepFactor;
     }
 
     void PhysicsWorld::SetThreadCount(int numThreads)
@@ -353,9 +353,30 @@ namespace Urho3D {
     void PhysicsWorld::applyNewtonWorldSettings()
     {
         NewtonSetSolverIterations(newtonWorld_, iterationCount_);
-        NewtonSetNumberOfSubsteps(newtonWorld_, numSubsteps_);
+        NewtonSetNumberOfSubsteps(newtonWorld_, 1);
         NewtonSetThreadsCount(newtonWorld_, newtonThreadCount_);
         NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
+
+
+        UnsubscribeFromEvent(E_UPDATE_RATE8);
+        UnsubscribeFromEvent(E_UPDATE_RATE4);
+        UnsubscribeFromEvent(E_UPDATE_RATE2);
+        UnsubscribeFromEvent(E_UPDATE);
+
+
+        if(subStepFactor == 8)
+            SubscribeToEvent(E_UPDATE_RATE8, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+        else if (subStepFactor == 4)
+            SubscribeToEvent(E_UPDATE_RATE4, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+        else if (subStepFactor == 2)
+            SubscribeToEvent(E_UPDATE_RATE2, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+        else if (subStepFactor == 1)
+            SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+        else
+        {
+            URHO3D_LOGWARNING("PhysicsWorld: subStepFactor must be 8,4,2, or 1");
+            SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+        }
     }
 
     void PhysicsWorld::formContacts()
@@ -591,91 +612,98 @@ namespace Urho3D {
     }
 
 
-    void PhysicsWorld::HandleUpdate(StringHash eventType, VariantMap& eventData)
+
+
+    void PhysicsWorld::HandleUpdateRate8(StringHash eventType, VariantMap& eventData)
     {
         URHO3D_PROFILE_FUNCTION();
-        float timeStep = eventData[SceneSubsystemUpdate::P_TIMESTEP].GetFloat();
+        float timeStep = eventData[UpdateRate8::P_TIMESTEP].GetFloat()*GetScene()->GetTimeScale();
+        int subCount = eventData[UpdateRate8::P_SUBCOUNT].GetInt();
+        bool rootRate = (subCount == 0);
 
+        if (rootRate) {
 
-        //Resolve the root rigid body component if it needs created:
-        if (!sceneBody_) {
-            sceneBody_ = GetScene()->GetOrCreateComponent<RigidBody>();
-            sceneBody_->SetIsSceneRootBody(true);
+            //Resolve the root rigid body component if it needs created:
+            if (!sceneBody_) {
+                sceneBody_ = GetScene()->GetOrCreateComponent<RigidBody>();
+                sceneBody_->SetIsSceneRootBody(true);
+            }
         }
 
 
 
-        //send prestep physics event
-        VariantMap sendEventData;
-        sendEventData[PhysicsPreStep::P_WORLD] = this;
-        sendEventData[PhysicsPreStep::P_TIMESTEP] = timeStep;
         {
             URHO3D_PROFILE("Wait For ASync Update To finish.");
             NewtonWaitForUpdateToFinish(newtonWorld_);
         }
 
-        //send post physics event.
-        SendEvent(E_PHYSICSPOSTSTEP, sendEventData);
+        if (rootRate) {
+            //send post physics event.
+            VariantMap sendEventData;
+            sendEventData[PhysicsPostStep::P_WORLD] = this;
+            sendEventData[PhysicsPostStep::P_TIMESTEP] = timeStep;
+            SendEvent(E_PHYSICSPOSTSTEP, sendEventData);
 
-
-        {
-            URHO3D_PROFILE("Apply Node Transforms");
 
             {
-                URHO3D_PROFILE("Rigid Body Order Pre Sort");
-                //sort the rigidBodyComponentList by scene depth.
-                if (rigidBodyListNeedsSorted) {
-                    Sort(rigidBodyComponentList.Begin(), rigidBodyComponentList.End(), RigidBodySceneDepthCompare);
-                    rigidBodyListNeedsSorted = false;
+                URHO3D_PROFILE("Apply Node Transforms");
+
+                {
+                    URHO3D_PROFILE("Rigid Body Order Pre Sort");
+                    //sort the rigidBodyComponentList by scene depth.
+                    if (rigidBodyListNeedsSorted) {
+                        Sort(rigidBodyComponentList.Begin(), rigidBodyComponentList.End(), RigidBodySceneDepthCompare);
+                        rigidBodyListNeedsSorted = false;
+                    }
                 }
-            }
 
-            //apply the transform of all rigid body components to their respective nodes.
-            for (RigidBody* rigBody : rigidBodyComponentList)
-            {
-                if (rigBody->GetInternalTransformDirty()) {
-                    rigBody->ApplyTransform(timeStep);
+                //apply the transform of all rigid body components to their respective nodes.
+                for (RigidBody* rigBody : rigidBodyComponentList)
+                {
+                    if (rigBody->GetInternalTransformDirty()) {
+                        rigBody->ApplyTransform(timeStep);
 
 
-                    if(rigBody->InterpolationWithinRestTolerance())
-                        rigBody->MarkInternalTransformDirty(false);
+                        if (rigBody->InterpolationWithinRestTolerance())
+                            rigBody->MarkInternalTransformDirty(false);
+                    }
                 }
+
+                //tell vehilces to update the nodes for the tires.
+                for (PhysicsVehicle* vehicle : vehicleList)
+                {
+                    vehicle->applyTransforms();
+                }
+
             }
 
-            //tell vehilces to update the nodes for the tires.
-            for (PhysicsVehicle* vehicle : vehicleList)
-            {
-                vehicle->applyTransforms();
-            }
+
+
+            SendEvent(E_PHYSICSPRESTEP, sendEventData);
+
+
+            //rebuild collision shapes from child nodes to root nodes.
+            rebuildDirtyPhysicsComponents();
 
         }
 
-
-
-        SendEvent(E_PHYSICSPRESTEP, sendEventData);
-
-        //rebuild collision shapes from child nodes to root nodes.
-        rebuildDirtyPhysicsComponents();
-
         formContacts();
 
-        ParseContacts();
+        if (rootRate) {
+            ParseContacts();
 
-        freePhysicsInternals();
-
+            freePhysicsInternals();
+        }
         {
             URHO3D_PROFILE("NewtonUpdate");
             //use target time step to give newton constant time steps. 
 
-            
+
             NewtonUpdateAsync(newtonWorld_, timeStep);
+
         }
 
-
-
     }
-
-
 
     void PhysicsWorld::rebuildDirtyPhysicsComponents()
     {

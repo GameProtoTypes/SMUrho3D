@@ -185,10 +185,10 @@ namespace Urho3D
         void SetIterationCount(int numIterations);
 
         int GetIterationCount() const;
-        /// set how many substeps newton will run per iteration (slightly different effect that changing Iteration Count) (warning! raising this may result in missed contacts)
-        void SetSubstepCount(int numSubsteps);
+        /// set how many sub-updates to run vs the core update rate. must be 8, 4, 2, or 1
+        void SetSubstepFactor(int numSubsteps);
 
-        int GetSubstepCount() const;
+        int GetSubstepFactor() const;
         /// set how many threads the newton can use.
         void SetThreadCount(int numThreads);
 
@@ -207,7 +207,7 @@ namespace Urho3D
         /// number of iterations newton will internally use.
         int iterationCount_ = 8;
         /// number of substeps per iteration. 
-        int numSubsteps_ = 1;
+        int subStepFactor = 2;
 
 
         virtual void OnSceneSet(Scene* scene) override;
@@ -256,7 +256,8 @@ namespace Urho3D
         bool contactMapLocked_ = false;
 
         /// Step the simulation forward.
-        void HandleUpdate(StringHash eventType, VariantMap& eventData);
+        void HandleSceneUpdate(StringHash eventType, VariantMap& eventData);
+        void HandleUpdateRate8(StringHash eventType, VariantMap& eventData);
         void rebuildDirtyPhysicsComponents();
 
 

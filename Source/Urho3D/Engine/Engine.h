@@ -68,7 +68,7 @@ public:
 	long long GetUpdateCount() const { return updateTick_; }
 
 
-    float GetUpdateTimeGoalMs() const { return updateTimeGoalUs_ / 1000.0f; }
+    float GetUpdateTimeGoalMs() const { return (updateTimeGoalUs_ / 1000.0f)*8.0f; }
 
     float GetRenderTimeGoalMs() const { return renderTimeGoalUs_ / 1000.0f; }
 
@@ -81,12 +81,8 @@ public:
 
 
 
-    /// Set fps goal for rendering
-    void SetRenderFpsGoal(int fps);
 	/// Set render time goal for rendering
 	void SetRenderTimeGoalUs(unsigned timeUs);
-	/// Set fps goal for update
-	void SetUpdateFpsGoal(unsigned fps);
 	/// Set the time interval for Update events
 	void SetUpdateTimeGoalUs(unsigned updateTimeUs);
 
@@ -138,7 +134,7 @@ private:
     /// Updates
     void Update();
 
-    void SendUpdateEvents();
+    void SendUpdateEvents(int rateLevel);
 
     /// Renders
     void Render();
@@ -154,12 +150,14 @@ private:
 
 	long long renderTick_{ 0 };
 	long long updateTick_{ 0 };
+    int curUpdateLevel_ = 0;
 
 	HiresTimer updateTimer_;
-	HiresTimer renderGoalTimer_;
+	HiresTimer renderTimer_;
 
-	float renderTimeGoalUs_{ 5000.0f };  //200 Hz   
-    float updateTimeGoalUs_{ 16666.0f*0.25*0.5f}; //60 Hz
+	float renderTimeGoalUs_{ 5000.0f };      //200 Hz   
+    float updateTimeGoalUs_{ 16666.0f/8.0f}; //480 Hz
+
 
     float lastRenderTimeUs_{ 0 };
     float lastUpdateTimeUs_{ 0 };
@@ -183,7 +181,7 @@ private:
     /// Audio paused flag.
     bool audioPaused_;
 
-	void updateFpsGoalTimer();
+	void updateRenderTimeTimer();
 	void updateUpdateTimeTimer();
 
 

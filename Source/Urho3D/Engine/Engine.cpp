@@ -329,7 +329,7 @@ bool Engine::Initialize(const VariantMap& parameters)
 	renderTimerTracker_.Reset();
 
 	updateUpdateTimeTimer();
-	updateFpsGoalTimer();
+	updateRenderTimeTimer();
 
 
     URHO3D_LOGINFO("Initialized engine");
@@ -531,28 +531,19 @@ DebugHud* Engine::CreateDebugHud()
 
 
 
-void Engine::SetRenderFpsGoal(int fps)
-{
-	renderTimeGoalUs_ = int((1.0f/float(fps))*1000000.0f);
-	updateFpsGoalTimer();
-}
 
 void Engine::SetRenderTimeGoalUs(unsigned timeUs)
 {
 	renderTimeGoalUs_ = timeUs;
-	updateFpsGoalTimer();
+	updateRenderTimeTimer();
 }
 
-void Engine::SetUpdateFpsGoal(unsigned fps)
-{
-	updateTimeGoalUs_ = int((1.0f / float(fps))*1000000.0f);
-	updateUpdateTimeTimer();
-}
+
 
 
 void Engine::SetUpdateTimeGoalUs(unsigned timeUs)
 {
-	updateTimeGoalUs_ = timeUs;
+	updateTimeGoalUs_ = timeUs/8;
 	updateUpdateTimeTimer();
 }
 
@@ -677,9 +668,9 @@ unsigned Engine::FreeUpdate()
 
 
     //if we have not rendered in a long time - we are overloaded so just render once every second to indicate the program is still alive.
-    if (renderGoalTimer_.GetUSec(false) > 100000)
+    if (renderTimer_.GetUSec(false) > 100000)
     {
-        renderGoalTimer_.Reset();
+        renderTimer_.Reset();
         Render();
 
     }
@@ -688,10 +679,10 @@ unsigned Engine::FreeUpdate()
         URHO3D_PROFILE_FRAME();//sync profiling frames on the start of updates.
 		Update();
 	}
-	else if (renderGoalTimer_.IsTimedOut())
+	else if (renderTimer_.IsTimedOut())
 	{
 		//Render
-		renderGoalTimer_.Reset();
+		renderTimer_.Reset();
 		Render();
 	}
 
@@ -700,7 +691,7 @@ unsigned Engine::FreeUpdate()
 
         //lets compute approximate time we have until next update or render
         long long updateTimeLeft = (updateTimer_.GetTimeoutDuration() - updateTimer_.GetUSec(false));
-        long long renderTimeLeft = (renderGoalTimer_.GetTimeoutDuration() - renderGoalTimer_.GetUSec(false));
+        long long renderTimeLeft = (renderTimer_.GetTimeoutDuration() - renderTimer_.GetUSec(false));
 
         long long timeLeftUS = Urho3D::Min(updateTimeLeft, renderTimeLeft);
         if (timeLeftUS > 0)
@@ -725,27 +716,60 @@ void Engine::Update()
 
 
 
-    SendUpdateEvents();
+    SendUpdateEvents(curUpdateLevel_);
+    curUpdateLevel_++;
+    if (curUpdateLevel_ > 7)
+        curUpdateLevel_ = 0;
 }
 
-void Engine::SendUpdateEvents()
+void Engine::SendUpdateEvents(int rateLevel)
 {
 
+
         VariantMap& eventData = GetEventDataMap();
-        eventData[Update::P_TIMESTEP] = float(lastUpdateTimeUs_) / 1000000.0f;
-        eventData[Update::P_TARGET_TIMESTEP] = float(updateTimeGoalUs_) / 1000000.0f;
-        eventData[Update::P_UPDATETICK] = updateTick_;
 
 
-        SendEvent(E_PREUPDATE, eventData);
 
-        SendEvent(E_UPDATE, eventData);
-        // Logic post-update event
-        SendEvent(E_POSTUPDATE, eventData);
+        eventData[UpdateRate8::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f);
+        eventData[UpdateRate8::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f);
+        eventData[UpdateRate8::P_UPDATETICK] = updateTick_;
+        eventData[UpdateRate8::P_SUBCOUNT] = rateLevel;
+        SendEvent(E_UPDATE_RATE8, eventData);
+        
+        if (rateLevel == 0 || rateLevel == 2 || rateLevel == 4 || rateLevel == 6) {
 
-        SendEvent(E_ENDFRAME);
+            eventData[UpdateRate4::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f) * 2.0f;
+            eventData[UpdateRate4::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f) * 2.0f;
+            eventData[UpdateRate4::P_UPDATETICK] = updateTick_;
+            SendEvent(E_UPDATE_RATE4, eventData);
+        }
+        if (rateLevel == 0 || rateLevel == 4) {
+            eventData[UpdateRate2::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f) * 4.0f;
+            eventData[UpdateRate2::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f) * 4.0f;
+            eventData[UpdateRate2::P_UPDATETICK] = updateTick_;
 
-        SendEvent(E_ENDFRAMEFINAL);
+            SendEvent(E_UPDATE_RATE2, eventData);
+        }
+        if (rateLevel == 0) {
+
+            eventData[Update::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f) * 8.0f ;
+            eventData[Update::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f)* 8.0f;
+            eventData[Update::P_UPDATETICK] = updateTick_;
+
+
+            SendEvent(E_PREUPDATE, eventData);
+
+            SendEvent(E_UPDATE, eventData);
+            // Logic post-update event
+            SendEvent(E_POSTUPDATE, eventData);
+
+            SendEvent(E_ENDFRAME);
+
+            SendEvent(E_ENDFRAMEFINAL);
+        }
+
+
+
 
 }
 
@@ -999,9 +1023,9 @@ void Engine::updateAudioPausing()
 	}
 }
 
-void Engine::updateFpsGoalTimer()
+void Engine::updateRenderTimeTimer()
 {
-	renderGoalTimer_.SetTimeoutDuration(renderTimeGoalUs_, false);
+	renderTimer_.SetTimeoutDuration(renderTimeGoalUs_, false);
 }
 
 void Engine::updateUpdateTimeTimer()

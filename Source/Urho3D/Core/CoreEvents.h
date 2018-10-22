@@ -38,12 +38,42 @@ URHO3D_EVENT(E_PREUPDATE, PreUpdate)
 	URHO3D_PARAM(P_UPDATETICK, UpdateTickNumber);  // long long
 }
 
+
+/// Application-wide logic update event. Called 8 times faster than E_UPDATE
+URHO3D_EVENT(E_UPDATE_RATE8, UpdateRate8)
+{
+    URHO3D_PARAM(P_TIMESTEP, TimeStep);            // float
+    URHO3D_PARAM(P_TARGET_TIMESTEP, TimeStep);     // float
+    URHO3D_PARAM(P_UPDATETICK, UpdateTickNumber);  // long long
+    URHO3D_PARAM(P_SUBCOUNT, SubRateCount);        // int 0-7
+}
+ 
+/// Application-wide logic update event. Called 4 times faster than E_UPDATE
+URHO3D_EVENT(E_UPDATE_RATE4, UpdateRate4)
+{
+    URHO3D_PARAM(P_TIMESTEP, TimeStep);         // float
+    URHO3D_PARAM(P_TARGET_TIMESTEP, TimeStep);         // float
+    URHO3D_PARAM(P_UPDATETICK, UpdateTickNumber);  // long long
+    URHO3D_PARAM(P_SUBCOUNT, SubRateCount);        // int 0-7
+}
+
+/// Application-wide logic update event. Called 4 times faster than E_UPDATE
+URHO3D_EVENT(E_UPDATE_RATE2, UpdateRate2)
+{
+    URHO3D_PARAM(P_TIMESTEP, TimeStep);         // float
+    URHO3D_PARAM(P_TARGET_TIMESTEP, TimeStep);         // float
+    URHO3D_PARAM(P_UPDATETICK, UpdateTickNumber);  // long long
+    URHO3D_PARAM(P_SUBCOUNT, SubRateCount);        // int 0-7
+}
+
+
 /// Application-wide logic update event. (generally use this one)
 URHO3D_EVENT(E_UPDATE, Update)
 {
     URHO3D_PARAM(P_TIMESTEP, TimeStep);         // float
     URHO3D_PARAM(P_TARGET_TIMESTEP, TimeStep);         // float
 	URHO3D_PARAM(P_UPDATETICK, UpdateTickNumber);  // long long
+    URHO3D_PARAM(P_SUBCOUNT, SubRateCount);        // int 0-7
 }
 
 /// Application-wide logic post-update event.
