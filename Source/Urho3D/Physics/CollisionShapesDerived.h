@@ -150,7 +150,32 @@ namespace Urho3D {
 
     };
 
+    class URHO3D_API CollisionShape_ChamferCylinder : public CollisionShape {
 
+        URHO3D_OBJECT(CollisionShape_ChamferCylinder, CollisionShape);
+
+    public:
+        CollisionShape_ChamferCylinder(Context* context);
+        virtual ~CollisionShape_ChamferCylinder();
+
+        static void RegisterObject(Context* context);
+
+        /// Set Radius in 1st dimension
+        void SetRadius(float radius) { radius_ = radius; MarkDirty(true); }
+        float GetRadius() const { return radius_; }
+
+        /// set the length
+        void SetLength(float length) { length_ = length; MarkDirty(true); }
+
+        float GetLength() const { return length_; }
+
+    protected:
+        float radius_ = 0.5f;
+        float length_ = 1.0f;
+
+        virtual bool buildNewtonCollision() override;
+
+    };
 
 
 

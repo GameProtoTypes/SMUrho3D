@@ -906,6 +906,7 @@ namespace Urho3D {
         CollisionShape_Box::RegisterObject(context);
         CollisionShape_Sphere::RegisterObject(context);
         CollisionShape_Cylinder::RegisterObject(context);
+        CollisionShape_ChamferCylinder::RegisterObject(context);
         CollisionShape_Capsule::RegisterObject(context);
         CollisionShape_Cone::RegisterObject(context);
         CollisionShape_Geometry::RegisterObject(context);

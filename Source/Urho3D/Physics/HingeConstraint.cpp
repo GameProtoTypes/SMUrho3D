@@ -52,6 +52,11 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Actuator Max Angular Rate", GetActuatorMaxAngularRate, SetActuatorMaxAngularRate, float, 1.0f, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Actuator Target Angle", GetActuatorTargetAngle, SetActuatorTargetAngle, float, 0.0f, AM_DEFAULT);
 
+        URHO3D_ACCESSOR_ATTRIBUTE("Spring Damper Enable", GetNoPowerSpringDamper, SetNoPowerSpringDamper, bool, false, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Spring Coefficient", GetNoPowerSpringCoefficient, SetNoPowerSpringCoefficient, float, HINGE_CONSTRAINT_DEF_SPRING_COEF, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Spring Damper Coefficient", GetNoPowerSpringDamper, SetNoPowerSpringDamper, float, HINGE_CONSTRAINT_DEF_DAMPER_COEF, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Spring Damper Relaxation", GetNoPowerSpringDamperRelaxation, SetNoPowerSpringDamperRelaxation, float, HINGE_CONSTRAINT_DEF_RELAX, AM_DEFAULT);
+
 
 
 
@@ -203,6 +208,84 @@ namespace Urho3D {
         }
     }
 
+    void HingeConstraint::SetNoPowerSpringDamper(bool enable)
+    {
+        if (enableSpringDamper_ != enable)
+        {
+            enableSpringDamper_ = enable;
+
+            if (newtonJoint_)
+            {
+                if (powerMode_ == NO_POWER)
+                {
+                    static_cast<dCustomHinge*>(newtonJoint_)->SetAsSpringDamper(enableSpringDamper_, springRelaxation_, springSpringCoef_, springDamperCoef_);
+                }
+            }
+            else
+                MarkDirty();
+
+        }
+    }
+
+
+
+    void HingeConstraint::SetNoPowerSpringCoefficient(float springCoef)
+    {
+        if (springSpringCoef_ != springCoef)
+        {
+            springSpringCoef_ = springCoef;
+
+            if (newtonJoint_)
+            {
+                if (powerMode_ == NO_POWER)
+                {
+                    static_cast<dCustomHinge*>(newtonJoint_)->SetAsSpringDamper(enableSpringDamper_, springRelaxation_, springSpringCoef_, springDamperCoef_);
+                }
+            }
+            else
+                MarkDirty();
+
+        }
+    }
+
+    void HingeConstraint::SetNoPowerDamperCoefficient(float damperCoef)
+    {
+        if (springDamperCoef_ != damperCoef)
+        {
+            springDamperCoef_ = damperCoef;
+
+            if (newtonJoint_)
+            {
+                if (powerMode_ == NO_POWER)
+                {
+                    static_cast<dCustomHinge*>(newtonJoint_)->SetAsSpringDamper(enableSpringDamper_, springRelaxation_, springSpringCoef_, springDamperCoef_);
+                }
+            }
+            else
+                MarkDirty();
+
+        }
+    }
+
+    void HingeConstraint::SetNoPowerSpringDamperRelaxation(float relaxation)
+    {
+        if (springRelaxation_ != relaxation)
+        {
+            springRelaxation_ = relaxation;
+
+            if (newtonJoint_)
+            {
+                if (powerMode_ == NO_POWER)
+                {
+                    static_cast<dCustomHinge*>(newtonJoint_)->SetAsSpringDamper(enableSpringDamper_, springRelaxation_, springSpringCoef_, springDamperCoef_);
+                }
+            }
+            else
+                MarkDirty();
+
+        }
+    }
+
     void Urho3D::HingeConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         Constraint::DrawDebugGeometry(debug, depthTest);
@@ -251,9 +334,13 @@ namespace Urho3D {
             static_cast<dCustomHinge*>(newtonJoint_)->EnableLimits(enableLimits_);
             static_cast<dCustomHinge*>(newtonJoint_)->SetLimits(minAngle_ * dDegreeToRad, maxAngle_ * dDegreeToRad);
             static_cast<dCustomHinge*>(newtonJoint_)->SetFriction(physicsWorld_->SceneToPhysics_Domain(frictionTorque_));
+            static_cast<dCustomHinge*>(newtonJoint_)->SetAsSpringDamper(enableSpringDamper_, springRelaxation_, springSpringCoef_, springDamperCoef_);
         }
 
 
         return true;
     }
+
+
+
 }

@@ -402,6 +402,36 @@ namespace Urho3D {
         return true;
     }
 
+
+    CollisionShape_ChamferCylinder::CollisionShape_ChamferCylinder(Context* context) : CollisionShape(context)
+    {
+
+    }
+
+    CollisionShape_ChamferCylinder::~CollisionShape_ChamferCylinder()
+    {
+
+    }
+
+    void CollisionShape_ChamferCylinder::RegisterObject(Context* context)
+    {
+        context->RegisterFactory<CollisionShape_ChamferCylinder>(DEF_PHYSICS_CATEGORY.CString());
+        URHO3D_COPY_BASE_ATTRIBUTES(CollisionShape);
+        URHO3D_ACCESSOR_ATTRIBUTE("Radius", GetRadius, SetRadius, float, 0.5f, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Length", GetLength, SetLength, float, 1.0f, AM_DEFAULT);
+    }
+
+    bool CollisionShape_ChamferCylinder::buildNewtonCollision()
+    {
+        // get a newton collision object (note: the same NewtonCollision could be shared between multiple component so this is not nessecarily a unique pointer)
+        newtonCollision_ = NewtonCreateChamferCylinder(physicsWorld_->GetNewtonWorld(), radius_, length_, 0, nullptr);
+
+        return true;
+    }
+
+
+
+
     CollisionShape_Capsule::CollisionShape_Capsule(Context* context) : CollisionShape(context)
     {
     }
@@ -505,7 +535,7 @@ namespace Urho3D {
 
             ////set the internal offset correction to match where HeightmapTerrain renders
             position_ = -Vector3(float(size*spacing.x_)*0.5f - spacing.x_*0.5f, 0, float(size*spacing.z_)*0.5f - spacing.z_*0.5f);
-            return false;
+            return true;
         }
         else
             return false;
@@ -538,6 +568,8 @@ namespace Urho3D {
         newtonCollision_ = NewtonCreateTreeCollisionFromMesh(world, newtonMesh_->mesh, 0);
         return true;
     }
+
+
 
 }
 

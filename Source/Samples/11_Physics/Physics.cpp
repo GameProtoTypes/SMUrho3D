@@ -105,8 +105,8 @@ void Physics::CreateScene()
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
     PhysicsWorld* newtonWorld = scene_->CreateComponent<PhysicsWorld>();
-    newtonWorld->SetGravity(Vector3(0, 0, 0));
-    newtonWorld->SetPhysicsScale(0.5f);
+    newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
+    newtonWorld->SetPhysicsScale(1.0f);
     //scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
@@ -152,10 +152,13 @@ void Physics::CreateScene()
     //CreatePyramids(Vector3(0,0,0));
 
 
-    SpawnCompound(Vector3(-2, 1 , 10));
+    //SpawnCompound(Vector3(-2, 1 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
     //SpawnVehicle(Vector3(0, 10, 0));
+    for(int i = 0; i < 10; i++)
+    SpawnTrialBike(Vector3(0, 10, i*2));
+
 
     //SpawnCollisionExceptionsTest(Vector3(0, 1, 0));
     //SpawnSliderTest(Vector3(0, 1, 0));
@@ -957,6 +960,111 @@ void Physics::SpawnVehicle(Vector3 worldPosition)
 
 }
 
+void Physics::SpawnTrialBike(Vector3 worldPosition)
+{
+    Node* root = scene_->CreateChild("TrialBike");
+
+    //A (Engine Body)
+    Node* A = SpawnSamplePhysicsBox(root, worldPosition, Vector3(1, 1, 0.5f));
+
+    Node* B = SpawnSamplePhysicsBox(A, worldPosition + Vector3(-1,0.7,0), Vector3(2, 0.3, 0.5));
+    B->RemoveComponent<RigidBody>();
+    B->SetWorldRotation(Quaternion(0, 0, -30));
+
+    Node* C = SpawnSamplePhysicsBox(root, worldPosition + Vector3(-1, -0.5, 0), Vector3(2, 0.3, 0.5));
+    C->SetWorldRotation(Quaternion(0, 0, 0));
+
+    C->GetComponent<RigidBody>()->SetCollisionOverride(A->GetComponent<RigidBody>(), false);
+
+    //make back spring.
+    HingeConstraint* hingeConstraint = A->CreateComponent<HingeConstraint>();
+    hingeConstraint->SetOtherBody(C->GetComponent<RigidBody>());
+    hingeConstraint->SetNoPowerSpringDamper(true);
+    hingeConstraint->SetNoPowerSpringCoefficient(1000.0f);
+    hingeConstraint->SetWorldRotation(Quaternion(90, 0, 90));
+    hingeConstraint->SetWorldPosition(A->GetWorldPosition() + Vector3(0,-0.5,0));
+
+
+
+    Node* D = SpawnSamplePhysicsBox(A, worldPosition + Vector3(0.7,0.5,0), Vector3(1,0.5,0.5));
+    D->RemoveComponent<RigidBody>();
+    D->SetWorldRotation(Quaternion(0, 0, 45));
+
+
+    Node* E = SpawnSamplePhysicsBox(root, worldPosition + Vector3(1.5, 0, 0), Vector3(0.2, 2.5, 0.5));
+    E->GetComponent<RigidBody>()->SetCollisionOverride(A->GetComponent<RigidBody>(), false);
+    E->SetWorldRotation(Quaternion(0, 0, 20));
+
+
+    HingeConstraint* hinge = E->CreateComponent<HingeConstraint>();
+    hinge->SetOtherBody(A->GetComponent<RigidBody>());
+    hinge->SetWorldPosition(worldPosition + Vector3(1.2, 0.8, 0));
+    hinge->SetWorldRotation(Quaternion(0,0,-90 + 20));
+
+
+    Node* F = SpawnSamplePhysicsBox(root, worldPosition + Vector3(1.5, 0, 0), Vector3(0.2, 2.5, 0.5));
+    F->SetWorldRotation(Quaternion(0, 0, 20));
+    F->GetComponent<RigidBody>()->SetCollisionOverride(E->GetComponent<RigidBody>(), false);
+    F->GetComponent<RigidBody>()->SetCollisionOverride(A->GetComponent<RigidBody>(), false);
+
+    SliderConstraint* frontSuspension = F->CreateComponent<SliderConstraint>();
+    frontSuspension->SetOtherBody(E->GetComponent<RigidBody>());
+    frontSuspension->SetWorldRotation(F->GetWorldRotation() * Quaternion(0,0,90));
+    frontSuspension->SetEnableSliderSpringDamper(true);
+    frontSuspension->SetSliderSpringCoefficient(1000.0f);
+    frontSuspension->SetSliderDamperCoefficient(50.0f);
+    frontSuspension->SetEnableTwistLimits(true, true);
+    frontSuspension->SetTwistLimits(0, 0);
+    frontSuspension->SetEnableSliderLimits(true, true);
+    frontSuspension->SetSliderLimits(-0.5, 0.5);
+
+
+
+    float wheelFriction = 2.0f;
+
+    //backwheel
+    Vector3 backWheelOffset = Vector3(-2.0, -0.5, 0);
+    Node* backWheel = SpawnSamplePhysicsChamferCylinder(root, worldPosition + backWheelOffset, 0.8f,0.2f);
+    backWheel->SetWorldRotation(Quaternion(90,0,0));
+    backWheel->GetComponent<RigidBody>()->SetCollisionOverride(C->GetComponent<RigidBody>(), false);
+    backWheel->GetDerivedComponent<CollisionShape>()->SetFriction(wheelFriction);
+
+
+    HingeConstraint* motor = backWheel->CreateComponent<HingeConstraint>();
+    motor->SetPowerMode(HingeConstraint::MOTOR);
+    motor->SetOtherBody(C->GetComponent<RigidBody>());
+    motor->SetWorldPosition(worldPosition + backWheelOffset);
+    motor->SetWorldRotation(Quaternion(0, 90, 0));
+    motor->SetMotorTargetAngularRate(20);
+    motor->SetMaxTorque(motor->GetMaxTorque()*0.00125f);
+
+
+
+
+
+    Vector3 frontWheelOffset = Vector3(1.8, -1, 0);
+    Node* frontWheel = SpawnSamplePhysicsChamferCylinder(root, worldPosition + frontWheelOffset, 0.8f, 0.2f);
+    frontWheel->SetWorldRotation(Quaternion(90, 0, 0));
+    frontWheel->GetComponent<RigidBody>()->SetCollisionOverride(E->GetComponent<RigidBody>(), false);
+    frontWheel->GetComponent<RigidBody>()->SetCollisionOverride(F->GetComponent<RigidBody>(), false);
+    frontWheel->GetDerivedComponent<CollisionShape>()->SetFriction(wheelFriction);
+
+
+    HingeConstraint* frontAxle = frontWheel->CreateComponent<HingeConstraint>();
+    //frontAxle->SetPowerMode(HingeConstraint::MOTOR);
+    frontAxle->SetOtherBody(F->GetComponent<RigidBody>());
+    frontAxle->SetWorldPosition(worldPosition + frontWheelOffset);
+    frontAxle->SetWorldRotation(Quaternion(0, 90, 0));
+    frontAxle->SetEnableLimits(false);
+    //frontAxle->SetMotorTargetAngularRate(10);
+
+
+
+
+
+
+}
+
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
     using namespace Update;
@@ -1160,7 +1268,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
 
-    if (0) {
+    if (1) {
         // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
         Node* floorNode = scene_->CreateChild("Floor");
         floorNode->SetPosition(worldPosition - Vector3(0, 0.5f, 0));
@@ -1175,13 +1283,13 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
     }
 
-    if (1) {
+    if (0) {
         //Create heightmap terrain with collision
         Node* terrainNode = scene_->CreateChild("Terrain");
         terrainNode->SetPosition(worldPosition);
         auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
         terrain->SetPatchSize(64);
-        terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
+        terrain->SetSpacing(Vector3(2.0f, 0.2f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
         terrain->SetSmoothing(true);
         terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
         terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
@@ -1194,19 +1302,35 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
 
+    if (1) {
 
+        for (int i = 0; i < 10; i++) {
+        // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
+        Node* ramp = scene_->CreateChild("ramp");
+        ramp->SetPosition(worldPosition + Vector3(30*float(i) + 100, 0, 10*(i%2)));
+        ramp->SetScale(Vector3(10.0f, 1.0f, 10.0f));
+        auto* floorObject = ramp->CreateComponent<StaticModel>();
+        floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+        floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+        floorObject->SetCastShadows(true);
+        ramp->SetWorldRotation(Quaternion(0, 0, 20));
 
+        //// Make the floor physical by adding NewtonCollisionShape component. 
+
+        auto* shape = ramp->CreateComponent<CollisionShape_Box>();
+        }
+    }
 
 
 
     float range = 200;
-    float objectScale = 10;
+    float objectScale = 100;
 
-    for (int i = 0; i < 0; i++)
+    for (int i = 0; i < 10; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* stMdl = scenePart->CreateComponent<StaticModel>();
-
+        stMdl->SetCastShadows(true);
         scenePart->SetPosition(Vector3(Random(-range, range), 0, Random(-range, range)) + worldPosition);
         scenePart->SetRotation(Quaternion(Random(-360, 0), Random(-360, 0), Random(-360, 0)));
         scenePart->SetScale(Vector3(Random(1.0f, objectScale), Random(1.0f, objectScale), Random(1.0f, objectScale)));

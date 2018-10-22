@@ -133,8 +133,8 @@ namespace Urho3D {
             float softness1 = colShape1->GetSoftness();
 
 
-            float finalStaticFriction = Min(staticFriction0, staticFriction1);
-            float finalKineticFriction = Min(kineticFriction0, kineticFriction1);
+            float finalStaticFriction = Max(staticFriction0, staticFriction1);
+            float finalKineticFriction = Max(kineticFriction0, kineticFriction1);
             float finalElasticity = Min(elasticity0, elasticity1);
             float finalSoftness = Max(softness0, softness1);
 
@@ -184,10 +184,6 @@ namespace Urho3D {
 
         res = rigBody1->CanCollideWith(rigBody0);
 
-        if (!res)
-        {
-            URHO3D_LOGINFO("AABB Collision Disabled");
-        }
 
         NewtonWorldCriticalSectionUnlock(physicsWorld->GetNewtonWorld());
         return res;
