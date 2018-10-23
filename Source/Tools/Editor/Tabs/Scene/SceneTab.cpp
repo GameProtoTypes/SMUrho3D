@@ -990,7 +990,7 @@ void SceneTab::RenderNodeContextMenu()
 
             if (GetSelection()[0]->GetNumChildren(false))
             {
-                if (ui::MenuItem(ICON_FA_ADJUST " Move Children To Node Center"))
+                if (ui::MenuItem(ICON_FA_ADJUST " Remove Children Position Offset"))
                 {
                     NormalizeNodeChildrenPosition(GetSelection()[0]);
                 }
