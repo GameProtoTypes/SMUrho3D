@@ -23,34 +23,34 @@
 #pragma once
 
 
-#include "../Core/Object.h"
-#include "../Scene/CameraViewport.h"
+#include <Urho3D/Engine/Application.h>
+#include <Urho3D/Engine/PluginApplication.h>
+#include <Urho3D/Scene/Scene.h>
 
 
 namespace Urho3D
 {
 
-/// Listens on various engine events and gathers useful information about scene. This component is used by internal tools.
-class URHO3D_API SceneMetadata : public Component
+class Player : public Application
 {
-    URHO3D_OBJECT(SceneMetadata, Component);
 public:
-    /// Construct.
-    explicit SceneMetadata(Context* context);
-    /// Store component.
-    void RegisterComponent(Component* component);
-    /// Remove stored component.
-    void UnregisterComponent(Component* component);
-
-    /// Returns a list of existing CameraViewport components.
-    const Vector<WeakPtr<CameraViewport>>& GetCameraViewportComponents() const { return viewportComponents_; }
-    
-    /// Register object with the engine.
-    static void RegisterObject(Context* context);
+    ///
+    explicit Player(Context* context);
+    ///
+    void Setup() override;
+    ///
+    void Start() override;
+    ///
+    void Stop() override;
 
 protected:
-    /// A list of components.
-    Vector<WeakPtr<CameraViewport>> viewportComponents_;
+    ///
+    bool LoadAssembly(const String& path);
+
+    ///
+    Vector<SharedPtr<PluginApplication>> plugins_;
+    ///
+    SharedPtr<Scene> scene_;
 };
 
 }

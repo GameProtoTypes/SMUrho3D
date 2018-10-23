@@ -30,6 +30,8 @@
 #include <Tabs/ResourceTab.h>
 #include <Tabs/HierarchyTab.h>
 #include <Tabs/InspectorTab.h>
+#include <Toolbox/SystemUI/Widgets.h>
+#include <ThirdParty/tracy/server/IconsFontAwesome5.h>
 
 #include "Editor.h"
 #include "EditorEvents.h"
@@ -49,6 +51,16 @@ Project::Project(Context* context)
 #endif
 {
     SubscribeToEvent(E_EDITORRESOURCESAVED, std::bind(&Project::SaveProject, this));
+    SubscribeToEvent(E_RESOURCERENAMED, [this](StringHash, VariantMap& args) {
+        using namespace ResourceRenamed;
+        if (args[P_FROM].GetString() == defaultScene_)
+            defaultScene_ = args[P_TO].GetString();
+    });
+    SubscribeToEvent(E_RESOURCEBROWSERDELETE, [this](StringHash, VariantMap& args) {
+        using namespace ResourceBrowserDelete;
+        if (args[P_NAME].GetString() == defaultScene_)
+            defaultScene_ = String::EMPTY;
+    });
 }
 
 Project::~Project()
@@ -164,20 +176,35 @@ bool Project::LoadProject(const String& projectPath)
             if (root.Contains("plugins"))
             {
                 const auto& plugins = root["plugins"]->GetArray();
-                for (const auto& plugin : plugins)
-                    plugins_.Load(plugin.GetString());
+                for (const auto& pluginInfoValue : plugins)
+                {
+                    const JSONObject& pluginInfo = pluginInfoValue.GetObject();
+                    Plugin* plugin = plugins_.Load(pluginInfo["name"]->GetString());
+                    if (pluginInfo["private"]->GetBool())
+                        plugin->SetFlags(plugin->GetFlags() | PLUGIN_PRIVATE);
+                }
                 // Tick plugins once to ensure plugins are loaded before loading any possibly open scenes. This makes
                 // plugins register themselves with the engine so that loaded scenes can properly load components
                 // provided by plugins. Not doing this would cause scenes to load these components as UnknownComponent.
                 plugins_.OnEndFrame();
             }
 
-            for (const auto& value : file.GetRoot().GetArray())
-            {
-                // Seed global string hash to name map.
-                StringHash hash(value.GetString());
-                (void) (hash);
-            }
+            if (root.Contains("default-scene"))
+                defaultScene_ = root["default-scene"]->GetString();
+        }
+    }
+
+    // Settings.json
+    {
+        String filePath(projectFileDir_ + "Settings.json");
+        if (GetFileSystem()->Exists(filePath))
+        {
+            JSONFile file(context_);
+            if (!file.LoadFile(filePath))
+                return false;
+
+            for (auto& pair : file.GetRoot().GetObject())
+                engineParameters_[pair.first_] = pair.second_.GetVariant();
         }
     }
 
@@ -281,14 +308,38 @@ bool Project::SaveProject()
         {
             JSONArray plugins{};
             for (const auto& plugin : plugins_.GetPlugins())
-                plugins.Push(plugin->GetName());
+            {
+                plugins.Push(JSONObject{{"name",    plugin->GetName()},
+                                        {"private", plugin->GetFlags() & PLUGIN_PRIVATE ? true : false}});
+            }
             Sort(plugins.Begin(), plugins.End(), [](JSONValue& a, JSONValue& b) {
-                return a.GetString().Compare(b.GetString());
+                const String& nameA = a.GetObject()["name"]->GetString();
+                const String& nameB = b.GetObject()["name"]->GetString();
+                return nameA.Compare(nameB);
             });
             root["plugins"] = plugins;
         }
 
+        root["default-scene"] = defaultScene_;
+
         String filePath(projectFileDir_ + "Project.json");
+        if (!file.SaveFile(filePath))
+        {
+            projectFileDir_.Clear();
+            URHO3D_LOGERRORF("Saving project to '%s' failed", filePath.CString());
+            return false;
+        }
+    }
+
+    // Settings.json
+    {
+        JSONFile file(context_);
+        JSONValue& root = file.GetRoot();
+
+        for (const auto& pair : engineParameters_)
+            root[pair.first_].SetVariant(pair.second_, context_);
+
+        String filePath(projectFileDir_ + "Settings.json");
         if (!file.SaveFile(filePath))
         {
             projectFileDir_.Clear();

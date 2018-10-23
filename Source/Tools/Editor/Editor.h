@@ -25,7 +25,6 @@
 
 #include <Urho3D/Engine/Application.h>
 #include <Toolbox/SystemUI/AttributeInspector.h>
-#include "Plugins/PluginFilesCache.h"
 #include "Project.h"
 
 using namespace std::placeholders;
@@ -100,7 +99,7 @@ protected:
     /// Process any global hotkeys.
     void HandleHotkeys();
     /// Renders a project plugins submenu.
-    void RenderProjectPluginsMenu();
+    void RenderProjectMenu();
     ///
     void SetupSystemUI();
 
@@ -122,8 +121,6 @@ protected:
     WeakPtr<SceneTab> lastActiveScene_;
     ///
     ImFont* monoFont_ = nullptr;
-    ///
-    PluginFilesCache pluginFiles_;
 };
 
 }

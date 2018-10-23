@@ -23,29 +23,15 @@
 #pragma once
 
 
-#include <Urho3D/Core/Timer.h>
+#include <Urho3D/Core/Context.h>
+#include <Urho3D/Engine/PluginApplication.h>
 
 
 namespace Urho3D
 {
 
-/// Class responsible for efficient caching of plugin files list.
-class PluginFilesCache : public Object
-{
-    URHO3D_OBJECT(PluginFilesCache, Object);
-public:
-    ///
-    explicit PluginFilesCache(Context* context);
-    /// Returns list of sorted plugin names.
-    const StringVector& GetPluginNames();
+/// Checks specified file and recognizes it's plugin type.
+PluginType GetPluginType(Context* context, const String& path);
 
-protected:
-    ///
-    Timer updateTimer_;
-    ///
-    StringVector names_;
-    ///
-    HashMap<String, unsigned> modificationTimes_;
-};
 
 }

@@ -51,8 +51,14 @@ public:
     String GetResourcePath() const;
     /// Returns plugin manager.
     PluginManager* GetPlugins() { return &plugins_; }
-    ///
+    /// Returns true in very first session of new project.
     bool IsNewProject() const { return isNewProject_; }
+    /// Return resource name of scene that will be executed first by the player.
+    const String& GetDefaultSceneName() const { return defaultScene_; }
+    /// Set resource name of scene that will be executed first by the player.
+    void SetDefaultSceneName(const String& defaultScene) { defaultScene_ = defaultScene; }
+    /// Returns a map of default engine settings that will be applied on the start of player application.
+    HashMap<String, Variant>& GetDefaultEngineSettings() { return engineParameters_; }
 
 protected:
     /// Directory containing project.
@@ -69,6 +75,10 @@ protected:
 #endif
     /// Flag indicating that project was just created.
     bool isNewProject_ = false;
+    /// Resource name of scene that will be started by player first.
+    String defaultScene_;
+    ///
+    HashMap<String, Variant> engineParameters_;
 };
 
 

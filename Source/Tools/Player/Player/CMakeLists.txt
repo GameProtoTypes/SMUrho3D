@@ -20,24 +20,20 @@
 # THE SOFTWARE.
 #
 
-# Urho3D tools
-set (CMAKE_INSTALL_RPATH ".:..")
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${DEST_TOOLS_DIR})
-
-if (URHO3D_PACKAGING OR         # When packing resources
-    URHO3D_PACKAGING_TOOL OR    # When crosscompiling and tool is required
-    URHO3D_TOOLS)
-    add_subdirectory (PackageTool)
+file (GLOB SOURCE_FILES *.cpp *.h)
+if (URHO3D_CSHARP)
+    # Use C# executable to host .net runtime and load editor.
+    set (CMAKE_SHARED_LIBRARY_PREFIX lib)
+    add_library (Player SHARED ${SOURCE_FILES})
+else ()
+    if (NOT URHO3D_WIN32_CONSOLE)
+        set (TARGET_TYPE WIN32)
+    endif ()
+    add_executable (Player ${TARGET_TYPE} ${SOURCE_FILES})
 endif ()
-if (URHO3D_TOOLS AND DESKTOP)
-    add_subdirectory (Toolbox)
-    add_subdirectory (AssetImporter)
-    add_subdirectory (AssetViewer)
-    add_subdirectory (OgreImporter)
-    add_subdirectory (RampGenerator)
-    add_subdirectory (SpritePacker)
-    add_subdirectory (Editor)
-    add_subdirectory (Player)
-endif ()
-
-vs_group_subdirectory_targets(${CMAKE_CURRENT_SOURCE_DIR} Tools)
+target_link_libraries(Player Urho3D PlayerCommon cr)
+install(TARGETS Player
+    LIBRARY DESTINATION ${DEST_LIBRARY_DIR}
+    RUNTIME DESTINATION ${DEST_BIN_DIR}
+    ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR}
+)

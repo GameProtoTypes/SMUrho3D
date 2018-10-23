@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
-    <AssemblyName>Editor</AssemblyName>
+    <AssemblyName>Player</AssemblyName>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>EditorHost</RootNamespace>
+    <RootNamespace>Player</RootNamespace>
     <EnableDefaultCompileItems>False</EnableDefaultCompileItems>
     <LangVersion>7.2</LangVersion>
   </PropertyGroup>

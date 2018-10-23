@@ -125,14 +125,14 @@ namespace EditorHost
             return versionedPath;
         }
 
-        public bool LoadPlugin(string path)
+        public IntPtr LoadPlugin(string path)
         {
-            if (!File.Exists(path) && !path.EndsWith(".dll"))
-                return false;
+            if (!File.Exists(path) || !path.EndsWith(".dll"))
+                return IntPtr.Zero;
 
             path = VersionFile(path);
             if (path == null)
-                return false;
+                return IntPtr.Zero;
 
             Assembly assembly;
             try
@@ -141,7 +141,7 @@ namespace EditorHost
             }
             catch (Exception)
             {
-                return false;
+                return IntPtr.Zero;
             }
 
             Type pluginType = null;
@@ -158,16 +158,16 @@ namespace EditorHost
             }
 
             if (pluginType == null)
-                return false;
+                return IntPtr.Zero;
 
             var plugin = Activator.CreateInstance(pluginType, _context) as PluginApplication;
             if (plugin is null)
-                return false;
+                return IntPtr.Zero;
 
             plugin.Load();
             _plugins.Add(plugin);
 
-            return true;
+            return PluginApplication.getCPtr(plugin).Handle;
         }
     }
 
@@ -182,7 +182,6 @@ namespace EditorHost
 
         public Program()
         {
-
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (sender, args) => Assembly.ReflectionOnlyLoadFrom(
                 Path.Combine(ProgramDirectory, args.Name.Substring(0, args.Name.IndexOf(',')) + ".dll"));
         }
@@ -237,9 +236,7 @@ namespace EditorHost
                 case ScriptRuntimeCommand.LoadAssembly:
                 {
                     var path = Marshal.PtrToStringAnsi(Marshal.ReadIntPtr(args, 0));    // TODO: utf-8
-                    if (_manager.LoadPlugin(path))
-                        return Urho3D.ScriptCommandSuccess;
-                    break;
+                    return _manager.LoadPlugin(path);
                 }
                 case ScriptRuntimeCommand.VerifyAssembly:
                 {

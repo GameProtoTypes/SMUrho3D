@@ -24,13 +24,14 @@
 #endif
 
 #include <CLI11/CLI11.hpp>
-
+#include <ImGui/imgui.h>
+#include <ImGui/imgui_stdlib.h>
 #include <Toolbox/IO/ContentUtilities.h>
 #include <Toolbox/SystemUI/ResourceBrowser.h>
 #include <Toolbox/ToolboxAPI.h>
+#include <Toolbox/SystemUI/Widgets.h>
 #include <IconFontCppHeaders/IconsFontAwesome5.h>
 #include <nativefiledialog/nfd.h>
-#include <Toolbox/SystemUI/Widgets.h>
 
 #include "Editor.h"
 #include "EditorEvents.h"
@@ -47,10 +48,7 @@
 #include "Assets/Inspector/MaterialInspector.h"
 #include "Urho3D/Misc/FreeFunctions.h"
 
-#ifdef WIN32
-#include <windows.h>
-#endif
-
+using namespace ui::litterals;
 
 URHO3D_DEFINE_APPLICATION_MAIN(Editor);
 
@@ -62,7 +60,6 @@ static std::string defaultProjectPath;
 
 Editor::Editor(Context* context)
     : Application(context)
-    , pluginFiles_(context)
 {
 }
 
@@ -311,11 +308,7 @@ void Editor::RenderMenuBar()
 
             if (ui::BeginMenu("Project"))
             {
-                if (ui::BeginMenu("Plugins"))
-                {
-                    RenderProjectPluginsMenu();
-                    ui::EndMenu();
-                }
+                RenderProjectMenu();
                 ui::EndMenu();
             }
 
@@ -489,30 +482,161 @@ void Editor::HandleHotkeys()
     }
 }
 
-void Editor::RenderProjectPluginsMenu()
+void Editor::RenderProjectMenu()
 {
-    const StringVector& pluginNames = pluginFiles_.GetPluginNames();
-    if (pluginNames.Size() == 0)
+    if (ui::BeginMenu("Plugins"))
     {
-        ui::TextUnformatted("No available files.");
-        ui::SetHelpTooltip("Plugins are shared libraries that have a class inheriting from PluginApplication and "
-            "define a plugin entry point. Look at Samples/103_GamePlugin for more information.");
-    }
-    else
-    {
-        for (const String& baseName : pluginNames)
+        ui::PushID("Plugins");
+        const StringVector& pluginNames = GetPluginNames(context_);
+        if (pluginNames.Size() == 0)
         {
-            PluginManager* plugins = project_->GetPlugins();
-            Plugin* plugin = plugins->GetPlugin(baseName);
-            bool loaded = plugin != nullptr;
-            if (ui::Checkbox(baseName.CString(), &loaded))
+            ui::TextUnformatted("No available files.");
+            ui::SetHelpTooltip("Plugins are shared libraries that have a class inheriting from PluginApplication and "
+                               "define a plugin entry point. Look at Samples/103_GamePlugin for more information.");
+        }
+        else
+        {
+            for (const String& baseName : pluginNames)
             {
-                if (loaded)
-                    plugins->Load(baseName);
-                else
+                PluginManager* plugins = project_->GetPlugins();
+                Plugin* plugin = plugins->GetPlugin(baseName);
+                bool loaded = plugin != nullptr;
+                bool editorOnly = plugin && plugin->GetFlags() & PLUGIN_PRIVATE;
+
+                ui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
+                if (ui::EditorToolbarButton(ICON_FA_BATTERY_EMPTY, "Inactive", !loaded) && loaded)
                     plugins->Unload(plugin);
+
+                if (ui::EditorToolbarButton(ICON_FA_BATTERY_HALF, "Editor-only", loaded && editorOnly))
+                {
+                    if (!loaded)
+                    {
+                        plugins->Load(baseName);
+                        plugin = plugins->GetPlugin(baseName);
+                    }
+                    plugin->SetFlags(plugin->GetFlags() | PLUGIN_PRIVATE);
+                }
+                if (ui::EditorToolbarButton(ICON_FA_BATTERY_FULL, "Editor and Game", loaded && !editorOnly))
+                {
+                    if (!loaded)
+                    {
+                        plugins->Load(baseName);
+                        plugin = plugins->GetPlugin(baseName);
+                    }
+                    plugin->SetFlags(plugin->GetFlags() & ~PLUGIN_PRIVATE);
+                }
+                ui::PopStyleVar();
+                ui::SameLine();
+                ui::TextUnformatted(baseName.CString());
             }
         }
+        ui::PopID();    // Plugins
+        ui::EndMenu();
+    }
+
+    if (ui::BeginMenu("Main Scene"))
+    {
+        ui::PushID("Main Scene");
+        StringVector* sceneNames = ui::GetUIState<StringVector>();
+        if (sceneNames->Empty())
+        {
+            GetFileSystem()->ScanDir(*sceneNames, project_->GetResourcePath(), "*.xml", SCAN_FILES, true);
+            for (auto it = sceneNames->Begin(); it != sceneNames->End();)
+            {
+                if (GetContentType(*it) == CTYPE_SCENE)
+                    ++it;
+                else
+                    it = sceneNames->Erase(it);
+            }
+        }
+
+        for (const String& resourceName : *sceneNames)
+        {
+            bool isDefaultScene = resourceName == project_->GetDefaultSceneName();
+            if (ui::Checkbox(resourceName.CString(), &isDefaultScene))
+            {
+                if (isDefaultScene)
+                    project_->SetDefaultSceneName(resourceName);
+            }
+        }
+
+        if (sceneNames->Empty())
+            ui::TextUnformatted("Create a new scene first.");
+
+        ui::PopID();    // Main Scene
+        ui::EndMenu();
+    }
+
+    ui::Separator();
+
+    if (ui::BeginMenu("Settings"))
+    {
+        static const VariantType variantTypes[] = {
+            VAR_BOOL,
+            VAR_INT,
+            VAR_INT64,
+            VAR_FLOAT,
+            VAR_DOUBLE,
+            VAR_COLOR,
+            VAR_STRING,
+        };
+
+        static const char* variantNames[] = {
+            "Bool",
+            "Int",
+            "Int64",
+            "Float",
+            "Double",
+            "Color",
+            "String",
+        };
+
+        struct NewEntryState
+        {
+            std::string fieldName;
+            int variantTypeIndex = 0;
+            bool insertingNew = false;
+        };
+
+        auto* state = ui::GetUIState<NewEntryState>();
+        auto& settings = project_->GetDefaultEngineSettings();
+        for (auto it = settings.Begin(); it != settings.End();)
+        {
+            const String& settingName = it->first_;
+            ui::IdScope idScope(settingName.CString());
+            Variant& value = it->second_;
+            float startPos = ui::GetCursorPosX();
+            ui::TextUnformatted(settingName.CString());
+            ui::SameLine();
+            ui::SetCursorPosX(startPos = startPos + 180_dpx + ui::GetStyle().ItemSpacing.x);
+            UI_ITEMWIDTH(100_dpx)
+                RenderSingleAttribute(value);
+            ui::SameLine();
+            ui::SetCursorPosX(startPos + 100_dpx + ui::GetStyle().ItemSpacing.x);
+            if (ui::Button(ICON_FA_TRASH))
+                it = settings.Erase(it);
+            else
+                ++it;
+        }
+
+        UI_ITEMWIDTH(180_dpx)
+            ui::InputText("###Key", &state->fieldName);
+        ui::SameLine();
+        UI_ITEMWIDTH(100_dpx)
+            ui::Combo("###Type", &state->variantTypeIndex, variantNames, SDL_arraysize(variantTypes));
+        ui::SameLine();
+        if (ui::Button(ICON_FA_CHECK))
+        {
+            if (settings.Find(state->fieldName.c_str()) == settings.End())   // TODO: Show warning about duplicate name
+            {
+                settings.Insert({state->fieldName.c_str(), Variant{variantTypes[state->variantTypeIndex]}});
+                state->fieldName.clear();
+                state->variantTypeIndex = 0;
+                state->insertingNew = false;
+            }
+        }
+
+        ui::EndMenu();
     }
 }
 

@@ -29,36 +29,17 @@
 #include <cr/cr.h>
 #include <Urho3D/Core/Object.h>
 #include <Urho3D/IO/FileWatcher.h>
+#include <Player/Common/PluginUtils.h>
 
 namespace Urho3D
 {
 
-/// Enumeration describing plugin file path status.
-enum PluginType
+enum PluginFlag
 {
-    /// Not a valid plugin.
-    PLUGIN_INVALID,
-    /// A native plugin.
-    PLUGIN_NATIVE,
-    /// A managed plugin.
-    PLUGIN_MANAGED,
+    PLUGIN_DEFAULT = 0,
+    PLUGIN_PRIVATE = 1,
 };
-
-enum class ReloadStatus
-{
-    None,
-    ReloadRequest,
-    Reloading,
-};
-
-struct DomainManagerInterface
-{
-    void* handle;
-    bool(*LoadPlugin)(void* handle, const char* path);
-    void(*SetReloadStatus)(void* handle, ReloadStatus status);
-    ReloadStatus(*GetReloadStatus)(void* handle);
-    bool(*IsPlugin)(void* handle, const char* path);
-};
+URHO3D_FLAGSET(PluginFlag, PluginFlags);
 
 class Plugin : public Object
 {
@@ -70,6 +51,10 @@ public:
     PluginType GetPluginType() const { return type_; }
     /// Returns file name of plugin.
     String GetName() const { return name_; }
+    ///
+    PluginFlags GetFlags() const { return flags_; }
+    ///
+    void SetFlags(PluginFlags flags) { flags_ = flags; }
 
 protected:
     /// Unload plugin.
@@ -87,6 +72,8 @@ protected:
     bool unloading_ = false;
     /// Last modification time.
     unsigned mtime_;
+    ///
+    PluginFlags flags_ = PLUGIN_DEFAULT;
 
     friend class PluginManager;
 };
@@ -111,8 +98,6 @@ public:
     void OnEndFrame();
     /// Converts relative or absolute plugin path to universal plugin name. Returns empty string on failure.
     static String PathToName(const String& path);
-    /// Checks specified file and recognizes it's plugin type.
-    static PluginType GetPluginType(const String& path);
 
 protected:
     /// Delete temporary files from binary directory.
@@ -125,6 +110,9 @@ protected:
 
     friend class Plugin;
 };
+
+/// Returns list of sorted plugin names that exist in editor directory.
+const StringVector& GetPluginNames(Context* context);
 
 }
 #endif
