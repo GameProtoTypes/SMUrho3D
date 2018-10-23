@@ -279,7 +279,9 @@ namespace Urho3D {
 {
         NewtonWorld* world = physicsWorld_->GetNewtonWorld();
 
-        resolveOrCreateTriangleMeshFromModel();
+        if (!resolveOrCreateTriangleMeshFromModel())
+            return false;
+
         newtonCollision_ = NewtonCreateCompoundCollisionFromMesh(world, newtonMesh_->mesh, hullTolerance_, 0, 0);
 
         return true;

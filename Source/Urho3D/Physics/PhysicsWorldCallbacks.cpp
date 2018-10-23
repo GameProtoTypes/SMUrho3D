@@ -179,6 +179,13 @@ namespace Urho3D {
         if (physicsWorld == nullptr)
             return 1;//scene is being destroyed.
 
+        //#todo why is this happening.
+        if (!rigBody0->RefCountPtr() || !rigBody1->RefCountPtr())
+        {
+            return 1;
+        }
+
+
         bool res;
         NewtonWorldCriticalSectionLock(physicsWorld->GetNewtonWorld(), threadIndex);
 

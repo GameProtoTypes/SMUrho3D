@@ -287,6 +287,24 @@ namespace Urho3D {
         }
     }
 
+    float HingeConstraint::GetCurrentAngularRate()
+    {
+        if (newtonJoint_)
+        {
+            return static_cast<dCustomHinge*>(newtonJoint_)->GetJointOmega();
+        }
+        return 0.0f;
+    }
+
+    float HingeConstraint::GetCurrentAngle()
+    {
+        if (newtonJoint_)
+        {
+            return static_cast<dCustomHinge*>(newtonJoint_)->GetJointAngle();
+        }
+        return 0.0f;
+    }
+
     void Urho3D::HingeConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         Constraint::DrawDebugGeometry(debug, depthTest);

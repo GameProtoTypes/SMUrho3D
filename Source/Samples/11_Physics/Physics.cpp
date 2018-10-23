@@ -1236,7 +1236,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
         // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
         Node* floorNode = scene_->CreateChild("Floor");
         floorNode->SetPosition(worldPosition - Vector3(0, 0.5f, 0));
-        floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+        floorNode->SetScale(Vector3(10000.0f, 1.0f, 10000.0f));
         auto* floorObject = floorNode->CreateComponent<StaticModel>();
         floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
         floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
@@ -1266,13 +1266,14 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
 
+    //ramps
     if (1) {
 
         for (int i = 0; i < 10; i++) {
-        // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
+      
         Node* ramp = scene_->CreateChild("ramp");
-        ramp->SetPosition(worldPosition + Vector3(30*float(i) + 100, 0, 10*(i%2)));
-        ramp->SetScale(Vector3(10.0f, 1.0f, 10.0f));
+        ramp->SetPosition(worldPosition + Vector3(300*float(i) + 100, 0, 100*(i%2)));
+        ramp->SetScale(Vector3(100.0f, 1.0f, 100.0f));
         auto* floorObject = ramp->CreateComponent<StaticModel>();
         floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
         floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));

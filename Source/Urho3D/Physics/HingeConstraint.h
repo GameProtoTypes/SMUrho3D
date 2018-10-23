@@ -62,6 +62,12 @@ namespace Urho3D {
         void SetNoPowerSpringDamperRelaxation(float relaxation);
         float GetNoPowerSpringDamperRelaxation() const { return springRelaxation_; }
 
+
+
+        float GetCurrentAngularRate();
+        float GetCurrentAngle();
+
+
         ///set the hinge power mode
         void SetPowerMode(PoweredMode mode);
         PoweredMode GetPowerMode() const { return powerMode_; }
@@ -79,6 +85,8 @@ namespace Urho3D {
 
         ///motor specific:
         void SetMotorTargetAngularRate(float rate);
+
+
 
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
