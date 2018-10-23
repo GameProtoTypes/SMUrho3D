@@ -358,26 +358,6 @@ namespace Urho3D {
         NewtonSetThreadsCount(newtonWorld_, newtonThreadCount_);
         NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
 
-
-        UnsubscribeFromEvent(E_UPDATE_RATE8);
-        UnsubscribeFromEvent(E_UPDATE_RATE4);
-        UnsubscribeFromEvent(E_UPDATE_RATE2);
-        UnsubscribeFromEvent(E_UPDATE);
-
-
-        if(subStepFactor == 8)
-            SubscribeToEvent(E_UPDATE_RATE8, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
-        else if (subStepFactor == 4)
-            SubscribeToEvent(E_UPDATE_RATE4, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
-        else if (subStepFactor == 2)
-            SubscribeToEvent(E_UPDATE_RATE2, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
-        else if (subStepFactor == 1)
-            SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
-        else
-        {
-            URHO3D_LOGWARNING("PhysicsWorld: subStepFactor must be 8,4,2, or 1");
-            SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
-        }
     }
 
     void PhysicsWorld::formContacts()
@@ -619,21 +599,12 @@ namespace Urho3D {
     {
        sceneUpdated_ = true;
 
-
-       Update(GSS<Engine>()->GetUpdateTimeGoalMs() / 1000.0f /8.0f, true);
+       Update(GSS<Engine>()->GetUpdateTimeGoalMs() / 1000.0f / float(subStepFactor), true);
+       for(int i = 0; i < subStepFactor-1; i++)
+            Update(GSS<Engine>()->GetUpdateTimeGoalMs() / 1000.0f / float(subStepFactor), false);
     }
 
-    void PhysicsWorld::HandleFastUpdateRate(StringHash eventType, VariantMap& eventData)
-    {
-        int subcount = eventData[UpdateRate8::P_SUBCOUNT].GetInt();
 
-        if (subcount == 0)
-            sceneUpdated_ = false;
-
-        if(subcount != 0 && sceneUpdated_)
-            Update(GSS<Engine>()->GetUpdateTimeGoalMs() / 1000.0f / 8.0f, false);
-
-    }
 
     void PhysicsWorld::Update(float timestep, bool isRootUpdate)
     {

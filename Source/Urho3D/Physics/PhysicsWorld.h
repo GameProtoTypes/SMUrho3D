@@ -257,7 +257,6 @@ namespace Urho3D
 
         /// Step the simulation forward.
         void HandleSceneUpdate(StringHash eventType, VariantMap& eventData);
-        void HandleFastUpdateRate(StringHash eventType, VariantMap& eventData);
         void Update(float timestep, bool isRootUpdate);
         void rebuildDirtyPhysicsComponents();
         bool sceneUpdated_ = false;
