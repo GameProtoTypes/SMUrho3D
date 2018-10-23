@@ -37,6 +37,7 @@
 #include "../dVehicle/dVehicleManager.h"
 #include "PhysicsVehicle.h"
 #include "VehicleTire.h"
+#include "Engine/Engine.h"
 
 namespace Urho3D {
 
@@ -46,7 +47,7 @@ namespace Urho3D {
     PhysicsWorld::PhysicsWorld(Context* context) : Component(context)
     {
 
-
+        SubscribeToEvent(E_SCENESUBSYSTEMUPDATE, URHO3D_HANDLER(PhysicsWorld, HandleSceneUpdate));
     }
 
     PhysicsWorld::~PhysicsWorld()
@@ -365,17 +366,17 @@ namespace Urho3D {
 
 
         if(subStepFactor == 8)
-            SubscribeToEvent(E_UPDATE_RATE8, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+            SubscribeToEvent(E_UPDATE_RATE8, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
         else if (subStepFactor == 4)
-            SubscribeToEvent(E_UPDATE_RATE4, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+            SubscribeToEvent(E_UPDATE_RATE4, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
         else if (subStepFactor == 2)
-            SubscribeToEvent(E_UPDATE_RATE2, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+            SubscribeToEvent(E_UPDATE_RATE2, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
         else if (subStepFactor == 1)
-            SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+            SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
         else
         {
             URHO3D_LOGWARNING("PhysicsWorld: subStepFactor must be 8,4,2, or 1");
-            SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleUpdateRate8));
+            SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(PhysicsWorld, HandleFastUpdateRate));
         }
     }
 
@@ -614,12 +615,32 @@ namespace Urho3D {
 
 
 
-    void PhysicsWorld::HandleUpdateRate8(StringHash eventType, VariantMap& eventData)
+    void PhysicsWorld::HandleSceneUpdate(StringHash eventType, VariantMap& eventData)
     {
+       sceneUpdated_ = true;
+
+
+       Update(GSS<Engine>()->GetUpdateTimeGoalMs() / 1000.0f /8.0f, true);
+    }
+
+    void PhysicsWorld::HandleFastUpdateRate(StringHash eventType, VariantMap& eventData)
+    {
+        int subcount = eventData[UpdateRate8::P_SUBCOUNT].GetInt();
+
+        if (subcount == 0)
+            sceneUpdated_ = false;
+
+        if(subcount != 0 && sceneUpdated_)
+            Update(GSS<Engine>()->GetUpdateTimeGoalMs() / 1000.0f / 8.0f, false);
+
+    }
+
+    void PhysicsWorld::Update(float timestep, bool isRootUpdate)
+    {
+
         URHO3D_PROFILE_FUNCTION();
-        float timeStep = eventData[UpdateRate8::P_TIMESTEP].GetFloat()*GetScene()->GetTimeScale();
-        int subCount = eventData[UpdateRate8::P_SUBCOUNT].GetInt();
-        bool rootRate = (subCount == 0);
+        float timeStep = timestep*GetScene()->GetTimeScale();
+        bool rootRate = isRootUpdate;
 
         if (rootRate) {
 
@@ -632,58 +653,55 @@ namespace Urho3D {
 
 
 
-        {
+        if (simulationStarted_) {
             URHO3D_PROFILE("Wait For ASync Update To finish.");
             NewtonWaitForUpdateToFinish(newtonWorld_);
         }
-
+        VariantMap sendEventData;
+        sendEventData[PhysicsPostStep::P_WORLD] = this;
+        sendEventData[PhysicsPostStep::P_TIMESTEP] = timeStep;
         if (rootRate) {
-            //send post physics event.
-            VariantMap sendEventData;
-            sendEventData[PhysicsPostStep::P_WORLD] = this;
-            sendEventData[PhysicsPostStep::P_TIMESTEP] = timeStep;
-            SendEvent(E_PHYSICSPOSTSTEP, sendEventData);
 
-
-            {
-                URHO3D_PROFILE("Apply Node Transforms");
-
+            if (simulationStarted_) {
+                //send post physics event.
+                SendEvent(E_PHYSICSPOSTSTEP, sendEventData);
                 {
-                    URHO3D_PROFILE("Rigid Body Order Pre Sort");
-                    //sort the rigidBodyComponentList by scene depth.
-                    if (rigidBodyListNeedsSorted) {
-                        Sort(rigidBodyComponentList.Begin(), rigidBodyComponentList.End(), RigidBodySceneDepthCompare);
-                        rigidBodyListNeedsSorted = false;
+                    URHO3D_PROFILE("Apply Node Transforms");
+
+                    {
+                        URHO3D_PROFILE("Rigid Body Order Pre Sort");
+                        //sort the rigidBodyComponentList by scene depth.
+                        if (rigidBodyListNeedsSorted) {
+                            Sort(rigidBodyComponentList.Begin(), rigidBodyComponentList.End(), RigidBodySceneDepthCompare);
+                            rigidBodyListNeedsSorted = false;
+                        }
                     }
-                }
 
-                //apply the transform of all rigid body components to their respective nodes.
-                for (RigidBody* rigBody : rigidBodyComponentList)
-                {
-                    if (rigBody->GetInternalTransformDirty()) {
-                        rigBody->ApplyTransform(timeStep);
+                    //apply the transform of all rigid body components to their respective nodes.
+                    for (RigidBody* rigBody : rigidBodyComponentList)
+                    {
+                        if (rigBody->GetInternalTransformDirty()) {
+                            rigBody->ApplyTransform(timeStep);
 
 
-                        if (rigBody->InterpolationWithinRestTolerance())
-                            rigBody->MarkInternalTransformDirty(false);
+                            if (rigBody->InterpolationWithinRestTolerance())
+                                rigBody->MarkInternalTransformDirty(false);
+                        }
                     }
-                }
 
-                //tell vehilces to update the nodes for the tires.
-                for (PhysicsVehicle* vehicle : vehicleList)
-                {
-                    vehicle->applyTransforms();
-                }
+                    //tell vehilces to update the nodes for the tires.
+                    for (PhysicsVehicle* vehicle : vehicleList)
+                    {
+                        vehicle->applyTransforms();
+                    }
 
+                }
             }
 
 
 
-            SendEvent(E_PHYSICSPRESTEP, sendEventData);
 
 
-            //rebuild collision shapes from child nodes to root nodes.
-            rebuildDirtyPhysicsComponents();
 
         }
 
@@ -693,16 +711,21 @@ namespace Urho3D {
             ParseContacts();
 
             freePhysicsInternals();
+
+            //rebuild stuff.
+            rebuildDirtyPhysicsComponents();
         }
+
+
+        SendEvent(E_PHYSICSPRESTEP, sendEventData);
         {
             URHO3D_PROFILE("NewtonUpdate");
             //use target time step to give newton constant time steps. 
 
 
             NewtonUpdateAsync(newtonWorld_, timeStep);
-
+            simulationStarted_ = true;
         }
-
     }
 
     void PhysicsWorld::rebuildDirtyPhysicsComponents()

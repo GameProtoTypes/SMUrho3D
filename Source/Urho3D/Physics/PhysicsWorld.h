@@ -206,7 +206,7 @@ namespace Urho3D
         int newtonThreadCount_ = 4;
         /// number of iterations newton will internally use.
         int iterationCount_ = 8;
-        /// number of substeps per iteration. 
+        /// number of substeps per scene subsystem update. (1,2,4,8)
         int subStepFactor = 2;
 
 
@@ -257,10 +257,11 @@ namespace Urho3D
 
         /// Step the simulation forward.
         void HandleSceneUpdate(StringHash eventType, VariantMap& eventData);
-        void HandleUpdateRate8(StringHash eventType, VariantMap& eventData);
+        void HandleFastUpdateRate(StringHash eventType, VariantMap& eventData);
+        void Update(float timestep, bool isRootUpdate);
         void rebuildDirtyPhysicsComponents();
-
-
+        bool sceneUpdated_ = false;
+        bool simulationStarted_ = false;
         /// Internal newton world
         NewtonWorld* newtonWorld_ = nullptr;
 
