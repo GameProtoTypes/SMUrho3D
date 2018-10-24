@@ -20,8 +20,9 @@
 // THE SOFTWARE.
 //
 
-#include <IconFontCppHeaders/IconsFontAwesome5.h>
+#include <Urho3D/Graphics/DebugRenderer.h>
 
+#include <IconFontCppHeaders/IconsFontAwesome5.h>
 #include <Toolbox/Scene/DebugCameraController.h>
 #include <Toolbox/SystemUI/Widgets.h>
 #include <ImGui/imgui_internal.h>
@@ -31,7 +32,7 @@
 #include "EditorEvents.h"
 #include "Editor.h"
 #include "Widgets.h"
-#include "SceneSettings.h"
+#include "EditorSceneSettings.h"
 #include "Tabs/HierarchyTab.h"
 #include "Tabs/InspectorTab.h"
 #include "Tabs/PreviewTab.h"
@@ -47,7 +48,7 @@ static const IntVector2 cameraPreviewSize{320, 200};
 
 SceneTab::SceneTab(Context* context)
     : BaseClassName(context)
-    , view_(context, {0, 0, 1024, 768})
+    , rect_({0, 0, 1024, 768})
     , gizmo_(context)
     , undo_(context)
     , clipboard_(context)
@@ -55,9 +56,23 @@ SceneTab::SceneTab(Context* context)
     SetTitle("New Scene");
     windowFlags_ = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
+    // Scene
+    scene_ = SharedPtr<Scene>(new Scene(context));
+    scene_->CreateComponent<Octree>();
+    scene_->CreateComponent<EditorSceneSettings>()->CreateEditorObjects();
+
+    // Main viewport
+    viewport_ = new Viewport(context_);
+    viewport_->SetScene(scene_);
+    viewport_->SetRect(rect_);
+    texture_ = new Texture2D(context_);
+    texture_->SetSize(rect_.Width(), rect_.Height(), Graphics::GetRGBFormat(), TEXTURE_RENDERTARGET);
+    texture_->GetRenderSurface()->SetUpdateMode(SURFACE_UPDATEALWAYS);
+    texture_->GetRenderSurface()->SetViewport(0, viewport_);
+
     // Camera preview objects
     cameraPreviewViewport_ = new Viewport(context_);
-    cameraPreviewViewport_->SetScene(view_.GetScene());
+    cameraPreviewViewport_->SetScene(scene_);
     cameraPreviewViewport_->SetRect(IntRect{{0, 0}, cameraPreviewSize});
     cameraPreviewViewport_->SetDrawDebug(false);
     cameraPreviewtexture_ = new Texture2D(context_);
@@ -70,10 +85,10 @@ SceneTab::SceneTab(Context* context)
     SubscribeToEvent(E_UPDATE, std::bind(&SceneTab::OnUpdate, this, _2));
     SubscribeToEvent(GetScene(), E_COMPONENTADDED, std::bind(&SceneTab::OnComponentAdded, this, _2));
     SubscribeToEvent(GetScene(), E_COMPONENTREMOVED, std::bind(&SceneTab::OnComponentRemoved, this, _2));
-
+    SubscribeToEvent(E_POSTRENDERUPDATE, [&](StringHash, VariantMap&) { RenderDebugInfo(); });
     SubscribeToEvent(E_SCENESETTINGMODIFIED, [this](StringHash, VariantMap& args) {
         using namespace SceneSettingModified;
-        if (GetScene()->GetComponent<SceneSettings>() != GetEventSender())
+        if (GetScene()->GetComponent<EditorSceneSettings>() != GetEventSender())
             return;
         // TODO: Stinks.
         if (args[P_NAME].GetString() == "Editor Viewport RenderPath")
@@ -100,7 +115,7 @@ SceneTab::SceneTab(Context* context)
                             }
                         }
                     };
-                    setRenderPathToViewport(GetSceneView()->GetViewport());
+                    setRenderPathToViewport(GetViewport());
                     setRenderPathToViewport(cameraPreviewViewport_);
                 }
             }
@@ -125,6 +140,7 @@ SceneTab::SceneTab(Context* context)
             ui::NextColumn();
         }
     });
+    SubscribeToEvent(E_ENDFRAME, [this](StringHash, VariantMap&) { UpdateCameras(); });
 
     undo_.Connect(GetScene());
     undo_.Connect(&inspector_);
@@ -137,7 +153,6 @@ SceneTab::SceneTab(Context* context)
     // Scene is updated manually.
     GetScene()->SetUpdateEnabled(false);
 
-    CreateObjects();
     undo_.Clear();
 
     UpdateUniqueTitle();
@@ -164,8 +179,8 @@ bool SceneTab::RenderWindowContent()
 
     ui::SetCursorScreenPos(ToImGui(tabRect.Min()));
     ui::BeginChild("Scene view");
-    ui::Image(view_.GetTexture(), ToImGui(tabRect.Size()));
-    gizmo_.ManipulateSelection(view_.GetCamera());
+    ui::Image(texture_, ToImGui(tabRect.Size()));
+    gizmo_.ManipulateSelection(GetCamera());
 
     if (GetInput()->IsMouseVisible())
         mouseHoversViewport_ = ui::IsItemHovered();
@@ -200,7 +215,7 @@ bool SceneTab::RenderWindowContent()
         IntVector2 pos = GetInput()->GetMousePosition();
         pos -= tabRect.Min();
 
-        Ray cameraRay = view_.GetCamera()->GetScreenRay((float)pos.x_ / tabRect.Width(), (float)pos.y_ / tabRect.Height());
+        Ray cameraRay = GetCamera()->GetScreenRay((float)pos.x_ / tabRect.Width(), (float)pos.y_ / tabRect.Height());
         // Pick only geometry objects, not eg. zones or lights, only get the first (closest) hit
         PODVector<RayQueryResult> results;
 
@@ -317,7 +332,6 @@ bool SceneTab::LoadResource(const String& resourcePath)
         auto* file = GetCache()->GetResource<XMLFile>(resourcePath);
         if (file && GetScene()->LoadXML(file->GetRoot()))
         {
-            CreateObjects();
         }
         else
         {
@@ -330,7 +344,6 @@ bool SceneTab::LoadResource(const String& resourcePath)
         auto* file = GetCache()->GetResource<JSONFile>(resourcePath);
         if (file && GetScene()->LoadJSON(file->GetRoot()))
         {
-            CreateObjects();
         }
         else
         {
@@ -347,7 +360,7 @@ bool SceneTab::LoadResource(const String& resourcePath)
     SetTitle(GetFileName(resourcePath));
 
     // Components for custom scene settings
-    GetScene()->GetOrCreateComponent<SceneSettings>(LOCAL, FIRST_INTERNAL_ID);
+    GetScene()->GetOrCreateComponent<EditorSceneSettings>(LOCAL, FIRST_INTERNAL_ID + 4)->CreateEditorObjects();
 
     return true;
 }
@@ -382,15 +395,6 @@ bool SceneTab::SaveResource()
         URHO3D_LOGERRORF("Saving scene to %s failed.", resourceName_.CString());
 
     return result;
-}
-
-void SceneTab::CreateObjects()
-{
-    auto isTracking = undo_.IsTrackingEnabled();
-    undo_.SetTrackingEnabled(false);
-    view_.CreateObjects();
-    view_.GetCamera()->GetNode()->GetOrCreateComponent<DebugCameraController>();
-    undo_.SetTrackingEnabled(isTracking);
 }
 
 void SceneTab::Select(Node* node)
@@ -519,6 +523,15 @@ void SceneTab::RenderToolbarButtons()
 
     ui::SameLine(0, 3.f);
 
+    if (EditorSceneSettings* settings = scene_->GetComponent<EditorSceneSettings>())
+    {
+        if (ui::EditorToolbarButton("3D", "3D mode in editor viewport.", !settings->GetCamera2D()))
+            settings->SetCamera2D(false);
+        if (ui::EditorToolbarButton("2D", "2D mode in editor viewport.", settings->GetCamera2D()))
+            settings->SetCamera2D(true);
+    }
+    ui::SameLine(0, 3.f);
+
     SendEvent(E_EDITORTOOLBARBUTTONS);
 
     ui::SameLine(0, 3.f);
@@ -546,7 +559,6 @@ bool SceneTab::IsSelected(Component* component) const
 void SceneTab::OnNodeSelectionChanged()
 {
     using namespace EditorSelectionChanged;
-    UpdateCameraPreview();
 }
 
 void SceneTab::RenderInspector(const char* filter)
@@ -593,7 +605,7 @@ void SceneTab::RenderNodeTree(Node* node)
     if (node->GetParent() == nullptr)
         flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
-    if (node->IsTemporary())
+    if (node->IsTemporary() || node->HasTag("__EDITOR_OBJECT__"))
         return;
 
     if (node == scrollTo_.Get())
@@ -753,25 +765,12 @@ void SceneTab::OnLoadProject(const JSONValue& tab)
 
     BaseClassName::OnLoadProject(tab);
 
-    const auto& camera = tab["camera"];
-    if (camera.IsObject())
-    {
-        Node* cameraNode = view_.GetCamera()->GetNode();
-        cameraNode->SetPosition(camera["position"].GetVariant().GetVector3());
-        cameraNode->SetRotation(camera["rotation"].GetVariant().GetQuaternion());
-    }
-
     undo_.SetTrackingEnabled(isTracking);
 }
 
 void SceneTab::OnSaveProject(JSONValue& tab)
 {
     BaseClassName::OnSaveProject(tab);
-
-    auto& camera = tab["camera"];
-    Node* cameraNode = view_.GetCamera()->GetNode();
-    camera["position"].SetVariant(cameraNode->GetPosition());
-    camera["rotation"].SetVariant(cameraNode->GetRotation());
 }
 
 void SceneTab::OnActiveUpdate()
@@ -798,7 +797,7 @@ void SceneTab::RemoveSelection()
 IntRect SceneTab::UpdateViewRect()
 {
     IntRect tabRect = BaseClassName::UpdateViewRect();
-    view_.SetSize(tabRect);
+    ResizeMainViewport(tabRect);
     gizmo_.SetScreenRect(tabRect);
     return tabRect;
 }
@@ -807,10 +806,17 @@ void SceneTab::OnUpdate(VariantMap& args)
 {
     float timeStep = args[Update::P_TIMESTEP].GetFloat();
 
-    if (auto component = view_.GetCamera()->GetComponent<DebugCameraController>())
+
+    bool isMode3D_ = !scene_->GetComponent<EditorSceneSettings>()->GetCamera2D();
+    StringHash cameraControllerType = isMode3D_ ? DebugCameraController::GetTypeStatic() : DebugCameraController2D::GetTypeStatic();
+    if (Camera* camera = GetCamera())
     {
-        if (mouseHoversViewport_)
-            component->Update(timeStep);
+        LogicComponent* component = static_cast<LogicComponent*>(camera->GetComponent(cameraControllerType));
+        if (component != nullptr)
+        {
+            if (mouseHoversViewport_)
+                component->Update(timeStep);
+        }
     }
 
     if (Tab* tab = GetSubsystem<Editor>()->GetActiveTab())
@@ -837,12 +843,15 @@ void SceneTab::OnUpdate(VariantMap& args)
     }
 
     // Render editor camera rotation guide
-    if (auto* debug = GetScene()->GetComponent<DebugRenderer>())
+    if (isMode3D_)
     {
-        Vector3 guideRoot = GetSceneView()->GetCamera()->ScreenToWorldPoint({0.95, 0.1, 1});
-        debug->AddLine(guideRoot, guideRoot + Vector3::RIGHT * 0.05f, Color::RED, false);
-        debug->AddLine(guideRoot, guideRoot + Vector3::UP * 0.05f, Color::GREEN, false);
-        debug->AddLine(guideRoot, guideRoot + Vector3::FORWARD * 0.05f, Color::BLUE, false);
+        if (auto* debug = GetScene()->GetComponent<DebugRenderer>())
+        {
+            Vector3 guideRoot = GetCamera()->ScreenToWorldPoint({0.95, 0.1, 1});
+            debug->AddLine(guideRoot, guideRoot + Vector3::RIGHT * 0.05f, Color::RED, false);
+            debug->AddLine(guideRoot, guideRoot + Vector3::UP * 0.05f, Color::GREEN, false);
+            debug->AddLine(guideRoot, guideRoot + Vector3::FORWARD * 0.05f, Color::BLUE, false);
+        }
     }
 }
 
@@ -864,36 +873,38 @@ void SceneTab::SceneStateSave(VectorBuffer& destination)
             savedComponentSelection_.Push(component->GetID());
     }
 
-    // Ensure that editor objects are saved.
-    PODVector<Node*> nodes;
-    GetScene()->GetNodesWithTag(nodes, "__EDITOR_OBJECT__");
-    for (auto* node : nodes)
-        node->SetTemporary(false);
-
     destination.Clear();
     GetScene()->Save(destination);
-
-    // Now that editor objects are saved make sure UI does not expose them
-    for (auto* node : nodes)
-        node->SetTemporary(true);
 }
 
 void SceneTab::SceneStateRestore(VectorBuffer& source)
 {
     Undo::SetTrackingScoped tracking(undo_, false);
 
+    VectorBuffer editorObjectsState;
+    if (Node* editorObjects = GetScene()->GetChild("EditorObjects"))
+    {
+        // Preserve state of editor camera.
+        editorObjects->SetTemporary(false);
+        editorObjects->Save(editorObjectsState);
+    }
+
     source.Seek(0);
     GetScene()->Load(source);
-
-    CreateObjects();
-
-    // Ensure that editor objects are not saved in user scene.
-    PODVector<Node*> nodes;
-    GetScene()->GetNodesWithTag(nodes, "__EDITOR_OBJECT__");
-    for (auto* node : nodes)
-        node->SetTemporary(true);
-
     source.Clear();
+
+    if (editorObjectsState.GetSize() > 0)
+    {
+        if (Node* objects = GetScene()->GetChild("EditorObjects"))
+            objects->Remove();
+
+        // Make sure camera is not reset upon stopping scene simulation.
+        editorObjectsState.Seek(0);
+        auto nodeID = editorObjectsState.ReadUInt();
+        Node* editorObjects = GetScene()->CreateChild("EditorObjects", LOCAL, nodeID, true);
+        editorObjectsState.Seek(0);
+        editorObjects->Load(editorObjectsState);
+    }
 
     // Restore previous selection
     UnselectAll();
@@ -905,7 +916,7 @@ void SceneTab::SceneStateRestore(VectorBuffer& source)
     savedNodeSelection_.Clear();
     savedComponentSelection_.Clear();
 
-    UpdateCameraPreview();
+    scene_->GetComponent<EditorSceneSettings>()->CreateEditorObjects();
 }
 
 void SceneTab::RenderNodeContextMenu()
@@ -1009,6 +1020,85 @@ void SceneTab::RenderNodeContextMenu()
         if (ui::MenuItem(ICON_FA_TRASH " Delete", "Del"))
             RemoveSelection();
 
+        ui::Separator();
+
+        if (ui::BeginMenu("Debug Info"))
+        {
+            enum class DebugInfoMode
+            {
+                AUTOMATIC,
+                ALWAYS,
+                NEVER,
+                MISMATCH,
+                NONE,
+            } debugMode = DebugInfoMode::NONE;
+
+            for (auto& node : GetSelection())
+            {
+                if (node.Null())
+                    continue;
+
+                DebugInfoMode nodeMode;
+                if (node->HasTag("DebugInfoNever"))
+                    nodeMode = DebugInfoMode::NEVER;
+                else if (node->HasTag("DebugInfoAlways"))
+                    nodeMode = DebugInfoMode::ALWAYS;
+                else
+                    nodeMode = DebugInfoMode::AUTOMATIC;
+
+                if (debugMode == DebugInfoMode::NONE)
+                    debugMode = nodeMode;
+                else if (debugMode != nodeMode)
+                {
+                    debugMode = DebugInfoMode::MISMATCH;
+                    break;
+                }
+            }
+
+            bool setDebugMode = false;
+            if (ui::MenuItem("Automatic", nullptr, debugMode == DebugInfoMode::AUTOMATIC))
+            {
+                debugMode = DebugInfoMode::AUTOMATIC;
+                setDebugMode = true;
+            }
+            if (ui::MenuItem("Always", nullptr, debugMode == DebugInfoMode::ALWAYS))
+            {
+                debugMode = DebugInfoMode::ALWAYS;
+                setDebugMode = true;
+            }
+            if (ui::MenuItem("Never", nullptr, debugMode == DebugInfoMode::NEVER))
+            {
+                debugMode = DebugInfoMode::NEVER;
+                setDebugMode = true;
+            }
+
+            if (setDebugMode)
+            {
+                for (auto& node : GetSelection())
+                {
+                    if (node.Null())
+                        continue;
+
+                    if (debugMode == DebugInfoMode::AUTOMATIC)
+                    {
+                        node->RemoveTag("DebugInfoAlways");
+                        node->RemoveTag("DebugInfoNever");
+                    }
+                    if (debugMode == DebugInfoMode::ALWAYS)
+                    {
+                        node->AddTag("DebugInfoAlways");
+                        node->RemoveTag("DebugInfoNever");
+                    }
+                    if (debugMode == DebugInfoMode::NEVER)
+                    {
+                        node->RemoveTag("DebugInfoAlways");
+                        node->AddTag("DebugInfoNever");
+                    }
+                }
+            }
+            ui::EndMenu();
+        }
+
         ui::EndPopup();
     }
 }
@@ -1019,7 +1109,8 @@ void SceneTab::OnComponentAdded(VariantMap& args)
     auto* component = static_cast<Component*>(args[P_COMPONENT].GetPtr());
     auto* node = static_cast<Node*>(args[P_NODE].GetPtr());
 
-    if (node->IsTemporary() || node->HasTag("__EDITOR_OBJECT__"))
+    if (node->IsTemporary() || node->HasTag("__EDITOR_OBJECT__") ||
+        (node->GetName().StartsWith("__") && node->GetName().EndsWith("__")))
         return;
 
     auto* material = GetCache()->GetResource<Material>("Materials/Editor/DebugIcon" + component->GetTypeName() + ".xml", false);
@@ -1054,8 +1145,6 @@ void SceneTab::OnComponentAdded(VariantMap& args)
             billboard->Commit();
         }
     }
-
-    UpdateCameraPreview();
 }
 
 void SceneTab::OnComponentRemoved(VariantMap& args)
@@ -1082,8 +1171,6 @@ void SceneTab::OnComponentRemoved(VariantMap& args)
             }
         }
     }
-
-    UpdateCameraPreview();
 }
 
 void SceneTab::OnFocused()
@@ -1091,11 +1178,11 @@ void SceneTab::OnFocused()
     if (InspectorTab* inspector = GetSubsystem<Editor>()->GetTab<InspectorTab>())
     {
         if (auto* inspectorProvider = dynamic_cast<MaterialInspector*>(inspector->GetInspector(IC_RESOURCE)))
-            inspectorProvider->SetEffectSource(GetSceneView()->GetViewport()->GetRenderPath());
+            inspectorProvider->SetEffectSource(GetViewport()->GetRenderPath());
     }
 }
 
-void SceneTab::UpdateCameraPreview()
+void SceneTab::UpdateCameras()
 {
     cameraPreviewViewport_->SetCamera(nullptr);
 
@@ -1107,10 +1194,15 @@ void SceneTab::UpdateCameraPreview()
             {
                 camera->SetViewMask(camera->GetViewMask() & ~EDITOR_VIEW_LAYER);
                 cameraPreviewViewport_->SetCamera(camera);
-                cameraPreviewViewport_->SetRenderPath(GetSceneView()->GetViewport()->GetRenderPath());
+                cameraPreviewViewport_->SetRenderPath(GetViewport()->GetRenderPath());
             }
         }
     }
+
+    Camera* camera = GetCamera();
+    viewport_->SetCamera(camera);
+    if (auto* debug = GetScene()->GetComponent<DebugRenderer>())
+        debug->SetView(camera);
 }
 
 void SceneTab::CopySelection()
@@ -1171,7 +1263,66 @@ void SceneTab::NormalizeNodeChildrenPosition(Node* node)
         child->Translate((node->GetWorldPosition() - worldBounds.Center()), TS_WORLD);
     }
 
+}
+void SceneTab::ResizeMainViewport(const IntRect& rect)
+{
+    if (rect_ == rect)
+        return;
 
+    rect_ = rect;
+    viewport_->SetRect(IntRect(IntVector2::ZERO, rect.Size()));
+    texture_->SetSize(rect.Width(), rect.Height(), Graphics::GetRGBFormat(), TEXTURE_RENDERTARGET);
+    texture_->GetRenderSurface()->SetViewport(0, viewport_);
+    texture_->GetRenderSurface()->SetUpdateMode(SURFACE_UPDATEALWAYS);
+}
+
+
+Camera* SceneTab::GetCamera()
+{
+    if (Node* node = scene_->GetChild("__EditorCamera__", true))
+        return node->GetComponent<Camera>();
+    return nullptr;
+}
+
+void SceneTab::RenderDebugInfo()
+{
+    DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
+
+    auto renderDebugInfo = [debug](Component* component) {
+        if (auto* light = component->Cast<Light>())
+            light->DrawDebugGeometry(debug, true);
+        else if (auto* drawable = component->Cast<Drawable>())
+            debug->AddBoundingBox(drawable->GetWorldBoundingBox(), Color::WHITE);
+        else
+            component->DrawDebugGeometry(debug, true);
+    };
+
+    const auto& selection = GetSelection();
+    for (auto& node : selection)
+    {
+        if (node && !node->HasTag("DebugInfoNever"))
+        {
+            for (auto& component: node->GetComponents())
+                renderDebugInfo(component);
+        }
+    }
+
+    PODVector<Node*> debugNodes;
+    scene_->GetNodesWithTag(debugNodes, "DebugInfoAlways");
+    for (Node* node : debugNodes)
+    {
+        if (selection.Contains(WeakPtr<Node>(node)))
+            continue;
+
+        for (auto& component: node->GetComponents())
+            renderDebugInfo(component);
+    }
+
+    for (auto& component : selectedComponents_)
+    {
+        if (component)
+            renderDebugInfo(component);
+    }
 }
 
 }
