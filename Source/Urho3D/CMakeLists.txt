@@ -168,6 +168,8 @@ set (THIRD_PARTY_DEPENDENCIES
     dScene
     dTimeTracker
     tinyxml
+
+    mlpack_wrap
     
     ImGui
     LibCpuId
