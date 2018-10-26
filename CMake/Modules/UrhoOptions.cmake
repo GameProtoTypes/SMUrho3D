@@ -117,6 +117,7 @@ option(URHO3D_THIRDPARTY_SHARED_LIBS "Build third party dependencies as static l
 _option(URHO3D_IK "Inverse kinematics subsystem enabled")
 _option(URHO3D_NAVIGATION "Navigation subsystem enabled")
 _option(URHO3D_PHYSICS "Physics subsystem enabled")
+_option(URHO3D_MACHINELEARNING "Machine Learning tools enabled")
 _option(URHO3D_URHO2D "2D subsystem enabled")
 _option(URHO3D_WEBP "WEBP support enabled")
 _option(URHO3D_NETWORK "Networking subsystem enabled")

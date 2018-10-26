@@ -113,6 +113,7 @@ A number of build options can be defined when invoking the build scripts or when
 |URHO3D_IK            |1|Enable inverse kinematics support|
 |URHO3D_NETWORK       |1|Enable Networking support|
 |URHO3D_PHYSICS       |1|Enable Physics support|
+|URHO3D_TOOLS         |1|Enable Machine Learning tools|
 |URHO3D_NAVIGATION    |1|Enable Navigation support|
 |URHO3D_URHO2D        |1|Enable 2D rendering & physics support|
 |URHO3D_SAMPLES       |1|Build sample applications|

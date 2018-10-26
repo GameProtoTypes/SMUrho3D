@@ -66,6 +66,12 @@ if (URHO3D_PHYSICS)
     add_subdirectory (newton-dynamics)
 endif ()
 
+if(URHO3D_MACHINELEARNING)
+    add_subdirectory (boost)
+    #add_subdirectory (armadillo)
+    #add_subdirectory (mlpack)
+endif ()
+
 if (URHO3D_TOOLS)
     add_subdirectory(nativefiledialog)
 endif ()
