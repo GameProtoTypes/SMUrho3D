@@ -40,26 +40,39 @@ class dVehicleTireInterface: public dVehicleNode
 		dFloat m_mass;
 		dFloat m_radio;
 		dFloat m_width;
+		dFloat m_steerRate;
 		dFloat m_pivotOffset;
 		dFloat m_dampingRatio;
 		dFloat m_springStiffness;
 		dFloat m_suspensionLength;
-		//dFloat m_maxSteeringAngle;
-		//dFloat m_corneringStiffness;
+		dFloat m_maxSteeringAngle;
+		dFloat m_corneringStiffness;
+		dFloat m_longitudinalStiffness;
 		//dFloat m_aligningMomentTrail;
 		//int m_hasFender;
 		//dSuspensionType m_suspentionType;
 	};
 
-	DVEHICLE_API dVehicleTireInterface(dVehicleNode* const parent);
+	DVEHICLE_API dVehicleTireInterface(dVehicleNode* const parent, const dTireInfo& info);
 	DVEHICLE_API virtual ~dVehicleTireInterface();
 
 	virtual dVehicleTireInterface* GetAsTire() const {return (dVehicleTireInterface*) this;} 
 	
+	const dTireInfo& GetInfo() const {return m_info;}
+	void SetInfo(const dTireInfo& info) {m_info = info;}
+	
 	virtual dMatrix GetLocalMatrix () const = 0;
 	virtual dMatrix GetGlobalMatrix () const = 0;
 	virtual NewtonCollision* GetCollisionShape() const = 0;
+
+	virtual dFloat GetSteeringAngle() const = 0;
 	virtual void SetSteeringAngle(dFloat steeringAngle) = 0;
+
+	virtual dFloat GetBrakeTorque() const = 0;
+	virtual void SetBrakeTorque(dFloat brakeTorque) = 0;
+
+	protected:
+	dTireInfo m_info;
 };
 
 

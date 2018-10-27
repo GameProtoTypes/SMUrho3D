@@ -15,8 +15,7 @@
 #include "dVehicleVirtualTire.h"
 
 dVehicleVirtualTire::dVehicleVirtualTire(dVehicleNode* const parent, const dMatrix& locationInGlobalSpace, const dTireInfo& info, const dMatrix& localFrame)
-	:dVehicleTireInterface(parent)
-	,m_info(info)
+	:dVehicleTireInterface(parent, info)
 	,m_joint()
 	,m_dynamicContactBodyNode(NULL, true)
 	,m_omega(0.0f)
@@ -24,6 +23,7 @@ dVehicleVirtualTire::dVehicleVirtualTire(dVehicleNode* const parent, const dMatr
 	,m_position(0.0f)
 	,m_tireLoad(0.0f)
 	,m_tireAngle(0.0f)
+	,m_brakeTorque(0.0f)
 	,m_steeringAngle(0.0f)
 	,m_invSuspensionLength(m_info.m_suspensionLength > 0.0f ? 1.0f/m_info.m_suspensionLength : 0.0f)
 {
@@ -72,7 +72,8 @@ dVehicleVirtualTire::dVehicleVirtualTire(dVehicleNode* const parent, const dMatr
 	}
 	m_contactsJoints[sizeof (m_contactsJoints) / sizeof (m_contactsJoints[0]) - 1].SetOwners(this, &m_dynamicContactBodyNode);
 
-//m_omega = -10.0f;
+//m_brakeTorque = 100.0f;
+//m_omega = -20.0f;
 }
 
 dVehicleVirtualTire::~dVehicleVirtualTire()
@@ -142,6 +143,21 @@ void dVehicleVirtualTire::SetSteeringAngle(dFloat steeringAngle)
 	m_steeringAngle = steeringAngle;
 }
 
+dFloat dVehicleVirtualTire::GetSteeringAngle() const
+{
+	return m_steeringAngle;
+}
+
+dFloat dVehicleVirtualTire::GetBrakeTorque() const
+{
+	return m_brakeTorque;
+}
+
+void dVehicleVirtualTire::SetBrakeTorque(dFloat brakeTorque)
+{
+	m_brakeTorque = dAbs (brakeTorque);
+}
+
 void dVehicleVirtualTire::ApplyExternalForce()
 {
 	dVehicleSingleBody* const chassisNode = (dVehicleSingleBody*)m_parent;
@@ -191,8 +207,28 @@ void dVehicleVirtualTire::Integrate(dFloat timestep)
 	dVector tireOmega(m_body.GetOmega());
 	dVector chassisOmega(chassisBody->GetOmega());
 	dVector localOmega(tireOmega - chassisOmega);
-	m_omega = tireMatrix.m_right.DotProduct3(localOmega);
-	m_tireAngle = dClamp(m_tireAngle + m_omega * timestep, dFloat(0.0f), dFloat(2.0f * dPi));
+	m_omega = tireMatrix.m_front.DotProduct3(localOmega);
+	// check if the tire is going to rest
+	if (dAbs(m_omega) < 0.25f) {
+		dFloat alpha = tireMatrix.m_front.DotProduct3(m_body.GetTorque()) * m_body.GetInvInertia()[0][0];
+		if (alpha < 0.2f) {
+			m_omega = 0.0f;
+		}
+	}
+
+static int xxx;
+xxx++;
+if (xxx > 2000) {
+if ((m_solverIndex == 2) || (m_solverIndex == 3))
+m_omega = -20.0f;
+}
+
+	m_tireAngle += m_omega * timestep;
+	while (m_tireAngle < 0.0f)
+	{
+		m_tireAngle += 2.0f * dPi;
+	}
+	m_tireAngle = dMod(m_tireAngle, dFloat(2.0f * dPi));
 
 	dVector tireVeloc(m_body.GetVelocity());
 	dVector chassisVeloc(chassisBody->GetVelocity());
@@ -206,13 +242,7 @@ void dVehicleVirtualTire::Integrate(dFloat timestep)
 void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectCollidingBodies& bodyArray, dFloat timestep)
 {
 	for (int i = 0; i < sizeof(m_contactsJoints) / sizeof(m_contactsJoints[0]); i++) {
-		dTireContact* const contact = &m_contactsJoints[i];
-		if (contact->m_isActive == false) {
-			contact->m_jointFeebackForce[0] = 0.0f;
-			contact->m_jointFeebackForce[1] = 0.0f;
-			contact->m_jointFeebackForce[2] = 0.0f;
-		}
-		contact->m_isActive = false;
+		m_contactsJoints[i].ResetContact();
 	}
 
 	if (bodyArray.m_count) {
@@ -245,6 +275,7 @@ void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectColli
 				otherShape, &matrixB[0][0], &tmp[0], &tmp[0], 
 				&impactParam, &contact[0], &normal[0], &penetration,
 				&attributeA, &attributeB, 0);
+
 			if (count) {
 				// calculate tire penetration
 				dFloat dist = (param - impactParam) * m_info.m_suspensionLength;
@@ -253,16 +284,16 @@ void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectColli
 					normal.m_w = 0.0f;
 					penetration = normal.DotProduct3(tireMatrix.m_up.Scale(dist));
 
-					// calculate contact matrix
-					dMatrix contactMatrix;
-					contactMatrix[0] = normal;
-					contactMatrix[1] = normal.CrossProduct(tireMatrix.m_front);
-					dAssert(contactMatrix[1].DotProduct3(contactMatrix[1]) > 0.0f);
-					contactMatrix[1] = contactMatrix[1].Normalize();
-					contactMatrix[2] = contactMatrix[0].CrossProduct(contactMatrix[1]);
-					contactMatrix[3] = contact - tireMatrix.m_up.Scale (dist);
-					contactMatrix[3].m_w = 1.0f;
-					m_contactsJoints[contactCount].SetContact(contactMatrix, penetration);
+					dVector lateralDir (normal.CrossProduct(tireMatrix.m_right));
+					if (lateralDir.DotProduct3(lateralDir) < 0.1f) {
+						lateralDir = normal.CrossProduct(tireMatrix.m_front.CrossProduct(normal)); 
+					}
+					lateralDir = lateralDir.Normalize();
+					dAssert (lateralDir.DotProduct3(lateralDir) > 0.0f);
+
+					contact -= tireMatrix.m_up.Scale (dist);
+					contact.m_w = 1.0f;
+					m_contactsJoints[contactCount].SetContact(contact, normal, lateralDir, penetration, 1.0f, 0.8f);
 					contactCount ++;
 				}
 			}

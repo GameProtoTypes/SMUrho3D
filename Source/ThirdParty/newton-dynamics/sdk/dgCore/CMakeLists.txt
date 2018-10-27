@@ -13,15 +13,22 @@ cmake_minimum_required(VERSION 3.12.0)
 set (projectName "dgCore")
 #message (${projectName})
 
+# low level core
+file(GLOB CPP_SOURCE *.cpp)
+file(GLOB HEADERS *.h)
 
- # low level core
-file(GLOB source *.cpp *.h)
-
-add_library(${projectName} STATIC ${source})
+if (UNIX)
+	if(NEWTON_BUILD_SHARED_LIBS)
+	   add_library(${projectName} SHARED ${CPP_SOURCE})
+	else(NEWTON_BUILD_SHARED_LIBS)
+	   add_library(${projectName} STATIC ${CPP_SOURCE})
+	endif(NEWTON_BUILD_SHARED_LIBS)
+endif(UNIX)
 
 if (MSVC)
-	set_target_properties(${projectName} PROPERTIES COMPILE_FLAGS "/YudgStdAfx.h")
-	set_source_files_properties(dgTypes.cpp PROPERTIES COMPILE_FLAGS "/YcdgStdAfx.h")
+	   add_library(${projectName} STATIC ${CPP_SOURCE})
+       set_target_properties(${projectName} PROPERTIES COMPILE_FLAGS "/YudgStdAfx.h")
+       set_source_files_properties(dgTypes.cpp PROPERTIES COMPILE_FLAGS "/YcdgStdAfx.h")
 endif(MSVC)
 
 target_include_directories(${projectName} PUBLIC 

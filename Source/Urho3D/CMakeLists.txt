@@ -166,7 +166,6 @@ set (THIRD_PARTY_DEPENDENCIES
     dVehicle
     newton
     dScene
-    dTimeTracker
     tinyxml
 
     mlpack_wrap

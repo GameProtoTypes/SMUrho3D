@@ -53,7 +53,7 @@ namespace Urho3D
         void SetMassScale(float massDensityScale);
 
 
-
+        
         PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
 
         /// returns the body transform in scene space or physics world space (they will be the same if PhysicsScale is 1.0f)

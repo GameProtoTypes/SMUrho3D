@@ -47,9 +47,6 @@ dVehicleTireInterface* dVehicleSingleBody::AddTire (const dMatrix& locationInGlo
 
 dMatrix dVehicleSingleBody::GetMatrix () const
 {
-//	dMatrix matrix;
-//	NewtonBody* const chassisBody = m_chassis->GetBody();
-//	NewtonBodyGetMatrix(chassisBody, &matrix[0][0]);
 	return m_body.GetMatrix();
 }
 
@@ -69,11 +66,20 @@ void dVehicleSingleBody::RigidBodyToStates()
 	NewtonBodyGetMatrix(m_newtonBody, &matrix[0][0]);
 	chassisBody->SetMatrix(matrix);
 
+static int xxx;
+xxx++;
+if (xxx == 1500)
+{
+//	NewtonBodyGetVelocity(m_newtonBody, &vector[0]);
+//	vector.m_x += 2.0f;
+//	NewtonBodySetVelocity(m_newtonBody, &vector[0]);
+}
+
+
 	NewtonBodyGetVelocity(m_newtonBody, &vector[0]);
 	chassisBody->SetVeloc(vector);
 
 	NewtonBodyGetOmega(m_newtonBody, &vector[0]);
-	//vector.m_y = 10.0f;
 	chassisBody->SetOmega(vector);
 
 	NewtonBodyGetForce(m_newtonBody, &vector[0]);
@@ -87,7 +93,7 @@ void dVehicleSingleBody::RigidBodyToStates()
 	dVehicleInterface::RigidBodyToStates();
 }
 
-void dVehicleSingleBody::StatestoRigidBody(dFloat timestep)
+void dVehicleSingleBody::StatesToRigidBody(dFloat timestep)
 {
 	dComplementaritySolver::dBodyState* const chassisBody = GetBody();
 
@@ -96,7 +102,7 @@ void dVehicleSingleBody::StatestoRigidBody(dFloat timestep)
 	NewtonBodySetForce(m_newtonBody, &force[0]);
 	NewtonBodySetTorque(m_newtonBody, &torque[0]);
 
-	dVehicleInterface::StatestoRigidBody(timestep);
+	dVehicleInterface::StatesToRigidBody(timestep);
 }
 
 int dVehicleSingleBody::GetKinematicLoops(dKinematicLoopJoint** const jointArray)
@@ -126,9 +132,3 @@ void dVehicleSingleBody::ApplyExternalForce()
 	dVehicleInterface::ApplyExternalForce();
 }
 
-/*
-void dVehicleSingleBody::Integrate(dFloat timestep)
-{
-	dVehicleInterface::Integrate(timestep);
-}
-*/

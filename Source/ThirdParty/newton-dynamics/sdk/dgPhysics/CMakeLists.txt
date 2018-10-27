@@ -13,15 +13,25 @@ cmake_minimum_required(VERSION 3.12.0)
 set (projectName "dgPhysics")
 #message (${projectName})
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fp:fast")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /fp:fast")
-
- # low level core
-file(GLOB source *.cpp *.h ../dgMeshUtil/*.cpp ../dgMeshUtil/*.h)
-
-add_library(${projectName} STATIC ${source})
+# low level core
+file(GLOB CPP_SOURCE *.cpp ../dgMeshUtil/*.cpp)
+file(GLOB HEADERS *.h ../dgMeshUtil/*.h)
 
 if (MSVC)
+       set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fp:fast")
+       set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /fp:fast")
+endif(MSVC)
+
+if (UNIX)
+	if(NEWTON_BUILD_SHARED_LIBS)
+	   add_library(${projectName} SHARED ${CPP_SOURCE})
+	else(NEWTON_BUILD_SHARED_LIBS)
+	   add_library(${projectName} STATIC ${CPP_SOURCE})
+	endif(NEWTON_BUILD_SHARED_LIBS)
+endif(UNIX)
+
+if (MSVC)
+   add_library(${projectName} STATIC ${CPP_SOURCE})
 	set_target_properties(${projectName} PROPERTIES COMPILE_FLAGS "/YudgPhysicsStdafx.h")
 	set_source_files_properties(dgWorld.cpp PROPERTIES COMPILE_FLAGS "/YcdgPhysicsStdafx.h")
 endif(MSVC)

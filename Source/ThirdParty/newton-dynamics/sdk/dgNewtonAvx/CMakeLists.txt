@@ -24,7 +24,10 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /arch:AVX")
 
 add_definitions(-DNEWTONCPU_EXPORTS)
 add_library(${projectName} SHARED ${source})
-target_link_libraries (${projectName} dTimeTracker)
+
+if (NEWTON_BUILD_PROFILER)
+	target_link_libraries (${projectName} dTimeTracker)
+endif ()
 
 if (MSVC)
 	set_target_properties(${projectName} PROPERTIES COMPILE_FLAGS "/YudgNewtonPluginStdafx.h")
@@ -47,7 +50,7 @@ install (TARGETS ${projectName} EXPORT Urho3D
 add_custom_command(
 	TARGET ${projectName} POST_BUILD
 	COMMAND ${CMAKE_COMMAND}
-	ARGS -E copy $(TargetPath) ${dllPath}/newtonPlugins/${CMAKE_CFG_INTDIR}/$(TargetFileName))
+	ARGS -E copy $(TargetPath) ${CMAKE_INSTALL_BINDIR}/newtonPlugins/${CMAKE_CFG_INTDIR}/$(TargetFileName))
 
 
 if (NEWTON_BUILD_SANDBOX_DEMOS)

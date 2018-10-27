@@ -42,6 +42,7 @@ class dVehicleNode: public dContainersAlloc
 	virtual dComplementaritySolver::dBilateralJoint* GetJoint() {return NULL;}
 
 	bool IsLoopNode() const{return m_isLoop;}
+	int GetIndex() const {return m_solverIndex;}
 	void SetIndex(int index){m_solverIndex = index;}
 	void SetLoopNode(bool staste){m_isLoop = staste;}
 
@@ -51,7 +52,7 @@ class dVehicleNode: public dContainersAlloc
 	protected:	
 	virtual void RigidBodyToStates();
 	virtual void Integrate(dFloat timestep);
-	virtual void StatestoRigidBody(dFloat timestep);
+	virtual void StatesToRigidBody(dFloat timestep);
 	void CalculateAABB(const NewtonCollision* const collision, const dMatrix& matrix, dVector& minP, dVector& maxP) const;
 
 	void* m_userData;

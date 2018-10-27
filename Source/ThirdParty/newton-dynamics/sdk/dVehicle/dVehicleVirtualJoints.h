@@ -18,6 +18,8 @@
 class dVehicleNode;
 class dVehicleVirtualTire;
 
+// tang of 10 degrees
+#define D_TIRE_MAX_LATERAL_SLIP				(0.175f)
 #define D_TIRE_MAX_ELASTIC_DEFORMATION		(0.05f)
 #define D_TIRE_MAX_ELASTIC_NORMAL_STIFFNESS (10.0f / D_TIRE_MAX_ELASTIC_DEFORMATION)
 
@@ -53,14 +55,42 @@ class dTireJoint: public dComplementaritySolver::dBilateralJoint
 class dTireContact: public dKinematicLoopJoint
 {
 	public:
+	class dTireModel
+	{
+		public:
+		dTireModel ()
+			:m_alingMoment(0.0f)
+			,m_lateralForce(0.0f)
+			,m_longitunalForce(0.0f)
+		{
+		}
+		dFloat m_alingMoment;
+		dFloat m_lateralForce;
+		dFloat m_longitunalForce;
+	};
+
 	dTireContact();
+
+	void ResetContact ();
+	void SetContact (const dVector& posit, const dVector& normal, const dVector& lateralDir, dFloat penetration, dFloat staticFriction, dFloat kineticFriction);
+
+	private:
+	int GetMaxDof() const { return 3;}
+	void TireForces(dFloat longitudinalSlip, dFloat lateralSlip, dFloat frictionCoef);
 	void JacobianDerivative(dComplementaritySolver::dParamInfo* const constraintParams);
 	void UpdateSolverForces(const dComplementaritySolver::dJacobianPair* const jacobians) const { dAssert(0); }
-	void SetContact (const dMatrix& contact, dFloat penetration);
-	int GetMaxDof() const { return 3;}
 
-	dMatrix m_contact;
+	dVector m_point;
+	dVector m_normal;
+	dVector m_lateralDir;
+	dVector m_longitudinalDir;
 	dFloat m_penetration;
+	dFloat m_staticFriction;
+	dFloat m_kineticFriction;
+	dFloat m_load;
+	dTireModel m_tireModel;
+	dFloat m_normalFilter[4];
+	bool m_isActiveFilter[4];
 };
 
 

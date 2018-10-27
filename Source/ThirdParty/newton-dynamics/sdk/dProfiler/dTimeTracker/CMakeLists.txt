@@ -14,10 +14,11 @@ set (projectName "dTimeTracker")
 #message (${projectName})
 
 # low level core
-file(GLOB source *.cpp *.h)
+file(GLOB CPP_SOURCE *.cpp)
+file(GLOB HEADERS *.h)
 
 add_definitions(-DDTIMETRACKER_EXPORTS)
-add_library(${projectName} SHARED ${source})
+add_library(${projectName} SHARED ${CPP_SOURCE})
 
 if (MSVC)
 	target_link_libraries (${projectName} ws2_32.lib)
@@ -39,9 +40,4 @@ install (TARGETS ${projectName} EXPORT Urho3D
     ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR}
 )
 
-if (NEWTON_BUILD_SANDBOX_DEMOS)
-	add_custom_command(
-		TARGET ${projectName} POST_BUILD
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $(TargetPath) ${PROJECT_BINARY_DIR}/applications/demosSandbox/${CMAKE_CFG_INTDIR}/$(TargetFileName))
-endif ()
+
