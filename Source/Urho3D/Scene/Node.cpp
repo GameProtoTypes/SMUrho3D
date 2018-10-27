@@ -651,7 +651,7 @@ void Node::RotateAround(const Vector3& point, const Quaternion& delta, Transform
         {
             parentSpacePoint = parent_->GetWorldTransform().Inverse() * point;
             Quaternion worldRotation = GetWorldRotation();
-            SetWorldRotation(worldRotation);
+            SetRotation(rotation_ * worldRotation.Inverse() * delta * worldRotation);
         }
         break;
     }
