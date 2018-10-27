@@ -27,7 +27,6 @@ add_subdirectory(rapidjson)
 add_subdirectory(SDL)
 add_subdirectory(STB)
 add_subdirectory(IconFontCppHeaders)
-add_subdirectory(glm)
 add_subdirectory(cr)
 
 if (DESKTOP AND NOT APPLE)
