@@ -617,7 +617,7 @@ void Node::Rotate(const Quaternion& delta, TransformSpace space)
         else
         {
             Quaternion worldRotation = GetWorldRotation();
-            SetWorldRotation(worldRotation);
+            SetRotation(rotation_ * worldRotation.Inverse() * delta * worldRotation);
         }
         break;
     }
