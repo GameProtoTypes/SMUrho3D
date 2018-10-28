@@ -5,12 +5,12 @@ add_library(mlpack_wrap STATIC dummy.cpp)
 
 find_path (MLPACK_HOME mlpack)
 find_path (ARMADILLO_INCLUDE mlpack)
-
+find_path (BOOST_INCLUDE mlpack)
 
 message(${MLPACK_HOME}/include)
 target_include_directories(mlpack_wrap PUBLIC ${MLPACK_HOME}/include)
 target_include_directories(mlpack_wrap PUBLIC ${ARMADILLO_INCLUDE})
-
+target_include_directories(mlpack_wrap PUBLIC ${BOOST_INCLUDE})
 
 target_link_libraries(mlpack_wrap "${MLPACK_HOME}/Release/mlpack.lib")
 
