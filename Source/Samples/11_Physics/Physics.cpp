@@ -106,7 +106,7 @@ void Physics::CreateScene()
     scene_->CreateComponent<Octree>();
     PhysicsWorld* newtonWorld = scene_->CreateComponent<PhysicsWorld>();
     newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
-    newtonWorld->SetPhysicsScale(0.5f);
+    newtonWorld->SetPhysicsScale(1.0f);
     //scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
@@ -152,7 +152,7 @@ void Physics::CreateScene()
     //CreatePyramids(Vector3(0,0,0));
 
 
-    SpawnCompound(Vector3(-2, 1 , 10));
+    //SpawnCompound(Vector3(-2, 1 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
     //SpawnVehicle(Vector3(0, 10, 0));
@@ -170,8 +170,8 @@ void Physics::CreateScene()
     //SpawnCompoundedRectTest(Vector3(20, 10, 10));
 
     ////////create scale test
-    //SpawnSceneCompoundTest(Vector3(-20, 10, 20), true);
-    //SpawnSceneCompoundTest(Vector3(-20, 10, 30), false);
+    SpawnSceneCompoundTest(Vector3(-20, 10, 20), true);
+    SpawnSceneCompoundTest(Vector3(-20, 10, 30), false);
 
     //CreateTowerOfLiar(Vector3(40, 0, 20));
 
@@ -1267,7 +1267,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
     //ramps
-    if (1) {
+    if (0) {
 
         for (int i = 0; i < 10; i++) {
       

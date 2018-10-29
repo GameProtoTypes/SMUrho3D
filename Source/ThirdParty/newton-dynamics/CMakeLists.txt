@@ -96,7 +96,14 @@ if (UNIX)
     set(NEWTON_WITH_AVX_PLUGIN OFF CACHE BOOL "" FORCE)
     set(NEWTON_BUILD_PROFILER OFF CACHE BOOL "" FORCE)
 
+    find_package(glfw3 REQUIRED)
 
+    if(NOT_glfw3_FOUND)
+        set(NEWTON_BUILD_SANDBOX_DEMOS OFF CACHE BOOL "" FORCE)
+        message(WARNING "GLFW headers were not found. Sandbox_Demos disabled")
+    else(NOT_glfw3_FOUND)
+        message("Found GLFW library")
+    endif(NOT_glfw3_FOUND)
 
 endif (UNIX)
 
