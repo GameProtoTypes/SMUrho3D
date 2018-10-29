@@ -618,7 +618,7 @@ namespace Urho3D {
 
             dVector inertia;
             dVector centerOfMass;
-            NewtonConvexCollisionCalculateInertialMatrix(resolvedCollision, &inertia[0], &centerOfMass[0]);//#todo check in upstream newton - this inertia calculation still needs fixed.
+            //NewtonConvexCollisionCalculateInertialMatrix(resolvedCollision, &inertia[0], &centerOfMass[0]);//#todo check in upstream newton - this inertia calculation still needs fixed.
 
 
             mass_ = accumMass * massScale_;
@@ -626,8 +626,11 @@ namespace Urho3D {
                 mass_ = 0;
 
             
-            NewtonBodySetMassMatrix(newtonBody_, mass_, inertia[0], inertia[1], inertia[2]);
-            NewtonBodySetCentreOfMass(newtonBody_, &centerOfMass[0]);
+            //NewtonBodySetMassMatrix(newtonBody_, mass_, inertia[0], inertia[1], inertia[2]);
+            //NewtonBodySetCentreOfMass(newtonBody_, &centerOfMass[0]);
+
+            NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
+
 
             NewtonBodySetMaterialGroupID(newtonBody_, 0);
 

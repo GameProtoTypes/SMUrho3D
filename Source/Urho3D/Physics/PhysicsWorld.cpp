@@ -993,10 +993,7 @@ namespace Urho3D {
         {
             for (int i = 0; i < numContacts; i++)
             {
-
-                //debug->AddCross(contactPositions[i]drawScale, 0.2f, Color::RED, false);
                 debug->AddLine(contactPositions[i], (contactPositions[i] + contactNormals[i]), Color::GREEN, depthTest);
-
             }
         }
     }
