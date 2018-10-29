@@ -867,14 +867,15 @@ namespace Urho3D {
 
     void RigidBody::AddWorldForce(const Vector3& force, const Vector3& localPosition)
     {
-        netForce_ += physicsWorld_->SceneToPhysics_Domain(force);
-        netTorque_ += localPosition.CrossProduct(node_->WorldToLocal(physicsWorld_->SceneToPhysics_Domain(force)));
+        float physScale = physicsWorld_->GetPhysicsScale();
+        netForce_ += force * physScale * physScale * physScale; //forceScaled = force*(physScale^3)
         bakeForceAndTorque();
     }
 
     void RigidBody::AddWorldTorque(const Vector3& torque)
     {
-        netTorque_ += physicsWorld_->SceneToPhysics_Domain(torque);
+        float physScale = physicsWorld_->GetPhysicsScale();
+        netTorque_ += torque * (physScale*physScale*physScale*physScale*physScale); //torqueScaled = torque*(physScale^5).
         bakeForceAndTorque();
     }
 
