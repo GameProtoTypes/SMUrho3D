@@ -106,7 +106,7 @@ void Physics::CreateScene()
     scene_->CreateComponent<Octree>();
     PhysicsWorld* newtonWorld = scene_->CreateComponent<PhysicsWorld>();
     newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
-    newtonWorld->SetPhysicsScale(1.0f);
+    newtonWorld->SetPhysicsScale(0.5f);
     //scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
@@ -152,12 +152,12 @@ void Physics::CreateScene()
     //CreatePyramids(Vector3(0,0,0));
 
 
-    //SpawnCompound(Vector3(-2, 1 , 10));
+    SpawnCompound(Vector3(-2, 1 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
     //SpawnVehicle(Vector3(0, 10, 0));
-    for(int i = 0; i < 50; i++)
-    SpawnTrialBike(Vector3(0, 10, i*4));
+    //for(int i = 0; i < 50; i++)
+    //SpawnTrialBike(Vector3(0, 10, i*4));
 
 
     //SpawnCollisionExceptionsTest(Vector3(0, 1, 0));
@@ -1232,7 +1232,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
 
-    if (1) {
+    if (0) {
         // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
         Node* floorNode = scene_->CreateChild("Floor");
         floorNode->SetPosition(worldPosition - Vector3(0, 0.5f, 0));
@@ -1247,7 +1247,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
     }
 
-    if (0) {
+    if (1) {
         //Create heightmap terrain with collision
         Node* terrainNode = scene_->CreateChild("Terrain");
         terrainNode->SetPosition(worldPosition);
