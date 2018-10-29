@@ -27,6 +27,7 @@ namespace Urho3D
 
     static const Vector3 DEF_GRAVITY = Vector3(0, -9.81, 0);
     static const String DEF_PHYSICS_CATEGORY = "Physics";
+    static const int DEF_PHYSICS_MAX_CONTACT_POINTS = 512;//maximum number of contacts per contact entry.
 
 
     class URHO3D_API  RigidBodyContactEntry : public Object
@@ -44,6 +45,7 @@ namespace Urho3D
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest);
 
+        void ResizeBuffers(int size);
         unsigned int hashKey_ = 0;
 
         WeakPtr<RigidBody> body0 = nullptr;

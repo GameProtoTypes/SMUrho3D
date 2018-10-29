@@ -67,8 +67,8 @@ namespace Urho3D {
         for (CollisionShape* colShapeComp : rigBodyComp->GetCollisionShapes())
         {
 
-                if (!colShapeComp->GetDrawNewtonDebugGeometry())
-                    continue;
+            if (!colShapeComp->GetDrawNewtonDebugGeometry())
+                continue;
 
 
             dMatrix matrix;
@@ -81,8 +81,6 @@ namespace Urho3D {
             NewtonCollisionForEachPolygonDo(colShapeComp->GetNewtonCollision(), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
 
         }
-
-
     }
 
 

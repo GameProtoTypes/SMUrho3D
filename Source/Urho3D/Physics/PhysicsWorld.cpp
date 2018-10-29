@@ -392,13 +392,13 @@ namespace Urho3D {
                 contactEntry->wakeFlag_ = true;
                 contactEntry->inContact_ = NewtonJointIsActive(curJoint);
                 contactEntry->numContacts = NewtonContactJointGetContactCount(curJoint);
-                contactEntry->contactNormals.Resize(contactEntry->numContacts);
-                contactEntry->contactPositions.Resize(contactEntry->numContacts);
-                contactEntry->contactForces.Resize(contactEntry->numContacts);
-                contactEntry->contactTangent0.Resize(contactEntry->numContacts);
-                contactEntry->contactTangent1.Resize(contactEntry->numContacts);
-                contactEntry->shapes0.Resize(contactEntry->numContacts);
-                contactEntry->shapes1.Resize(contactEntry->numContacts);
+
+                if (contactEntry->numContacts > DEF_PHYSICS_MAX_CONTACT_POINTS)
+                {
+                    contactEntry->ResizeBuffers(contactEntry->numContacts);
+                }
+
+
 
 
                 int contactIdx = 0;
@@ -973,7 +973,7 @@ namespace Urho3D {
 
     RigidBodyContactEntry::RigidBodyContactEntry(Context* context) : Object(context)
     {
-
+        ResizeBuffers(DEF_PHYSICS_MAX_CONTACT_POINTS);
     }
 
     RigidBodyContactEntry::~RigidBodyContactEntry()
@@ -998,14 +998,18 @@ namespace Urho3D {
                 debug->AddLine(contactPositions[i], (contactPositions[i] + contactNormals[i]), Color::GREEN, depthTest);
 
             }
-
-
-
-
-
         }
+    }
 
-
+    void RigidBodyContactEntry::ResizeBuffers(int size)
+    {
+        contactForces.Resize(size);
+        contactPositions.Resize(size);
+        contactNormals.Resize(size);
+        contactTangent0.Resize(size);
+        contactTangent1.Resize(size);
+        shapes0.Resize(size);
+        shapes1.Resize(size);
     }
 
 }

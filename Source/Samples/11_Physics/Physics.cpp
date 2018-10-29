@@ -106,7 +106,7 @@ void Physics::CreateScene()
     scene_->CreateComponent<Octree>();
     PhysicsWorld* newtonWorld = scene_->CreateComponent<PhysicsWorld>();
     newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
-    newtonWorld->SetPhysicsScale(1.0f);
+    newtonWorld->SetPhysicsScale(0.5f);
     //scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
