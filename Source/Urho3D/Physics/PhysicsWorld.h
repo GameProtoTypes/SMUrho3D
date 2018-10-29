@@ -165,19 +165,17 @@ namespace Urho3D
 
         ///Conversions From Scene space to physics space.
         float SceneToPhysics_Domain(float x);
-        //void SceneToPhysics_Domain(float& x);
         Vector3 SceneToPhysics_Domain(Vector3 v);
-        //void SceneToPhysics_Domain(Vector3& v);
         Matrix3x4 SceneToPhysics_Domain(Matrix3x4 sceneFrame);
-        //void SceneToPhysics_Domain(Matrix3x4& frame);
+        Vector3 SceneToPhysics_Domain_Torque(Vector3 torque);
+        float SceneToPhysics_Domain_Torque(float torque);
 
         ///Conversions From physics space to scene space.
         float PhysicsToScene_Domain(float x);
-        //void PhysicsToScene_Domain(float& x);
         Vector3 PhysicsToScene_Domain(Vector3 v);
-        //void PhysicsToScene_Domain(Vector3& v);
         Matrix3x4 PhysicsToScene_Domain(Matrix3x4 newtonFrame);
-        //void PhysicsToScene_Domain(Matrix3x4& frame);
+        Vector3 PhysicsToScene_Domain_Torque(Vector3 torque);
+        float PhysicsToScene_Domain_Torque(float torque);
 
 
 

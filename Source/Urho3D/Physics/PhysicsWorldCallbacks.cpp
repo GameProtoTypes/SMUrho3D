@@ -29,19 +29,33 @@ namespace Urho3D {
 
         Vector3 gravityForce;
         if (rigidBodyComp->GetScene())//on scene destruction sometimes this is null so check...
-            gravityForce = rigidBodyComp->GetScene()->GetComponent<PhysicsWorld>()->GetGravity() * rigidBodyComp->GetEffectiveMass();
+        {
+            PhysicsWorld* physicsWorld = rigidBodyComp->GetScene()->GetComponent<PhysicsWorld>();
+            float physicsScale = physicsWorld->GetPhysicsScale();
+            gravityForce = physicsWorld->GetGravity() * physicsScale* rigidBodyComp->GetEffectiveMass();
 
-        netForce += gravityForce;
 
-        NewtonBodySetForce(body, &UrhoToNewton(netForce)[0]);
-        NewtonBodySetTorque(body, &UrhoToNewton(netTorque)[0]);
+            //all 
+            netForce *= physicsScale*physicsScale*physicsScale;
+
+
+            netForce += gravityForce;
+
+
+
+
+            NewtonBodySetForce(body, &UrhoToNewton(netForce)[0]);
+            NewtonBodySetTorque(body, &UrhoToNewton(netTorque*physicsScale*physicsScale*physicsScale*physicsScale*physicsScale)[0]);
+
+        }
     }
 
 
     void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
     {
         RigidBody* rigBody = static_cast<RigidBody*>(NewtonBodyGetUserData(body));
-        rigBody->MarkInternalTransformDirty();
+        if(rigBody)
+            rigBody->MarkInternalTransformDirty();
     }
 
 

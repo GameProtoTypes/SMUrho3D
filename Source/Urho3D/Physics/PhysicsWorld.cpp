@@ -380,6 +380,14 @@ namespace Urho3D {
                 RigidBody* rigBody0 = (RigidBody*)NewtonBodyGetUserData(body0);
                 RigidBody* rigBody1 = (RigidBody*)NewtonBodyGetUserData(body1);
 
+                if (!rigBody0 || !rigBody1)
+                {
+                    curJoint = NewtonBodyGetNextContactJoint(newtonBody, curJoint);
+                    continue;
+                }
+
+
+
                 unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
                 SharedPtr<RigidBodyContactEntry> contactEntry = nullptr;
 
@@ -387,8 +395,12 @@ namespace Urho3D {
 
                 contactEntry = GetCreateBodyContactEntry(key);
 
+
+                
                 contactEntry->body0 = rigBody0;
                 contactEntry->body1 = rigBody1;
+
+
                 contactEntry->wakeFlag_ = true;
                 contactEntry->inContact_ = NewtonJointIsActive(curJoint);
                 contactEntry->numContacts = NewtonContactJointGetContactCount(curJoint);
@@ -436,7 +448,7 @@ namespace Urho3D {
 
                     contactIdx++;
                 }
-
+                
                 curJoint = NewtonBodyGetNextContactJoint(newtonBody, curJoint);
             }
 

@@ -38,6 +38,8 @@ namespace Urho3D {
     {
         if (nextAngularVelocityNeeded_ || nextImpulseNeeded_ || nextLinearVelocityNeeded_ || nextSleepStateNeeded_)
             URHO3D_LOGWARNING("Rigid Body Scheduled update did not get a chance to apply!  Consider saving the updates as attributes.");
+
+        
     }
 
     void RigidBody::RegisterObject(Context* context)
@@ -404,6 +406,7 @@ namespace Urho3D {
     {
         if (newtonBody_ != nullptr) {
             physicsWorld_->addToFreeQueue(newtonBody_);
+            NewtonBodySetUserData(newtonBody_, nullptr);
             newtonBody_ = nullptr;
         }
 
@@ -867,15 +870,15 @@ namespace Urho3D {
 
     void RigidBody::AddWorldForce(const Vector3& force, const Vector3& localPosition)
     {
-        float physScale = physicsWorld_->GetPhysicsScale();
-        netForce_ += force * physScale * physScale * physScale; //forceScaled = force*(physScale^3)
+        //float physScale = physicsWorld_->GetPhysicsScale();
+        netForce_ += force ; //forceScaled = force*(physScale^3)
         bakeForceAndTorque();
     }
 
     void RigidBody::AddWorldTorque(const Vector3& torque)
     {
-        float physScale = physicsWorld_->GetPhysicsScale();
-        netTorque_ += torque * (physScale*physScale*physScale*physScale*physScale); //torqueScaled = torque*(physScale^5).
+        //float physScale = physicsWorld_->GetPhysicsScale();
+        netTorque_ += torque; //torqueScaled = torque*(physScale^5).
         bakeForceAndTorque();
     }
 
