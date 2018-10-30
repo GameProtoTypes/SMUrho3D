@@ -553,9 +553,6 @@ namespace Urho3D {
 
 
 
-
-
-
                     //take into account existing local matrix of the newton collision shape.
                     dMatrix existingLocalMatrix;
                     NewtonCollisionGetMatrix(curCollisionInstance, &existingLocalMatrix[0][0]);
@@ -576,7 +573,7 @@ namespace Urho3D {
 
                     //calculate volume
                     float vol = NewtonConvexCollisionCalculateVolume(curCollisionInstance);
-                    accumMass += vol * 1.0f;//#todo 1.0f should be mass density of material attached to collision shape.
+                    accumMass += vol * colComp->GetDensity();
 
 
                     //end adding current shape.

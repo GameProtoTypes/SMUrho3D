@@ -53,6 +53,7 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Kinetic Friction Coefficient", GetKineticFriction, SetKineticFriction, float, COLLISION_SHAPE_DEF_KINETIC_FRICTION, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Elasticity", GetElasticity, SetElasticity, float, COLLISION_SHAPE_DEF_ELASTICITY, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Softness", GetSoftness, SetSoftness, float, COLLISION_SHAPE_DEF_SOFTNESS, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Density", GetDensity, SetDensity, float, 1.0f, AM_DEFAULT);
     }
 
 
@@ -188,6 +189,15 @@ namespace Urho3D {
     float CollisionShape::GetSoftness() const
     {
         return softness_;
+    }
+
+    void CollisionShape::SetDensity(float density)
+    {
+        if (density != density_)
+        {
+            density_ = density;
+            MarkDirty();
+        }
     }
 
     void CollisionShape::SetPositionOffset(Vector3 position)
