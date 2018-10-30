@@ -106,7 +106,7 @@ void Physics::CreateScene()
     scene_->CreateComponent<Octree>();
     PhysicsWorld* newtonWorld = scene_->CreateComponent<PhysicsWorld>();
     newtonWorld->SetGravity(Vector3(0, -9.81f, 0));
-    newtonWorld->SetPhysicsScale(0.125f);
+    newtonWorld->SetPhysicsScale(1.0f);
     //scene_->CreateComponent<NewtonCollisionShape_SceneCollision>();
     scene_->CreateComponent<DebugRenderer>();
 
@@ -146,6 +146,8 @@ void Physics::CreateScene()
     //SpawnMaterialsTest(Vector3(0,-25,100));
 
 
+    SpawnCompoundedRectTest2(Vector3(0, 10, 0));
+
     //SpawnBallSocketTest(Vector3(50, 10, 0));
     //SpawnHingeActuatorTest(Vector3(52, 10, 0));
 
@@ -170,7 +172,7 @@ void Physics::CreateScene()
     //SpawnCompoundedRectTest(Vector3(20, 10, 10));
 
     ////////create scale test
-    SpawnSceneCompoundTest(Vector3(-20, 10, 20), true);
+    //SpawnSceneCompoundTest(Vector3(-20, 10, 20), true);
     //SpawnSceneCompoundTest(Vector3(-20, 10, 30), false);
 
     //CreateTowerOfLiar(Vector3(40, 0, 20));
@@ -937,6 +939,40 @@ void Physics::SpawnCompoundedRectTest(Vector3 worldPosition)
     //Test different collision parts having different physical properties:
     box1->SetElasticity(1.0f);
     box2->SetElasticity(0.0f);
+
+
+    box1->SetPositionOffset(Vector3(0, 0, 1));
+
+}
+
+void Physics::SpawnCompoundedRectTest2(Vector3 worldPosition)
+{
+    //make 2 1x1x1 physics rectangles. 1 with just one shape and 1 with 2 smaller compounds.
+
+   // Node* regularRect = SpawnSamplePhysicsBox(scene_, worldPosition + Vector3(-2, 0, 0), Vector3(1, 1, 2));
+
+    Node* compoundRootRect = scene_->CreateChild();
+
+    Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
+    Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+
+    Node* visualNode = compoundRootRect->CreateChild();
+
+    visualNode->SetPosition(Vector3(0, 0, 0.5));
+    visualNode->SetScale(Vector3(1, 1, 2));
+    StaticModel* sphere1StMdl = visualNode->CreateComponent<StaticModel>();
+    sphere1StMdl->SetCastShadows(true);
+    sphere1StMdl->SetModel(sphereMdl);
+    sphere1StMdl->SetMaterial(sphereMat);
+
+    compoundRootRect->SetWorldPosition(worldPosition + Vector3(2, 0, 0));
+    compoundRootRect->CreateComponent<RigidBody>();
+    CollisionShape_Box* box1 = compoundRootRect->CreateComponent<CollisionShape_Box>();
+    CollisionShape_Box* box2 = compoundRootRect->CreateComponent<CollisionShape_Box>();
+
+    //Test different collision parts having different physical properties:
+    box1->SetDensity(1.0f);
+    box2->SetDensity(0.5f);
 
 
     box1->SetPositionOffset(Vector3(0, 0, 1));
