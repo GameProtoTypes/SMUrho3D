@@ -426,10 +426,12 @@ namespace Urho3D {
         URHO3D_PROFILE_FUNCTION();
 
         freeBody();
-        NewtonBody* finalBody = nullptr;
         float finalMass;
         dMatrix finalInertia;
         dVector finalCenterOfMass;
+        dMatrix identity = dGetIdentityMatrix();
+        newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), nullptr, &identity[0][0]);
+
         for (int densityPass = 1; densityPass >= 0; densityPass--)
         {
 
@@ -536,10 +538,6 @@ namespace Urho3D {
                         dMatrix localTransform = UrhoToNewton(Matrix3x4(physicsWorld_->SceneToPhysics_Domain(finalLocal.Translation()), colRotLocalToThisNode, 1.0f));
 
 
-
-
-
-
                         //now determine scale to apply around the center of each sub shape.
                         Vector3 scale = Vector3::ONE;
                         if (colComp->GetInheritNodeScale())
@@ -618,7 +616,11 @@ namespace Urho3D {
                 worldTransform.SetRotation((node_->GetWorldRotation()).RotationMatrix());
 
                 
-                NewtonBody* body = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &UrhoToNewton(worldTransform)[0][0]);
+                //NewtonBody* body = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &UrhoToNewton(worldTransform)[0][0]);
+
+                NewtonBodySetCollision(newtonBody_, resolvedCollision);
+                NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(worldTransform)[0][0]);
+
 
                 targetNodeRotation_ = node_->GetWorldRotation();
                 targetNodePos_ = node_->GetWorldPosition();
@@ -632,27 +634,22 @@ namespace Urho3D {
                     mass_ = 0;
 
 
-                NewtonBodySetMassProperties(body, mass_, resolvedCollision);
+                NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
 
                 //save the inertia matrix for 2nd pass.
                 if (densityPass) {
-                    NewtonBodyGetInertiaMatrix(body, &finalInertia[0][0]);
+                    NewtonBodyGetInertiaMatrix(newtonBody_, &finalInertia[0][0]);
                     finalMass = mass_;
-                    NewtonBodyGetCentreOfMass(body, &finalCenterOfMass[0]);
+                    NewtonBodyGetCentreOfMass(newtonBody_, &finalCenterOfMass[0]);
                 }
+
+                
 
                
-
-                if (!densityPass) {
-                    finalBody = body;
-                }
-                else
-                    NewtonDestroyBody(body);
 
             }
         }
 
-        newtonBody_ = finalBody;
         NewtonBodySetFullMassMatrix(newtonBody_, finalMass, &finalInertia[0][0]);
         NewtonBodySetCentreOfMass(newtonBody_, &finalCenterOfMass[0]);
 
