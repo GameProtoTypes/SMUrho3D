@@ -110,7 +110,7 @@ public:
     void SetUseScreenKeyboard(bool enable);
     /// Set whether to use mutable (eraseable) glyphs to ensure a font face never expands to more than one texture. Default false.
     void SetUseMutableGlyphs(bool enable);
-    /// Set whether to force font autohinting instead of using FreeType's TTF bytecode interpreter. Default false
+    /// Set whether to force font autohinting instead of using FreeType's TTF bytecode interpreter.
     void SetForceAutoHint(bool enable);
     /// Set the hinting level used by FreeType fonts.
     void SetFontHintLevel(FontHintLevel level);
@@ -118,7 +118,16 @@ public:
     void SetFontSubpixelThreshold(float threshold);
     /// Set the oversampling (horizonal stretching) used to improve subpixel font rendering. Only affects fonts smaller than the subpixel limit.
     void SetFontOversampling(int oversampling);
-
+    /// Set %UI scale. 1.0 is default (pixel perfect). Resize the root element to match.
+    void SetScale(float scale);
+    /// Scale %UI to the specified width in pixels.
+    void SetWidth(float width);
+    /// Scale %UI to the specified height in pixels.
+    void SetHeight(float height);
+    /// Set custom size of the root element. This disables automatic resizing of the root element according to window size. Set custom size 0,0 to return to automatic resizing.
+    void SetCustomSize(const IntVector2& size);
+    /// Set custom size of the root element.
+    void SetCustomSize(int width, int height);
 
     /// Return root UI element.
     UIElement* GetRoot() const { return rootElement_; }
@@ -205,6 +214,9 @@ public:
 
     /// Return whether a drag is in progress.
     bool IsDragging() const { return dragConfirmedCount_ > 0; };
+
+    /// Return current UI scale.
+    float GetScale() const { return uiScale_; }
 
     /// Return root element custom size. Returns 0,0 when custom size is not being used and automatic resizing according to window size is in use instead (default.)
     const IntVector2& GetCustomSize() const { return customSize_; }
@@ -293,6 +305,10 @@ private:
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
     /// Handle text input event.
     void HandleTextInput(StringHash eventType, VariantMap& eventData);
+    /// Handle frame begin event.
+    void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
+    /// Handle logic post-update event.
+    void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle render update event.
     void HandleRenderUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle a file being drag-dropped into the application window.
@@ -398,6 +414,8 @@ private:
     HashMap<WeakPtr<UIElement>, MouseButtonFlags> touchDragElements_;
     /// Confirmed drag elements cache.
     PODVector<UIElement*> dragElementsConfirmed_;
+    /// Current scale of UI.
+    float uiScale_;
     /// Root element custom size. 0,0 for automatic resizing (default.)
     IntVector2 customSize_;
     /// Texture that UI will be rendered into.
