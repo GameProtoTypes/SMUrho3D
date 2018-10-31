@@ -3,6 +3,7 @@
 
 
 class dVehicleChassis;
+class NewtonBody;
 
 namespace Urho3D {
 
@@ -43,12 +44,13 @@ namespace Urho3D {
 
         virtual void OnNodeSet(Node* node) override;
 
-        void updateBuild();
+        void reBuild();
 
         void applyTransforms();
 
 
         WeakPtr<RigidBody> rigidBody_;
+        //NewtonBody* internalBody_ = nullptr;
 
         //WeakPtr<CollisionShape> colShape_;
 

@@ -94,18 +94,6 @@ dComplementaritySolver::dBilateralJoint* dVehicleVirtualTire::GetJoint()
 	return &m_joint;
 }
 
-void dVehicleVirtualTire::RenderDebugTire(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
-{
-	dCustomJoint::dDebugDisplay* const debugContext = (dCustomJoint::dDebugDisplay*) userData;
-
-	int index = vertexCount - 1;
-	dVector p0(faceVertec[index * 3 + 0], faceVertec[index * 3 + 1], faceVertec[index * 3 + 2]);
-	for (int i = 0; i < vertexCount; i++) {
-		dVector p1(faceVertec[i * 3 + 0], faceVertec[i * 3 + 1], faceVertec[i * 3 + 2]);
-		debugContext->DrawLine(p0, p1);
-		p0 = p1;
-	}
-}
 
 dMatrix dVehicleVirtualTire::GetHardpointMatrix (dFloat param) const
 {
@@ -128,13 +116,6 @@ dMatrix dVehicleVirtualTire::GetGlobalMatrix () const
 	return GetLocalMatrix() * chassisNode->GetBody()->GetMatrix();
 }
 
-void dVehicleVirtualTire::Debug(dCustomJoint::dDebugDisplay* const debugContext) const
-{
-	dVehicleTireInterface::Debug(debugContext);
-
-	dMatrix trieMatrix (GetGlobalMatrix ());
-	NewtonCollisionForEachPolygonDo(m_tireShape, &trieMatrix[0][0], RenderDebugTire, debugContext);
-}
 
 void dVehicleVirtualTire::SetSteeringAngle(dFloat steeringAngle)
 {
@@ -244,6 +225,7 @@ void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectColli
 	}
 
 	int contactCount = 0;
+	dFloat friction = m_info.m_frictionCoefficient;
 	if (bodyArray.m_staticCount) {
 		dVehicleSingleBody* const chassisNode = (dVehicleSingleBody*)m_parent;
 		dComplementaritySolver::dBodyState* const chassisBody = chassisNode->GetBody();
@@ -291,7 +273,7 @@ void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectColli
 					
 					contact -= tireMatrix.m_up.Scale (dist);
 					contact.m_w = 1.0f;
-					m_contactsJoints[contactCount].SetContact(contact, normal, longitudinalDir, penetration, 1.0f, 0.8f);
+					m_contactsJoints[contactCount].SetContact(contact, normal, longitudinalDir, penetration, friction, friction * 0.8f);
 					contactCount ++;
 				}
 			}
@@ -315,6 +297,42 @@ void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectColli
 					contactCount --;
 				}
 			}
+		}
+	}
+}
+
+
+void dVehicleVirtualTire::RenderDebugTire(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
+{
+	dCustomJoint::dDebugDisplay* const debugContext = (dCustomJoint::dDebugDisplay*) userData;
+
+	int index = vertexCount - 1;
+	dVector p0(faceVertec[index * 3 + 0], faceVertec[index * 3 + 1], faceVertec[index * 3 + 2]);
+	for (int i = 0; i < vertexCount; i++) {
+		dVector p1(faceVertec[i * 3 + 0], faceVertec[i * 3 + 1], faceVertec[i * 3 + 2]);
+		debugContext->DrawLine(p0, p1);
+		p0 = p1;
+	}
+}
+
+
+void dVehicleVirtualTire::Debug(dCustomJoint::dDebugDisplay* const debugContext) const
+{
+	dVehicleTireInterface::Debug(debugContext);
+
+	debugContext->SetColor(dVector(0.0f, 0.4f, 0.7f, 1.0f));
+	dMatrix trieMatrix(GetGlobalMatrix());
+	NewtonCollisionForEachPolygonDo(m_tireShape, &trieMatrix[0][0], RenderDebugTire, debugContext);
+
+	dVehicleSingleBody* const chassis = (dVehicleSingleBody*)m_parent->GetAsVehicle();
+	dAssert (chassis);
+	dVector weight (chassis->m_gravity.Scale(chassis->GetBody()->GetMass()));
+	dFloat scale (1.0f / dSqrt (weight.DotProduct3(weight)));
+
+	for (int i = 0; i < sizeof (m_contactsJoints)/sizeof (m_contactsJoints[0]); i ++) {
+		const dTireContact* const contact = &m_contactsJoints[i];
+		if (contact->IsActive()) {
+			contact->Debug(debugContext, scale);
 		}
 	}
 }

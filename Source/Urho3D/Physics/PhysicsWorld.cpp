@@ -287,9 +287,6 @@ namespace Urho3D {
     void PhysicsWorld::freeWorld()
     {
 
-
-
-
         //free any joints
         for (Constraint* constraint : constraintList)
         {
@@ -734,6 +731,17 @@ namespace Urho3D {
                 continue;
 
 
+            //cross check if any vehicles are using the body - if so mark the vehicle dirty to because it will need rebuilt.
+            for (PhysicsVehicle* vehicle : vehicleList)
+            {
+                if (vehicle->rigidBody_ == rigBody) {
+                    vehicle->MarkDirty();
+                }
+            }
+
+
+
+
             rigBody->reBuildBody();
             rigBody->MarkDirty(false);
         }
@@ -757,7 +765,7 @@ namespace Urho3D {
         for (PhysicsVehicle* vehicle : vehicleList)
         {
             if (vehicle->isDirty_) {
-                vehicle->updateBuild();
+                vehicle->reBuild();
             }
         }
     }

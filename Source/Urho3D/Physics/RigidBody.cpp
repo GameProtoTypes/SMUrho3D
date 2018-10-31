@@ -426,7 +426,6 @@ namespace Urho3D {
         URHO3D_PROFILE_FUNCTION();
 
         freeBody();
-        float finalMass;
         dMatrix finalInertia;
         dVector finalCenterOfMass;
         dMatrix identity = dGetIdentityMatrix();
@@ -475,10 +474,15 @@ namespace Urho3D {
 
                 ///determine early on if a compound is going to be needed.
                 bool compoundNeeded = false;
+                float smallestDensity = M_LARGE_VALUE;
                 for (CollisionShape* col : childCollisionShapes)
                 {
                     if (col->IsCompound())
                         compoundNeeded = true;
+
+
+                    if (col->GetDensity() < smallestDensity)
+                        smallestDensity = col->GetDensity();
                 }
                 compoundNeeded |= (childCollisionShapes.Size() > 1);
 
@@ -557,7 +561,7 @@ namespace Urho3D {
                         //if we are in the first pass - scale the sub collision by the density.  so when we calculate the intertia matrix it will reflect the density of subshapes.
                         //on the 2nd (final pass - scale as normal).
                         if (densityPass)
-                            densityScaleFactor = colComp->GetDensity();
+                            densityScaleFactor = colComp->GetDensity()/smallestDensity;
 
                         NewtonCollisionSetScale(curCollisionInstance, densityScaleFactor*scale.x_*existingLocalScale.m_x, densityScaleFactor*scale.y_*existingLocalScale.m_y, densityScaleFactor*scale.z_*existingLocalScale.m_z);
 
@@ -633,15 +637,16 @@ namespace Urho3D {
                 if (sceneRootBodyMode_)
                     mass_ = 0;
 
-
-                NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
-
-                //save the inertia matrix for 2nd pass.
                 if (densityPass) {
+                    NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
+
+                    //save the inertia matrix for 2nd pass.
+                
                     NewtonBodyGetInertiaMatrix(newtonBody_, &finalInertia[0][0]);
-                    finalMass = mass_;
+                    
                     NewtonBodyGetCentreOfMass(newtonBody_, &finalCenterOfMass[0]);
                 }
+
 
                 
 
@@ -650,7 +655,18 @@ namespace Urho3D {
             }
         }
 
-        NewtonBodySetFullMassMatrix(newtonBody_, finalMass, &finalInertia[0][0]);
+
+        Matrix4 inertiaMatrixUrho = NewtonToUrhoMat4(finalInertia);
+        URHO3D_LOGINFO("Inertia Matrix:");
+        URHO3D_LOGINFO(String(inertiaMatrixUrho));
+
+
+        //test if the inertia matrix is symetric.
+        URHO3D_LOGINFO("Final Mass: " + String(mass_));
+
+
+
+        NewtonBodySetFullMassMatrix(newtonBody_, mass_, &finalInertia[0][0]);
         NewtonBodySetCentreOfMass(newtonBody_, &finalCenterOfMass[0]);
 
 

@@ -21,7 +21,6 @@ else ()
 endif ()
 
 
-#option("NEWTON_GENERATE_DLL" "build dll libraries" ON)
 option("NEWTON_BUILD_SANDBOX_DEMOS" "generates demos projects" ON)
 option("NEWTON_BUILD_PROFILER" "build profiler" OFF)
 option("NEWTON_DOUBLE_PRECISION" "Generate double precision" OFF)
@@ -66,28 +65,37 @@ else ()
   set(BUILD_64 FALSE)
 endif ()
 
-#check for MAC or UNIX
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#check for MAC
+if(APPLE)
   add_definitions(-D_MACOSX_VER)
-else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  if (${UNIX})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fms-extensions -std=c++11")
+endif(APPLE)
+
+#check for UNIX
+if (UNIX)
     if (BUILD_64)
       add_definitions(-D_POSIX_VER_64)
     else (BUILD_64)
       add_definitions(-D_POSIX_VER)
     endif (BUILD_64)
-  endif(${UNIX})
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-set(CMAKE_INSTALL_LIBDIR "${PROJECT_BINARY_DIR}/build/lib")
-set(CMAKE_INSTALL_BINDIR "${PROJECT_BINARY_DIR}/build/bin")
-set(CMAKE_INSTALL_INCLUDEDIR "${PROJECT_BINARY_DIR}/build/include")
+endif(UNIX)
 
 if (UNIX)
+    include("GNUInstallDirs")
+
+    # uninstall target
+    if(NOT TARGET uninstall)
+        configure_file(
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+            IMMEDIATE @ONLY)
+
+        add_custom_target(uninstall
+            COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+    endif()
 
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
-    #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
     add_definitions(-march=native -fPIC)
 
@@ -96,14 +104,10 @@ if (UNIX)
     set(NEWTON_WITH_AVX_PLUGIN OFF CACHE BOOL "" FORCE)
     set(NEWTON_BUILD_PROFILER OFF CACHE BOOL "" FORCE)
 
-    find_package(glfw3 REQUIRED)
-
-    if(NOT_glfw3_FOUND)
-        set(NEWTON_BUILD_SANDBOX_DEMOS OFF CACHE BOOL "" FORCE)
-        message(WARNING "GLFW headers were not found. Sandbox_Demos disabled")
-    else(NOT_glfw3_FOUND)
-        message("Found GLFW library")
-    endif(NOT_glfw3_FOUND)
+else (UNIX)
+    set(CMAKE_INSTALL_LIBDIR "${PROJECT_BINARY_DIR}/build/lib")
+    set(CMAKE_INSTALL_BINDIR "${PROJECT_BINARY_DIR}/build/bin")
+    set(CMAKE_INSTALL_INCLUDEDIR "${PROJECT_BINARY_DIR}/build/include")
 
 endif (UNIX)
 

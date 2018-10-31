@@ -146,7 +146,7 @@ void Physics::CreateScene()
     //SpawnMaterialsTest(Vector3(0,-25,100));
 
 
-    SpawnCompoundedRectTest2(Vector3(0, 10, 0));
+    //SpawnCompoundedRectTest2(Vector3(100, 100, 0));
 
     //SpawnBallSocketTest(Vector3(50, 10, 0));
     //SpawnHingeActuatorTest(Vector3(52, 10, 0));
@@ -157,7 +157,7 @@ void Physics::CreateScene()
     //SpawnCompound(Vector3(-2, 1 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
-    //SpawnVehicle(Vector3(0, 10, 0));
+    SpawnVehicle(Vector3(0, 10, 0));
     //for(int i = 0; i < 50; i++)
     //SpawnTrialBike(Vector3(0, 10, i*4));
 
@@ -952,30 +952,113 @@ void Physics::SpawnCompoundedRectTest2(Vector3 worldPosition)
    // Node* regularRect = SpawnSamplePhysicsBox(scene_, worldPosition + Vector3(-2, 0, 0), Vector3(1, 1, 2));
 
     Node* compoundRootRect = scene_->CreateChild();
-
-    Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
-    Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
-
-    Node* visualNode = compoundRootRect->CreateChild();
-
-    visualNode->SetPosition(Vector3(0, 0, 0.5));
-    visualNode->SetScale(Vector3(1, 1, 2));
-    StaticModel* sphere1StMdl = visualNode->CreateComponent<StaticModel>();
-    sphere1StMdl->SetCastShadows(true);
-    sphere1StMdl->SetModel(sphereMdl);
-    sphere1StMdl->SetMaterial(sphereMat);
-
     compoundRootRect->SetWorldPosition(worldPosition + Vector3(2, 0, 0));
     compoundRootRect->CreateComponent<RigidBody>();
-    CollisionShape_Box* box1 = compoundRootRect->CreateComponent<CollisionShape_Box>();
-    CollisionShape_Box* box2 = compoundRootRect->CreateComponent<CollisionShape_Box>();
-
-    //Test different collision parts having different physical properties:
-    box1->SetDensity(1.0f);
-    box2->SetDensity(0.5f);
+    
 
 
-    box1->SetPositionOffset(Vector3(0, 0, 1));
+    for (int i = 0; i < 2; i++)
+    {
+
+
+        Node* subNode = compoundRootRect->CreateChild();
+        CollisionShape_Box* box = subNode->CreateComponent<CollisionShape_Box>();
+
+        //box->SetDensity(0.1f);
+
+        
+        subNode->SetPosition(Vector3(5.0f*i,0,0));
+
+        Text3D* text = subNode->CreateComponent<Text3D>();
+        text->SetText(String("Density: " + String(box->GetDensity()) + "\n\n\n\n\n\n\n\n\n"));
+        text->SetFont(GSS<ResourceCache>()->GetResource<Font>("Fonts/Anonymous Pro.ttf"));
+        text->SetFaceCameraMode(FC_LOOKAT_XYZ);
+        text->SetVerticalAlignment(VA_BOTTOM);
+        
+
+
+        Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
+        Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+
+
+
+        StaticModel* sphere1StMdl = subNode->CreateComponent<StaticModel>();
+        sphere1StMdl->SetCastShadows(true);
+        sphere1StMdl->SetModel(sphereMdl);
+        sphere1StMdl->SetMaterial(sphereMat);
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+    Node* first = nullptr;
+    Node* second = nullptr;
+
+    for (int i = 0; i < 2; i++)
+    {
+
+
+        Node* subNode = scene_->CreateChild();
+        CollisionShape_Box* box = subNode->CreateComponent<CollisionShape_Box>();
+        RigidBody* rigBody = subNode->CreateComponent<RigidBody>();
+        //box->SetDensity(0.1f);
+
+
+        if (i == 0)
+            first = subNode;
+        else
+            second = subNode;
+
+
+        subNode->SetPosition(Vector3(5.0f*i, 0, 0) + worldPosition + Vector3(0,0,5));
+
+        Text3D* text = subNode->CreateComponent<Text3D>();
+        text->SetText(String("Density: " + String(box->GetDensity()) + "\n\n\n\n\n\n\n\n\n"));
+        text->SetFont(GSS<ResourceCache>()->GetResource<Font>("Fonts/Anonymous Pro.ttf"));
+        text->SetFaceCameraMode(FC_LOOKAT_XYZ);
+        text->SetVerticalAlignment(VA_BOTTOM);
+
+
+
+        Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
+        Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+
+
+
+        StaticModel* sphere1StMdl = subNode->CreateComponent<StaticModel>();
+        sphere1StMdl->SetCastShadows(true);
+        sphere1StMdl->SetModel(sphereMdl);
+        sphere1StMdl->SetMaterial(sphereMat);
+
+
+    }
+
+
+    FullyFixedConstraint* fixedConstriant = first->CreateComponent<FullyFixedConstraint>();
+    fixedConstriant->SetOtherBody(second->GetComponent<RigidBody>());
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 
@@ -990,8 +1073,16 @@ void Physics::SpawnVehicle(Vector3 worldPosition)
     PhysicsVehicle* vehicle = vehicleNode->CreateComponent<PhysicsVehicle>();
 
 
-    vehicle->AddTire(Matrix3x4(worldPosition + Vector3(-2,0,0), Quaternion::IDENTITY, 1.0f));
-    
+
+
+
+    VehicleTire* tire = vehicle->AddTire(Matrix3x4(worldPosition + Vector3(-2,0,0), Quaternion::IDENTITY, 1.0f));
+    tire->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cylinder.mdl"));
+    tire->SetVisualRotationOffset(Quaternion(0, 90, 90));
+
+
+
+
 
 
 }

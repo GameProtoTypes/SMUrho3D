@@ -46,6 +46,9 @@ namespace Urho3D {
         tire->initialWorldTransform_ = worldTransform;
         tires_ += tire;
 
+
+        MarkDirty();
+
         return tire;
     }
 
@@ -70,15 +73,22 @@ namespace Urho3D {
         }
     }
 
-    void PhysicsVehicle::updateBuild()
+    void PhysicsVehicle::reBuild()
     {
-
+        if (vehicleChassis_)
+        {
+            physicsWorld_->vehicleManager_->DestroyController(vehicleChassis_);
+            //NewtonDestroyBody(internalBody_);
+            //internalBody_ = nullptr;
+            vehicleChassis_ = nullptr;
+        }
 
 
 
         rigidBody_ = node_->GetOrCreateComponent<RigidBody>();
-
-        if (!rigidBody_->GetNewtonBody())
+        NewtonBody* body = rigidBody_->GetNewtonBody();
+        //internalBody_ = body;
+        if (!body)
             return;
 
 
@@ -87,7 +97,7 @@ namespace Urho3D {
         
 
         NewtonApplyForceAndTorque callback = NewtonBodyGetForceAndTorqueCallback(rigidBody_->GetNewtonBody());//use existing callback.
-        vehicleChassis_ = physicsWorld_->vehicleManager_->CreateSingleBodyVehicle(rigidBody_->GetNewtonBody(), UrhoToNewton(Matrix3x4(worldTransform.Translation(), worldTransform.Rotation(), 1.0f)), callback, 1.0f);
+        vehicleChassis_ = physicsWorld_->vehicleManager_->CreateSingleBodyVehicle(body, UrhoToNewton(Matrix3x4(worldTransform.Translation(), worldTransform.Rotation(), 1.0f)), callback, 1.0f);
 
 
         int i = 0;
@@ -95,20 +105,24 @@ namespace Urho3D {
         {
 
             tire->node_ = node_->CreateChild("Tire" + String(i));
-            tire->node_->SetWorldTransform(tire->initialWorldTransform_.Translation(), tire->initialWorldTransform_.Rotation());
+            tire->node_->SetWorldTransform(tire->initialWorldTransform_.Translation(), tire->visualWorldRotation_);
             StaticModel* stmdl = tire->node_->CreateComponent<StaticModel>();
             stmdl->SetModel(tire->model_);
 
 
 
             tire->tireInterface_ = vehicleChassis_->AddTire(UrhoToNewton(tire->initialWorldTransform_), *tire->tireInfo_);
-
+            
             i++;
         }
 
 
 
         vehicleChassis_->Finalize();
+
+
+        RigidBody* backTest = (RigidBody*)NewtonBodyGetUserData(body);
+
 
 
         isDirty_ = false;
@@ -122,7 +136,7 @@ namespace Urho3D {
         for (VehicleTire* tire : tires_)
         {
             Matrix3x4 worldTransform = physicsWorld_->PhysicsToScene_Domain(Matrix3x4(NewtonToUrhoMat4(tire->tireInterface_->GetGlobalMatrix())));
-            node_->SetWorldTransform(worldTransform.Translation(), worldTransform.Rotation());
+            tire->node_->SetWorldTransform(worldTransform.Translation(), tire->visualWorldRotation_ * worldTransform.Rotation());
         }
     }
 

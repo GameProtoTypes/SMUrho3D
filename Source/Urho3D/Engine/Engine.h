@@ -68,7 +68,7 @@ public:
 	long long GetUpdateCount() const { return updateTick_; }
 
 
-    float GetUpdateTimeGoalMs() const { return (updateTimeGoalUs_ / 1000.0f)*8.0f; }
+    float GetUpdateTimeGoalMs() const { return (updateTimeGoalUs_ / 1000.0f); }
 
     float GetRenderTimeGoalMs() const { return renderTimeGoalUs_ / 1000.0f; }
 
@@ -134,7 +134,7 @@ private:
     /// Updates
     void Update();
 
-    void SendUpdateEvents(int rateLevel);
+    void SendUpdateEvents();
 
     /// Renders
     void Render();
@@ -150,13 +150,13 @@ private:
 
 	long long renderTick_{ 0 };
 	long long updateTick_{ 0 };
-    int curUpdateLevel_ = 0;
+
 
 	HiresTimer updateTimer_;
 	HiresTimer renderTimer_;
 
 	float renderTimeGoalUs_{ 5000.0f };      //200 Hz   
-    float updateTimeGoalUs_{ 16666.0f/8.0f}; //480 Hz
+    float updateTimeGoalUs_{ 16666.0f}; //480 Hz
 
 
     float lastRenderTimeUs_{ 0 };

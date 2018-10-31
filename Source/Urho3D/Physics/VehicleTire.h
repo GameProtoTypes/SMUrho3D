@@ -20,7 +20,11 @@ namespace Urho3D {
 
         void SetModel(Model* model);
 
+        void SetVisualRotationOffset(Quaternion rotation);
+
         Matrix3x4 initialWorldTransform_;
+
+        Quaternion visualWorldRotation_;
 
         dVehicleTireInterface::dTireInfo* tireInfo_ = nullptr;
 
