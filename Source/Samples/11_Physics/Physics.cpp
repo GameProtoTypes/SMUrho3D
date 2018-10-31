@@ -1053,20 +1053,13 @@ void Physics::SpawnCompoundedRectTest2(Vector3 worldPosition)
 
 
 
-
-
-
-
-
-
-
 }
 
 void Physics::SpawnVehicle(Vector3 worldPosition)
 {
     Node* vehicleNode = SpawnSamplePhysicsBox(scene_, worldPosition, Vector3(5, 2, 2));
     vehicleNode->SetWorldPosition(worldPosition);
-
+    vehicleNode->GetComponent<RigidBody>()->SetMassScale(50);
 
 
 
@@ -1074,13 +1067,23 @@ void Physics::SpawnVehicle(Vector3 worldPosition)
 
 
 
+    for (int i = 0; i < 4; i++) {
 
+        Vector3 offset;
+        if (i == 0)
+            offset = Vector3(-2, -1, 2);
+        if(i == 1)
+            offset = Vector3(2, -1, 2);
+        if(i == 2)
+            offset = Vector3(-2, -1, -2);
+        if(i == 3)
+            offset = Vector3(2, -1, -2);
 
-    VehicleTire* tire = vehicle->AddTire(Matrix3x4(worldPosition + Vector3(-2,0,0), Quaternion::IDENTITY, 1.0f));
-    tire->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cylinder.mdl"));
-    tire->SetVisualRotationOffset(Quaternion(0, 90, 90));
+        VehicleTire* tire = vehicle->AddTire(Matrix3x4(worldPosition + offset, Quaternion(0,90,0), 1.0f));
+        tire->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cylinder.mdl"));
+        tire->SetVisualRotationOffset(Quaternion(0, 0, 90));
 
-
+    }
 
 
 

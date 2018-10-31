@@ -210,7 +210,10 @@ namespace Urho3D {
             if (sceneBody_)
                 sceneBody_->DrawDebugGeometry(debug, depthTest);
 
-            
+            //draw debug geometry on vehicles
+            for (PhysicsVehicle* vehicle : vehicleList) {
+                vehicle->DrawDebugGeometry(debug, depthTest);
+            }
         }
     }
 

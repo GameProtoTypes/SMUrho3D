@@ -12,6 +12,7 @@
 #include "Graphics/Model.h"
 #include "Graphics/StaticModel.h"
 #include "VehicleTire.h"
+#include "NewtonDebugDrawing.h"
 
 namespace Urho3D {
 
@@ -37,6 +38,30 @@ namespace Urho3D {
     void PhysicsVehicle::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         Component::DrawDebugGeometry(debug, depthTest);
+
+        //NewtonDebug_BodyDrawCollision(physicsWorld_, tires_[0]->tireInterface_->GetCollisionShape(), debug, depthTest);
+
+
+        for (VehicleTire* tire : tires_)
+        {
+
+            dMatrix matrix = tire->tireInterface_->GetGlobalMatrix();
+
+            Matrix3x4 mat = Matrix3x4(NewtonToUrhoMat4(matrix));
+
+
+
+
+            debugRenderOptions options;
+            options.debug = debug;
+            options.depthTest = depthTest;
+
+
+
+            matrix = UrhoToNewton(mat);
+            NewtonCollisionForEachPolygonDo(tire->tireInterface_->GetCollisionShape(), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
+
+        }
     }
 
     VehicleTire* PhysicsVehicle::AddTire(Matrix3x4 worldTransform)
@@ -45,7 +70,6 @@ namespace Urho3D {
         SharedPtr<VehicleTire> tire = context_->CreateObject<VehicleTire>();
         tire->initialWorldTransform_ = worldTransform;
         tires_ += tire;
-
 
         MarkDirty();
 
@@ -136,7 +160,7 @@ namespace Urho3D {
         for (VehicleTire* tire : tires_)
         {
             Matrix3x4 worldTransform = physicsWorld_->PhysicsToScene_Domain(Matrix3x4(NewtonToUrhoMat4(tire->tireInterface_->GetGlobalMatrix())));
-            tire->node_->SetWorldTransform(worldTransform.Translation(), tire->visualWorldRotation_ * worldTransform.Rotation());
+            tire->node_->SetWorldTransform(worldTransform.Translation(), worldTransform.Rotation() * tire->visualWorldRotation_);
         }
     }
 
