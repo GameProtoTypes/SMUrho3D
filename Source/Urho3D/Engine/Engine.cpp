@@ -144,6 +144,8 @@ Engine::Engine(Context* context) :
 #endif
 	context_->RegisterSubsystem(new FreeFunctions(context_));
     // Register object factories for libraries which are not automatically registered along with subsystem creation
+    RegisterUILibrary(context_);
+
     RegisterSceneLibrary(context_);
 
 #ifdef URHO3D_TASKS

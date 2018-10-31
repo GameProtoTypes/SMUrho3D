@@ -51,7 +51,7 @@ SceneTab::SceneTab(Context* context)
     , rect_({0, 0, 1024, 768})
     , gizmo_(context)
     , undo_(context)
-    , clipboard_(context)
+    , clipboard_(context, undo_)
 {
     SetTitle("New Scene");
     windowFlags_ = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
@@ -171,15 +171,11 @@ bool SceneTab::RenderWindowContent()
         ui::SetWindowFocus();
 
     RenderToolbarButtons();
-
     IntRect tabRect = UpdateViewRect();
-    // Correct content rect to not overlap buttons. Ideally this should be in Tab.cpp but for some reason it creates
-    // unused space at the bottom of PreviewTab.
-    tabRect.top_ += static_cast<int>(ui::GetCursorPosY());
-
     ui::SetCursorScreenPos(ToImGui(tabRect.Min()));
-    ui::BeginChild("Scene view");
-    ui::Image(texture_, ToImGui(tabRect.Size()));
+    ImVec2 contentSize = ToImGui(tabRect.Size());
+    ui::BeginChild("Scene view", contentSize, false, windowFlags_);
+    ui::Image(texture_, contentSize);
     gizmo_.ManipulateSelection(GetCamera());
 
     if (GetInput()->IsMouseVisible())
@@ -739,8 +735,11 @@ void SceneTab::RenderNodeTree(Node* node)
                 // ensure the tree is expanded to the currently selected node if there is one node selected.
                 if (GetSelection().Size() == 1)
                 {
-                    for (auto selectedNode : GetSelection()) 
+                    for (auto& selectedNode : GetSelection())
                     {
+                        if (selectedNode.Expired())
+                            continue;
+
                         if(selectedNode->IsChildOf(child))
                             ui::SetNextTreeNodeOpen(true);
                     }
@@ -797,6 +796,9 @@ void SceneTab::RemoveSelection()
 IntRect SceneTab::UpdateViewRect()
 {
     IntRect tabRect = BaseClassName::UpdateViewRect();
+    // Correct content rect to not overlap buttons. Ideally this should be in Tab.cpp but for some reason it creates
+    // unused space at the bottom of PreviewTab.
+    tabRect.top_ += static_cast<int>(ui::GetCursorPosY());
     ResizeMainViewport(tabRect);
     gizmo_.SetScreenRect(tabRect);
     return tabRect;
@@ -834,7 +836,12 @@ void SceneTab::OnUpdate(VariantMap& args)
                     if (GetInput()->GetKeyPress(KEY_C))
                         CopySelection();
                     else if (GetInput()->GetKeyPress(KEY_V))
-                        PasteToSelection();
+                    {
+                        if (GetInput()->GetKeyDown(KEY_SHIFT))
+                            PasteIntoSelection();
+                        else
+                            PasteIntuitive();
+                    }
                 }
                 else if (GetInput()->GetKeyPress(KEY_ESCAPE))
                     UnselectAll();
@@ -847,10 +854,13 @@ void SceneTab::OnUpdate(VariantMap& args)
     {
         if (auto* debug = GetScene()->GetComponent<DebugRenderer>())
         {
-            Vector3 guideRoot = GetCamera()->ScreenToWorldPoint({0.95, 0.1, 1});
-            debug->AddLine(guideRoot, guideRoot + Vector3::RIGHT * 0.05f, Color::RED, false);
-            debug->AddLine(guideRoot, guideRoot + Vector3::UP * 0.05f, Color::GREEN, false);
-            debug->AddLine(guideRoot, guideRoot + Vector3::FORWARD * 0.05f, Color::BLUE, false);
+            if (Camera* camera = GetCamera())
+            {
+                Vector3 guideRoot = GetCamera()->ScreenToWorldPoint({0.95, 0.1, 1});
+                debug->AddLine(guideRoot, guideRoot + Vector3::RIGHT * 0.05f, Color::RED, false);
+                debug->AddLine(guideRoot, guideRoot + Vector3::UP * 0.05f, Color::GREEN, false);
+                debug->AddLine(guideRoot, guideRoot + Vector3::FORWARD * 0.05f, Color::BLUE, false);
+            }
         }
     }
 }
@@ -1015,7 +1025,10 @@ void SceneTab::RenderNodeContextMenu()
             CopySelection();
 
         if (ui::MenuItem(ICON_FA_PASTE " Paste", "Ctrl+V"))
-            PasteToSelection();
+            PasteIntuitive();
+
+        if (ui::MenuItem(ICON_FA_PASTE " Paste Into", "Ctrl+Shift+V"))
+            PasteIntoSelection();
 
         if (ui::MenuItem(ICON_FA_TRASH " Delete", "Del"))
             RemoveSelection();
@@ -1207,24 +1220,38 @@ void SceneTab::UpdateCameras()
 
 void SceneTab::CopySelection()
 {
-    clipboard_.Clear();
-    clipboard_.Copy(GetSelection());
-    clipboard_.Copy(selectedComponents_);
+    const auto& selection = GetSelection();
+    if (!selection.Empty())
+    {
+        clipboard_.Clear();
+        clipboard_.Copy(GetSelection());
+    }
+    else if (!selectedComponents_.Empty())
+    {
+        clipboard_.Clear();
+        clipboard_.Copy(selectedComponents_);
+    }
 }
 
-void SceneTab::PasteToSelection()
+void SceneTab::PasteNextToSelection()
 {
     const auto& selection = GetSelection();
     PasteResult result;
+    Node* target = nullptr;
     if (!selection.Empty())
     {
-        if (selection.Size() == 1 && (selection[0]->GetParent() != nullptr))
-            result = clipboard_.Paste(selection[0]->GetParent());
-        else
-            result = clipboard_.Paste(selection);
+        target = nullptr;
+        unsigned i = 0;
+        while (target == nullptr && i < selection.Size())   // Selected node may be null
+            target = selection[i++].Get();
+        if (target != nullptr)
     }
-    else
-        result = clipboard_.Paste(GetScene());
+            target = target->GetParent();
+
+    if (target == nullptr)
+        target = GetScene();
+
+    result = clipboard_.Paste(target);
 
     UnselectAll();
 
@@ -1233,6 +1260,34 @@ void SceneTab::PasteToSelection()
 
     for (Component* component : result.components_)
         selectedComponents_.Insert(WeakPtr<Component>(component));
+}
+
+void SceneTab::PasteIntoSelection()
+{
+    const auto& selection = GetSelection();
+    PasteResult result;
+    if (selection.Empty())
+        result = clipboard_.Paste(GetScene());
+    else
+        result = clipboard_.Paste(selection);
+
+    UnselectAll();
+
+    for (Node* node : result.nodes_)
+        Select(node);
+
+    for (Component* component : result.components_)
+        selectedComponents_.Insert(WeakPtr<Component>(component));
+}
+
+
+
+void SceneTab::PasteIntuitive()
+{
+    if (clipboard_.HasNodes())
+        PasteNextToSelection();
+    else if (clipboard_.HasComponents())
+        PasteIntoSelection();
 }
 
 void SceneTab::NormalizeNodeChildrenPosition(Node* node)
