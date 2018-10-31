@@ -1245,9 +1245,8 @@ void SceneTab::PasteNextToSelection()
         while (target == nullptr && i < selection.Size())   // Selected node may be null
             target = selection[i++].Get();
         if (target != nullptr)
-    }
             target = target->GetParent();
-
+    }
     if (target == nullptr)
         target = GetScene();
 

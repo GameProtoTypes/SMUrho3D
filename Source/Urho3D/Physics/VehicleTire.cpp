@@ -1,7 +1,7 @@
 #include "VehicleTire.h"
 #include "Core/Object.h"
 #include "Core/Context.h"
-#include "dVehicleTireInterface.h"
+#include "dVehicleInterface.h"
 #include "PhysicsWorld.h"
 #include "Graphics/Model.h"
 #include "Scene/Node.h"

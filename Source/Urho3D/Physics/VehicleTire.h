@@ -1,6 +1,6 @@
 #pragma once
 #include "../Core/Object.h"
-#include "dVehicleTireInterface.h"
+#include "dVehicleInterface.h"
 
 
 class dVehicleTireInterface;
