@@ -1086,7 +1086,6 @@ void Physics::SpawnVehicle(Vector3 worldPosition)
         VehicleTire* tire = tireNode->CreateComponent<VehicleTire>();
 
 
-
         Node* rotatedNode = tireNode->CreateChild("Tire: " + String(i) + " Child");
 
 
@@ -1203,9 +1202,6 @@ void Physics::SpawnTrialBike(Vector3 worldPosition)
 
 
 
-
-
-
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -1224,40 +1220,7 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 
     //move the scene node as a rebuild scene collision test.
     Node* movingNode = scene_->GetChild("MovingSceneNode");
-    //movingNode->Translate(Vector3(0, 0.1f, 0));
 
-
-
-
-
-
-
-
-    //debug compound
-    //PODVector<Node*> dest;
-    //scene_->GetNodesWithTag(dest, "scaleTestCube");
-
-    //for (Node* node : dest)
-    //{
-    //    URHO3D_LOGINFO(node->GetName());
-    //    if (node->HasComponent<RigidBody>())
-    //    {
-    //        RigidBody* rigBody = node->GetComponent<RigidBody>();
-    //        URHO3D_LOGINFO("    Rigid Body: " + String((unsigned)(void*)rigBody->GetNewtonBody()));
-    //        if (rigBody->GetNewtonBody())
-    //        {
-    //            URHO3D_LOGINFO("     Collision: " + String((unsigned)(void*)NewtonBodyGetCollision(rigBody->GetNewtonBody())));
-    //        }
-    //    }
-    //    PODVector<NewtonCollisionShape*> colShapes;
-    //    node->GetDerivedComponents(colShapes);
-
-    //    for (NewtonCollisionShape* col : colShapes)
-    //    {
-    //       // URHO3D_LOGINFO("    Internal: " + String((unsigned)(void*)NewtonBodyGetCollision(rigBody->GetNewtonBody())));
-
-    //    }
-    //}
 
     if (hingeActuatorTest) {
         float angle = Sin(timeAccum*10.0f)*45.0f;
