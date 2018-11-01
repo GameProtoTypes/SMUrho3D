@@ -1058,6 +1058,7 @@ void Physics::SpawnCompoundedRectTest2(Vector3 worldPosition)
 void Physics::SpawnVehicle(Vector3 worldPosition)
 {
     Node* vehicleNode = SpawnSamplePhysicsBox(scene_, worldPosition, Vector3(5, 2, 2));
+    vehicleNode->SetName("VehicleRootNode");
     vehicleNode->SetWorldPosition(worldPosition);
     vehicleNode->GetComponent<RigidBody>()->SetMassScale(50);
 
@@ -1080,8 +1081,18 @@ void Physics::SpawnVehicle(Vector3 worldPosition)
             offset = Vector3(2, -1, -2);
 
         VehicleTire* tire = vehicle->AddTire(Matrix3x4(worldPosition + offset, Quaternion(0,90,0), 1.0f));
-        tire->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cylinder.mdl"));
-        tire->SetVisualRotationOffset(Quaternion(0, 0, 90));
+        tire->GetNode()->SetName("Tire: " + String(i));
+
+
+        Node* rotatedNode = tire->GetNode()->CreateChild("Tire: " + String(i) + " Child");
+
+        GSS<VisualDebugger>()->AddNode(tire->GetNode(), 1.0, false)->SetLifeTimeMs(10000000);
+
+        rotatedNode->Rotate(Quaternion(90, 0, 90));
+        rotatedNode->SetScale(Vector3(1, 0.5, 1));
+        StaticModel* mdl = rotatedNode->CreateComponent<StaticModel>();
+        mdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cylinder.mdl"));
+        mdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml"));
 
     }
 

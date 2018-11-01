@@ -13,6 +13,8 @@
 #include "Graphics/StaticModel.h"
 #include "VehicleTire.h"
 #include "NewtonDebugDrawing.h"
+#include "Graphics/VisualDebugger.h"
+#include "Graphics/DebugRenderer.h"
 
 namespace Urho3D {
 
@@ -61,6 +63,8 @@ namespace Urho3D {
             matrix = UrhoToNewton(mat);
             NewtonCollisionForEachPolygonDo(tire->tireInterface_->GetCollisionShape(), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
 
+
+            debug->AddFrame(tire->node_->GetWorldTransform());
         }
     }
 
@@ -69,6 +73,9 @@ namespace Urho3D {
 
         SharedPtr<VehicleTire> tire = context_->CreateObject<VehicleTire>();
         tire->initialWorldTransform_ = worldTransform;
+        tire->node_ = node_->CreateChild();
+        tire->node_->SetWorldTransform(worldTransform.Translation(), worldTransform.Rotation());
+
         tires_ += tire;
 
         MarkDirty();
@@ -129,10 +136,7 @@ namespace Urho3D {
         {
 
             tire->node_ = node_->CreateChild("Tire" + String(i));
-            tire->node_->SetWorldTransform(tire->initialWorldTransform_.Translation(), tire->visualWorldRotation_);
-            StaticModel* stmdl = tire->node_->CreateComponent<StaticModel>();
-            stmdl->SetModel(tire->model_);
-
+            tire->node_->SetWorldTransform(tire->initialWorldTransform_.Translation(), tire->initialWorldTransform_.Rotation());
 
 
             tire->tireInterface_ = vehicleChassis_->AddTire(UrhoToNewton(tire->initialWorldTransform_), *tire->tireInfo_);
@@ -154,13 +158,14 @@ namespace Urho3D {
 
     void PhysicsVehicle::applyTransforms()
     {
-        if (isDirty_)
-            return;
+       // if (isDirty_)
+        //    return;
 
         for (VehicleTire* tire : tires_)
         {
             Matrix3x4 worldTransform = physicsWorld_->PhysicsToScene_Domain(Matrix3x4(NewtonToUrhoMat4(tire->tireInterface_->GetGlobalMatrix())));
-            tire->node_->SetWorldTransform(worldTransform.Translation(), worldTransform.Rotation() * tire->visualWorldRotation_);
+            //worldTransform.SetTranslation(Vector3(0, 0, 0));
+            tire->node_->SetWorldTransform(worldTransform.Translation(), worldTransform.Rotation());
         }
     }
 

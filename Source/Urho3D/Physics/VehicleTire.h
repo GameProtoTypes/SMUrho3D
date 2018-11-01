@@ -18,19 +18,17 @@ namespace Urho3D {
 
         static void RegisterObject(Context* context);
 
-        void SetModel(Model* model);
+        ///return the node that will be moving along with the tire position.
+        Node* GetNode() { return node_; }
 
-        void SetVisualRotationOffset(Quaternion rotation);
 
         Matrix3x4 initialWorldTransform_;
 
-        Quaternion visualWorldRotation_;
 
         dVehicleTireInterface::dTireInfo* tireInfo_ = nullptr;
 
         dVehicleTireInterface* tireInterface_ = nullptr;
 
-        WeakPtr<Model> model_;
         WeakPtr<Node> node_;
     };
 

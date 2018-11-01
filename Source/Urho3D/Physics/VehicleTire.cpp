@@ -41,14 +41,4 @@ namespace Urho3D {
         context->RegisterFactory<VehicleTire>(DEF_PHYSICS_CATEGORY.CString());
     }
 
-    void VehicleTire::SetModel(Model* model)
-    {
-        model_ = model;
-    }
-
-    void VehicleTire::SetVisualRotationOffset(Quaternion rotation)
-    {
-        visualWorldRotation_ = rotation;
-    }
-
 }

@@ -672,12 +672,11 @@ namespace Urho3D {
                         }
                     }
 
-                    //tell vehilces to update the nodes for the tires.
+                    //tell vehicles to update the nodes for the tires.
                     for (PhysicsVehicle* vehicle : vehicleList)
                     {
                         vehicle->applyTransforms();
                     }
-
                 }
             }
 
