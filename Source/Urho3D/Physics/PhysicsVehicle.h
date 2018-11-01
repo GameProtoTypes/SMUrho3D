@@ -40,8 +40,6 @@ namespace Urho3D {
 
     protected:
 
-
-
         virtual void OnNodeSet(Node* node) override;
 
         void reBuild();
@@ -50,9 +48,6 @@ namespace Urho3D {
 
 
         WeakPtr<RigidBody> rigidBody_;
-        //NewtonBody* internalBody_ = nullptr;
-
-        //WeakPtr<CollisionShape> colShape_;
 
         WeakPtr<PhysicsWorld> physicsWorld_;
 

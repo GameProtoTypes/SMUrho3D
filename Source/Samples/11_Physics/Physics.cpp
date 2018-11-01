@@ -1086,7 +1086,6 @@ void Physics::SpawnVehicle(Vector3 worldPosition)
 
         Node* rotatedNode = tire->GetNode()->CreateChild("Tire: " + String(i) + " Child");
 
-        GSS<VisualDebugger>()->AddNode(tire->GetNode(), 1.0, false)->SetLifeTimeMs(10000000);
 
         rotatedNode->Rotate(Quaternion(90, 0, 90));
         rotatedNode->SetScale(Vector3(1, 0.5, 1));

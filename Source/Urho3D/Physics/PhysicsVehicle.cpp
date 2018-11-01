@@ -15,6 +15,7 @@
 #include "NewtonDebugDrawing.h"
 #include "Graphics/VisualDebugger.h"
 #include "Graphics/DebugRenderer.h"
+#include "IO/Log.h"
 
 namespace Urho3D {
 
@@ -40,9 +41,6 @@ namespace Urho3D {
     void PhysicsVehicle::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         Component::DrawDebugGeometry(debug, depthTest);
-
-        //NewtonDebug_BodyDrawCollision(physicsWorld_, tires_[0]->tireInterface_->GetCollisionShape(), debug, depthTest);
-
 
         for (VehicleTire* tire : tires_)
         {
@@ -109,8 +107,6 @@ namespace Urho3D {
         if (vehicleChassis_)
         {
             physicsWorld_->vehicleManager_->DestroyController(vehicleChassis_);
-            //NewtonDestroyBody(internalBody_);
-            //internalBody_ = nullptr;
             vehicleChassis_ = nullptr;
         }
 
@@ -118,7 +114,8 @@ namespace Urho3D {
 
         rigidBody_ = node_->GetOrCreateComponent<RigidBody>();
         NewtonBody* body = rigidBody_->GetNewtonBody();
-        //internalBody_ = body;
+
+
         if (!body)
             return;
 
@@ -134,8 +131,6 @@ namespace Urho3D {
         int i = 0;
         for (VehicleTire* tire : tires_)
         {
-
-            tire->node_ = node_->CreateChild("Tire" + String(i));
             tire->node_->SetWorldTransform(tire->initialWorldTransform_.Translation(), tire->initialWorldTransform_.Rotation());
 
 
@@ -158,12 +153,14 @@ namespace Urho3D {
 
     void PhysicsVehicle::applyTransforms()
     {
-       // if (isDirty_)
-        //    return;
+        if (isDirty_)
+            return;
 
         for (VehicleTire* tire : tires_)
         {
             Matrix3x4 worldTransform = physicsWorld_->PhysicsToScene_Domain(Matrix3x4(NewtonToUrhoMat4(tire->tireInterface_->GetGlobalMatrix())));
+
+
             //worldTransform.SetTranslation(Vector3(0, 0, 0));
             tire->node_->SetWorldTransform(worldTransform.Translation(), worldTransform.Rotation());
         }
