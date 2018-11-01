@@ -1,6 +1,7 @@
 #pragma once
 #include "../Core/Object.h"
 #include "dVehicleInterface.h"
+#include "../Scene/Component.h"
 
 
 class dVehicleTireInterface;
@@ -10,8 +11,8 @@ namespace Urho3D {
     class Node;
     class Model;
 
-    class URHO3D_API VehicleTire : public Object {
-        URHO3D_OBJECT(VehicleTire, Object);
+    class URHO3D_API VehicleTire : public Component {
+        URHO3D_OBJECT(VehicleTire, Component);
     public:
 
         friend class PhysicsVehicle;
@@ -36,7 +37,10 @@ namespace Urho3D {
         float GetWidth() const { return width_; }
 
 
-        
+        virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
+
+
+
 
     protected:
 
@@ -55,7 +59,11 @@ namespace Urho3D {
 
         dVehicleTireInterface* tireInterface_ = nullptr;
 
-        WeakPtr<Node> node_;
+        bool isDirty_ = true;
+        void reBuild();
+
+        virtual void OnNodeSet(Node* node) override;
+
     };
 
 

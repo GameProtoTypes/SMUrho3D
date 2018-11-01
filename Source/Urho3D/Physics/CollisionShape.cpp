@@ -132,6 +132,12 @@ namespace Urho3D {
 
     Urho3D::Matrix3x4 CollisionShape::GetWorldTransform()
     {
+        if (!node_)
+        {
+            URHO3D_LOGWARNING("CollisionShape::GetWorldTransform No Node Present");
+            return Matrix3x4();
+
+        }
         return node_->GetWorldTransform() * GetOffsetMatrix();
     }
 

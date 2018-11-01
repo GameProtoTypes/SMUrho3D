@@ -1080,11 +1080,14 @@ void Physics::SpawnVehicle(Vector3 worldPosition)
         if(i == 3)
             offset = Vector3(2, -1, -2);
 
-        VehicleTire* tire = vehicle->AddTire(Matrix3x4(worldPosition + offset, Quaternion(0,90,0), 1.0f));
-        tire->GetNode()->SetName("Tire: " + String(i));
+        Node* tireNode = vehicleNode->CreateChild("TireNode");
+        tireNode->SetWorldTransform(worldPosition + offset, Quaternion(0, 90, 0));
+
+        VehicleTire* tire = tireNode->CreateComponent<VehicleTire>();
 
 
-        Node* rotatedNode = tire->GetNode()->CreateChild("Tire: " + String(i) + " Child");
+
+        Node* rotatedNode = tireNode->CreateChild("Tire: " + String(i) + " Child");
 
 
         rotatedNode->Rotate(Quaternion(90, 0, 90));

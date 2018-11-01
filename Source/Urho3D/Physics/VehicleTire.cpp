@@ -5,12 +5,13 @@
 #include "PhysicsWorld.h"
 #include "Graphics/Model.h"
 #include "Scene/Node.h"
+#include "PhysicsVehicle.h"
 
 
 namespace Urho3D {
 
 
-    VehicleTire::VehicleTire(Context* context) : Object(context)
+    VehicleTire::VehicleTire(Context* context) : Component(context)
     {
         tireInfo_ = new dVehicleTireInterface::dTireInfo();
         tireInfo_->m_mass = 40.0f;
@@ -39,6 +40,46 @@ namespace Urho3D {
     void VehicleTire::RegisterObject(Context* context)
     {
         context->RegisterFactory<VehicleTire>(DEF_PHYSICS_CATEGORY.CString());
+    }
+
+    void VehicleTire::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
+    {
+        Component::DrawDebugGeometry(debug, depthTest);
+
+    }
+
+    void VehicleTire::reBuild()
+    {
+        if (!node_)
+            return;
+
+        if (!node_->GetParent())
+            return;
+
+        if (!node_->GetParent()->HasComponent<PhysicsVehicle>())
+            return;
+
+
+
+        PhysicsVehicle* vehicle = node_->GetParent()->GetComponent<PhysicsVehicle>();
+
+
+        vehicle->reBuild();
+
+        isDirty_ = false;
+        
+    }
+
+    void VehicleTire::OnNodeSet(Node* node)
+    {
+        if (node)
+        {
+            reBuild();
+        }
+        else
+        {
+            reBuild();
+        }
     }
 
 }

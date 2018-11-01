@@ -20,6 +20,7 @@ namespace Urho3D {
     public:
 
         friend class PhysicsWorld;
+        friend class VehicleTire;
 
         PhysicsVehicle(Context* context);
         virtual ~PhysicsVehicle();
@@ -31,7 +32,7 @@ namespace Urho3D {
 
         void MarkDirty(bool dirty = true) { isDirty_ = dirty; }
 
-        //add a tire with suspension.
+        /// add a tire with suspension. 
         VehicleTire* AddTire(Matrix3x4 worldTransform);
 
 
@@ -55,7 +56,7 @@ namespace Urho3D {
 
         dVehicleChassis* vehicleChassis_ = nullptr;
 
-        Vector<SharedPtr<VehicleTire>> tires_;
+        Vector<VehicleTire*> tires_;
 
     };
 
