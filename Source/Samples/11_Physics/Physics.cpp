@@ -1491,9 +1491,15 @@ void Physics::RemovePickNode(bool removeRigidBodyOnly /*= false*/)
     if (res.node_) {
         if (removeRigidBodyOnly)
         {
-            RigidBody* rigBody = res.node_->GetComponent<RigidBody>();
-            if (rigBody)
-                rigBody->Remove();
+            PODVector<RigidBody*> bodies;
+            GetRootRigidBodies(bodies, res.node_, false);
+            if(bodies.Size())
+                bodies.Back()->GetNode()->Remove();
+
+
+            //RigidBody* rigBody = res.node_->GetComponent<RigidBody>();
+            //if (rigBody)
+            //    rigBody->Remove();
         }
         else
         {

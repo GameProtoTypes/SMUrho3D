@@ -63,6 +63,8 @@ namespace Urho3D {
         }
 
         RigidBody* rigBodyComp = (RigidBody*)NewtonBodyGetUserData(body);
+        if (!rigBodyComp)
+            return;
 
         for (CollisionShape* colShapeComp : rigBodyComp->GetCollisionShapes())
         {
