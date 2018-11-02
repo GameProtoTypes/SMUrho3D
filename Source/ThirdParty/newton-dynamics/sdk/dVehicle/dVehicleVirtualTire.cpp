@@ -31,9 +31,7 @@ dVehicleVirtualTire::dVehicleVirtualTire(dVehicleNode* const parent, const dMatr
 	m_dynamicContactBodyNode.SetWorld(m_world);
 
 	dVehicleSingleBody* const chassisNode = (dVehicleSingleBody*) m_parent;
-	//dVehicleChassis* const chassis = chassisNode->GetChassis();
 	NewtonBody* const newtonBody = chassisNode->m_newtonBody;
-	//NewtonWorld* const world = NewtonBodyGetWorld(newtonBody);
 
 	m_tireShape = NewtonCreateChamferCylinder(m_world, 0.5f, 1.0f, 0, NULL);
 	NewtonCollisionSetScale(m_tireShape, m_info.m_width, m_info.m_radio, m_info.m_radio);
@@ -43,7 +41,7 @@ dVehicleVirtualTire::dVehicleVirtualTire(dVehicleNode* const parent, const dMatr
 
 	dMatrix alignMatrix(dGetIdentityMatrix());
 	alignMatrix.m_front = dVector (0.0f, 0.0f, 1.0f, 0.0f);
-	alignMatrix.m_up = dVector (0.0f, 1.0f, 0.0f, 0.0f);
+	alignMatrix.m_up = dVector (1.0f, 0.0f, 0.0f, 0.0f);
 	alignMatrix.m_right = alignMatrix.m_front.CrossProduct(alignMatrix.m_up);
 
 	m_matrix = alignMatrix * localFrame;
@@ -96,23 +94,11 @@ dComplementaritySolver::dBilateralJoint* dVehicleVirtualTire::GetJoint()
 	return &m_joint;
 }
 
-void dVehicleVirtualTire::RenderDebugTire(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
-{
-	dCustomJoint::dDebugDisplay* const debugContext = (dCustomJoint::dDebugDisplay*) userData;
-
-	int index = vertexCount - 1;
-	dVector p0(faceVertec[index * 3 + 0], faceVertec[index * 3 + 1], faceVertec[index * 3 + 2]);
-	for (int i = 0; i < vertexCount; i++) {
-		dVector p1(faceVertec[i * 3 + 0], faceVertec[i * 3 + 1], faceVertec[i * 3 + 2]);
-		debugContext->DrawLine(p0, p1);
-		p0 = p1;
-	}
-}
 
 dMatrix dVehicleVirtualTire::GetHardpointMatrix (dFloat param) const
 {
-	dMatrix matrix(dYawMatrix(m_steeringAngle) * m_matrix);
-	matrix.m_posit += m_matrix.m_up.Scale(param * m_info.m_suspensionLength - m_info.m_pivotOffset);
+	dMatrix matrix(dRollMatrix(m_steeringAngle) * m_matrix);
+	matrix.m_posit += m_matrix.m_right.Scale(param * m_info.m_suspensionLength - m_info.m_pivotOffset);
 	return matrix;
 }
 
@@ -130,13 +116,6 @@ dMatrix dVehicleVirtualTire::GetGlobalMatrix () const
 	return GetLocalMatrix() * chassisNode->GetBody()->GetMatrix();
 }
 
-void dVehicleVirtualTire::Debug(dCustomJoint::dDebugDisplay* const debugContext) const
-{
-	dVehicleTireInterface::Debug(debugContext);
-
-	dMatrix trieMatrix (GetGlobalMatrix ());
-	NewtonCollisionForEachPolygonDo(m_tireShape, &trieMatrix[0][0], RenderDebugTire, debugContext);
-}
 
 void dVehicleVirtualTire::SetSteeringAngle(dFloat steeringAngle)
 {
@@ -168,7 +147,7 @@ void dVehicleVirtualTire::ApplyExternalForce()
 	tireBody->SetMatrix(tireMatrix);
 
 	tireBody->SetOmega(chassisBody->GetOmega() + tireMatrix.m_front.Scale(m_omega));
-	tireBody->SetVeloc(chassisBody->CalculatePointVelocity (tireMatrix.m_posit) + tireMatrix.m_up.Scale(m_speed));
+	tireBody->SetVeloc(chassisBody->CalculatePointVelocity (tireMatrix.m_posit) + tireMatrix.m_right.Scale(m_speed));
 
 	tireBody->SetTorque(dVector (0.0f));
 	tireBody->SetForce(chassisNode->m_gravity.Scale (tireBody->GetMass()));
@@ -235,7 +214,7 @@ m_omega = -20.0f;
 	dVector chassinPointVeloc (chassisVeloc + chassisOmega.CrossProduct(tireMatrix.m_posit - chassisMatrix.m_posit));
 	dVector localVeloc (tireVeloc - chassinPointVeloc);
 
-	m_speed = tireMatrix.m_up.DotProduct3(localVeloc);
+	m_speed = tireMatrix.m_right.DotProduct3(localVeloc);
 	m_position = dClamp (m_position + m_speed * timestep, dFloat (0.0f), m_info.m_suspensionLength);
 }
 
@@ -245,13 +224,15 @@ void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectColli
 		m_contactsJoints[i].ResetContact();
 	}
 
-	if (bodyArray.m_count) {
+	int contactCount = 0;
+	dFloat friction = m_info.m_frictionCoefficient;
+	if (bodyArray.m_staticCount) {
 		dVehicleSingleBody* const chassisNode = (dVehicleSingleBody*)m_parent;
 		dComplementaritySolver::dBodyState* const chassisBody = chassisNode->GetBody();
 
 		const dMatrix& chassisMatrix = chassisBody->GetMatrix();
 		dMatrix tireMatrix (GetHardpointMatrix (1.0f) * chassisMatrix);
-		dVector veloc0 (tireMatrix.m_up.Scale (-m_info.m_suspensionLength));
+		dVector veloc0 (tireMatrix.m_right.Scale (-m_info.m_suspensionLength));
 		dVector tmp (0.0f);
 		
 		dVector contact(0.0f);
@@ -259,9 +240,7 @@ void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectColli
 		dFloat penetration(0.0f);
 
 		dFloat param = 1.0f - m_position * m_invSuspensionLength;
-
-		int contactCount = 0;
-		for (int i = 0; i < bodyArray.m_count; i ++) {
+		for (int i = 0; i < bodyArray.m_staticCount; i ++) {
 			dMatrix matrixB;
 			dLong attributeA;
 			dLong attributeB;
@@ -282,21 +261,78 @@ void dVehicleVirtualTire::CalculateContacts(const dVehicleChassis::dCollectColli
 				if (dist > -D_TIRE_MAX_ELASTIC_DEFORMATION) {
 
 					normal.m_w = 0.0f;
-					penetration = normal.DotProduct3(tireMatrix.m_up.Scale(dist));
+					penetration = normal.DotProduct3(tireMatrix.m_right.Scale(dist));
 
-					dVector lateralDir (normal.CrossProduct(tireMatrix.m_right));
-					if (lateralDir.DotProduct3(lateralDir) < 0.1f) {
-						lateralDir = normal.CrossProduct(tireMatrix.m_front.CrossProduct(normal)); 
+					dVector longitudinalDir (normal.CrossProduct(tireMatrix.m_front));
+					if (longitudinalDir.DotProduct3(longitudinalDir) < 0.1f) {
+						//lateralDir = normal.CrossProduct(tireMatrix.m_front.CrossProduct(normal)); 
+						longitudinalDir = normal.CrossProduct(tireMatrix.m_up.CrossProduct(normal));
+						dAssert(longitudinalDir.DotProduct3(longitudinalDir) > 0.1f);
 					}
-					lateralDir = lateralDir.Normalize();
-					dAssert (lateralDir.DotProduct3(lateralDir) > 0.0f);
-
+					longitudinalDir = longitudinalDir.Normalize();
+					
 					contact -= tireMatrix.m_up.Scale (dist);
 					contact.m_w = 1.0f;
-					m_contactsJoints[contactCount].SetContact(contact, normal, lateralDir, penetration, 1.0f, 0.8f);
+					m_contactsJoints[contactCount].SetContact(contact, normal, longitudinalDir, penetration, friction, friction * 0.8f);
 					contactCount ++;
 				}
 			}
+		}
+	}
+
+	if (bodyArray.m_count > bodyArray.m_staticCount) {
+		// for now ignore tire collision with dynamics bodies,
+		// later tire collision with dynamic bodies will no be CCD
+		//dAssert (0);
+	}
+
+
+	if (contactCount > 1) {
+		for (int i = 0; i < contactCount - 1; i ++) {
+			const dVector& n = m_contactsJoints[i].m_normal;
+			for (int j = contactCount - 1; j > i; j --) {
+				dFloat val = dAbs (n.DotProduct3(m_contactsJoints[j].m_normal));
+				if (val > 0.99f) {
+					m_contactsJoints[j] = m_contactsJoints[contactCount - 1];
+					contactCount --;
+				}
+			}
+		}
+	}
+}
+
+
+void dVehicleVirtualTire::RenderDebugTire(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
+{
+	dCustomJoint::dDebugDisplay* const debugContext = (dCustomJoint::dDebugDisplay*) userData;
+
+	int index = vertexCount - 1;
+	dVector p0(faceVertec[index * 3 + 0], faceVertec[index * 3 + 1], faceVertec[index * 3 + 2]);
+	for (int i = 0; i < vertexCount; i++) {
+		dVector p1(faceVertec[i * 3 + 0], faceVertec[i * 3 + 1], faceVertec[i * 3 + 2]);
+		debugContext->DrawLine(p0, p1);
+		p0 = p1;
+	}
+}
+
+
+void dVehicleVirtualTire::Debug(dCustomJoint::dDebugDisplay* const debugContext) const
+{
+	dVehicleTireInterface::Debug(debugContext);
+
+	debugContext->SetColor(dVector(0.0f, 0.4f, 0.7f, 1.0f));
+	dMatrix trieMatrix(GetGlobalMatrix());
+	NewtonCollisionForEachPolygonDo(m_tireShape, &trieMatrix[0][0], RenderDebugTire, debugContext);
+
+	dVehicleSingleBody* const chassis = (dVehicleSingleBody*)m_parent->GetAsVehicle();
+	dAssert (chassis);
+	dVector weight (chassis->m_gravity.Scale(chassis->GetBody()->GetMass()));
+	dFloat scale (1.0f / dSqrt (weight.DotProduct3(weight)));
+
+	for (int i = 0; i < sizeof (m_contactsJoints)/sizeof (m_contactsJoints[0]); i ++) {
+		const dTireContact* const contact = &m_contactsJoints[i];
+		if (contact->IsActive()) {
+			contact->Debug(debugContext, scale);
 		}
 	}
 }

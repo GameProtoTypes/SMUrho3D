@@ -115,6 +115,7 @@ private:
     void SpawnSliderTest(Vector3 worldPosition);
     void FireSmallBall();
     void SpawnCompoundedRectTest(Vector3 worldPosition);
+    void SpawnCompoundedRectTest2(Vector3 worldPosition);
     void SpawnVehicle(Vector3 worldPosition);
     void SpawnTrialBike(Vector3 worldPosition);
 

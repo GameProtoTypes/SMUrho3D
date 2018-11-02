@@ -72,6 +72,7 @@ class dTireContact: public dKinematicLoopJoint
 	dTireContact();
 
 	void ResetContact ();
+	void Debug(dCustomJoint::dDebugDisplay* const debugContext, dFloat scale) const;
 	void SetContact (const dVector& posit, const dVector& normal, const dVector& lateralDir, dFloat penetration, dFloat staticFriction, dFloat kineticFriction);
 
 	private:
@@ -91,6 +92,8 @@ class dTireContact: public dKinematicLoopJoint
 	dTireModel m_tireModel;
 	dFloat m_normalFilter[4];
 	bool m_isActiveFilter[4];
+
+	friend class dVehicleVirtualTire;
 };
 
 

@@ -332,11 +332,11 @@ namespace Urho3D
 			virtual void DrawDebugGeometry(DebugRenderer* debugRenderer);
 			float GetScale() const { return mScale; }
 			void SetScale(float val) { mScale = val; }
-			Urho3D::WeakPtr<Urho3D::Node> GetNode() const { return mNode; }
-			void SetNode(Urho3D::WeakPtr<Urho3D::Node> val) { mNode = val; }
+			Urho3D::WeakPtr<Urho3D::Node> GetNode() const { return node_; }
+			void SetNode(Urho3D::WeakPtr<Urho3D::Node> val) { node_ = val; }
 		protected:
 			float mScale = 1.0f;
-			WeakPtr<Node> mNode;
+			WeakPtr<Node> node_;
 		};
 
 		class URHO3D_API VisualDebuggerUILabel : public VisualDebuggerObject {

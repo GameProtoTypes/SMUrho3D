@@ -234,7 +234,8 @@ void StaticModel::SetModel(Model* model)
 
     if (!node_)
     {
-        URHO3D_LOGERROR("Can not set model while model component is not attached to a scene node");
+        
+        URHO3D_LOGERROR("Can not set model while model component is not attached to a scene node");//#todo rework this class so you can.
         return;
     }
 

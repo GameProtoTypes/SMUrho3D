@@ -23,25 +23,41 @@ namespace Urho3D {
 
         rigidBodyComp = static_cast<RigidBody*>(NewtonBodyGetUserData(body));
 
+        if (rigidBodyComp == nullptr)
+            return;
 
         rigidBodyComp->GetForceAndTorque(netForce, netTorque);
 
 
         Vector3 gravityForce;
         if (rigidBodyComp->GetScene())//on scene destruction sometimes this is null so check...
-            gravityForce = rigidBodyComp->GetScene()->GetComponent<PhysicsWorld>()->GetGravity() * rigidBodyComp->GetEffectiveMass();
+        {
+            PhysicsWorld* physicsWorld = rigidBodyComp->GetScene()->GetComponent<PhysicsWorld>();
+            float physicsScale = physicsWorld->GetPhysicsScale();
+            gravityForce = physicsWorld->GetGravity() * physicsScale* rigidBodyComp->GetEffectiveMass();
 
-        netForce += gravityForce;
 
-        NewtonBodySetForce(body, &UrhoToNewton(netForce)[0]);
-        NewtonBodySetTorque(body, &UrhoToNewton(netTorque)[0]);
+            //all 
+            netForce *= physicsScale*physicsScale*physicsScale;
+
+
+            netForce += gravityForce;
+
+
+
+
+            NewtonBodySetForce(body, &UrhoToNewton(netForce)[0]);
+            NewtonBodySetTorque(body, &UrhoToNewton(netTorque*physicsScale*physicsScale*physicsScale*physicsScale*physicsScale)[0]);
+
+        }
     }
 
 
     void Newton_SetTransformCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
     {
         RigidBody* rigBody = static_cast<RigidBody*>(NewtonBodyGetUserData(body));
-        rigBody->MarkInternalTransformDirty();
+        if(rigBody)
+            rigBody->MarkInternalTransformDirty();
     }
 
 
@@ -94,7 +110,8 @@ namespace Urho3D {
         RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
         RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
 
-
+        if (!rigBody0 || !rigBody1)
+            return;
 
 
         unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
@@ -173,6 +190,8 @@ namespace Urho3D {
         RigidBody* rigBody0 = static_cast<RigidBody*>(NewtonBodyGetUserData(body0));
         RigidBody* rigBody1 = static_cast<RigidBody*>(NewtonBodyGetUserData(body1));
 
+        if (!rigBody0 || !rigBody1)
+            return 1;
 
         PhysicsWorld* physicsWorld = rigBody0->GetPhysicsWorld();
 

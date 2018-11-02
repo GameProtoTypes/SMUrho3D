@@ -144,6 +144,8 @@ Engine::Engine(Context* context) :
 #endif
 	context_->RegisterSubsystem(new FreeFunctions(context_));
     // Register object factories for libraries which are not automatically registered along with subsystem creation
+    RegisterUILibrary(context_);
+
     RegisterSceneLibrary(context_);
 
 #ifdef URHO3D_TASKS
@@ -716,13 +718,11 @@ void Engine::Update()
 
 
 
-    SendUpdateEvents(curUpdateLevel_);
-    curUpdateLevel_++;
-    if (curUpdateLevel_ > 7)
-        curUpdateLevel_ = 0;
+    SendUpdateEvents();
+
 }
 
-void Engine::SendUpdateEvents(int rateLevel)
+void Engine::SendUpdateEvents()
 {
 
 
@@ -730,46 +730,21 @@ void Engine::SendUpdateEvents(int rateLevel)
 
 
 
-        eventData[UpdateRate8::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f);
-        eventData[UpdateRate8::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f);
-        eventData[UpdateRate8::P_UPDATETICK] = updateTick_;
-        eventData[UpdateRate8::P_SUBCOUNT] = rateLevel;
-        SendEvent(E_UPDATE_RATE8, eventData);
-        
-        if (rateLevel == 0 || rateLevel == 2 || rateLevel == 4 || rateLevel == 6) {
 
-            eventData[UpdateRate4::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f) * 2.0f;
-            eventData[UpdateRate4::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f) * 2.0f;
-            eventData[UpdateRate4::P_UPDATETICK] = updateTick_;
-            SendEvent(E_UPDATE_RATE4, eventData);
-        }
-        if (rateLevel == 0 || rateLevel == 4) {
-            eventData[UpdateRate2::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f) * 4.0f;
-            eventData[UpdateRate2::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f) * 4.0f;
-            eventData[UpdateRate2::P_UPDATETICK] = updateTick_;
-
-            SendEvent(E_UPDATE_RATE2, eventData);
-        }
-        if (rateLevel == 0) {
-
-            eventData[Update::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f) * 8.0f ;
-            eventData[Update::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f)* 8.0f;
-            eventData[Update::P_UPDATETICK] = updateTick_;
+        eventData[Update::P_TIMESTEP] = (float(lastUpdateTimeUs_) / 1000000.0f);
+        eventData[Update::P_TARGET_TIMESTEP] = (float(updateTimeGoalUs_) / 1000000.0f);
+        eventData[Update::P_UPDATETICK] = updateTick_;
 
 
-            SendEvent(E_PREUPDATE, eventData);
+        SendEvent(E_PREUPDATE, eventData);
 
-            SendEvent(E_UPDATE, eventData);
-            // Logic post-update event
-            SendEvent(E_POSTUPDATE, eventData);
+        SendEvent(E_UPDATE, eventData);
+        // Logic post-update event
+        SendEvent(E_POSTUPDATE, eventData);
 
-            SendEvent(E_ENDFRAME);
+        SendEvent(E_ENDFRAME);
 
-            SendEvent(E_ENDFRAMEFINAL);
-        }
-
-
-
+        SendEvent(E_ENDFRAMEFINAL);
 
 }
 

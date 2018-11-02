@@ -126,13 +126,11 @@ UI::UI(Context* context) :
     nonModalBatchSize_(0),
     dragElementsCount_(0),
     dragConfirmedCount_(0),
+    uiScale_(1.0f),
     customSize_(IntVector2::ZERO)
 {
     rootElement_->SetTraversalMode(TM_DEPTH_FIRST);
     rootModalElement_->SetTraversalMode(TM_DEPTH_FIRST);
-
-    // Register UI library object factories
-    RegisterUILibrary(context_);
 
     SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(UI, HandleScreenMode));
     SubscribeToEvent(E_MOUSEBUTTONDOWN, URHO3D_HANDLER(UI, HandleMouseButtonDown));
@@ -145,6 +143,7 @@ UI::UI(Context* context) :
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(UI, HandleKeyDown));
     SubscribeToEvent(E_TEXTINPUT, URHO3D_HANDLER(UI, HandleTextInput));
     SubscribeToEvent(E_DROPFILE, URHO3D_HANDLER(UI, HandleDropFile));
+    SubscribeToEvent(E_FOCUSED, URHO3D_HANDLER(UI, HandleFocused));
 
     // Try to initialize right now, but skip if screen mode is not yet set
     Initialize();
@@ -385,9 +384,9 @@ void UI::Update(float timeStep)
         {
             TouchState* touch = input->GetTouch(i);
             IntVector2 touchPos = touch->position_;
-            touchPos.x_ = (int)(touchPos.x_);
-            touchPos.y_ = (int)(touchPos.y_);
-            ProcessHover(touchPos, MouseButtonFlags(touch->touchID_), QualifierFlags(0), nullptr);
+            touchPos.x_ = (int)(touchPos.x_ / uiScale_);
+            touchPos.y_ = (int)(touchPos.y_ / uiScale_);
+            ProcessHover(touchPos, MakeTouchIDMask(touch->touchID_), QUAL_NONE, nullptr);
         }
 #ifdef URHO3D_SYSTEMUI
     }
@@ -452,93 +451,54 @@ void UI::RenderUpdate()
         GetBatches(batches_, vertexData_, cursor_, currentScissor);
     }
 
-    // Get batches for UI elements rendered into textures. Each element rendered into texture is treated as root element.
-    for (auto it = renderToTexture_.Begin(); it != renderToTexture_.End();)
+    // UIElement does not have anything to show. Insert dummy batch that will clear the texture.
+    if (batches_.Empty() && texture_.NotNull())
     {
-        RenderToTextureData& data = it->second_;
-        if (data.rootElement_.Expired())
-        {
-            it = renderToTexture_.Erase(it);
-            continue;
-        }
-
-        if (data.rootElement_->IsEnabled())
-        {
-            data.batches_.Clear();
-            data.vertexData_.Clear();
-            UIElement* element = data.rootElement_;
-            const IntVector2& size = element->GetSize();
-            const IntVector2& pos = element->GetPosition();
-            // Note: the scissors operate on unscaled coordinates. Scissor scaling is only performed during render
-            IntRect scissor = IntRect(pos.x_, pos.y_, pos.x_ + size.x_, pos.y_ + size.y_);
-            GetBatches(data.batches_, data.vertexData_, element, scissor);
-
-            // UIElement does not have anything to show. Insert dummy batch that will clear the texture.
-            if (data.batches_.Empty())
-            {
-                UIBatch batch(element, BLEND_REPLACE, scissor, nullptr, &data.vertexData_);
-                batch.SetColor(Color::BLACK);
-                batch.AddQuad(scissor.left_, scissor.top_, scissor.right_, scissor.bottom_, 0, 0);
-                data.batches_.Push(batch);
-            }
-        }
-        ++it;
+        UIBatch batch(rootElement_, BLEND_REPLACE, currentScissor, nullptr, &vertexData_);
+        batch.SetColor(Color::BLACK);
+        batch.AddQuad(currentScissor.left_, currentScissor.top_, currentScissor.right_, currentScissor.bottom_, 0, 0);
+        batches_.Push(batch);
     }
 }
 
-void UI::Render(bool renderUICommand)
+void UI::Render()
 {
     URHO3D_PROFILE("RenderUI");
 
-    // If the OS cursor is visible, apply its shape now if changed
-    if (!renderUICommand)
-    {
-        bool osCursorVisible = GetSubsystem<Input>()->IsMouseVisible();
-        if (cursor_ && osCursorVisible)
-            cursor_->ApplyOSCursorShape();
-    }
-
     // Perform the default backbuffer render only if not rendered yet, or additional renders through RenderUI command
-    if (renderUICommand || !uiRendered_)
+    if (!uiRendered_)
     {
+
+        if (texture_.NotNull())
+        {
+            if (RenderSurface* surface = texture_->GetRenderSurface())
+            {
+                // If the OS cursor is visible, apply its shape now if changed
+                bool osCursorVisible = GetSubsystem<Input>()->IsMouseVisible();
+                if (cursor_ && osCursorVisible)
+                    cursor_->ApplyOSCursorShape();
+
+                // Perform the default backbuffer render only if not rendered yet, or additional renders through RenderUI command
+                graphics_->ResetRenderTargets();
+
+                graphics_->SetDepthStencil(surface->GetLinkedDepthStencil());
+                graphics_->SetRenderTarget(0, surface);
+                graphics_->SetViewport(IntRect(0, 0, surface->GetWidth(), surface->GetHeight()));
+                graphics_->Clear(Urho3D::CLEAR_COLOR);
+            }
+        }
+
         SetVertexData(vertexBuffer_, vertexData_);
         SetVertexData(debugVertexBuffer_, debugVertexData_);
 
-        if (!renderUICommand)
-            graphics_->ResetRenderTargets();
         // Render non-modal batches
         Render(vertexBuffer_, batches_, 0, nonModalBatchSize_);
         // Render debug draw
         Render(debugVertexBuffer_, debugDrawBatches_, 0, debugDrawBatches_.Size());
         // Render modal batches
         Render(vertexBuffer_, batches_, nonModalBatchSize_, batches_.Size());
-    }
 
-    // Render to UIComponent textures. This is skipped when called from the RENDERUI command
-    if (!renderUICommand)
-    {
-        for (auto& item : renderToTexture_)
-        {
-            RenderToTextureData& data = item.second_;
-            if (data.rootElement_->IsEnabled())
-            {
-                SetVertexData(data.vertexBuffer_, data.vertexData_);
-                SetVertexData(data.debugVertexBuffer_, data.debugVertexData_);
-
-                RenderSurface* surface = data.texture_->GetRenderSurface();
-                graphics_->SetDepthStencil(surface->GetLinkedDepthStencil());
-                graphics_->SetRenderTarget(0, surface);
-                graphics_->SetViewport(IntRect(0, 0, surface->GetWidth(), surface->GetHeight()));
-                graphics_->Clear(Urho3D::CLEAR_COLOR);
-
-                Render(data.vertexBuffer_, data.batches_, 0, data.batches_.Size());
-                Render(data.debugVertexBuffer_, data.debugDrawBatches_, 0, data.debugDrawBatches_.Size());
-                data.debugDrawBatches_.Clear();
-                data.debugVertexData_.Clear();
-            }
-        }
-
-        if (renderToTexture_.Size())
+        if (texture_.NotNull())
             graphics_->ResetRenderTargets();
     }
 
@@ -559,20 +519,7 @@ void UI::DebugDraw(UIElement* element)
         const IntVector2& rootSize = root->GetSize();
         const IntVector2& rootPos = root->GetPosition();
         IntRect scissor(rootPos.x_, rootPos.y_, rootPos.x_ + rootSize.x_, rootPos.y_ + rootSize.y_);
-        if (root == rootElement_ || root == rootModalElement_)
-            element->GetDebugDrawBatches(debugDrawBatches_, debugVertexData_, scissor);
-        else
-        {
-            for (auto& item : renderToTexture_)
-            {
-                RenderToTextureData& data = item.second_;
-                if (!data.rootElement_.Expired() && data.rootElement_ == root && data.rootElement_->IsEnabled())
-                {
-                    element->GetDebugDrawBatches(data.debugDrawBatches_, data.debugVertexData_, scissor);
-                    break;
-                }
-            }
-        }
+        element->GetDebugDrawBatches(debugDrawBatches_, debugVertexData_, scissor);
     }
 }
 
@@ -742,6 +689,35 @@ void UI::SetFontOversampling(int oversampling)
     }
 }
 
+void UI::SetScale(float scale)
+{
+    uiScale_ = Max(scale, M_EPSILON);
+    ResizeRootElement();
+}
+
+void UI::SetWidth(float width)
+{
+    IntVector2 size = GetEffectiveRootElementSize(false);
+    SetScale((float)size.x_ / width);
+}
+
+void UI::SetHeight(float height)
+{
+    IntVector2 size = GetEffectiveRootElementSize(false);
+    SetScale((float)size.y_ / height);
+}
+
+void UI::SetCustomSize(const IntVector2& size)
+{
+    customSize_ = IntVector2(Max(0, size.x_), Max(0, size.y_));
+    ResizeRootElement();
+}
+
+void UI::SetCustomSize(int width, int height)
+{
+    customSize_ = IntVector2(Max(0, width), Max(0, height));
+    ResizeRootElement();
+}
 
 IntVector2 UI::GetCursorPosition() const
 {
@@ -751,6 +727,7 @@ IntVector2 UI::GetCursorPosition() const
 UIElement* UI::GetElementAt(const IntVector2& position, bool enabledOnly, IntVector2* elementScreenPosition)
 {
     UIElement* result = nullptr;
+    IntVector2 screenPosition;
 
     if (HasModalElement())
         result = GetElementAt(rootModalElement_, position, enabledOnly);
@@ -758,29 +735,7 @@ UIElement* UI::GetElementAt(const IntVector2& position, bool enabledOnly, IntVec
     if (!result)
         result = GetElementAt(rootElement_, position, enabledOnly);
 
-    // Mouse was not hovering UI element. Check elements rendered on 3D objects.
-    if (!result && renderToTexture_.Size())
-    {
-        for (auto& item : renderToTexture_)
-        {
-            RenderToTextureData& data = item.second_;
-            if (data.rootElement_.Expired() || !data.rootElement_->IsEnabled())
-                continue;
-
-            IntVector2 screenPosition = data.rootElement_->ScreenToElement(position);
-            if (data.rootElement_->GetCombinedScreenRect().IsInside(screenPosition) == INSIDE)
-            {
-                result = GetElementAt(data.rootElement_, screenPosition, enabledOnly);
-                if (result)
-                {
-                    if (elementScreenPosition)
-                        *elementScreenPosition = screenPosition;
-                    break;
-                }
-            }
-        }
-    }
-    else if (elementScreenPosition)
+    if (result && elementScreenPosition)
         *elementScreenPosition = position;
 
     return result;
@@ -919,6 +874,8 @@ void UI::Initialize()
 
     initialized_ = true;
 
+    SubscribeToEvent(E_PREUPDATE, URHO3D_HANDLER(UI, HandleUpdate));
+    SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(UI, HandlePostUpdate));
     SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(UI, HandleRenderUpdate));
 
     URHO3D_LOGINFO("Initialized user interface");
@@ -983,11 +940,11 @@ void UI::Render(VertexBuffer* buffer, const PODVector<UIBatch>& batches, unsigne
         scale.y_ = -scale.y_;
 #endif
     }
-	float pixelToDevicePixelRatio = GetSubsystem<Graphics>()->GetPixelToDevicePixelRatio();
+
     Matrix4 projection(Matrix4::IDENTITY);
-    projection.m00_ = scale.x_ / pixelToDevicePixelRatio;
+    projection.m00_ = scale.x_ * uiScale_;
     projection.m03_ = offset.x_;
-    projection.m11_ = scale.y_ / pixelToDevicePixelRatio;
+    projection.m11_ = scale.y_ * uiScale_;
     projection.m13_ = offset.y_;
     projection.m22_ = 1.0f;
     projection.m23_ = 0.0f;
@@ -1056,10 +1013,10 @@ void UI::Render(VertexBuffer* buffer, const PODVector<UIBatch>& batches, unsigne
         graphics_->SetShaderParameter(PSP_ELAPSEDTIME, elapsedTime);
 
         IntRect scissor = batch.scissor_;
-        scissor.left_ = (int)(scissor.left_ / pixelToDevicePixelRatio);
-        scissor.top_ = (int)(scissor.top_ / pixelToDevicePixelRatio);
-        scissor.right_ = (int)(scissor.right_ / pixelToDevicePixelRatio);
-        scissor.bottom_ = (int)(scissor.bottom_ / pixelToDevicePixelRatio);
+        scissor.left_ = (int)(scissor.left_ * uiScale_);
+        scissor.top_ = (int)(scissor.top_ * uiScale_);
+        scissor.right_ = (int)(scissor.right_ * uiScale_);
+        scissor.bottom_ = (int)(scissor.bottom_ * uiScale_);
 
         // Flip scissor vertically if using OpenGL texture rendering
 #ifdef URHO3D_OPENGL
@@ -1229,15 +1186,16 @@ void UI::GetCursorPositionAndVisible(IntVector2& pos, bool& visible)
     else
     {
         auto* input = GetSubsystem<Input>();
-        pos = input->GetMousePosition();
         visible = input->IsMouseVisible();
 
         if (!visible && cursor_)
             pos = cursor_->GetPosition();
+        else
+            pos = rootElement_->ScreenToElement(input->GetMousePosition());
     }
 
-    pos.x_ = (int)(pos.x_);
-    pos.y_ = (int)(pos.y_);
+    pos.x_ = (int)(pos.x_ / uiScale_);
+    pos.y_ = (int)(pos.y_ / uiScale_);
 }
 
 void UI::SetCursorShape(CursorShape shape)
@@ -1338,7 +1296,6 @@ void UI::ProcessHover(const IntVector2& windowCursorPos, MouseButtonFlags button
             {
                 SendDragOrHoverEvent(E_HOVERBEGIN, element, cursorPos, IntVector2::ZERO, nullptr);
                 // Exit if element is destroyed by the event handling
-				
                 if (!element)
                     return;
             }
@@ -1667,9 +1624,8 @@ void UI::HandleScreenMode(StringHash eventType, VariantMap& eventData)
 
     if (!initialized_)
         Initialize();
-	else {
-		ResizeRootElement();
-	}
+    else
+        ResizeRootElement();
 }
 
 void UI::HandleMouseButtonDown(StringHash eventType, VariantMap& eventData)
@@ -1732,7 +1688,11 @@ void UI::HandleMouseMove(StringHash eventType, VariantMap& eventData)
         if (!input->IsMouseVisible())
         {
             if (!input->IsMouseLocked())
-                cursor_->SetPosition(IntVector2(eventData[P_X].GetInt(), eventData[P_Y].GetInt()));
+            {
+                IntVector2 position{eventData[P_X].GetInt(), eventData[P_Y].GetInt()};
+                position = rootElement_->ScreenToElement(position);
+                cursor_->SetPosition(position);
+            }
             else if (cursor_->IsVisible())
             {
                 // Relative mouse motion: move cursor only when visible
@@ -1747,7 +1707,9 @@ void UI::HandleMouseMove(StringHash eventType, VariantMap& eventData)
         else
         {
             // Absolute mouse motion: move always
-            cursor_->SetPosition(IntVector2(eventData[P_X].GetInt(), eventData[P_Y].GetInt()));
+            IntVector2 position{eventData[P_X].GetInt(), eventData[P_Y].GetInt()};
+            position = rootElement_->ScreenToElement(position);
+            cursor_->SetPosition(position);
         }
     }
 
@@ -1829,8 +1791,8 @@ void UI::HandleTouchBegin(StringHash eventType, VariantMap& eventData)
     using namespace TouchBegin;
 
     IntVector2 pos(eventData[P_X].GetInt(), eventData[P_Y].GetInt());
-    pos.x_ = int(pos.x_);
-    pos.y_ = int(pos.y_);
+    pos.x_ = int(pos.x_ / uiScale_);
+    pos.y_ = int(pos.y_ / uiScale_);
     usingTouchInput_ = true;
 
     const MouseButton touchId = MakeTouchIDMask(eventData[P_TOUCHID].GetInt());
@@ -1850,8 +1812,8 @@ void UI::HandleTouchEnd(StringHash eventType, VariantMap& eventData)
     using namespace TouchEnd;
 
     IntVector2 pos(eventData[P_X].GetInt(), eventData[P_Y].GetInt());
-    pos.x_ = int(pos.x_ );
-    pos.y_ = int(pos.y_ );
+    pos.x_ = int(pos.x_ / uiScale_);
+    pos.y_ = int(pos.y_ / uiScale_);
 
     // Get the touch index
     const MouseButton touchId = MakeTouchIDMask(eventData[P_TOUCHID].GetInt());
@@ -1887,10 +1849,10 @@ void UI::HandleTouchMove(StringHash eventType, VariantMap& eventData)
 
     IntVector2 pos(eventData[P_X].GetInt(), eventData[P_Y].GetInt());
     IntVector2 deltaPos(eventData[P_DX].GetInt(), eventData[P_DY].GetInt());
-    pos.x_ = int(pos.x_ );
-    pos.y_ = int(pos.y_ );
-    deltaPos.x_ = int(deltaPos.x_);
-    deltaPos.y_ = int(deltaPos.y_);
+    pos.x_ = int(pos.x_ / uiScale_);
+    pos.y_ = int(pos.y_ / uiScale_);
+    deltaPos.x_ = int(deltaPos.x_ / uiScale_);
+    deltaPos.y_ = int(deltaPos.y_ / uiScale_);
     usingTouchInput_ = true;
 
     const MouseButton touchId = MakeTouchIDMask(eventData[P_TOUCHID].GetInt());
@@ -1994,17 +1956,24 @@ void UI::HandleTextInput(StringHash eventType, VariantMap& eventData)
         element->OnTextInput(eventData[P_TEXT].GetString());
 }
 
-
-void UI::HandleRenderUpdate(StringHash eventType, VariantMap& eventData)
+void UI::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
     // If have a cursor, and a drag is not going on, reset the cursor shape. Application logic that wants to apply
     // custom shapes can do it after this, but needs to do it each frame
     if (cursor_ && dragElementsCount_ == 0)
         cursor_->SetShape(CS_NORMAL);
-   
-	Update(eventData[RenderUpdate::P_TIMESTEP].GetFloat());
-    
-	RenderUpdate();
+}
+
+void UI::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
+{
+    using namespace PostUpdate;
+
+    Update(eventData[P_TIMESTEP].GetFloat());
+}
+
+void UI::HandleRenderUpdate(StringHash eventType, VariantMap& eventData)
+{
+    RenderUpdate();
 }
 
 void UI::HandleDropFile(StringHash eventType, VariantMap& eventData)
@@ -2015,8 +1984,8 @@ void UI::HandleDropFile(StringHash eventType, VariantMap& eventData)
     if (input->IsMouseVisible())
     {
         IntVector2 screenPos = input->GetMousePosition();
-        screenPos.x_ = int(screenPos.x_);
-        screenPos.y_ = int(screenPos.y_);
+        screenPos.x_ = int(screenPos.x_ / uiScale_);
+        screenPos.y_ = int(screenPos.y_ / uiScale_);
 
         UIElement* element = GetElementAt(screenPos);
 
@@ -2037,6 +2006,22 @@ void UI::HandleDropFile(StringHash eventType, VariantMap& eventData)
 
         SendEvent(E_UIDROPFILE, uiEventData);
     }
+}
+
+void UI::HandleFocused(StringHash eventType, VariantMap& eventData)
+{
+    using namespace Focused;
+    if (UIElement* focusedElement = static_cast<UIElement*>(eventData[P_ELEMENT].GetPtr()))
+    {
+        if (focusElement_ != focusedElement)
+            SetFocusElement(nullptr);
+    }
+}
+
+void UI::HandleEndAllViewsRender(StringHash eventType, VariantMap& eventData)
+{
+    if (texture_.NotNull())
+        Render();
 }
 
 HashMap<WeakPtr<UIElement>, UI::DragData*>::Iterator UI::DragElementErase(HashMap<WeakPtr<UIElement>, UI::DragData*>::Iterator i)
@@ -2102,8 +2087,8 @@ IntVector2 UI::SumTouchPositions(UI::DragData* dragData, const IntVector2& oldSe
                 if (!ts)
                     break;
                 IntVector2 pos = ts->position_;
-                dragData->sumPos.x_ += (int)(pos.x_);
-                dragData->sumPos.y_ += (int)(pos.y_);
+                dragData->sumPos.x_ += (int)(pos.x_ / uiScale_);
+                dragData->sumPos.y_ += (int)(pos.y_ / uiScale_);
             }
         }
         sendPos.x_ = dragData->sumPos.x_ / dragData->numDragButtons;
@@ -2114,10 +2099,21 @@ IntVector2 UI::SumTouchPositions(UI::DragData* dragData, const IntVector2& oldSe
 
 void UI::ResizeRootElement()
 {
-    IntVector2 effectiveSize = GetEffectiveRootElementSize(true);
-	URHO3D_LOGINFO("effectiveSize: " + String(effectiveSize));
+    IntVector2 effectiveSize = GetEffectiveRootElementSize();
     rootElement_->SetSize(effectiveSize);
     rootModalElement_->SetSize(effectiveSize);
+
+    if (texture_.NotNull())
+    {
+        unsigned format = texture_->GetFormat();
+        if (format == 0)
+            format = Graphics::GetRGBAFormat();
+        if (texture_->SetSize(effectiveSize.x_, effectiveSize.y_, format, TEXTURE_RENDERTARGET,
+                              texture_->GetMultiSample(), texture_->GetAutoResolve()))
+            texture_->GetRenderSurface()->SetUpdateMode(SURFACE_MANUALUPDATE);
+        else
+            URHO3D_LOGERROR("Resizing of UI render target texture failed.");
+    }
 }
 
 IntVector2 UI::GetEffectiveRootElementSize(bool applyScale) const
@@ -2129,38 +2125,22 @@ IntVector2 UI::GetEffectiveRootElementSize(bool applyScale) const
 
     if (applyScale)
     {
-		float pixelToDeviePixelRatio = graphics_->GetPixelToDevicePixelRatio();
-        size.x_ = RoundToInt((float)size.x_ * pixelToDeviePixelRatio);
-        size.y_ = RoundToInt((float)size.y_ * pixelToDeviePixelRatio);
+        size.x_ = RoundToInt((float)size.x_ / uiScale_);
+        size.y_ = RoundToInt((float)size.y_ / uiScale_);
     }
 
     return size;
 }
 
-void UI::SetElementRenderTexture(UIElement* element, Texture2D* texture)
+void UI::SetRenderTarget(Texture2D* texture)
 {
-    if (element == nullptr)
+    texture_ = texture;
+    if (texture == nullptr)
+        UnsubscribeFromEvent(E_ENDALLVIEWSRENDER);
+    else
     {
-        URHO3D_LOGERROR("UI::SetElementRenderTexture called with null element.");
-        return;
-    }
-
-    auto it = renderToTexture_.Find(element);
-    if (texture && it == renderToTexture_.End())
-    {
-        RenderToTextureData data;
-        data.texture_ = texture;
-        data.rootElement_ = element;
-        data.vertexBuffer_ = new VertexBuffer(context_);
-        data.debugVertexBuffer_ = new VertexBuffer(context_);
-        renderToTexture_[element] = data;
-    }
-    else if (it != renderToTexture_.End())
-    {
-        if (texture == nullptr)
-            renderToTexture_.Erase(it);
-        else
-            it->second_.texture_ = texture;
+        SubscribeToEvent(E_ENDALLVIEWSRENDER, URHO3D_HANDLER(UI, HandleEndAllViewsRender));
+        ResizeRootElement();
     }
 }
 

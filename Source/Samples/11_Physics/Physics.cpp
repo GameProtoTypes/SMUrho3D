@@ -146,6 +146,8 @@ void Physics::CreateScene()
     //SpawnMaterialsTest(Vector3(0,-25,100));
 
 
+    //SpawnCompoundedRectTest2(Vector3(100, 100, 0));
+
     //SpawnBallSocketTest(Vector3(50, 10, 0));
     //SpawnHingeActuatorTest(Vector3(52, 10, 0));
 
@@ -155,9 +157,9 @@ void Physics::CreateScene()
     //SpawnCompound(Vector3(-2, 1 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
-    //SpawnVehicle(Vector3(0, 10, 0));
-    for(int i = 0; i < 50; i++)
-    SpawnTrialBike(Vector3(0, 10, i*4));
+    SpawnVehicle(Vector3(0, 10, 0));
+    //for(int i = 0; i < 50; i++)
+    //SpawnTrialBike(Vector3(0, 10, i*4));
 
 
     //SpawnCollisionExceptionsTest(Vector3(0, 1, 0));
@@ -943,19 +945,159 @@ void Physics::SpawnCompoundedRectTest(Vector3 worldPosition)
 
 }
 
+void Physics::SpawnCompoundedRectTest2(Vector3 worldPosition)
+{
+    //make 2 1x1x1 physics rectangles. 1 with just one shape and 1 with 2 smaller compounds.
+
+   // Node* regularRect = SpawnSamplePhysicsBox(scene_, worldPosition + Vector3(-2, 0, 0), Vector3(1, 1, 2));
+
+    Node* compoundRootRect = scene_->CreateChild();
+    compoundRootRect->SetWorldPosition(worldPosition + Vector3(2, 0, 0));
+    compoundRootRect->CreateComponent<RigidBody>();
+    
+
+
+    for (int i = 0; i < 2; i++)
+    {
+
+
+        Node* subNode = compoundRootRect->CreateChild();
+        CollisionShape_Box* box = subNode->CreateComponent<CollisionShape_Box>();
+
+        //box->SetDensity(0.1f);
+
+        
+        subNode->SetPosition(Vector3(5.0f*i,0,0));
+
+        Text3D* text = subNode->CreateComponent<Text3D>();
+        text->SetText(String("Density: " + String(box->GetDensity()) + "\n\n\n\n\n\n\n\n\n"));
+        text->SetFont(GSS<ResourceCache>()->GetResource<Font>("Fonts/Anonymous Pro.ttf"));
+        text->SetFaceCameraMode(FC_LOOKAT_XYZ);
+        text->SetVerticalAlignment(VA_BOTTOM);
+        
+
+
+        Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
+        Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+
+
+
+        StaticModel* sphere1StMdl = subNode->CreateComponent<StaticModel>();
+        sphere1StMdl->SetCastShadows(true);
+        sphere1StMdl->SetModel(sphereMdl);
+        sphere1StMdl->SetMaterial(sphereMat);
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+    Node* first = nullptr;
+    Node* second = nullptr;
+
+    for (int i = 0; i < 2; i++)
+    {
+
+
+        Node* subNode = scene_->CreateChild();
+        CollisionShape_Box* box = subNode->CreateComponent<CollisionShape_Box>();
+        RigidBody* rigBody = subNode->CreateComponent<RigidBody>();
+        //box->SetDensity(0.1f);
+
+
+        if (i == 0)
+            first = subNode;
+        else
+            second = subNode;
+
+
+        subNode->SetPosition(Vector3(5.0f*i, 0, 0) + worldPosition + Vector3(0,0,5));
+
+        Text3D* text = subNode->CreateComponent<Text3D>();
+        text->SetText(String("Density: " + String(box->GetDensity()) + "\n\n\n\n\n\n\n\n\n"));
+        text->SetFont(GSS<ResourceCache>()->GetResource<Font>("Fonts/Anonymous Pro.ttf"));
+        text->SetFaceCameraMode(FC_LOOKAT_XYZ);
+        text->SetVerticalAlignment(VA_BOTTOM);
+
+
+
+        Model* sphereMdl = GSS<ResourceCache>()->GetResource<Model>("Models/Box.mdl");
+        Material* sphereMat = GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml");
+
+
+
+        StaticModel* sphere1StMdl = subNode->CreateComponent<StaticModel>();
+        sphere1StMdl->SetCastShadows(true);
+        sphere1StMdl->SetModel(sphereMdl);
+        sphere1StMdl->SetMaterial(sphereMat);
+
+
+    }
+
+
+    FullyFixedConstraint* fixedConstriant = first->CreateComponent<FullyFixedConstraint>();
+    fixedConstriant->SetOtherBody(second->GetComponent<RigidBody>());
+
+
+
+
+
+
+
+
+
+}
+
 void Physics::SpawnVehicle(Vector3 worldPosition)
 {
     Node* vehicleNode = SpawnSamplePhysicsBox(scene_, worldPosition, Vector3(5, 2, 2));
+    vehicleNode->SetName("VehicleRootNode");
     vehicleNode->SetWorldPosition(worldPosition);
-
+    vehicleNode->GetComponent<RigidBody>()->SetMassScale(50);
 
 
 
     PhysicsVehicle* vehicle = vehicleNode->CreateComponent<PhysicsVehicle>();
 
 
-    vehicle->AddTire(Matrix3x4(worldPosition + Vector3(-2,0,0), Quaternion::IDENTITY, 1.0f));
-    
+
+    for (int i = 0; i < 4; i++) {
+
+        Vector3 offset;
+        if (i == 0)
+            offset = Vector3(-2, -1, 2);
+        if(i == 1)
+            offset = Vector3(2, -1, 2);
+        if(i == 2)
+            offset = Vector3(-2, -1, -2);
+        if(i == 3)
+            offset = Vector3(2, -1, -2);
+
+        Node* tireNode = vehicleNode->CreateChild("TireNode");
+        tireNode->SetWorldTransform(worldPosition + offset, Quaternion(0, 90, 0));
+
+        VehicleTire* tire = tireNode->CreateComponent<VehicleTire>();
+
+
+        Node* rotatedNode = tireNode->CreateChild("Tire: " + String(i) + " Child");
+
+
+        rotatedNode->Rotate(Quaternion(90, 0, 90));
+        rotatedNode->SetScale(Vector3(1, 0.5, 1));
+        StaticModel* mdl = rotatedNode->CreateComponent<StaticModel>();
+        mdl->SetModel(GSS<ResourceCache>()->GetResource<Model>("Models/Cylinder.mdl"));
+        mdl->SetMaterial(GSS<ResourceCache>()->GetResource<Material>("Materials/Stone.xml"));
+
+    }
+
+
 
 
 }
@@ -1060,9 +1202,6 @@ void Physics::SpawnTrialBike(Vector3 worldPosition)
 
 
 
-
-
-
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -1081,40 +1220,7 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
 
     //move the scene node as a rebuild scene collision test.
     Node* movingNode = scene_->GetChild("MovingSceneNode");
-    //movingNode->Translate(Vector3(0, 0.1f, 0));
 
-
-
-
-
-
-
-
-    //debug compound
-    //PODVector<Node*> dest;
-    //scene_->GetNodesWithTag(dest, "scaleTestCube");
-
-    //for (Node* node : dest)
-    //{
-    //    URHO3D_LOGINFO(node->GetName());
-    //    if (node->HasComponent<RigidBody>())
-    //    {
-    //        RigidBody* rigBody = node->GetComponent<RigidBody>();
-    //        URHO3D_LOGINFO("    Rigid Body: " + String((unsigned)(void*)rigBody->GetNewtonBody()));
-    //        if (rigBody->GetNewtonBody())
-    //        {
-    //            URHO3D_LOGINFO("     Collision: " + String((unsigned)(void*)NewtonBodyGetCollision(rigBody->GetNewtonBody())));
-    //        }
-    //    }
-    //    PODVector<NewtonCollisionShape*> colShapes;
-    //    node->GetDerivedComponents(colShapes);
-
-    //    for (NewtonCollisionShape* col : colShapes)
-    //    {
-    //       // URHO3D_LOGINFO("    Internal: " + String((unsigned)(void*)NewtonBodyGetCollision(rigBody->GetNewtonBody())));
-
-    //    }
-    //}
 
     if (hingeActuatorTest) {
         float angle = Sin(timeAccum*10.0f)*45.0f;
@@ -1232,7 +1338,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
 {
     ResourceCache* cache = GSS<ResourceCache>();
 
-    if (1) {
+    if (0) {
         // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
         Node* floorNode = scene_->CreateChild("Floor");
         floorNode->SetPosition(worldPosition - Vector3(0, 0.5f, 0));
@@ -1247,7 +1353,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
     }
 
-    if (0) {
+    if (1) {
         //Create heightmap terrain with collision
         Node* terrainNode = scene_->CreateChild("Terrain");
         terrainNode->SetPosition(worldPosition);
@@ -1267,7 +1373,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
 
 
     //ramps
-    if (1) {
+    if (0) {
 
         for (int i = 0; i < 10; i++) {
       
@@ -1348,9 +1454,15 @@ void Physics::RemovePickNode(bool removeRigidBodyOnly /*= false*/)
     if (res.node_) {
         if (removeRigidBodyOnly)
         {
-            RigidBody* rigBody = res.node_->GetComponent<RigidBody>();
-            if (rigBody)
-                rigBody->Remove();
+            PODVector<RigidBody*> bodies;
+            GetRootRigidBodies(bodies, res.node_, false);
+            if(bodies.Size())
+                bodies.Back()->GetNode()->Remove();
+
+
+            //RigidBody* rigBody = res.node_->GetComponent<RigidBody>();
+            //if (rigBody)
+            //    rigBody->Remove();
         }
         else
         {

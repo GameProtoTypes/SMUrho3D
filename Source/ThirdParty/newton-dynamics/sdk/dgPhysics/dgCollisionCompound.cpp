@@ -1902,9 +1902,6 @@ dgInt32 dgCollisionCompound::CalculateContactsToCompound (dgBroadPhase::dgPair* 
 	return contactCount;
 }
 
-
-
-
 dgInt32 dgCollisionCompound::CalculateContactsToHeightField (dgBroadPhase::dgPair* const pair, dgCollisionParamProxy& proxy) const
 {
 	dgContactPoint* const contacts = proxy.m_contacts;
@@ -1927,8 +1924,9 @@ dgInt32 dgCollisionCompound::CalculateContactsToHeightField (dgBroadPhase::dgPai
 	proxy.m_body1 = terrainBody;
 
 	proxy.m_instance1 = terrainInstance;
-	const dgMatrix& myMatrix = compoundInstance->GetGlobalMatrix();
-	dgOOBBTestData data (terrainInstance->GetGlobalMatrix() * myMatrix.Inverse());
+	const dgMatrix& compoundMatrix = compoundInstance->GetGlobalMatrix();
+	const dgMatrix& hieghFieldMatrix = terrainInstance->GetGlobalMatrix();
+	dgOOBBTestData data (hieghFieldMatrix * compoundMatrix.Inverse());
 
 	dgInt32 stack = 1;
 	stackPool[0] = m_root;
@@ -1942,20 +1940,22 @@ dgInt32 dgCollisionCompound::CalculateContactsToHeightField (dgBroadPhase::dgPai
 
 	dgFloat32 timestep = pair->m_timestep;
 	dgFloat32 closestDist = dgFloat32 (1.0e10f);
+
+	const dgVector heighFieldScale(terrainInstance->GetScale());
+	const dgVector heighFieldInvScale(terrainInstance->GetInvScale());
 	while (stack) {
 		stack --;
 		const dgNodeBase* const me = stackPool[stack];
 
-		dgVector origin (data.m_matrix.UntransformVector(me->m_origin));
-		dgVector size (data.m_absMatrix.UnrotateVector(me->m_size));
+		dgVector origin (heighFieldInvScale * data.m_matrix.UntransformVector(me->m_origin));
+		dgVector size (heighFieldInvScale * data.m_absMatrix.UnrotateVector(me->m_size));
 		dgVector p0 (origin - size);
 		dgVector p1 (origin + size);
 		terrainCollision->GetLocalAABB (p0, p1, nodeProxi.m_p0, nodeProxi.m_p1);
-		//nodeProxi.m_size = (nodeProxi.m_p1 - nodeProxi.m_p0).Scale (dgFloat32 (0.5f));
-		//nodeProxi.m_origin = (nodeProxi.m_p1 + nodeProxi.m_p0).Scale (dgFloat32 (0.5f));
+		nodeProxi.m_p0 *= heighFieldScale;
+		nodeProxi.m_p1 *= heighFieldScale;
 		nodeProxi.m_size = dgVector::m_half * (nodeProxi.m_p1 - nodeProxi.m_p0);
 		nodeProxi.m_origin = dgVector::m_half * (nodeProxi.m_p1 + nodeProxi.m_p0);
-
 		if (me->BoxTest (data, &nodeProxi)) {
 			if (me->m_type == m_leaf) {
 				dgCollisionInstance* const subShape = me->GetShape();
@@ -1966,7 +1966,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToHeightField (dgBroadPhase::dgPai
 					}
 					if (processContacts) {
 						dgCollisionInstance childInstance (*subShape, subShape->GetChildShape());
-						childInstance.m_globalMatrix = childInstance.GetLocalMatrix() * myMatrix;
+						childInstance.m_globalMatrix = childInstance.GetLocalMatrix() * compoundMatrix;
 						proxy.m_instance0 = &childInstance; 
 
 						proxy.m_maxContacts = DG_MAX_CONTATCS - contactCount;

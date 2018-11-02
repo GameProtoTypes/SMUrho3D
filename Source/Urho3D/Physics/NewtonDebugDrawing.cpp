@@ -61,27 +61,28 @@ namespace Urho3D {
             options.color = Color::WHITE;
             break;
         }
-        dMatrix matrix;
-        NewtonCollision* col = NewtonBodyGetCollision(body);
-        CollisionShape* colShape = (CollisionShape*)NewtonCollisionGetUserData(col);
-        if (col)
+
+        RigidBody* rigBodyComp = (RigidBody*)NewtonBodyGetUserData(body);
+        if (!rigBodyComp)
+            return;
+
+        for (CollisionShape* colShapeComp : rigBodyComp->GetCollisionShapes())
         {
 
-            if (colShape)
-            {
-                if (!colShape->GetDrawNewtonDebugGeometry())
-                    return;
-            }
+            if (!colShapeComp->GetDrawNewtonDebugGeometry())
+                continue;
 
 
+            dMatrix matrix;
             NewtonBodyGetMatrix(body, &matrix[0][0]);
             Matrix3x4 mat = Matrix3x4(NewtonToUrhoMat4(matrix));
-            mat = physicsWorld->SceneToPhysics_Domain(mat);
+            mat = colShapeComp->GetWorldTransform();
+
+           
             matrix = UrhoToNewton(mat);
-            NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
+            NewtonCollisionForEachPolygonDo(colShapeComp->GetNewtonCollision(), &matrix[0][0], NewtonDebug_ShowGeometryCollisionCallback, (void*)&options);
+
         }
-
-
     }
 
 

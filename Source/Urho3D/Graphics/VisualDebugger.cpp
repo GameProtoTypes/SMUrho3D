@@ -323,7 +323,7 @@ VisualDebugger::VisualDebuggerNode::VisualDebuggerNode(VisualDebugger* visDebugg
 void VisualDebugger::VisualDebuggerNode::DrawDebugGeometry(DebugRenderer* debugRenderer)
 {
 	VisualDebuggerObject::DrawDebugGeometry(debugRenderer);
-	debugRenderer->AddNode(GetNode(), GetScale());
+	debugRenderer->AddFrame(node_->GetWorldTransform(), 1.0f, Color::RED, Color::GREEN, Color::BLUE, depthTest_);
 }
 
 VisualDebugger::VisualDebuggerOrb::VisualDebuggerOrb(VisualDebugger* visDebugger, Context* context_) : VisualDebuggerObject(visDebugger, context_)

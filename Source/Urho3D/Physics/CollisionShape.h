@@ -55,7 +55,13 @@ namespace Urho3D
         /// Set the softness
         void SetSoftness(float softness);
         float GetSoftness() const;
-        
+
+        /// Set the density scale.
+        void SetDensity(float density);
+        float GetDensity() const {
+            return density_;
+        }
+
 
         /// Set the positional offset of the shape in local space to the node.
         void SetPositionOffset(Vector3 position);
@@ -131,7 +137,8 @@ namespace Urho3D
         float elasticity_ = COLLISION_SHAPE_DEF_ELASTICITY;
         float softness_ = COLLISION_SHAPE_DEF_SOFTNESS;
 
-
+        ///volumetric density.
+        float density_ = 1.0f;
 
         ///is the underlying newtoncollision a compound.
         bool isCompound_ = false;

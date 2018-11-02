@@ -210,7 +210,10 @@ namespace Urho3D {
             if (sceneBody_)
                 sceneBody_->DrawDebugGeometry(debug, depthTest);
 
-            
+            //draw debug geometry on vehicles
+            for (PhysicsVehicle* vehicle : vehicleList) {
+                vehicle->DrawDebugGeometry(debug, depthTest);
+            }
         }
     }
 
@@ -286,9 +289,6 @@ namespace Urho3D {
 
     void PhysicsWorld::freeWorld()
     {
-
-
-
 
         //free any joints
         for (Constraint* constraint : constraintList)
@@ -380,6 +380,14 @@ namespace Urho3D {
                 RigidBody* rigBody0 = (RigidBody*)NewtonBodyGetUserData(body0);
                 RigidBody* rigBody1 = (RigidBody*)NewtonBodyGetUserData(body1);
 
+                if (!rigBody0 || !rigBody1)
+                {
+                    curJoint = NewtonBodyGetNextContactJoint(newtonBody, curJoint);
+                    continue;
+                }
+
+
+
                 unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
                 SharedPtr<RigidBodyContactEntry> contactEntry = nullptr;
 
@@ -387,18 +395,22 @@ namespace Urho3D {
 
                 contactEntry = GetCreateBodyContactEntry(key);
 
+
+                
                 contactEntry->body0 = rigBody0;
                 contactEntry->body1 = rigBody1;
+
+
                 contactEntry->wakeFlag_ = true;
                 contactEntry->inContact_ = NewtonJointIsActive(curJoint);
                 contactEntry->numContacts = NewtonContactJointGetContactCount(curJoint);
-                contactEntry->contactNormals.Resize(contactEntry->numContacts);
-                contactEntry->contactPositions.Resize(contactEntry->numContacts);
-                contactEntry->contactForces.Resize(contactEntry->numContacts);
-                contactEntry->contactTangent0.Resize(contactEntry->numContacts);
-                contactEntry->contactTangent1.Resize(contactEntry->numContacts);
-                contactEntry->shapes0.Resize(contactEntry->numContacts);
-                contactEntry->shapes1.Resize(contactEntry->numContacts);
+
+                if (contactEntry->numContacts > DEF_PHYSICS_MAX_CONTACT_POINTS)
+                {
+                    contactEntry->ResizeBuffers(contactEntry->numContacts);
+                }
+
+
 
 
                 int contactIdx = 0;
@@ -436,7 +448,7 @@ namespace Urho3D {
 
                     contactIdx++;
                 }
-
+                
                 curJoint = NewtonBodyGetNextContactJoint(newtonBody, curJoint);
             }
 
@@ -660,12 +672,11 @@ namespace Urho3D {
                         }
                     }
 
-                    //tell vehilces to update the nodes for the tires.
+                    //tell vehicles to update the nodes for the tires.
                     for (PhysicsVehicle* vehicle : vehicleList)
                     {
                         vehicle->applyTransforms();
                     }
-
                 }
             }
 
@@ -722,6 +733,17 @@ namespace Urho3D {
                 continue;
 
 
+            //cross check if any vehicles are using the body - if so mark the vehicle dirty to because it will need rebuilt.
+            for (PhysicsVehicle* vehicle : vehicleList)
+            {
+                if (vehicle->rigidBody_ == rigBody) {
+                    vehicle->MarkDirty();
+                }
+            }
+
+
+
+
             rigBody->reBuildBody();
             rigBody->MarkDirty(false);
         }
@@ -745,7 +767,7 @@ namespace Urho3D {
         for (PhysicsVehicle* vehicle : vehicleList)
         {
             if (vehicle->isDirty_) {
-                vehicle->updateBuild();
+                vehicle->reBuild();
             }
         }
     }
@@ -973,7 +995,7 @@ namespace Urho3D {
 
     RigidBodyContactEntry::RigidBodyContactEntry(Context* context) : Object(context)
     {
-
+        ResizeBuffers(DEF_PHYSICS_MAX_CONTACT_POINTS);
     }
 
     RigidBodyContactEntry::~RigidBodyContactEntry()
@@ -993,19 +1015,20 @@ namespace Urho3D {
         {
             for (int i = 0; i < numContacts; i++)
             {
-
-                //debug->AddCross(contactPositions[i]drawScale, 0.2f, Color::RED, false);
                 debug->AddLine(contactPositions[i], (contactPositions[i] + contactNormals[i]), Color::GREEN, depthTest);
-
             }
-
-
-
-
-
         }
+    }
 
-
+    void RigidBodyContactEntry::ResizeBuffers(int size)
+    {
+        contactForces.Resize(size);
+        contactPositions.Resize(size);
+        contactNormals.Resize(size);
+        contactTangent0.Resize(size);
+        contactTangent1.Resize(size);
+        shapes0.Resize(size);
+        shapes1.Resize(size);
     }
 
 }

@@ -10,30 +10,27 @@ namespace Urho3D
         return x * physicsScale_;
     }
 
-    //void PhysicsWorld::SceneToPhysics_Domain(float& x)
-    //{
-    //    x = x * physicsScale_;
-    //}
 
     Urho3D::Vector3 PhysicsWorld::SceneToPhysics_Domain(Vector3 v)
     {
         return v * physicsScale_;
     }
 
-    //void PhysicsWorld::SceneToPhysics_Domain(Vector3& v)
-    //{
-    //    v = v * physicsScale_;
-    //}
 
     Urho3D::Matrix3x4 PhysicsWorld::SceneToPhysics_Domain(Matrix3x4 sceneFrame)
     {
         return GetPhysicsWorldFrame().Inverse() * sceneFrame;
     }
 
-    //void PhysicsWorld::SceneToPhysics_Domain(Matrix3x4& frame)
-    //{
-    //    frame = GetPhysicsWorldFrame().Inverse() * frame;
-    //}
+
+    Vector3 PhysicsWorld::SceneToPhysics_Domain_Torque(Vector3 torque)
+    {
+        return torque * physicsScale_*physicsScale_*physicsScale_*physicsScale_*physicsScale_;
+    }
+    float PhysicsWorld::SceneToPhysics_Domain_Torque(float torque)
+    {
+        return torque * physicsScale_*physicsScale_*physicsScale_*physicsScale_*physicsScale_;
+    }
 
 
 
@@ -42,29 +39,26 @@ namespace Urho3D
         return x / physicsScale_;
     }
 
-    //void PhysicsWorld::PhysicsToScene_Domain(float& x)
-    //{
-    //    x = x / physicsScale_;
-    //}
 
     Urho3D::Vector3 PhysicsWorld::PhysicsToScene_Domain(Vector3 v)
     {
         return v / physicsScale_;
     }
 
-    //void PhysicsWorld::PhysicsToScene_Domain(Vector3& v)
-    //{
-    //    v = v / physicsScale_;
-    //}
 
     Urho3D::Matrix3x4 PhysicsWorld::PhysicsToScene_Domain(Matrix3x4 newtonFrame)
     {
         return GetPhysicsWorldFrame() * newtonFrame;
     }
 
-    //void PhysicsWorld::PhysicsToScene_Domain(Matrix3x4& frame)
-    //{
-    //    frame = GetPhysicsWorldFrame() * frame;
-    //}
 
+    Vector3 PhysicsWorld::PhysicsToScene_Domain_Torque(Vector3 torque)
+    {
+        return torque / (physicsScale_*physicsScale_*physicsScale_*physicsScale_*physicsScale_);
+
+    }
+    float PhysicsWorld::PhysicsToScene_Domain_Torque(float torque)
+    {
+        return torque / (physicsScale_*physicsScale_*physicsScale_*physicsScale_*physicsScale_);
+    }
 }

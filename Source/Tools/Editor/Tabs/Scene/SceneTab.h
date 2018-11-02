@@ -130,8 +130,12 @@ protected:
     void UpdateCameras();
     ///
     void CopySelection();
-    ///
-    void PasteToSelection();
+    /// Paste clipboard contents into a parent of first selected node.
+    void PasteNextToSelection();
+    /// Paste clipboard contents into a selected node.
+    void PasteIntoSelection();
+    /// Paste components into selection or nodes into parent if first selected node.
+    void PasteIntuitive();
     ///
     void ResizeMainViewport(const IntRect& rect);
     ///

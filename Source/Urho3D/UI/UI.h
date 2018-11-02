@@ -78,8 +78,8 @@ public:
     void Update(float timeStep);
     /// Update the UI for rendering. Called by HandleRenderUpdate().
     void RenderUpdate();
-    /// Render the UI. If renderUICommand is false (default), is assumed to be the default UI render to backbuffer called by Engine, and will be performed only once. Additional UI renders to a different rendertarget may be triggered from the renderpath.
-    void Render(bool renderUICommand = false);
+    /// Render the UI batches.
+    void Render();
     /// Debug draw a UI element.
     void DebugDraw(UIElement* element);
     /// Load a UI layout from an XML file. Optionally specify another XML file for element style. Return the root element.
@@ -110,7 +110,7 @@ public:
     void SetUseScreenKeyboard(bool enable);
     /// Set whether to use mutable (eraseable) glyphs to ensure a font face never expands to more than one texture. Default false.
     void SetUseMutableGlyphs(bool enable);
-    /// Set whether to force font autohinting instead of using FreeType's TTF bytecode interpreter. Default false
+    /// Set whether to force font autohinting instead of using FreeType's TTF bytecode interpreter.
     void SetForceAutoHint(bool enable);
     /// Set the hinting level used by FreeType fonts.
     void SetFontHintLevel(FontHintLevel level);
@@ -118,13 +118,26 @@ public:
     void SetFontSubpixelThreshold(float threshold);
     /// Set the oversampling (horizonal stretching) used to improve subpixel font rendering. Only affects fonts smaller than the subpixel limit.
     void SetFontOversampling(int oversampling);
-
+    /// Set %UI scale. 1.0 is default (pixel perfect). Resize the root element to match.
+    void SetScale(float scale);
+    /// Scale %UI to the specified width in pixels.
+    void SetWidth(float width);
+    /// Scale %UI to the specified height in pixels.
+    void SetHeight(float height);
+    /// Set custom size of the root element. This disables automatic resizing of the root element according to window size. Set custom size 0,0 to return to automatic resizing.
+    void SetCustomSize(const IntVector2& size);
+    /// Set custom size of the root element.
+    void SetCustomSize(int width, int height);
 
     /// Return root UI element.
     UIElement* GetRoot() const { return rootElement_; }
+    /// Sets new root UI element.
+    void SetRoot(UIElement* root) { rootElement_ = root; }
 
     /// Return root modal element.
     UIElement* GetRootModalElement() const { return rootModalElement_; }
+    /// Sets new root UI element for modals.
+    void SetRootModalElement(UIElement* rootModal) { rootModalElement_ = rootModal; }
 
     /// Return cursor.
     Cursor* GetCursor() const { return cursor_; }
@@ -202,11 +215,14 @@ public:
     /// Return whether a drag is in progress.
     bool IsDragging() const { return dragConfirmedCount_ > 0; };
 
+    /// Return current UI scale.
+    float GetScale() const { return uiScale_; }
+
     /// Return root element custom size. Returns 0,0 when custom size is not being used and automatic resizing according to window size is in use instead (default.)
     const IntVector2& GetCustomSize() const { return customSize_; }
 
-    /// Set texture to which element will be rendered.
-    void SetElementRenderTexture(UIElement* element, Texture2D* texture);
+    /// Set texture to which entire UI will be rendered.
+    void SetRenderTarget(Texture2D* texture);
 
     /// Data structure used to represent the drag data associated to a UIElement.
     struct DragData
@@ -226,27 +242,6 @@ public:
     };
 
 private:
-    /// Data structured used to hold data of UI elements that are rendered to texture.
-    struct RenderToTextureData
-    {
-        /// UIElement to be rendered into texture.
-        WeakPtr<UIElement> rootElement_;
-        /// Texture that UIElement will be rendered into.
-        SharedPtr<Texture2D> texture_;
-        /// UI rendering batches.
-        PODVector<UIBatch> batches_;
-        /// UI rendering vertex data.
-        PODVector<float> vertexData_;
-        /// UI vertex buffer.
-        SharedPtr<VertexBuffer> vertexBuffer_;
-        /// UI rendering batches for debug draw.
-        PODVector<UIBatch> debugDrawBatches_;
-        /// UI rendering vertex data for debug draw.
-        PODVector<float> debugVertexData_;
-        /// UI debug geometry vertex buffer.
-        SharedPtr<VertexBuffer> debugVertexBuffer_;
-    };
-
     /// Initialize when screen mode initially set.
     void Initialize();
     /// Update UI element logic recursively.
@@ -310,10 +305,18 @@ private:
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
     /// Handle text input event.
     void HandleTextInput(StringHash eventType, VariantMap& eventData);
+    /// Handle frame begin event.
+    void HandleUpdate(StringHash eventType, VariantMap& eventData);
+    /// Handle logic post-update event.
+    void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle render update event.
     void HandleRenderUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle a file being drag-dropped into the application window.
     void HandleDropFile(StringHash eventType, VariantMap& eventData);
+    /// Handle off-screen UI subsystems gaining focus.
+    void HandleFocused(StringHash eventType, VariantMap& eventData);
+    /// Handle rendering to a texture.
+    void HandleEndAllViewsRender(StringHash eventType, VariantMap& eventData);
     /// Remove drag data and return next iterator.
     HashMap<WeakPtr<UIElement>, DragData*>::Iterator DragElementErase(HashMap<WeakPtr<UIElement>, DragData*>::Iterator i);
     /// Handle clean up on a drag cancel.
@@ -411,10 +414,13 @@ private:
     HashMap<WeakPtr<UIElement>, MouseButtonFlags> touchDragElements_;
     /// Confirmed drag elements cache.
     PODVector<UIElement*> dragElementsConfirmed_;
+    /// Current scale of UI.
+    float uiScale_;
     /// Root element custom size. 0,0 for automatic resizing (default.)
     IntVector2 customSize_;
-    /// Elements that should be rendered to textures.
-    HashMap<UIElement*, RenderToTextureData> renderToTexture_;
+    /// Texture that UI will be rendered into.
+    WeakPtr<Texture2D> texture_;
+
 };
 
 /// Register UI library objects.

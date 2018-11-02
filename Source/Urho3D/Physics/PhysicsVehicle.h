@@ -3,6 +3,7 @@
 
 
 class dVehicleChassis;
+class NewtonBody;
 
 namespace Urho3D {
 
@@ -19,6 +20,7 @@ namespace Urho3D {
     public:
 
         friend class PhysicsWorld;
+        friend class VehicleTire;
 
         PhysicsVehicle(Context* context);
         virtual ~PhysicsVehicle();
@@ -30,7 +32,7 @@ namespace Urho3D {
 
         void MarkDirty(bool dirty = true) { isDirty_ = dirty; }
 
-        //add a tire with suspension.
+        /// add a tire with suspension. 
         VehicleTire* AddTire(Matrix3x4 worldTransform);
 
 
@@ -39,18 +41,14 @@ namespace Urho3D {
 
     protected:
 
-
-
         virtual void OnNodeSet(Node* node) override;
 
-        void updateBuild();
+        void reBuild();
 
         void applyTransforms();
 
 
         WeakPtr<RigidBody> rigidBody_;
-
-        //WeakPtr<CollisionShape> colShape_;
 
         WeakPtr<PhysicsWorld> physicsWorld_;
 
@@ -58,7 +56,7 @@ namespace Urho3D {
 
         dVehicleChassis* vehicleChassis_ = nullptr;
 
-        Vector<SharedPtr<VehicleTire>> tires_;
+        Vector<VehicleTire*> tires_;
 
     };
 

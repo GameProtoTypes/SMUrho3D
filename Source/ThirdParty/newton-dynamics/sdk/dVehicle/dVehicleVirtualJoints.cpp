@@ -14,7 +14,6 @@
 #include "dVehicleChassis.h"
 #include "dVehicleSingleBody.h"
 #include "dVehicleVirtualTire.h"
-#include "dVehicleTireInterface.h"
 #include "dVehicleVirtualJoints.h"
 
 dKinematicLoopJoint::dKinematicLoopJoint()
@@ -50,7 +49,7 @@ void dTireJoint::JacobianDerivative(dComplementaritySolver::dParamInfo* const co
 	AddLinearRowJacobian(constraintParams, tireMatrix.m_posit, tireMatrix.m_front, omega);
 
 	// longitudinal force
-	AddLinearRowJacobian(constraintParams, tireMatrix.m_posit, tireMatrix.m_right, omega);
+	AddLinearRowJacobian(constraintParams, tireMatrix.m_posit, tireMatrix.m_up, omega);
 
 	// angular constraints	
 	AddAngularRowJacobian(constraintParams, tireMatrix.m_up, omega, 0.0f);
@@ -65,6 +64,7 @@ void dTireJoint::JacobianDerivative(dComplementaritySolver::dParamInfo* const co
 	dFloat brakeTorque = m_tire->GetBrakeTorque();
 //brakeTorque = 1000;
 	if (brakeTorque > 1.0e-3f) {
+
 		int index = constraintParams->m_count;
 		AddAngularRowJacobian(constraintParams, tireMatrix.m_front, omega, 0.0f);
 
@@ -118,12 +118,12 @@ void dTireContact::ResetContact ()
 	}
 }
 
-void dTireContact::SetContact(const dVector& posit, const dVector& normal, const dVector& lateralDir, dFloat penetration, dFloat staticFriction, dFloat kineticFriction)
+void dTireContact::SetContact(const dVector& posit, const dVector& normal, const dVector& longitudinalDir, dFloat penetration, dFloat staticFriction, dFloat kineticFriction)
 {
 	m_point = posit;
 	m_normal = normal;
-	m_lateralDir = lateralDir;
-	m_longitudinalDir = m_normal.CrossProduct(m_lateralDir);
+	m_longitudinalDir = longitudinalDir;
+	m_lateralDir = m_longitudinalDir.CrossProduct(m_normal);
 
 	m_isActive = true;
 	m_isActiveFilter[0] = true;
@@ -215,14 +215,16 @@ void dTireContact::JacobianDerivative(dComplementaritySolver::dParamInfo* const 
 		if (!((omegaSpeed < 0.1f) && (linearSpeed < 0.1f))) {
 			if (relSpeed < 0.0f) {
 				dFloat speedDen = dMax (linearSpeed, dFloat(0.01f));
-				longitudialSlip = relSpeed / speedDen;
+				//longitudialSlip = dAbs (relSpeed / speedDen);
+				longitudialSlip = dClamp(dAbs (relSpeed / speedDen), dFloat(0.0f), dFloat(20.0f));
 				dFloat slipLimit = 2.0f * dMax (linearSpeed, dFloat(0.0f));
 				if ((omegaSpeed - slipLimit) > 0.0f) {
 					frictionCoef = m_kineticFriction;
 				}
 			} else {
 				dFloat speedDen = dMax(omegaSpeed, dFloat(0.01f));
-				longitudialSlip = relSpeed / speedDen;
+				//longitudialSlip = dAbs (relSpeed / speedDen);
+				longitudialSlip = dClamp (dAbs (relSpeed / speedDen), dFloat(0.0f), dFloat(4.0f));
 				dFloat slipLimit = 2.0f * dMax(omegaSpeed, dFloat(0.0f));
 				if ((linearSpeed - slipLimit) > 0.0f) {
 					frictionCoef = m_kineticFriction;
@@ -276,3 +278,41 @@ void dTireContact::JacobianDerivative(dComplementaritySolver::dParamInfo* const 
 	constraintParams->m_count = n;
 }
 
+void dTireContact::Debug(dCustomJoint::dDebugDisplay* const debugContext, dFloat scale) const
+{
+	dVehicleVirtualTire* const tire = (dVehicleVirtualTire*)GetOwner0()->GetAsTire();
+	dVehicleSingleBody* const chassis = (dVehicleSingleBody*)GetOwner0()->GetParent()->GetAsVehicle();
+
+	dAssert (tire);
+	dAssert (chassis);
+
+	const dMatrix& tireMatrix = tire->GetBody()->GetMatrix();
+	const dMatrix& chassisMatrix = chassis->GetBody()->GetMatrix();
+
+	dVector localPosit (chassisMatrix.UntransformVector(tireMatrix.m_posit));
+	dVector origin (m_point + m_normal.Scale (1.0f/32.0f)); 
+	if (localPosit.m_z > 0.0f) {
+		origin += m_lateralDir.Scale (1.0f/4.0f);
+	} else {
+		origin -= m_lateralDir.Scale (1.0f/4.0f);
+	}
+
+	scale *= 4.0f;
+
+	// show tire load
+	debugContext->SetColor(dVector(0.0f, 0.0f, 1.0f, 1.0f));
+	dVector p1(origin + m_normal.Scale (scale * m_jointFeebackForce[0]));
+	debugContext->DrawLine(origin, p1);
+
+	scale *= 1.0f;
+	// show tire longitudinal force
+	debugContext->SetColor(dVector(0.0f, 1.0f, 0.0f, 1.0f));
+	dVector p2(origin + m_longitudinalDir.Scale(scale * m_jointFeebackForce[1]));
+	debugContext->DrawLine(origin, p2);
+
+	// show tire lateral force
+	debugContext->SetColor(dVector(1.0f, 0.0f, 0.0f, 1.0f));
+	dVector p3(origin + m_lateralDir.Scale(scale * m_jointFeebackForce[2]));
+
+	debugContext->DrawLine(origin, p3);
+}

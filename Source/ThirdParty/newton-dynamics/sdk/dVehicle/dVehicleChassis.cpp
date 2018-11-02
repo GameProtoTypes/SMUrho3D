@@ -103,7 +103,7 @@ void dVehicleChassis::Init(NewtonBody* const body, const dMatrix& localFrame, Ne
 //	m_engine = NULL;
 //	m_brakesControl = NULL;
 //	m_engineControl = NULL;
-	m_steeringControl = NULL;
+//	m_steeringControl = NULL;
 //	m_handBrakesControl = NULL;
 }
 
@@ -155,6 +155,12 @@ dVehicleTireInterface* dVehicleChassis::AddTire (const dMatrix& locationInGlobal
 	return m_vehicle->AddTire(locationInGlobalSpace, tireInfo, m_localFrame);
 }
 
+dVehicleDifferentialInterface* dVehicleChassis::AddDifferential(dVehicleTireInterface* const leftTire, dVehicleTireInterface* const rightTire)
+{
+	return m_vehicle->AddDifferential(leftTire, rightTire, m_localFrame);
+}
+
+
 void dVehicleChassis::Debug(dCustomJoint::dDebugDisplay* const debugContext) const
 {
 	m_vehicle->Debug(debugContext);
@@ -199,8 +205,21 @@ int dVehicleChassis::OnAABBOverlap(const NewtonBody * const body, void* const co
 {
 	dCollectCollidingBodies* const bodyList = (dCollectCollidingBodies*)context;
 	if (body != bodyList->m_exclude) {
+		dFloat mass;
+		dFloat Ixx;
+		dFloat Iyy;
+		dFloat Izz;
+		NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
 		bodyList->m_array[bodyList->m_count] = (NewtonBody*)body;
+		if (mass == 0.0f) {
+			for (int i = bodyList->m_count; i > 0; i --) {
+				bodyList->m_array[i] = bodyList->m_array[i - 1];
+			}
+			bodyList->m_array[0] = (NewtonBody*)body;
+			bodyList->m_staticCount++;
+		}
 		bodyList->m_count++;
+		
 		dAssert(bodyList->m_count < sizeof(bodyList->m_array) / sizeof(bodyList->m_array[1]));
 	}
 	return 1;
@@ -490,8 +509,6 @@ void dVehicleChassis::CalculateSuspensionForces(dFloat timestep)
 					break;
 			}
 */
-//x = 0.1f;
-//v = 10.0f;
 			dComplementaritySolver::dBodyState* const tireBody = tire->GetBody();
 
 			const dFloat invMass = tireBody->GetInvMass();

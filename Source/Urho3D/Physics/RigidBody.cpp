@@ -38,6 +38,8 @@ namespace Urho3D {
     {
         if (nextAngularVelocityNeeded_ || nextImpulseNeeded_ || nextLinearVelocityNeeded_ || nextSleepStateNeeded_)
             URHO3D_LOGWARNING("Rigid Body Scheduled update did not get a chance to apply!  Consider saving the updates as attributes.");
+
+        
     }
 
     void RigidBody::RegisterObject(Context* context)
@@ -404,6 +406,7 @@ namespace Urho3D {
     {
         if (newtonBody_ != nullptr) {
             physicsWorld_->addToFreeQueue(newtonBody_);
+            NewtonBodySetUserData(newtonBody_, nullptr);
             newtonBody_ = nullptr;
         }
 
@@ -421,235 +424,271 @@ namespace Urho3D {
     void RigidBody::reBuildBody()
     {
         URHO3D_PROFILE_FUNCTION();
+
         freeBody();
+        dMatrix finalInertia;
+        dVector finalCenterOfMass;
+        dMatrix identity = dGetIdentityMatrix();
+        newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), nullptr, &identity[0][0]);
 
-        if (!IsEnabledEffective())
-            return;
-
-
-        //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
-        PODVector<CollisionShape*> childCollisionShapes;
-
-        GetAloneCollisionShapes(childCollisionShapes, node_, true);
-
-
-        PODVector<CollisionShape*> filteredList;
-
-        //update member list of shapes.
-        collisionShapes_ = childCollisionShapes;
-
-
-        //filter out shapes that are not enabled.
-        for (CollisionShape* col : childCollisionShapes)
+        for (int densityPass = 1; densityPass >= 0; densityPass--)
         {
-            if (col->IsEnabledEffective() && col->GetNewtonCollision())
-                filteredList += col;
-        }
-        childCollisionShapes = filteredList;
+
+            if (!IsEnabledEffective())
+                return;
 
 
-        if (childCollisionShapes.Size())
-        {  
-            NewtonCollision* resolvedCollision = nullptr;
+            //evaluate child nodes (+this node) and see if there are more collision shapes - if so create a compound collision.
+            PODVector<CollisionShape*> childCollisionShapes;
 
-            if (effectiveCollision_) {
-                NewtonDestroyCollision(effectiveCollision_);
-                effectiveCollision_ = nullptr;
-            }
+            GetAloneCollisionShapes(childCollisionShapes, node_, true);
 
 
-            ///determine early on if a compound is going to be needed.
-            bool compoundNeeded = false;
+            PODVector<CollisionShape*> filteredList;
+
+            //update member list of shapes.
+            collisionShapes_ = childCollisionShapes;
+
+
+            //filter out shapes that are not enabled.
             for (CollisionShape* col : childCollisionShapes)
             {
-                if (col->IsCompound())
-                    compoundNeeded = true;
+                if (col->IsEnabledEffective() && col->GetNewtonCollision())
+                    filteredList += col;
             }
-            compoundNeeded |= (childCollisionShapes.Size() > 1);
+            childCollisionShapes = filteredList;
 
 
-
-
-            if (compoundNeeded) {
-                if (sceneRootBodyMode_)
-                    effectiveCollision_ = NewtonCreateSceneCollision(physicsWorld_->GetNewtonWorld(), 0);//internally the same as a regular compond with some flags enabled..
-                else
-                    effectiveCollision_ = NewtonCreateCompoundCollision(physicsWorld_->GetNewtonWorld(), 0);
-
-                NewtonCompoundCollisionBeginAddRemove(effectiveCollision_);
-            }
-            float accumMass = 0.0f;
-
-            CollisionShape* firstCollisionShape = nullptr;
-            for (CollisionShape* colComp : childCollisionShapes)
+            if (childCollisionShapes.Size())
             {
-                if (firstCollisionShape == nullptr)
-                    firstCollisionShape = colComp;
 
-                //for each sub collision in the colComp
-                const NewtonCollision* rootCollision = colComp->GetNewtonCollision();
 
-                void* curSubNode = NewtonCompoundCollisionGetFirstNode((NewtonCollision*)rootCollision);
-                NewtonCollision* curSubCollision = nullptr;
-                if (curSubNode)
-                    curSubCollision = NewtonCompoundCollisionGetCollisionFromNode((NewtonCollision*)rootCollision, curSubNode);
-                else
-                    curSubCollision = (NewtonCollision*)rootCollision;
 
-                while (curSubCollision)
+                NewtonCollision* resolvedCollision = nullptr;
+
+                if (effectiveCollision_) {
+                    NewtonDestroyCollision(effectiveCollision_);
+                    effectiveCollision_ = nullptr;
+                }
+
+
+                ///determine early on if a compound is going to be needed.
+                bool compoundNeeded = false;
+                float smallestDensity = M_LARGE_VALUE;
+                for (CollisionShape* col : childCollisionShapes)
                 {
+                    if (col->IsCompound())
+                        compoundNeeded = true;
 
 
-                    NewtonCollision* curCollisionInstance = NewtonCollisionCreateInstance(curSubCollision);
-                    curSubNode = NewtonCompoundCollisionGetNextNode((NewtonCollision*)rootCollision, curSubNode);//advance
+                    if (col->GetDensity() < smallestDensity)
+                        smallestDensity = col->GetDensity();
+                }
+                compoundNeeded |= (childCollisionShapes.Size() > 1);
+
+
+
+
+                if (compoundNeeded) {
+                    if (sceneRootBodyMode_)
+                        effectiveCollision_ = NewtonCreateSceneCollision(physicsWorld_->GetNewtonWorld(), 0);//internally the same as a regular compond with some flags enabled..
+                    else
+                        effectiveCollision_ = NewtonCreateCompoundCollision(physicsWorld_->GetNewtonWorld(), 0);
+
+                    NewtonCompoundCollisionBeginAddRemove(effectiveCollision_);
+                }
+                float accumMass = 0.0f;
+
+                CollisionShape* firstCollisionShape = nullptr;
+                for (CollisionShape* colComp : childCollisionShapes)
+                {
+                    if (firstCollisionShape == nullptr)
+                        firstCollisionShape = colComp;
+
+                    //for each sub collision in the colComp
+                    const NewtonCollision* rootCollision = colComp->GetNewtonCollision();
+
+                    void* curSubNode = NewtonCompoundCollisionGetFirstNode((NewtonCollision*)rootCollision);
+                    NewtonCollision* curSubCollision = nullptr;
                     if (curSubNode)
                         curSubCollision = NewtonCompoundCollisionGetCollisionFromNode((NewtonCollision*)rootCollision, curSubNode);
                     else
-                        curSubCollision = nullptr;
+                        curSubCollision = (NewtonCollision*)rootCollision;
 
-
-
-
-
-                    Quaternion colPhysworldRot = colComp->GetWorldRotation();
-                    Quaternion thisNodeWorldRot = node_->GetWorldRotation();
-                    Quaternion colRotLocalToThisNode = thisNodeWorldRot.Inverse() * colPhysworldRot;
-
-                    //compute the relative vector from root node to collision
-                    Vector3 relativePos = (node_->GetRotation().Inverse()*(colComp->GetWorldPosition() - node_->GetWorldPosition()));
-
-                    //form final local matrix with physics world scaling applied.
-                    Matrix3x4 nodeWorldNoScale(node_->GetWorldTransform().Translation(), node_->GetWorldTransform().Rotation(), 1.0f);
-                    Matrix3x4 colWorldNoScale(colComp->GetWorldTransform().Translation(), colComp->GetWorldTransform().Rotation(), 1.0f);
-
-
-                    Matrix3x4 finalLocal = nodeWorldNoScale.Inverse() * colWorldNoScale;
-
-                    dMatrix localTransform = UrhoToNewton(Matrix3x4(physicsWorld_->SceneToPhysics_Domain(finalLocal.Translation()), colRotLocalToThisNode, 1.0f));
-
-
-
-
-
-
-                    //now determine scale to apply around the center of each sub shape.
-                    Vector3 scale = Vector3::ONE;
-                    if (colComp->GetInheritNodeScale())
+                    while (curSubCollision)
                     {
-                        scale = colComp->GetRotationOffset().Inverse() * colComp->GetNode()->GetWorldScale();
-                    }
-                    Vector3 shapeScale = colComp->GetScaleFactor();
-
-                    scale = scale * shapeScale;
-                    scale = physicsWorld_->SceneToPhysics_Domain(scale);
-
-                    dVector existingLocalScale;
-                    NewtonCollisionGetScale(curCollisionInstance, &existingLocalScale.m_x, &existingLocalScale.m_y, &existingLocalScale.m_z);
-                    NewtonCollisionSetScale(curCollisionInstance, scale.x_*existingLocalScale.m_x, scale.y_*existingLocalScale.m_y, scale.z_*existingLocalScale.m_z);
-
-
-
-
-
-
-
-                    //take into account existing local matrix of the newton collision shape.
-                    dMatrix existingLocalMatrix;
-                    NewtonCollisionGetMatrix(curCollisionInstance, &existingLocalMatrix[0][0]);
-
-                    Vector3 subLocalPos = NewtonToUrhoVec3(existingLocalMatrix.m_posit);
-                    subLocalPos = (subLocalPos * Vector3(scale.x_*existingLocalScale.m_x, scale.y_*existingLocalScale.m_y, scale.z_*existingLocalScale.m_z));
-                    subLocalPos = colComp->GetRotationOffset() * subLocalPos;
-                    existingLocalMatrix.m_posit = UrhoToNewton(subLocalPos);
-
-
-                    localTransform = existingLocalMatrix * localTransform ;
-                    NewtonCollisionSetMatrix(curCollisionInstance, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
-
-
-
-
-
-
-                    //calculate volume
-                    float vol = NewtonConvexCollisionCalculateVolume(curCollisionInstance);
-                    accumMass += vol * 1.0f;//#todo 1.0f should be mass density of material attached to collision shape.
-
-
-                    //end adding current shape.
-                    if (compoundNeeded) {
-
-                        if (sceneRootBodyMode_)
-                            NewtonSceneCollisionAddSubCollision(effectiveCollision_, curCollisionInstance);
+                        NewtonCollision* curCollisionInstance = NewtonCollisionCreateInstance(curSubCollision);
+                        curSubNode = NewtonCompoundCollisionGetNextNode((NewtonCollision*)rootCollision, curSubNode);//advance
+                        if (curSubNode)
+                            curSubCollision = NewtonCompoundCollisionGetCollisionFromNode((NewtonCollision*)rootCollision, curSubNode);
                         else
-                            NewtonCompoundCollisionAddSubCollision(effectiveCollision_, curCollisionInstance);
+                            curSubCollision = nullptr;
 
-                        NewtonDestroyCollision(curCollisionInstance);//free the temp collision that was used to build the compound.
+
+                        Quaternion colPhysworldRot = colComp->GetWorldRotation();
+                        Quaternion thisNodeWorldRot = node_->GetWorldRotation();
+                        Quaternion colRotLocalToThisNode = thisNodeWorldRot.Inverse() * colPhysworldRot;
+
+                        //compute the relative vector from root node to collision
+                        Vector3 relativePos = (node_->GetRotation().Inverse()*(colComp->GetWorldPosition() - node_->GetWorldPosition()));
+
+                        //form final local matrix with physics world scaling applied.
+                        Matrix3x4 nodeWorldNoScale(node_->GetWorldTransform().Translation(), node_->GetWorldTransform().Rotation(), 1.0f);
+                        Matrix3x4 colWorldNoScale(colComp->GetWorldTransform().Translation(), colComp->GetWorldTransform().Rotation(), 1.0f);
+
+
+                        Matrix3x4 finalLocal = nodeWorldNoScale.Inverse() * colWorldNoScale;
+
+                        dMatrix localTransform = UrhoToNewton(Matrix3x4(physicsWorld_->SceneToPhysics_Domain(finalLocal.Translation()), colRotLocalToThisNode, 1.0f));
+
+
+                        //now determine scale to apply around the center of each sub shape.
+                        Vector3 scale = Vector3::ONE;
+                        if (colComp->GetInheritNodeScale())
+                        {
+                            scale = colComp->GetRotationOffset().Inverse() * colComp->GetNode()->GetWorldScale();
+                        }
+                        Vector3 shapeScale = colComp->GetScaleFactor();
+
+                        scale = scale * shapeScale;
+                        scale = physicsWorld_->SceneToPhysics_Domain(scale);
+
+                        dVector existingLocalScale;
+                        NewtonCollisionGetScale(curCollisionInstance, &existingLocalScale.m_x, &existingLocalScale.m_y, &existingLocalScale.m_z);
+
+
+                        float densityScaleFactor = 1.0f;
+                        //if we are in the first pass - scale the sub collision by the density.  so when we calculate the intertia matrix it will reflect the density of subshapes.
+                        //on the 2nd (final pass - scale as normal).
+                        if (densityPass)
+                            densityScaleFactor = colComp->GetDensity()/smallestDensity;
+
+                        NewtonCollisionSetScale(curCollisionInstance, densityScaleFactor*scale.x_*existingLocalScale.m_x, densityScaleFactor*scale.y_*existingLocalScale.m_y, densityScaleFactor*scale.z_*existingLocalScale.m_z);
+
+
+
+
+                        //take into account existing local matrix of the newton collision shape.
+                        dMatrix existingLocalMatrix;
+                        NewtonCollisionGetMatrix(curCollisionInstance, &existingLocalMatrix[0][0]);
+
+                        Vector3 subLocalPos = NewtonToUrhoVec3(existingLocalMatrix.m_posit);
+                        subLocalPos = (subLocalPos * Vector3(scale.x_*existingLocalScale.m_x, scale.y_*existingLocalScale.m_y, scale.z_*existingLocalScale.m_z));
+                        subLocalPos = colComp->GetRotationOffset() * subLocalPos;
+                        existingLocalMatrix.m_posit = UrhoToNewton(subLocalPos);
+
+
+                        localTransform = existingLocalMatrix * localTransform;
+                        NewtonCollisionSetMatrix(curCollisionInstance, &localTransform[0][0]);//set the collision matrix with translation and rotation data only.
+
+
+                        //calculate volume
+                        float vol = NewtonConvexCollisionCalculateVolume(curCollisionInstance);
+                        accumMass += vol * colComp->GetDensity();
+
+
+                        //end adding current shape.
+                        if (compoundNeeded) {
+
+                            if (sceneRootBodyMode_)
+                                NewtonSceneCollisionAddSubCollision(effectiveCollision_, curCollisionInstance);
+                            else
+                                NewtonCompoundCollisionAddSubCollision(effectiveCollision_, curCollisionInstance);
+
+                            NewtonDestroyCollision(curCollisionInstance);//free the temp collision that was used to build the compound.
+                        }
+                        else
+                            resolvedCollision = curCollisionInstance;
+
+
                     }
-                    else
-                        resolvedCollision = curCollisionInstance;
-
-
                 }
+                if (compoundNeeded) {
+
+                    NewtonCompoundCollisionEndAddRemove(effectiveCollision_);
+
+                    resolvedCollision = effectiveCollision_;
+                }
+
+                effectiveCollision_ = resolvedCollision;
+
+
+                //create the body at node transform (with physics world scale applied)
+                Matrix3x4 worldTransform;
+
+                worldTransform.SetTranslation(physicsWorld_->SceneToPhysics_Domain(node_->GetWorldPosition()));
+                worldTransform.SetRotation((node_->GetWorldRotation()).RotationMatrix());
+
+                
+                //NewtonBody* body = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &UrhoToNewton(worldTransform)[0][0]);
+
+                NewtonBodySetCollision(newtonBody_, resolvedCollision);
+                NewtonBodySetMatrix(newtonBody_, &UrhoToNewton(worldTransform)[0][0]);
+
+
+                targetNodeRotation_ = node_->GetWorldRotation();
+                targetNodePos_ = node_->GetWorldPosition();
+                SnapInterpolation();
+
+
+
+
+                mass_ = accumMass * massScale_;
+                if (sceneRootBodyMode_)
+                    mass_ = 0;
+
+                if (densityPass) {
+                    NewtonBodySetMassProperties(newtonBody_, mass_, resolvedCollision);
+
+                    //save the inertia matrix for 2nd pass.
+                
+                    NewtonBodyGetInertiaMatrix(newtonBody_, &finalInertia[0][0]);
+                    
+                    NewtonBodyGetCentreOfMass(newtonBody_, &finalCenterOfMass[0]);
+                }
+
+
+                
+
+               
+
             }
-
-            if (compoundNeeded) {
-
-                NewtonCompoundCollisionEndAddRemove(effectiveCollision_);
-
-                resolvedCollision = effectiveCollision_;
-            }
-
-            effectiveCollision_ = resolvedCollision;
-            
-
-            //create the body at node transform (with physics world scale applied)
-            Matrix3x4 worldTransform;
-
-            worldTransform.SetTranslation(physicsWorld_->SceneToPhysics_Domain(node_->GetWorldPosition()));
-            worldTransform.SetRotation((node_->GetWorldRotation()).RotationMatrix());
-
-            newtonBody_ = NewtonCreateDynamicBody(physicsWorld_->GetNewtonWorld(), resolvedCollision, &UrhoToNewton(worldTransform)[0][0]);
-
-            targetNodeRotation_ = node_->GetWorldRotation();
-            targetNodePos_ = node_->GetWorldPosition();
-            SnapInterpolation();
-
-
-            dVector inertia;
-            dVector centerOfMass;
-            NewtonConvexCollisionCalculateInertialMatrix(resolvedCollision, &inertia[0], &centerOfMass[0]);//#todo check in upstream newton - this inertia calculation still needs fixed.
-
-
-            mass_ = accumMass * massScale_;
-            if (sceneRootBodyMode_)
-                mass_ = 0;
-
-            
-            NewtonBodySetMassMatrix(newtonBody_, mass_, inertia[0], inertia[1], inertia[2]);
-            NewtonBodySetCentreOfMass(newtonBody_, &centerOfMass[0]);
-
-            NewtonBodySetMaterialGroupID(newtonBody_, 0);
-
-            NewtonBodySetUserData(newtonBody_, (void*)this);
-
-            NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
-
-            //ensure newton damping is 0 because we apply our own as a force.
-            NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
-            NewtonBodySetAngularDamping(newtonBody_, &UrhoToNewton(angularDampeningInternal_)[0]);
-
-            //set auto sleep mode.
-            NewtonBodySetAutoSleep(newtonBody_, autoSleep_);
-
-
-            //assign callbacks
-            NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
-            NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback); 
-            NewtonBodySetDestructorCallback(newtonBody_, Newton_DestroyBodyCallback);
         }
-    }
 
+
+        Matrix4 inertiaMatrixUrho = NewtonToUrhoMat4(finalInertia);
+        URHO3D_LOGINFO("Inertia Matrix:");
+        URHO3D_LOGINFO(String(inertiaMatrixUrho));
+
+
+        //test if the inertia matrix is symetric.
+        URHO3D_LOGINFO("Final Mass: " + String(mass_));
+
+
+
+        NewtonBodySetFullMassMatrix(newtonBody_, mass_, &finalInertia[0][0]);
+        NewtonBodySetCentreOfMass(newtonBody_, &finalCenterOfMass[0]);
+
+
+        NewtonBodySetMaterialGroupID(newtonBody_, 0);
+
+        NewtonBodySetUserData(newtonBody_, (void*)this);
+
+        NewtonBodySetContinuousCollisionMode(newtonBody_, continuousCollision_);
+
+        //ensure newton damping is 0 because we apply our own as a force.
+        NewtonBodySetLinearDamping(newtonBody_, linearDampeningInternal_);
+        NewtonBodySetAngularDamping(newtonBody_, &UrhoToNewton(angularDampeningInternal_)[0]);
+
+        //set auto sleep mode.
+        NewtonBodySetAutoSleep(newtonBody_, autoSleep_);
+
+
+        //assign callbacks
+        NewtonBodySetForceAndTorqueCallback(newtonBody_, Newton_ApplyForceAndTorqueCallback);
+        NewtonBodySetTransformCallback(newtonBody_, Newton_SetTransformCallback);
+        NewtonBodySetDestructorCallback(newtonBody_, Newton_DestroyBodyCallback);
+    }
 
 
 
@@ -864,14 +903,15 @@ namespace Urho3D {
 
     void RigidBody::AddWorldForce(const Vector3& force, const Vector3& localPosition)
     {
-        netForce_ += physicsWorld_->SceneToPhysics_Domain(force);
-        netTorque_ += localPosition.CrossProduct(node_->WorldToLocal(physicsWorld_->SceneToPhysics_Domain(force)));
+        //float physScale = physicsWorld_->GetPhysicsScale();
+        netForce_ += force ; //forceScaled = force*(physScale^3)
         bakeForceAndTorque();
     }
 
     void RigidBody::AddWorldTorque(const Vector3& torque)
     {
-        netTorque_ += physicsWorld_->SceneToPhysics_Domain(torque);
+        //float physScale = physicsWorld_->GetPhysicsScale();
+        netTorque_ += torque; //torqueScaled = torque*(physScale^5).
         bakeForceAndTorque();
     }
 

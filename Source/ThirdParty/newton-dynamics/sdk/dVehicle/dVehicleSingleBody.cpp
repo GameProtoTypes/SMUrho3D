@@ -45,10 +45,16 @@ dVehicleTireInterface* dVehicleSingleBody::AddTire (const dMatrix& locationInGlo
 	return new dVehicleVirtualTire(this, locationInGlobalSpace, tireInfo, localFrame);
 }
 
+dVehicleDifferentialInterface* dVehicleSingleBody::AddDifferential(dVehicleTireInterface* const leftTire, dVehicleTireInterface* const rightTire, const dMatrix& localFrame)
+{
+	return NULL;
+}
+
 dMatrix dVehicleSingleBody::GetMatrix () const
 {
 	return m_body.GetMatrix();
 }
+
 
 void dVehicleSingleBody::CalculateNodeAABB(const dMatrix& matrix, dVector& minP, dVector& maxP) const
 {
@@ -65,16 +71,6 @@ void dVehicleSingleBody::RigidBodyToStates()
 	// get data from engine rigid body and copied to the vehicle chassis body
 	NewtonBodyGetMatrix(m_newtonBody, &matrix[0][0]);
 	chassisBody->SetMatrix(matrix);
-
-static int xxx;
-xxx++;
-if (xxx == 1500)
-{
-//	NewtonBodyGetVelocity(m_newtonBody, &vector[0]);
-//	vector.m_x += 2.0f;
-//	NewtonBodySetVelocity(m_newtonBody, &vector[0]);
-}
-
 
 	NewtonBodyGetVelocity(m_newtonBody, &vector[0]);
 	chassisBody->SetVeloc(vector);
@@ -127,8 +123,37 @@ void dVehicleSingleBody::ApplyExternalForce()
 
 	NewtonBodyGetTorque(m_newtonBody, &torque[0]);
 	chassisBody->SetTorque(torque);
-	
-	m_gravity = force.Scale (chassisBody->GetInvMass());
+
+	const dVector& updir = chassisBody->GetMatrix().m_up;
+	m_gravity = updir.Scale (chassisBody->GetInvMass() * updir.DotProduct3(force));
 	dVehicleInterface::ApplyExternalForce();
 }
 
+void dVehicleSingleBody::Debug(dCustomJoint::dDebugDisplay* const debugContext) const
+{
+	dVehicleInterface::Debug(debugContext);
+
+	const dMatrix& matrix = m_body.GetMatrix();
+
+	// draw velocity
+	dVector veloc (m_body.GetVelocity());
+	veloc = veloc - matrix.m_up.Scale (veloc.DotProduct3(matrix.m_up));
+	dFloat mag = dSqrt (veloc.DotProduct3(veloc));
+	veloc = veloc.Scale (dLog (mag) / (mag + 0.1f));
+
+	debugContext->SetColor(dVector(1.0f, 1.0f, 0.0f, 1.0f));
+	dVector p0 (matrix.m_posit + matrix.m_up.Scale (1.0f));
+	dVector p1 (p0 + veloc);
+	debugContext->DrawLine(p0, p1);
+	
+	debugContext->SetColor(dVector(0.5f, 0.5f, 0.5f, 1.0f));
+	dVector p2(p0 + matrix.m_front.Scale(2.0f));
+	debugContext->DrawLine(p0, p2);
+
+
+	//draw vehicle weight
+	debugContext->SetColor(dVector(0.0f, 0.0f, 0.0f, 1.0f));
+	// for now weight is normalize to 1.0
+	dVector p3(p0 + matrix.m_up.Scale(2.0f));
+	debugContext->DrawLine(p0, p3);
+}

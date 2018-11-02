@@ -2333,10 +2333,4 @@ void UIElement::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
     UpdateAttributeAnimations(eventData[P_TIMESTEP].GetFloat());
 }
 
-void UIElement::SetRenderTexture(Texture2D* texture)
-{
-    if (auto* ui = GetSubsystem<UI>())
-        ui->SetElementRenderTexture(this, texture);
-}
-
 }

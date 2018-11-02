@@ -8,7 +8,7 @@
 # including commercial applications, and to alter it and redistribute it
 # freely.
 
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.10.0)
 
 set (projectName "dAnimation")
 #message (${projectName})
@@ -23,6 +23,12 @@ if (UNIX)
 	else(NEWTON_BUILD_SHARED_LIBS)
 	   add_library(${projectName} STATIC ${CPP_SOURCE})
 	endif(NEWTON_BUILD_SHARED_LIBS)
+
+        target_include_directories(
+                            ${projectName} PUBLIC
+                            # Headers used from source/build location:
+                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+        )
 endif(UNIX)
 
 if (MSVC)
