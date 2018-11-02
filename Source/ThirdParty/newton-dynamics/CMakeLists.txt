@@ -32,6 +32,9 @@ option("NEWTON_WITH_AVX2_PLUGIN" "adding avx parallel solver" OFF)
 option("NEWTON_WITH_DX12_PLUGIN" "adding direct compute 12 parallel solver" OFF)
 option("NEWTON_BUILD_SHARED_LIBS" "Build shared library" OFF)
 
+message("NEWTON_STATIC_RUNTIME_LIBRARIES: " ${NEWTON_STATIC_RUNTIME_LIBRARIES} )
+message("NEWTON_WITH_AVX_PLUGIN: " ${NEWTON_WITH_AVX_PLUGIN} )
+message("NEWTON_WITH_SSE_PLUGIN: " ${NEWTON_WITH_SSE_PLUGIN} )
 
 
 
@@ -83,16 +86,6 @@ endif(UNIX)
 if (UNIX)
     include("GNUInstallDirs")
 
-    # uninstall target
-    if(NOT TARGET uninstall)
-        configure_file(
-            "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-            "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-            IMMEDIATE @ONLY)
-
-        add_custom_target(uninstall
-            COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-    endif()
 
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")

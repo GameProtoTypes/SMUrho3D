@@ -5,7 +5,7 @@
 
 
 class dVehicleTireInterface;
-class dVehicleTireInterface::dTireInfo;
+//class dVehicleTireInterface::dTireInfo;
 
 namespace Urho3D {
     class Node;

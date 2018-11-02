@@ -9,6 +9,7 @@ class NewtonBody;
 namespace Urho3D
 {
 
+    class Constraint;
     class Component;
     class PhysicsWorld;
     class CollisionShape;
@@ -53,7 +54,7 @@ namespace Urho3D
         void SetMassScale(float massDensityScale);
 
 
-        
+
         PhysicsWorld* GetPhysicsWorld() const { return physicsWorld_; }
 
         /// returns the body transform in scene space or physics world space (they will be the same if PhysicsScale is 1.0f)
@@ -66,7 +67,7 @@ namespace Urho3D
         ///Get the mass scale of the rigid body
         float GetMassScale() const { return massScale_; }
 
-        /// get the mass of the rigid body 
+        /// get the mass of the rigid body
         float GetEffectiveMass() { return mass_; }
 
         /// set the collision layer
@@ -251,7 +252,7 @@ namespace Urho3D
 
         bool GetInternalTransformDirty();
 
-        
+
 
         virtual void OnSetEnabled() override;
 
@@ -346,7 +347,7 @@ namespace Urho3D
         void HandleNodeTransformChange(StringHash event, VariantMap& eventData);
 
         bool respondToNodeTransformChange_ = true;
-       
+
 
         //variables for deferered singular actions on the newtonbody in case it has not been created yet.
         void applyDefferedActions();

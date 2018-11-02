@@ -29,17 +29,18 @@ if (UNIX)
                       # Headers used from source/build location:
                       "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
         )
+
 endif(UNIX)
 
 if (MSVC)
-	   add_library(${projectName} STATIC ${CPP_SOURCE})
+        add_library(${projectName} STATIC ${CPP_SOURCE})
        set_target_properties(${projectName} PROPERTIES COMPILE_FLAGS "/YudgStdAfx.h")
        set_source_files_properties(dgTypes.cpp PROPERTIES COMPILE_FLAGS "/YcdgStdAfx.h")
 endif(MSVC)
 
-target_include_directories(${projectName} PUBLIC 
+target_include_directories(${projectName} PUBLIC
 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-$<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk> 
+$<INSTALL_INTERFACE:${DEST_THIRDPARTY_HEADERS_DIR}/sdk>
 )
 
 

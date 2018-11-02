@@ -117,7 +117,7 @@ void Water::CreateScene()
     // Create heightmap terrain
     Node* terrainNode = scene_->CreateChild("Terrain");
     terrainNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    auto* terrain = terrainNode->CreateComponent<Terrain>();
+    auto* terrain = terrainNode->CreateComponent<HeightmapTerrain>();
     terrain->SetPatchSize(64);
     terrain->SetSpacing(Vector3(2.0f, 0.5f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
     terrain->SetSmoothing(true);

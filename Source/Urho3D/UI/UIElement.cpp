@@ -1686,7 +1686,7 @@ XMLFile* UIElement::GetDefaultStyle(bool recursiveUp, bool rootFallback) const
                 return GetSubsystem<UI>()->GetRoot()->GetDefaultStyle(false);
             }
             else
-                return false;
+                return nullptr;
         }
     }
 }
