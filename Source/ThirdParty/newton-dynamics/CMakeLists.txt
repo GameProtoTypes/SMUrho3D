@@ -32,6 +32,9 @@ option("NEWTON_WITH_AVX2_PLUGIN" "adding avx parallel solver" OFF)
 option("NEWTON_WITH_DX12_PLUGIN" "adding direct compute 12 parallel solver" OFF)
 option("NEWTON_BUILD_SHARED_LIBS" "Build shared library" OFF)
 
+message("NEWTON_STATIC_RUNTIME_LIBRARIES: " ${NEWTON_STATIC_RUNTIME_LIBRARIES} )
+message("NEWTON_WITH_AVX_PLUGIN: " ${NEWTON_WITH_AVX_PLUGIN} )
+message("NEWTON_WITH_SSE_PLUGIN: " ${NEWTON_WITH_SSE_PLUGIN} )
 
 
 
