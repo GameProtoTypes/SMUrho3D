@@ -131,6 +131,9 @@ namespace Urho3D {
 		return str;
 	}
 
+
+
+    #ifdef URHO3D_TOOLS
     String URHO3D_API GetNativeDialogSave(String startDirectory, const String& fileFilter)
     {
         startDirectory = GetNativePath(startDirectory);
@@ -165,5 +168,5 @@ namespace Urho3D {
         NFD_OpenDialog(fileFilter.CString(), startp, &outp);
         return GetInternalPath(String((char*)outp));
     }
-
+    #endif
 }
