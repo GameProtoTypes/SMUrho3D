@@ -780,6 +780,7 @@ void Engine::Render()
 
     GetSubsystem<Renderer>()->Render();
     GetSubsystem<UI>()->Render();
+    graphics->ResetRenderTargets();
     graphics->EndFrame();
 
 
