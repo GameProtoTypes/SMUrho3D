@@ -465,42 +465,20 @@ void UI::Render()
 {
     URHO3D_PROFILE("RenderUI");
 
-    // Perform the default backbuffer render only if not rendered yet, or additional renders through RenderUI command
-    if (!uiRendered_)
-    {
+    // If the OS cursor is visible, apply its shape now if changed
+    bool osCursorVisible = GetSubsystem<Input>()->IsMouseVisible();
+    if (cursor_ && osCursorVisible)
+        cursor_->ApplyOSCursorShape();
 
-        if (texture_.NotNull())
-        {
-            if (RenderSurface* surface = texture_->GetRenderSurface())
-            {
-                // If the OS cursor is visible, apply its shape now if changed
-                bool osCursorVisible = GetSubsystem<Input>()->IsMouseVisible();
-                if (cursor_ && osCursorVisible)
-                    cursor_->ApplyOSCursorShape();
+    SetVertexData(vertexBuffer_, vertexData_);
+    SetVertexData(debugVertexBuffer_, debugVertexData_);
 
-                // Perform the default backbuffer render only if not rendered yet, or additional renders through RenderUI command
-                graphics_->ResetRenderTargets();
-
-                graphics_->SetDepthStencil(surface->GetLinkedDepthStencil());
-                graphics_->SetRenderTarget(0, surface);
-                graphics_->SetViewport(IntRect(0, 0, surface->GetWidth(), surface->GetHeight()));
-                graphics_->Clear(Urho3D::CLEAR_COLOR);
-            }
-        }
-
-        SetVertexData(vertexBuffer_, vertexData_);
-        SetVertexData(debugVertexBuffer_, debugVertexData_);
-
-        // Render non-modal batches
-        Render(vertexBuffer_, batches_, 0, nonModalBatchSize_);
-        // Render debug draw
-        Render(debugVertexBuffer_, debugDrawBatches_, 0, debugDrawBatches_.Size());
-        // Render modal batches
-        Render(vertexBuffer_, batches_, nonModalBatchSize_, batches_.Size());
-
-        if (texture_.NotNull())
-            graphics_->ResetRenderTargets();
-    }
+    // Render non-modal batches
+    Render(vertexBuffer_, batches_, 0, nonModalBatchSize_);
+    // Render debug draw
+    Render(debugVertexBuffer_, debugDrawBatches_, 0, debugDrawBatches_.Size());
+    // Render modal batches
+    Render(vertexBuffer_, batches_, nonModalBatchSize_, batches_.Size());
 
     // Clear the debug draw batches and data
     debugDrawBatches_.Clear();
@@ -2021,7 +1999,17 @@ void UI::HandleFocused(StringHash eventType, VariantMap& eventData)
 void UI::HandleEndAllViewsRender(StringHash eventType, VariantMap& eventData)
 {
     if (texture_.NotNull())
-        Render();
+    {
+        if (RenderSurface* surface = texture_->GetRenderSurface())
+        {
+            graphics_->ResetRenderTargets();
+            graphics_->SetDepthStencil(surface->GetLinkedDepthStencil());
+            graphics_->SetRenderTarget(0, surface);
+            graphics_->SetViewport(IntRect(0, 0, surface->GetWidth(), surface->GetHeight()));
+            graphics_->Clear(Urho3D::CLEAR_COLOR);
+            Render();
+        }
+    }
 }
 
 HashMap<WeakPtr<UIElement>, UI::DragData*>::Iterator UI::DragElementErase(HashMap<WeakPtr<UIElement>, UI::DragData*>::Iterator i)
@@ -2142,6 +2130,19 @@ void UI::SetRenderTarget(Texture2D* texture)
         SubscribeToEvent(E_ENDALLVIEWSRENDER, URHO3D_HANDLER(UI, HandleEndAllViewsRender));
         ResizeRootElement();
     }
+}
+
+void UI::SetRoot(UIElement* root)
+{
+    rootElement_ = root;
+    customSize_ = root->GetSize();
+    ResizeRootElement();
+}
+
+void UI::SetRootModalElement(UIElement* rootModal)
+{
+    rootModalElement_ = rootModal;
+    ResizeRootElement();
 }
 
 void RegisterUILibrary(Context* context)

@@ -78,7 +78,7 @@ public:
     void Update(float timeStep);
     /// Update the UI for rendering. Called by HandleRenderUpdate().
     void RenderUpdate();
-    /// Render the UI batches.
+    /// Render the UI batches. Returns true if call rendered anything. Rendering succeeds only once per frame.
     void Render();
     /// Debug draw a UI element.
     void DebugDraw(UIElement* element);
@@ -132,12 +132,12 @@ public:
     /// Return root UI element.
     UIElement* GetRoot() const { return rootElement_; }
     /// Sets new root UI element.
-    void SetRoot(UIElement* root) { rootElement_ = root; }
+    void SetRoot(UIElement* root);
 
     /// Return root modal element.
     UIElement* GetRootModalElement() const { return rootModalElement_; }
     /// Sets new root UI element for modals.
-    void SetRootModalElement(UIElement* rootModal) { rootModalElement_ = rootModal; }
+    void SetRootModalElement(UIElement* rootModal);
 
     /// Return cursor.
     Cursor* GetCursor() const { return cursor_; }
@@ -223,6 +223,9 @@ public:
 
     /// Set texture to which entire UI will be rendered.
     void SetRenderTarget(Texture2D* texture);
+
+    /// Returns true if thus UI is already rendered in this frame.
+    bool IsRendered() const { return uiRendered_; }
 
     /// Data structure used to represent the drag data associated to a UIElement.
     struct DragData

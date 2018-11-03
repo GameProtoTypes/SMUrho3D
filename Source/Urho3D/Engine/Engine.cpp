@@ -760,9 +760,11 @@ void Engine::Render()
     if (!graphics->BeginFrame())
         return;
 
+
 	//compute times
 	renderTick_++;
 	lastRenderTimeUs_ = renderTimerTracker_.GetUSec(true);
+
 
 
 
@@ -780,7 +782,19 @@ void Engine::Render()
 
     GetSubsystem<Renderer>()->Render();
     GetSubsystem<UI>()->Render();
-    graphics->ResetRenderTargets();
+
+    // Render UI after scene is rendered, but only do so if user has not rendered it manually anywhere (for example
+    // using renderpath or to a texture).
+    if (UI* ui = GetSubsystem<UI>())
+    {
+        if (!ui->IsRendered())
+        {
+            graphics->ResetRenderTargets();
+            ui->Render();
+        }
+    }
+
+
     graphics->EndFrame();
 
 
