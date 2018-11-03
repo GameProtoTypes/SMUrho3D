@@ -23,6 +23,34 @@ class dVehicleVirtualTire;
 #define D_TIRE_MAX_ELASTIC_DEFORMATION		(0.05f)
 #define D_TIRE_MAX_ELASTIC_NORMAL_STIFFNESS (10.0f / D_TIRE_MAX_ELASTIC_DEFORMATION)
 
+class dTireJoint: public dComplementaritySolver::dBilateralJoint
+{
+	public:
+	dTireJoint();
+	void JacobianDerivative(dComplementaritySolver::dParamInfo* const constraintParams);
+	void UpdateSolverForces(const dComplementaritySolver::dJacobianPair* const jacobians) const { dAssert(0); }
+
+	dVehicleVirtualTire* m_tire;
+};
+
+class dDifferentialMount: public dComplementaritySolver::dBilateralJoint
+{
+	public:
+	dDifferentialMount();
+
+	void JacobianDerivative(dComplementaritySolver::dParamInfo* const constraintParams);
+	void UpdateSolverForces(const dComplementaritySolver::dJacobianPair* const jacobians) const { dAssert(0); }
+	bool m_slipeOn;
+};
+
+class dEngineJoint: public dComplementaritySolver::dBilateralJoint
+{
+	public:
+	dEngineJoint();
+
+	void JacobianDerivative(dComplementaritySolver::dParamInfo* const constraintParams);
+	void UpdateSolverForces(const dComplementaritySolver::dJacobianPair* const jacobians) const { dAssert(0); }
+};
 
 class dKinematicLoopJoint : public dComplementaritySolver::dBilateralJoint
 {
@@ -41,16 +69,6 @@ class dKinematicLoopJoint : public dComplementaritySolver::dBilateralJoint
 	bool m_isActive;
 };
 
-
-class dTireJoint: public dComplementaritySolver::dBilateralJoint
-{
-	public:
-	dTireJoint();
-	void JacobianDerivative(dComplementaritySolver::dParamInfo* const constraintParams);
-	void UpdateSolverForces(const dComplementaritySolver::dJacobianPair* const jacobians) const{dAssert (0);}
-
-	dVehicleVirtualTire* m_tire;
-};
 
 class dTireContact: public dKinematicLoopJoint
 {
@@ -96,6 +114,17 @@ class dTireContact: public dKinematicLoopJoint
 	friend class dVehicleVirtualTire;
 };
 
+
+class dDifferentialJoint: public dKinematicLoopJoint
+{
+	public:
+	dDifferentialJoint ();
+
+	private:
+	int GetMaxDof() const { return 1;}
+	void JacobianDerivative(dComplementaritySolver::dParamInfo* const constraintParams);
+	void UpdateSolverForces(const dComplementaritySolver::dJacobianPair* const jacobians) const { dAssert(0); }
+};
 
 
 #endif 

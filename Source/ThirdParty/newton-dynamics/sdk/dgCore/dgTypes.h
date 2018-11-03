@@ -1,33 +1,33 @@
 /* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
-*
+* 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
 * arising from the use of this software.
-*
+* 
 * Permission is granted to anyone to use this software for any purpose,
 * including commercial applications, and to alter it and redistribute it
 * freely, subject to the following restrictions:
-*
+* 
 * 1. The origin of this software must not be misrepresented; you must not
 * claim that you wrote the original software. If you use this software
 * in a product, an acknowledgment in the product documentation would be
 * appreciated but is not required.
-*
+* 
 * 2. Altered source versions must be plainly marked as such, and must not be
 * misrepresented as being the original software.
-*
+* 
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
 #ifndef __DGTYPES_H__
 #define __DGTYPES_H__
 
-#ifdef _MSC_VER
+#ifdef _MSC_VER 
 	#ifdef _M_X64
 		#ifndef _WIN_64_VER
 			#define _WIN_64_VER
 		#endif
-	#else
+	#else 		
 		#ifndef _WIN_32_VER
 			#define _WIN_32_VER
 		#endif
@@ -39,7 +39,7 @@
 #endif
 
 
-#ifdef _MSC_VER
+#ifdef _MSC_VER 
 	#if !(defined (_WIN_32_VER) || defined (_WIN_64_VER))
 		#error "most define _WIN_32_VER or _WIN_64_VER for a correct CPU target"
 	#endif
@@ -57,9 +57,9 @@
 	#pragma warning (disable: 4820) //bytes padding added after data member
 	#pragma warning (disable: 4005) //'__useHeader': macro redefinition
 	//#pragma warning (disable: 4577) // 'noexcept' used with no exception handling mode specified; termination on exception is not guaranteed. Specify /EHsc
-
-	#include <io.h>
-	#include <direct.h>
+    
+	#include <io.h> 
+	#include <direct.h> 
 	#include <malloc.h>
 	#include <float.h>
 	#include <stdarg.h>
@@ -69,13 +69,13 @@
 		#pragma warning (disable: 4127)	//conditional expression is constant
 	#endif
 
-	#pragma warning (push, 3)
+	#pragma warning (push, 3) 
 		#include <windows.h>
 		#include <crtdbg.h>
 		#ifndef _DURANGO
 			#include <tlhelp32.h>
 		#endif
-	#pragma warning (pop)
+	#pragma warning (pop) 
 #endif
 
 #include <new>
@@ -90,8 +90,8 @@
 //#include <atomic>
 
 #if (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
-	#include <io.h>
-	#include <direct.h>
+	#include <io.h> 
+	#include <direct.h> 
 	#include <malloc.h>
 	#include <float.h>
 	#include <windows.h>
@@ -100,7 +100,7 @@
 
 #if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
 	#include <intrin.h>
-	#include <emmintrin.h>
+	#include <emmintrin.h> 
 	#include <pmmintrin.h>
 #endif
 
@@ -115,37 +115,37 @@
 	#include <unistd.h>
 	#include <assert.h>
 	#ifndef __ARMCC_VERSION
-		extern "C"
-		{
+		extern "C" 
+		{ 
 			// for SSE3 and up
-			#include <pmmintrin.h>
-			#include <emmintrin.h>
-			#include <mmintrin.h>
-		}
+			#include <pmmintrin.h> 
+			#include <emmintrin.h> 
+			#include <mmintrin.h> 
+		} 
 	#endif
 #endif
 
 #ifdef _MACOSX_VER
 	#include <unistd.h>
 	#include <sys/sysctl.h>
-    #include <assert.h>
+    #include <assert.h> 
     #if (defined __i386__ || defined __x86_64__)
 		#include <fenv.h>
-		#include <pmmintrin.h>
+		#include <pmmintrin.h> 
 		#include <emmintrin.h>  //sse3
-        #include <mmintrin.h>
+        #include <mmintrin.h> 
     #endif
 #endif
 
 //#define DG_SCALAR_VECTOR_CLASS
 
 
-// by default newton run on a separate thread and
+// by default newton run on a separate thread and 
 // optionally concurrent with the calling thread,
 // it also uses a thread job pool for multi core systems.
-// define DG_USE_THREAD_EMULATION on the command line for
-// platform that do not support hardware multi threading or
-// if the and application want to control threading at the application level
+// define DG_USE_THREAD_EMULATION on the command line for 
+// platform that do not support hardware multi threading or 
+// if the and application want to control threading at the application level 
 //#define DG_USE_THREAD_EMULATION
 
 #if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
@@ -170,13 +170,13 @@
 //************************************************************
 #ifdef DG_DISABLE_ASSERT
 	#define dgAssert(x)
-#else
+#else 
 	#if defined (_WIN_32_VER) || defined (_WIN_64_VER)
 		#define dgAssert(x) _ASSERTE(x)
-	#else
+	#else 
 		#ifdef _DEBUG
 			#define dgAssert(x) assert(x)
-		#else
+		#else 
 			#define dgAssert(x)
 		#endif
 	#endif
@@ -186,7 +186,7 @@
 #define	DG_MAX_THREADS_HIVE_COUNT		16
 
 #ifdef _DEBUG
-//#define __ENABLE_DG_CONTAINERS_SANITY_CHECK
+//#define __ENABLE_DG_CONTAINERS_SANITY_CHECK 
 #endif
 
 
@@ -196,10 +196,10 @@
 
 #ifdef _DEBUG
 	#define DG_INLINE inline
-#else
+#else 
 	#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-		#define DG_INLINE __forceinline
-	#else
+		#define DG_INLINE __forceinline 
+	#else 
 		#define DG_INLINE	inline
 		//#define DG_INLINE	 __attribute__((always_inline))
 	#endif
@@ -210,19 +210,19 @@
 #define DG_VECTOR_AVX2_SIZE		32
 
 #if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-	#define	DG_GCC_VECTOR_ALIGMENT
+	#define	DG_GCC_VECTOR_ALIGMENT	
 	#define	DG_MSC_VECTOR_ALIGMENT			__declspec(align(DG_VECTOR_SIMD_SIZE))
 #else
 	#define	DG_GCC_VECTOR_ALIGMENT			__attribute__ ((aligned (DG_VECTOR_SIMD_SIZE)))
-	#define	DG_MSC_VECTOR_ALIGMENT
+	#define	DG_MSC_VECTOR_ALIGMENT			
 #endif
 
 #if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-	#define	DG_GCC_AVX_ALIGMENT
+	#define	DG_GCC_AVX_ALIGMENT	
 	#define	DG_MSC_AVX_ALIGMENT			__declspec(align(DG_VECTOR_AVX2_SIZE))
 #else
 	#define	DG_GCC_AVX_ALIGMENT			__attribute__ ((aligned (DG_VECTOR_AVX2_SIZE)))
-	#define	DG_MSC_AVX_ALIGMENT
+	#define	DG_MSC_AVX_ALIGMENT			
 #endif
 
 
@@ -288,14 +288,14 @@ class dgTriplex
 class dgBigVector;
 #ifndef _NEWTON_USE_DOUBLE
 class dgVector;
-#endif
+#endif 
 
 
 #if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-	#define dgApi __cdecl
-	#define dgStdApi __stdcall
+	#define dgApi __cdecl 	
+	#define dgStdApi __stdcall 	
 #else
-	#define dgApi
+	#define dgApi 	
 	#define dgStdApi
 #endif
 
@@ -320,7 +320,7 @@ typedef bool (dgApi *dgReportProgress) (dgFloat32 progressNormalzedPercent, void
 #define dgAlloca(type, count) (type*) alloca (sizeof (type) * (count))
 
 //#define dgCheckAligment(x) dgAssert (!(dgUnsigned64 (x) & 0xf))
-#define dgCheckAligment(x)
+#define dgCheckAligment(x) 
 
 DG_INLINE dgInt32 dgExp2 (dgInt32 x)
 {
@@ -345,16 +345,16 @@ DG_INLINE dgInt32 dgBitReversal(dgInt32 v, dgInt32 base)
 }
 
 
-template <class T>
+template <class T> 
 DG_INLINE T dgMin(T A, T B)
 {
-	return (A < B) ? A : B;
+	return (A < B) ? A : B; 
 }
 
-template <class T>
+template <class T> 
 DG_INLINE T dgMax(T A, T B)
 {
-	return (A > B) ? A : B;
+	return (A > B) ? A : B; 
 }
 
 template <class T>
@@ -375,13 +375,13 @@ DG_INLINE T dgClamp(T val, T min, T max)
 	return dgMax (min, dgMin (max, val));
 }
 
-template <class T>
+template <class T> 
 DG_INLINE void dgSwap(T& A, T& B)
 {
 	T tmp (A);
 	A = B;
 	B = tmp;
-}
+}	
 
 template <class T>
 DG_INLINE T dgAbs(T A)
@@ -396,7 +396,7 @@ DG_INLINE T dgSign(T A)
 	return (A >= T(0)) ? T(1) : T(-1);
 }
 
-template <class T>
+template <class T> 
 DG_INLINE bool dgAreEqual(T A, T B, T tol)
 {
 	if ((dgAbs(A) < tol) && (dgAbs(B) < tol)) {
@@ -417,14 +417,14 @@ DG_INLINE bool dgAreEqual(T A, T B, T tol)
 		return false;
 	}
 	return dgAbs(mantissa0 - mantissa1) < tol;
-*/
+*/	
 	T den = dgMax(dgAbs(A), dgAbs(B)) + tol;
 	A /= den;
 	B /= den;
 	return dgAbs(A - B) < tol;
 }
 
-template <class T>
+template <class T> 
 dgInt32 dgBinarySearch (T const* array, dgInt32 elements, const T& entry, dgInt32 (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
 {
 	dgInt32 index0 = 0;
@@ -439,7 +439,7 @@ dgInt32 dgBinarySearch (T const* array, dgInt32 elements, const T& entry, dgInt3
 			index2 = index1;
 		}
 	}
-
+	
 	index0 = (index0 > 0) ? index0 - 1 : 0;
 	index2 = ((index2 + 1) < elements) ? index2 + 1 : elements;
 	dgInt32 index = index0 - 1;
@@ -488,15 +488,15 @@ dgInt32 dgBinarySearchIndirect(T** const array, dgInt32 elements, const T& entry
 }
 
 
-template <class T>
+template <class T> 
 void dgRadixSort (T* const array, T* const tmpArray, dgInt32 elements, dgInt32 radixPass,  dgInt32 (*getRadixKey) (const T* const  A, void* const context), void* const context = NULL)
 {
-	dgInt32 scanCount[256];
+	dgInt32 scanCount[256]; 
 	dgInt32 histogram[256][4];
 
 	dgAssert (radixPass >= 1);
 	dgAssert (radixPass <= 4);
-
+	
 	memset (histogram, 0, sizeof (histogram));
 	for (dgInt32 i = 0; i < elements; i ++) {
 		dgInt32 key = getRadixKey (&array[i], context);
@@ -519,12 +519,12 @@ void dgRadixSort (T* const array, T* const tmpArray, dgInt32 elements, dgInt32 r
 			scanCount[key] = index + 1;
 		}
 
-		if ((radix + 1) < radixPass) {
+		if ((radix + 1) < radixPass) { 
 			scanCount[0] = 0;
 			for (dgInt32 i = 1; i < 256; i ++) {
 				scanCount[i] = scanCount[i - 1] + histogram[i - 1][radix + 1];
 			}
-
+			
 			dgInt32 radixShift = (radix + 1) << 3;
 			for (dgInt32 i = 0; i < elements; i ++) {
 				dgInt32 key = (getRadixKey (&array[i], context) >> radixShift) & 0xff;
@@ -533,7 +533,7 @@ void dgRadixSort (T* const array, T* const tmpArray, dgInt32 elements, dgInt32 r
 				scanCount[key] = index + 1;
 			}
 		} else {
-			memcpy (array, tmpArray, elements * sizeof (T));
+			memcpy (array, tmpArray, elements * sizeof (T)); 
 		}
 	}
 
@@ -544,7 +544,7 @@ void dgRadixSort (T* const array, T* const tmpArray, dgInt32 elements, dgInt32 r
 #endif
 }
 
-template <class T>
+template <class T> 
 void dgSort (T* const array, dgInt32 elements, dgInt32 (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
 {
 //	DG_TRACKTIME_NAMED("dgSort");
@@ -573,13 +573,13 @@ void dgSort (T* const array, dgInt32 elements, dgInt32 (*compare) (const T* cons
 			dgInt32 i = lo + 1;
 			dgInt32 j = hi - 1;
 			T val (array[mid]);
-			do {
+			do {    
 				while (compare (&array[i], &val, context) < 0) i ++;
 				while (compare (&array[j], &val, context) > 0) j --;
 
 				if (i <= j)	{
 					dgSwap(array[i], array[j]);
-					i++;
+					i++; 
 					j--;
 				}
 			} while (i <= j);
@@ -626,7 +626,7 @@ void dgSort (T* const array, dgInt32 elements, dgInt32 (*compare) (const T* cons
 }
 
 
-template <class T>
+template <class T> 
 void dgSortIndirect (T** const array, dgInt32 elements, dgInt32 (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
 {
 	DG_TRACKTIME(__FUNCTION__);
@@ -654,13 +654,13 @@ void dgSortIndirect (T** const array, dgInt32 elements, dgInt32 (*compare) (cons
 			dgInt32 i = lo + 1;
 			dgInt32 j = hi - 1;
 			T* val (array[mid]);
-			do {
+			do {    
 				while (compare (array[i], val, context) < 0) i ++;
 				while (compare (array[j], val, context) > 0) j --;
 
 				if (i <= j)	{
 					dgSwap(array[i], array[j]);
-					i++;
+					i++; 
 					j--;
 				}
 			} while (i <= j);
@@ -747,30 +747,30 @@ dgInt32 dgVertexListToIndexList (dgFloat32* const vertexList, dgInt32 strideInBy
 #define IntToPointer(x) ((void*)(size_t(x)))
 
 
-#ifndef _MSC_VER
+#ifndef _MSC_VER 
 	#define _stricmp(x,y) strcasecmp(x,y)
 #endif
 
-#define dgSqrt(x)			dgFloat32 (sqrt(x))
+#define dgSqrt(x)			dgFloat32 (sqrt(x))	
 #define dgSin(x)			dgFloat32 (sin(x))
 #define dgCos(x)			dgFloat32 (cos(x))
 #define dgAsin(x)			dgFloat32 (asin(x))
 #define dgAcos(x)			dgFloat32 (acos(x))
 #define dgLog(x)			dgFloat32 (log(x))
 #define dgCeil(x)			dgFloat32 (ceil(x))
-#define dgFloor(x)			dgFloat32 (floor(x))
+#define dgFloor(x)			dgFloat32 (floor(x))	
 #define dgPow(x,y)			dgFloat32 (pow(x,y))
 #define dgFmod(x,y)			dgFloat32 (fmod(x,y))
 #define dgAtan2(x,y)		dgFloat32 (atan2(x,y))
 #define dgRsqrt(x)			(dgFloat32 (1.0f) / dgSqrt(x))
-#define dgClearFP()			_clearfp()
+#define dgClearFP()			_clearfp() 
 #define dgControlFP(x,y)	_controlfp(x,y)
 
 enum dgSerializeRevisionNumber
 {
 	m_firstRevision = 100,
 	// add new serialization revision number here
-	m_currentRevision
+	m_currentRevision 
 };
 
 dgUnsigned64 dgGetTimeInMicrosenconds();
@@ -783,7 +783,7 @@ class dgFloatExceptions
 	public:
 	#ifdef _MSC_VER
 		#define DG_FLOAT_EXECTIONS_MASK	(EM_INVALID | EM_DENORMAL | EM_ZERODIVIDE)
-	#else
+	#else 
 		#define DG_FLOAT_EXECTIONS_MASK	0
 	#endif
 
@@ -795,12 +795,12 @@ class dgFloatExceptions
 };
 
 
-class dgSetPrecisionDouble
+class dgSetPrecisionDouble 
 {
 	public:
 	dgSetPrecisionDouble();
 	~dgSetPrecisionDouble();
-	dgInt32 m_mask;
+	dgInt32 m_mask; 
 };
 
 DG_INLINE dgInt32 dgAtomicExchangeAndAdd (dgInt32* const addend, dgInt32 amount)
@@ -852,7 +852,7 @@ DG_INLINE dgInt32 dgInterlockedTest(dgInt32* const ptr, dgInt32 value)
 		return InterlockedCompareExchange((long*)ptr, value, value);
 	#elif (defined (_POSIX_VER) || defined (_POSIX_VER_64) ||defined (_MACOSX_VER))
 		//__sync_synchronize();
-        return __sync_lock_test_and_set((int32_t*)ptr, value);
+		return __sync_lock_test_and_set((int32_t*)ptr, value);
 	#else
 		#error "dgInterlockedTest implementation required"
 	#endif
@@ -867,7 +867,7 @@ class dgAtomic: protected std::atomic<dgInt32>
 	{
 	}
 
-	DG_INLINE operator dgInt32() const
+	DG_INLINE operator dgInt32() const 
 	{
 		const std::atomic<dgInt32>& me = *this;
 		return me;
@@ -898,7 +898,7 @@ DG_INLINE void dgThreadPause()
 
 DG_INLINE void dgSpinLock(dgInt32* const ptr)
 {
-#ifndef DG_USE_THREAD_EMULATION
+#ifndef DG_USE_THREAD_EMULATION 
 	while (dgInterlockedExchange(ptr, 1)) {
 //		DG_TRACKTIME_NAMED("lock");
 		dgThreadYield();
@@ -909,7 +909,7 @@ DG_INLINE void dgSpinLock(dgInt32* const ptr)
 
 DG_INLINE void dgSpinUnlock (dgInt32* const ptr)
 {
-	#ifndef DG_USE_THREAD_EMULATION
+	#ifndef DG_USE_THREAD_EMULATION 
 		dgInterlockedExchange(ptr, 0);
 	#else
 		*ptr = 0;
