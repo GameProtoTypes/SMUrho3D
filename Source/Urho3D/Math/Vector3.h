@@ -415,6 +415,34 @@ public:
     /// Returns the angle between this vector and another vector in degrees.
     float Angle(const Vector3& rhs) const { return Urho3D::Acos(DotProduct(rhs) / (Length() * rhs.Length())); }
 
+    /// Returns the Largest Component in the vector.  ex: (-10,2,3) returns (0,0,3) 
+    Vector3 LargestComponent() {
+        Vector3 largest = -Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
+        
+        if (x_ > largest.x_)
+            largest.x_ = x_;
+        if (y_ > largest.y_)
+            largest.y_ = y_;
+        if (z_ > largest.z_)
+            largest.z_ = z_;
+
+        return largest;
+    }
+
+    /// Returns the Largest absolute value component in the vector.  ex: (-10,2,3) returns (-10,0,0) 
+    Vector3 LargestComponentAbs() {
+        Vector3 largest = Vector3::ZERO;
+
+        if (Urho3D::Abs(x_) > largest.x_)
+            largest.x_ = x_;
+        if (Urho3D::Abs(y_) > largest.y_)
+            largest.y_ = y_;
+        if (Urho3D::Abs(z_) > largest.z_)
+            largest.z_ = z_;
+
+        return largest;
+    }
+
     /// Return whether is NaN.
     bool IsNaN() const { return Urho3D::IsNaN(x_) || Urho3D::IsNaN(y_) || Urho3D::IsNaN(z_); }
 

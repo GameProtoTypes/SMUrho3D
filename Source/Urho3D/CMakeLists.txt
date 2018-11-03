@@ -153,6 +153,7 @@ set (THIRD_PARTY_DEPENDENCIES
     Recast
     Box2D
     WebP
+    FastNoiseSIMD
     
     dAnimation
     dContainers

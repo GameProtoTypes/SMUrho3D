@@ -105,9 +105,5 @@
 
 // @URHO3D_ENGINE_CONFIG@
 
-// Disable SSE if compiler does not support it.
-#if defined(URHO3D_SSE) && !defined(__SSE2__) && (!defined(_M_IX86_FP) || _M_IX86_FP < 2)
-#   undef URHO3D_SSE
-#endif
 
 #endif
