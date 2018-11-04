@@ -125,7 +125,7 @@ private:
     void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
 
     /// Flag for drawing debug geometry.
-    bool drawDebug_ = true;
+    bool drawDebug_ = false;
     void DecomposePhysicsTree();
     void RecomposePhysicsTree();
     void  TransportNode();

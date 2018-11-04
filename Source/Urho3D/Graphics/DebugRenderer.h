@@ -177,8 +177,6 @@ public:
     bool HasContent() const;
 
 private:
-    /// Handle end of frame. Clear debug geometry.
-    void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
 
     /// Lines rendered with depth test.
     PODVector<DebugLine> lines_;
