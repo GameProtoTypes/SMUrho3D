@@ -39,6 +39,7 @@
 
 #include "../DebugNew.h"
 
+
 namespace Urho3D
 {
 
@@ -54,8 +55,6 @@ DebugRenderer::DebugRenderer(Context* context) :
     lineAntiAlias_(false)
 {
     vertexBuffer_ = new VertexBuffer(context_);
-
-    SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(DebugRenderer, HandlePostRenderUpdate));
 }
 
 DebugRenderer::~DebugRenderer() = default;
@@ -539,6 +538,7 @@ void DebugRenderer::AddFrame(const Matrix3x4& worldTransform, float scale, Color
 
 void DebugRenderer::Render()
 {
+
     if (!HasContent())
         return;
 
@@ -688,20 +688,14 @@ void DebugRenderer::Render()
     }
 
     graphics->SetLineAntiAlias(false);
-}
 
-bool DebugRenderer::IsInside(const BoundingBox& box) const
-{
-    return frustum_.IsInsideFast(box) == INSIDE;
-}
 
-bool DebugRenderer::HasContent() const
-{
-    return !(lines_.Empty() && noDepthLines_.Empty() && triangles_.Empty() && noDepthTriangles_.Empty());
-}
 
-void DebugRenderer::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
-{
+
+
+
+    //clear
+
     // When the amount of debug geometry is reduced, release memory
     unsigned linesSize = lines_.Size();
     unsigned noDepthLinesSize = noDepthLines_.Size();
@@ -721,6 +715,18 @@ void DebugRenderer::HandlePostRenderUpdate(StringHash eventType, VariantMap& eve
         triangles_.Reserve(trianglesSize);
     if (noDepthTriangles_.Capacity() > noDepthTrianglesSize * 2)
         noDepthTriangles_.Reserve(noDepthTrianglesSize);
+    
 }
+
+bool DebugRenderer::IsInside(const BoundingBox& box) const
+{
+    return frustum_.IsInsideFast(box) == INSIDE;
+}
+
+bool DebugRenderer::HasContent() const
+{
+    return !(lines_.Empty() && noDepthLines_.Empty() && triangles_.Empty() && noDepthTriangles_.Empty());
+}
+
 
 }

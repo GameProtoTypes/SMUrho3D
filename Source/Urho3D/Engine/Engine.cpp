@@ -775,12 +775,9 @@ void Engine::Render()
 	// Rendering update event
 	SendEvent(E_RENDERUPDATE, eventData);
 
-
-	// Post-render update event
-	SendEvent(E_POSTRENDERUPDATE, eventData);
-
-
     GetSubsystem<Renderer>()->Render();
+
+
     GetSubsystem<UI>()->Render();
 
     // Render UI after scene is rendered, but only do so if user has not rendered it manually anywhere (for example
@@ -793,6 +790,8 @@ void Engine::Render()
             ui->Render();
         }
     }
+    // Post-render update event
+    SendEvent(E_POSTRENDERUPDATE, eventData);
 
 
     graphics->EndFrame();

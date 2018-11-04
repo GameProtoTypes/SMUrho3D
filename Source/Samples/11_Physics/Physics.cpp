@@ -61,8 +61,7 @@
 URHO3D_DEFINE_APPLICATION_MAIN(Physics)
 
 Physics::Physics(Context* context) :
-    Sample(context),
-    drawDebug_(false)
+    Sample(context)
 {
 }
 
@@ -387,6 +386,7 @@ void Physics::MoveCamera(float timeStep)
         filePath += "/Scenes/Physics.xml";
         File loadFile(context_, filePath, FILE_READ);
         scene_->LoadXML(loadFile);
+        scene_->GetComponent<DebugRenderer>()->SetView(cameraNode_->GetComponent<Camera>());
     }
 
     // Toggle physics debug geometry with space
