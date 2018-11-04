@@ -67,6 +67,8 @@ namespace Urho3D {
         URHO3D_ATTRIBUTE("Net Torque", Vector3, netTorque_, Vector3::ZERO, AM_DEFAULT | AM_NOEDIT);
         URHO3D_ATTRIBUTE("Is Scene Root Body", bool, sceneRootBodyMode_, false, AM_DEFAULT | AM_NOEDIT);
 
+
+
     }
 
 
@@ -112,7 +114,7 @@ namespace Urho3D {
                 dVector worldVel = UrhoToNewton(physicsWorld_->SceneToPhysics_Domain(worldVelocity)) - curWorldVel;
                 dVector bodyWorldPos;
                 NewtonBodyGetPosition(newtonBody_, &bodyWorldPos[0]);
-                NewtonBodyAddImpulse(newtonBody_, &worldVel[0], &bodyWorldPos[0], GSS<Engine>()->GetUpdateTimeGoalMs()*0.001f);
+                NewtonBodyAddImpulse(newtonBody_, &worldVel[0], &bodyWorldPos[0], GSS<Engine>()->GetUpdateTimeGoalMs()*GetScene()->GetTimeScale()*0.001f);
 
             }
             else
@@ -1098,9 +1100,6 @@ namespace Urho3D {
         updateInterpolatedTransform();
 
         node_->SetWorldTransform(interpolatedNodePos_, interpolatedNodeRotation_);
-
-
-
         node_->SetEnableTransformEvents(enableTEvents);
     }
 

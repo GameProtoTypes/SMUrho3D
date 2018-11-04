@@ -59,9 +59,6 @@ namespace Urho3D {
         URHO3D_ACCESSOR_ATTRIBUTE("Spring Damper Relaxation", GetNoPowerSpringDamperRelaxation, SetNoPowerSpringDamperRelaxation, float, HINGE_CONSTRAINT_DEF_RELAX, AM_DEFAULT);
 
 
-
-
-
     }
 
     void Urho3D::HingeConstraint::SetMinAngle(float minAngle)

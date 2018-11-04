@@ -646,6 +646,7 @@ namespace Urho3D {
         if (rootRate) {
 
             if (simulationStarted_) {
+
                 //send post physics event.
                 SendEvent(E_PHYSICSPOSTSTEP, sendEventData);
                 {
@@ -742,11 +743,11 @@ namespace Urho3D {
             }
 
 
-
-
             rigBody->reBuildBody();
             rigBody->MarkDirty(false);
         }
+
+
         //rebuild contraints if they need rebuilt (dirty)
         for (Constraint* constraint : constraintList)
         {
@@ -759,8 +760,6 @@ namespace Urho3D {
         {
             rigBody->applyDefferedActions();
         }
-
-
 
 
         //rebuild vehicles if they need rebuilt
