@@ -657,12 +657,12 @@ namespace Urho3D {
 
 
         Matrix4 inertiaMatrixUrho = NewtonToUrhoMat4(finalInertia);
-        URHO3D_LOGINFO("Inertia Matrix:");
-        URHO3D_LOGINFO(String(inertiaMatrixUrho));
+       // URHO3D_LOGINFO("Inertia Matrix:");
+        //URHO3D_LOGINFO(String(inertiaMatrixUrho));
 
 
         //test if the inertia matrix is symetric.
-        URHO3D_LOGINFO("Final Mass: " + String(mass_));
+        //URHO3D_LOGINFO("Final Mass: " + String(mass_));
 
 
 

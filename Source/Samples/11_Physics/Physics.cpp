@@ -157,13 +157,13 @@ void Physics::CreateScene()
     //SpawnCompound(Vector3(-2, 1 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
-    SpawnVehicle(Vector3(0, 10, 0));
+    //SpawnVehicle(Vector3(0, 10, 0));
     //for(int i = 0; i < 50; i++)
     //SpawnTrialBike(Vector3(0, 10, i*4));
 
 
     //SpawnCollisionExceptionsTest(Vector3(0, 1, 0));
-    //SpawnSliderTest(Vector3(0, 1, 0));
+    SpawnSliderTest(Vector3(0, 1, 0));
     //SpawnLinearJointedObject(1.0f, Vector3(10 , 2, 10));
 
     //////
@@ -851,7 +851,7 @@ void Physics::SpawnSliderTest(Vector3 worldPosition)
 {
     Node* a = SpawnSamplePhysicsBox(scene_, worldPosition, Vector3::ONE);
     Node* b = SpawnSamplePhysicsBox(scene_, worldPosition+Vector3(1,0,0), Vector3::ONE);
-    a->GetComponent<RigidBody>()->SetMassScale(0.0f);
+    //a->GetComponent<RigidBody>()->SetMassScale(0.0f);
     
 
     SliderConstraint* constraint = a->CreateComponent<SliderConstraint>();

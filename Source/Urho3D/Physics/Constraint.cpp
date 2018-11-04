@@ -101,7 +101,7 @@ namespace Urho3D {
 
     void Constraint::SetOtherBody(RigidBody* body)
     {
-        if (otherBody_ != body) {
+        if (otherBody_ != body && body != ownBody_) {
 
             if (otherBody_ != nullptr)
                 RemoveJointReferenceFromBody(otherBody_);//remove reference from old body
