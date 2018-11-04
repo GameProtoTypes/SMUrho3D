@@ -40,10 +40,18 @@ namespace Urho3D {
         URHO3D_ENUM_ACCESSOR_ATTRIBUTE("Solver Iterations", GetSolveMode, SetSolveMode, CONSTRAINT_SOLVE_MODE, solveModeNames, SOLVE_MODE_JOINT_DEFAULT, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Stiffness", GetStiffness, SetStiffness, float, 0.7f, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Other Body ID", GetOtherBodyId, SetOtherBodyById, unsigned, 0, AM_DEFAULT | AM_COMPONENTID);
-        URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Position", GetOtherPosition, SetOtherPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
-        URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Rotation", GetOtherRotation, SetOtherRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
-        URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Position", GetOwnPosition, SetOwnPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
-        URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Rotation", GetOwnRotation, SetOwnRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
+
+
+        //URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Position", GetOtherPosition, SetOtherPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
+        //URHO3D_ACCESSOR_ATTRIBUTE("Other Body Frame Rotation", GetOtherRotation, SetOtherRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
+        //URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Position", GetOwnPosition, SetOwnPosition, Vector3, Vector3::ZERO, AM_DEFAULT);
+        //URHO3D_ACCESSOR_ATTRIBUTE("Body Frame Rotation", GetOwnRotation, SetOwnRotation, Quaternion, Quaternion::IDENTITY, AM_DEFAULT);
+
+        URHO3D_ATTRIBUTE("Other Body Frame Position", Vector3, otherPosition_, Vector3::ZERO, AM_DEFAULT);
+        URHO3D_ATTRIBUTE("Other Body Frame Rotation", Quaternion, otherRotation_, Quaternion::IDENTITY, AM_DEFAULT);
+        URHO3D_ATTRIBUTE("Body Frame Position", Vector3, position_, Vector3::ZERO, AM_DEFAULT);
+        URHO3D_ATTRIBUTE("Body Frame Rotation", Quaternion, rotation_, Quaternion::IDENTITY, AM_DEFAULT);
+
 
     }
 

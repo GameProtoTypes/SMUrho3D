@@ -50,7 +50,7 @@ namespace Urho3D {
 
         
         URHO3D_ACCESSOR_ATTRIBUTE("MassScale", GetMassScale, SetMassScale, float, 1.0f, AM_DEFAULT);
-        URHO3D_ACCESSOR_ATTRIBUTE("Linear Velocity", GetLinearVelocity, SetLinearVelocity, Vector3, Vector3::ZERO, AM_DEFAULT);
+        URHO3D_ACCESSOR_ATTRIBUTE("Linear Velocity", GetLinearVelocity, SetLinearVelocityHard, Vector3, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Angular Velocity", GetAngularVelocity, SetAngularVelocity, Vector3, Vector3::ZERO, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Continuous Collision", GetContinuousCollision, SetContinuousCollision, bool, false, AM_DEFAULT);
         URHO3D_ACCESSOR_ATTRIBUTE("Linear Damping", GetLinearDamping, SetLinearDamping, float, 0.0f, AM_DEFAULT);
@@ -120,13 +120,17 @@ namespace Urho3D {
         }
         else
         {
-            
             nextLinearVelocity_ = physicsWorld_->SceneToPhysics_Domain(worldVelocity);
             nextLinearVelocityUseForces_ = useForces;
             nextLinearVelocityNeeded_ = true;
         }
     }
 
+
+    void RigidBody::SetLinearVelocityHard(const Vector3& worldVelocity)
+    {
+        SetLinearVelocity(worldVelocity, false);
+    }
 
     void RigidBody::SetAngularVelocity(const Vector3& angularVelocity)
     {

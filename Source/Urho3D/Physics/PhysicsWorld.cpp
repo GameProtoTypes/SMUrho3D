@@ -747,6 +747,12 @@ namespace Urho3D {
             rigBody->reBuildBody();
             rigBody->MarkDirty(false);
         }
+        //rebuild contraints if they need rebuilt (dirty)
+        for (Constraint* constraint : constraintList)
+        {
+            if (constraint->needsRebuilt_)
+                constraint->reEvalConstraint();
+        }
 
         //apply deferred actions (like impulses/velocity sets etc.) that were waiting for a real body to be built.
         for (RigidBody* rigBody : rigidBodyComponentList)
@@ -756,12 +762,6 @@ namespace Urho3D {
 
 
 
-        //rebuild contraints if they need rebuilt (dirty)
-        for (Constraint* constraint : constraintList)
-        {
-            if (constraint->needsRebuilt_)
-                constraint->reEvalConstraint();
-        }
 
         //rebuild vehicles if they need rebuilt
         for (PhysicsVehicle* vehicle : vehicleList)

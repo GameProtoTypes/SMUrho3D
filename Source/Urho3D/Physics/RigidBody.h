@@ -124,6 +124,9 @@ namespace Urho3D
         /// Set linear velocity in world cordinates. if useForces is false the velocity will be set exactly with no regard to using forces to achieve the desired velocity.
         void SetLinearVelocity(const Vector3& worldVelocity, bool useForces = true);
 
+        void SetLinearVelocityHard(const Vector3& worldVelocity);
+
+
         /// Set the Angular velocity in world cordinates
         void SetAngularVelocity(const Vector3& angularVelocity);
 

@@ -28,6 +28,8 @@ namespace Urho3D {
     void KinematicsControllerConstraint::RegisterObject(Context* context)
     {
         context->RegisterFactory<KinematicsControllerConstraint>(DEF_PHYSICS_CATEGORY.CString());
+
+        URHO3D_COPY_BASE_ATTRIBUTES(Constraint);
     }
 
     void KinematicsControllerConstraint::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)

@@ -1397,7 +1397,7 @@ void Physics::CreateScenery(Vector3 worldPosition)
     float range = 200;
     float objectScale = 100;
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 0; i++)
     {
         Node* scenePart = scene_->CreateChild("ScenePart" + String(i));
         auto* stMdl = scenePart->CreateComponent<StaticModel>();
