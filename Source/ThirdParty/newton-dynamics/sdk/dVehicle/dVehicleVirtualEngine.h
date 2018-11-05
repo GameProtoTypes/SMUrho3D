@@ -19,16 +19,50 @@
 
 class dVehicleVirtualEngine: public dVehicleEngineInterface
 {
+	class dEngineTorqueNode
+	{
+		public:
+		dEngineTorqueNode() {}
+		dEngineTorqueNode(dFloat rpm, dFloat torque)
+			:m_rpm(rpm)
+			, m_torque(torque)
+		{
+		}
+		dFloat m_rpm;
+		dFloat m_torque;
+	};
+
+
+	class dEngineMetricInfo: public dEngineInfo
+	{
+		public:
+		dEngineMetricInfo(const dEngineInfo& info);
+		dFloat m_peakPowerTorque;
+		//dFloat m_crownGearRatio;
+
+		dFloat GetTorque (dFloat rpm) const;
+
+		dEngineTorqueNode m_torqueCurve[6];
+	};
 	public:
+
 	DVEHICLE_API dVehicleVirtualEngine(dVehicleNode* const parent, const dEngineInfo& info, dVehicleDifferentialInterface* const differential);
 	DVEHICLE_API virtual ~dVehicleVirtualEngine();
 
 	protected:
+	virtual dFloat GetRpm() const;
+	virtual dFloat GetRedLineRpm() const;
+
 	void ApplyExternalForce();
+	void InitEngineTorqueCurve();
 	void Integrate(dFloat timestep);
+	void SetThrottle (dFloat throttle);
+	void SetInfo(const dEngineInfo& info);
+	
 	dComplementaritySolver::dBilateralJoint* GetJoint();
 	void Debug(dCustomJoint::dDebugDisplay* const debugContext) const;
 
+	dEngineMetricInfo m_metricInfo;
 	dEngineJoint m_joint;
 	dFloat m_omega;
 	friend class dVehicleChassis;
