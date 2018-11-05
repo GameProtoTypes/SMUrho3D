@@ -46,8 +46,17 @@ namespace Urho3D {
 
     PhysicsWorld::PhysicsWorld(Context* context) : Component(context)
     {
-
         SubscribeToEvent(E_SCENESUBSYSTEMUPDATE, URHO3D_HANDLER(PhysicsWorld, HandleSceneUpdate));
+
+
+        contactEntryPool_.Clear();
+        for (int i = 0; i < contactEntryPoolSize_; i++)
+        {
+            contactEntryPool_.Insert(0, context->CreateObject<RigidBodyContactEntry>());
+        }
+
+
+
     }
 
     PhysicsWorld::~PhysicsWorld()
@@ -126,14 +135,54 @@ namespace Urho3D {
 
     Urho3D::RigidBodyContactEntry* PhysicsWorld::GetCreateBodyContactEntry(unsigned int key)
     {
-        if (!bodyContactMap_.Contains(key)) {
-            SharedPtr<RigidBodyContactEntry> newContact = context_->CreateObject<RigidBodyContactEntry>();
+        RigidBodyContactEntry* entry = bodyContactMap_[key];
+        if (!entry) {
+
+            int initialPoolLookup = contactEntryPoolCurIdx_;
+            //get a contact entry from the pool:
+            entry = contactEntryPool_[contactEntryPoolCurIdx_];
+            int contactEntryPoolActualSize = contactEntryPool_.Size();
+            while (entry->hashKey_ != 0)
+            {
+                contactEntryPoolCurIdx_++;
+                if (contactEntryPoolCurIdx_ > contactEntryPoolActualSize - 1)
+                {
+                    contactEntryPoolCurIdx_ = 0;
+                }
+
+                if (initialPoolLookup == contactEntryPoolCurIdx_) {
+
+
+                    for (int i = 0; i < contactEntryPoolSize_; i++)
+                    {
+                        contactEntryPool_.Insert(contactEntryPool_.Size(), context_->CreateObject<RigidBodyContactEntry>());
+                    }
+
+                    URHO3D_LOGINFO("PhysicsWorld: Resizing Contact Entry Pool To: " + String(contactEntryPool_.Size()));
+                    //go to beggining of new chunk.
+                    contactEntryPoolCurIdx_ = contactEntryPoolActualSize;
+                }
+
+                //look again
+                entry = contactEntryPool_[contactEntryPoolCurIdx_];
+            }
+
+
+
+            SharedPtr<RigidBodyContactEntry> newContact = SharedPtr<RigidBodyContactEntry>(entry);
             newContact->hashKey_ = key;
             bodyContactMap_.Insert(Pair<unsigned int, SharedPtr<RigidBodyContactEntry>>(key, newContact));
 
+
+            //increment again for next time.
+            contactEntryPoolCurIdx_++;
+            if (contactEntryPoolCurIdx_ > contactEntryPoolSize_ - 1)
+            {
+                contactEntryPoolCurIdx_ = 0;
+            }
         }
 
-        return bodyContactMap_[key];
+        return entry;
     }
 
     void PhysicsWorld::SetGravity(const Vector3& force)
@@ -358,6 +407,7 @@ namespace Urho3D {
         NewtonSetThreadsCount(newtonWorld_, newtonThreadCount_);
         NewtonSelectBroadphaseAlgorithm(newtonWorld_, 1);//persistent broadphase.
 
+        
     }
 
     void PhysicsWorld::formContacts()
@@ -407,7 +457,7 @@ namespace Urho3D {
 
                 if (contactEntry->numContacts > DEF_PHYSICS_MAX_CONTACT_POINTS)
                 {
-                    contactEntry->ResizeBuffers(contactEntry->numContacts);
+                    URHO3D_LOGWARNING("Contact Entry Contact Count Greater Than DEF_PHYSICS_MAX_CONTACT_POINTS, consider increasing the limit.");
                 }
 
 
@@ -600,6 +650,7 @@ namespace Urho3D {
         //clean old contacts.
         for (auto key : removeKeys)
         {
+            bodyContactMap_[key]->hashKey_ = 0;
             bodyContactMap_.Erase(key);
         }
     }
@@ -994,7 +1045,7 @@ namespace Urho3D {
 
     RigidBodyContactEntry::RigidBodyContactEntry(Context* context) : Object(context)
     {
-        ResizeBuffers(DEF_PHYSICS_MAX_CONTACT_POINTS);
+
     }
 
     RigidBodyContactEntry::~RigidBodyContactEntry()
@@ -1019,15 +1070,6 @@ namespace Urho3D {
         }
     }
 
-    void RigidBodyContactEntry::ResizeBuffers(int size)
-    {
-        contactForces.Resize(size);
-        contactPositions.Resize(size);
-        contactNormals.Resize(size);
-        contactTangent0.Resize(size);
-        contactTangent1.Resize(size);
-        shapes0.Resize(size);
-        shapes1.Resize(size);
-    }
+
 
 }

@@ -45,22 +45,22 @@ namespace Urho3D
 
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest);
 
-        void ResizeBuffers(int size);
+
         unsigned int hashKey_ = 0;
 
         WeakPtr<RigidBody> body0 = nullptr;
         WeakPtr<RigidBody> body1 = nullptr;
-        Vector<CollisionShape*> shapes0;
-        Vector<CollisionShape*> shapes1;
+        CollisionShape* shapes0[DEF_PHYSICS_MAX_CONTACT_POINTS];
+        CollisionShape* shapes1[DEF_PHYSICS_MAX_CONTACT_POINTS];
 
 
         int numContacts = 0;
 
-        PODVector<Vector3> contactForces;    //net forces.
-        PODVector<Vector3> contactPositions; //global space
-        PODVector<Vector3> contactNormals;   //normal relative to body0
-        PODVector<Vector3> contactTangent0;  //tangent force in the 1st dimention.
-        PODVector<Vector3> contactTangent1;  //tangent force in the 2nd dimention.
+        Vector3 contactForces[DEF_PHYSICS_MAX_CONTACT_POINTS];    //net forces.
+        Vector3 contactPositions[DEF_PHYSICS_MAX_CONTACT_POINTS]; //global space
+        Vector3 contactNormals[DEF_PHYSICS_MAX_CONTACT_POINTS];   //normal relative to body0
+        Vector3 contactTangent0[DEF_PHYSICS_MAX_CONTACT_POINTS];  //tangent force in the 1st dimention.
+        Vector3 contactTangent1[DEF_PHYSICS_MAX_CONTACT_POINTS];  //tangent force in the 2nd dimention.
 
     protected:
         bool wakeFlag_ = false;
@@ -250,7 +250,10 @@ namespace Urho3D
 
 
         HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>> bodyContactMap_;
-        
+        Vector<SharedPtr<RigidBodyContactEntry>> contactEntryPool_;
+        int contactEntryPoolCurIdx_ = 0;
+        const int contactEntryPoolSize_ = 100;
+
         void formContacts();
         void ParseContacts();
         bool contactMapLocked_ = false;
