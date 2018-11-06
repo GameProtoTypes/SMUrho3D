@@ -271,6 +271,7 @@ namespace Urho3D
         /// all currently used collision shape components.
         PODVector<CollisionShape*> collisionShapes_;
 
+        unsigned int contactPoolId_ = 0;
 
         bool sceneRootBodyMode_ = false;
         ///Continuous Collision

@@ -153,7 +153,7 @@ void Physics::CreateScene()
     //CreatePyramids(Vector3(0,0,0));
 
 
-    //SpawnCompound(Vector3(-2, 1 , 10));
+    SpawnCompound(Vector3(-2, 10 , 10));
     //SpawnConvexHull(Vector3(-2, 3, 10));
 
     //SpawnVehicle(Vector3(0, 10, 0));
@@ -162,7 +162,7 @@ void Physics::CreateScene()
 
 
     //SpawnCollisionExceptionsTest(Vector3(0, 1, 0));
-    SpawnSliderTest(Vector3(0, 1, 0));
+    //SpawnSliderTest(Vector3(0, 10, 0));
     //SpawnLinearJointedObject(1.0f, Vector3(10 , 2, 10));
 
     //////
@@ -1312,7 +1312,7 @@ void Physics::HandleCollisionStart(StringHash eventType, VariantMap& eventData)
 
     RigidBodyContactEntry* contactData = static_cast<RigidBodyContactEntry*>(eventData[PhysicsCollisionStart::P_CONTACT_DATA].GetPtr());
     for (int i = 0; i < contactData->numContacts; i++) {
-        GSS<VisualDebugger>()->AddCross(contactData->contactPositions[i], 0.2f, Color::RED, true);
+         GSS<VisualDebugger>()->AddCross(contactData->contactPositions[i], 0.2f, Color::RED, true);
 
     }
 

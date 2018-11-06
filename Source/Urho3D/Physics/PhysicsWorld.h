@@ -46,7 +46,7 @@ namespace Urho3D
         virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest);
 
 
-        unsigned int hashKey_ = 0;
+        bool expired_ = true;
 
         WeakPtr<RigidBody> body0 = nullptr;
         WeakPtr<RigidBody> body1 = nullptr;
@@ -65,7 +65,6 @@ namespace Urho3D
     protected:
         bool wakeFlag_ = false;
         bool wakeFlagPrev_ = false;
-        bool inContact_ = false;
 
     };
 
@@ -143,7 +142,7 @@ namespace Urho3D
 
 
 
-        RigidBodyContactEntry* GetCreateBodyContactEntry(unsigned int key);
+        RigidBodyContactEntry* GetBodyContactEntry(unsigned int key);
 
 
 
@@ -253,6 +252,11 @@ namespace Urho3D
         Vector<SharedPtr<RigidBodyContactEntry>> contactEntryPool_;
         int contactEntryPoolCurIdx_ = 0;
         const int contactEntryPoolSize_ = 100;
+
+        unsigned int nextRigBodyPoolId_ = 0;
+
+
+
 
         void formContacts();
         void ParseContacts();

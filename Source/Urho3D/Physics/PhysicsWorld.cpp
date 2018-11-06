@@ -133,56 +133,73 @@ namespace Urho3D {
 
     }
 
-    Urho3D::RigidBodyContactEntry* PhysicsWorld::GetCreateBodyContactEntry(unsigned int key)
+    Urho3D::RigidBodyContactEntry* PhysicsWorld::GetBodyContactEntry(unsigned int index)
     {
-        RigidBodyContactEntry* entry = bodyContactMap_[key];
-        if (!entry) {
-
-            int initialPoolLookup = contactEntryPoolCurIdx_;
-            //get a contact entry from the pool:
-            entry = contactEntryPool_[contactEntryPoolCurIdx_];
-            int contactEntryPoolActualSize = contactEntryPool_.Size();
-            while (entry->hashKey_ != 0)
-            {
-                contactEntryPoolCurIdx_++;
-                if (contactEntryPoolCurIdx_ > contactEntryPoolActualSize - 1)
-                {
-                    contactEntryPoolCurIdx_ = 0;
-                }
-
-                if (initialPoolLookup == contactEntryPoolCurIdx_) {
-
-
-                    for (int i = 0; i < contactEntryPoolSize_; i++)
-                    {
-                        contactEntryPool_.Insert(contactEntryPool_.Size(), context_->CreateObject<RigidBodyContactEntry>());
-                    }
-
-                    URHO3D_LOGINFO("PhysicsWorld: Resizing Contact Entry Pool To: " + String(contactEntryPool_.Size()));
-                    //go to beggining of new chunk.
-                    contactEntryPoolCurIdx_ = contactEntryPoolActualSize;
-                }
-
-                //look again
-                entry = contactEntryPool_[contactEntryPoolCurIdx_];
-            }
-
-
-
-            SharedPtr<RigidBodyContactEntry> newContact = SharedPtr<RigidBodyContactEntry>(entry);
-            newContact->hashKey_ = key;
-            bodyContactMap_.Insert(Pair<unsigned int, SharedPtr<RigidBodyContactEntry>>(key, newContact));
-
-
-            //increment again for next time.
-            contactEntryPoolCurIdx_++;
-            if (contactEntryPoolCurIdx_ > contactEntryPoolSize_ - 1)
-            {
-                contactEntryPoolCurIdx_ = 0;
-            }
+        //first resize pool if we need to
+        while (index > contactEntryPool_.Size() - 1)
+        {
+            //for (int i = 0; i < contactEntryPoolSize_; i++)
+            //{
+                contactEntryPool_.Insert(contactEntryPool_.Size(), context_->CreateObject<RigidBodyContactEntry>());
+            ////}
+           // URHO3D_LOGINFO("PhysicsWorld: Resizing Contact Entry Pool To: " + String(contactEntryPool_.Size()));
         }
 
-        return entry;
+       // URHO3D_LOGINFO("PhysicsWorld: Resizing Contact Entry Pool To: " + String(contactEntryPool_.Size()) + " Body Count: " + String(rigidBodyComponentList.Size()));
+
+
+        return contactEntryPool_[index];
+
+
+
+        //RigidBodyContactEntry* entry = bodyContactMap_[key];
+        //if (!entry) {
+
+        //    int initialPoolLookup = contactEntryPoolCurIdx_;
+        //    //get a contact entry from the pool:
+        //    entry = contactEntryPool_[contactEntryPoolCurIdx_];
+        //    int contactEntryPoolActualSize = contactEntryPool_.Size();
+        //    while (entry->hashKey_ != 0)
+        //    {
+        //        contactEntryPoolCurIdx_++;
+        //        if (contactEntryPoolCurIdx_ > contactEntryPoolActualSize - 1)
+        //        {
+        //            contactEntryPoolCurIdx_ = 0;
+        //        }
+
+        //        if (initialPoolLookup == contactEntryPoolCurIdx_) {
+
+
+        //            for (int i = 0; i < contactEntryPoolSize_; i++)
+        //            {
+        //                contactEntryPool_.Insert(contactEntryPool_.Size(), context_->CreateObject<RigidBodyContactEntry>());
+        //            }
+
+        //            
+        //            //go to beggining of new chunk.
+        //            contactEntryPoolCurIdx_ = contactEntryPoolActualSize;
+        //        }
+
+        //        //look again
+        //        entry = contactEntryPool_[contactEntryPoolCurIdx_];
+        //    }
+
+
+
+        //    SharedPtr<RigidBodyContactEntry> newContact = SharedPtr<RigidBodyContactEntry>(entry);
+        //    newContact->hashKey_ = key;
+        //    bodyContactMap_.Insert(Pair<unsigned int, SharedPtr<RigidBodyContactEntry>>(key, newContact));
+
+
+        //    //increment again for next time.
+        //    contactEntryPoolCurIdx_++;
+        //    if (contactEntryPoolCurIdx_ > contactEntryPoolSize_ - 1)
+        //    {
+        //        contactEntryPoolCurIdx_ = 0;
+        //    }
+        //}
+
+        //return entry;
     }
 
     void PhysicsWorld::SetGravity(const Vector3& force)
@@ -307,6 +324,8 @@ namespace Urho3D {
 
     void PhysicsWorld::addRigidBody(RigidBody* body)
     {
+        body->contactPoolId_ = nextRigBodyPoolId_;
+        nextRigBodyPoolId_++;
         rigidBodyComponentList.Insert(0, WeakPtr<RigidBody>(body));
     }
 
@@ -437,22 +456,34 @@ namespace Urho3D {
                 }
 
 
+                //use cantor pairing function
+                int x = rigBody0->contactPoolId_;
+                int y = rigBody1->contactPoolId_;
 
-                unsigned int key = IntVector2(rigBody0->GetID(), rigBody1->GetID()).ToHash();
+                //if (x > y)
+                //{
+                //    x = rigBody1->contactPoolId_;
+                //    y = rigBody0->contactPoolId_;
+                //}
+
+
+                unsigned int key = ((x + y + 1)*(x + y)) / 2 + rigBody1->contactPoolId_;
+
+                //URHO3D_LOGINFO(String(x) + "," + String(y));
+
                 SharedPtr<RigidBodyContactEntry> contactEntry = nullptr;
 
 
 
-                contactEntry = GetCreateBodyContactEntry(key);
-
+                contactEntry = GetBodyContactEntry(x);
+                
 
                 
                 contactEntry->body0 = rigBody0;
                 contactEntry->body1 = rigBody1;
 
-
-                contactEntry->wakeFlag_ = true;
-                contactEntry->inContact_ = NewtonJointIsActive(curJoint);
+                contactEntry->expired_ = false;
+                contactEntry->wakeFlag_ = NewtonJointIsActive(curJoint);
                 contactEntry->numContacts = NewtonContactJointGetContactCount(curJoint);
 
                 if (contactEntry->numContacts > DEF_PHYSICS_MAX_CONTACT_POINTS)
@@ -460,7 +491,11 @@ namespace Urho3D {
                     URHO3D_LOGWARNING("Contact Entry Contact Count Greater Than DEF_PHYSICS_MAX_CONTACT_POINTS, consider increasing the limit.");
                 }
 
-
+                if (contactEntry->numContacts)
+                {
+                    int i = 2;
+                    bool s = NewtonJointIsActive(curJoint);
+                }
 
 
                 int contactIdx = 0;
@@ -519,140 +554,135 @@ namespace Urho3D {
         PODVector<unsigned int> removeKeys;
         VariantMap eventData;
         eventData[PhysicsCollisionStart::P_WORLD] = this;
-        for (HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>>::Iterator it = bodyContactMap_.Begin(); it != bodyContactMap_.End(); it++)
+
+
+
+        for (int i = 0; i < contactEntryPool_.Size(); i++)
         {
-            eventData[PhysicsCollisionStart::P_BODYA] = it->second_->body0;
-            eventData[PhysicsCollisionStart::P_BODYB] = it->second_->body1;
+            RigidBodyContactEntry* entry = contactEntryPool_[i];
 
-            eventData[PhysicsCollisionStart::P_CONTACT_DATA] = it->second_;
+            if(entry->expired_)
+                continue;
 
-            if (!it->second_->body0.Refs() || !it->second_->body1.Refs())//check expired
+            eventData[PhysicsCollisionStart::P_BODYA] = entry->body0;
+            eventData[PhysicsCollisionStart::P_BODYB] = entry->body1;
+
+            eventData[PhysicsCollisionStart::P_CONTACT_DATA] =entry;
+
+            if (!entry->body0.Refs() || !entry->body1.Refs())//check expired
             {
-                removeKeys += it->second_->hashKey_;
+                entry->expired_ = true;
             }
-            else if (!it->second_->inContact_)
+            else if (entry->wakeFlag_ && !entry->wakeFlagPrev_)//begin contact
             {
-                removeKeys += it->second_->hashKey_;
-            }
-            else if (it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//begin contact
-            {
-                it->second_->inContact_ = true;
-                if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
+                if (entry->body0->collisionEventMode_ &&entry->body1->collisionEventMode_) {
                     SendEvent(E_PHYSICSCOLLISIONSTART, eventData);
                 }
 
+                if (entry->body0->collisionEventMode_) {
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break; //it is possible someone deleted a body in the previous event.
 
-
-                if (it->second_->body0->collisionEventMode_) {
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break; //it is possible someone deleted a body in the previous event.
-
-                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
-                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
-                    it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
+                    eventData[NodeCollisionStart::P_OTHERNODE] =entry->body1->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] =entry->body1;
+                   entry->body0->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
                 }
 
 
-                if (it->second_->body1->collisionEventMode_) {
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                if (entry->body1->collisionEventMode_) {
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break;
 
-                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
-                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
-                    it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
+                    eventData[NodeCollisionStart::P_OTHERNODE] =entry->body0->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] =entry->body0;
+                   entry->body1->GetNode()->SendEvent(E_NODECOLLISIONSTART, eventData);
                 }
 
 
-                if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                if (entry->body0->collisionEventMode_ &&entry->body1->collisionEventMode_) {
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break;
 
                     //also send the E_NODECOLLISION event
                     SendEvent(E_PHYSICSCOLLISION, eventData);
                 }
 
-                if (it->second_->body0->collisionEventMode_) {
+                if (entry->body0->collisionEventMode_) {
 
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break;
 
-                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
-                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
-                    it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                    eventData[NodeCollisionStart::P_OTHERNODE] =entry->body1->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] =entry->body1;
+                   entry->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
                 }
 
 
-                if (it->second_->body1->collisionEventMode_) {
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                if (entry->body1->collisionEventMode_) {
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break;
 
-                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
-                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
-                    it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                    eventData[NodeCollisionStart::P_OTHERNODE] =entry->body0->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] =entry->body0;
+                   entry->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
                 }
 
 
             }
-            else if (!it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//end contact
+            else if (!entry->wakeFlag_ &&entry->wakeFlagPrev_)//end contact
             {
-                it->second_->inContact_ = false;
-                if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
+                if (entry->body0->collisionEventMode_ &&entry->body1->collisionEventMode_) {
                     SendEvent(E_PHYSICSCOLLISIONEND, eventData);
                 }
 
 
-                if (it->second_->body0->collisionEventMode_) {
+                if (entry->body0->collisionEventMode_) {
 
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
-                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
-                    it->second_->body0->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break;
+                    eventData[NodeCollisionStart::P_OTHERNODE] =entry->body1->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] =entry->body1;
+                   entry->body0->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
                 }
 
-                if (it->second_->body1->collisionEventMode_) {
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
-                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
-                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
-                    it->second_->body1->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
+                if (entry->body1->collisionEventMode_) {
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break;
+                    eventData[NodeCollisionStart::P_OTHERNODE] =entry->body0->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] =entry->body0;
+                   entry->body1->GetNode()->SendEvent(E_NODECOLLISIONEND, eventData);
                 }
             }
-            else if (it->second_->wakeFlag_ && it->second_->wakeFlagPrev_)//continued contact
+            else if (entry->wakeFlag_ &&entry->wakeFlagPrev_)//continued contact
             {
-                if (it->second_->body0->collisionEventMode_ && it->second_->body1->collisionEventMode_) {
+                if (entry->body0->collisionEventMode_ &&entry->body1->collisionEventMode_) {
                     SendEvent(E_PHYSICSCOLLISION, eventData);
                 }
 
 
 
-                if (it->second_->body0->collisionEventMode_) {
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                if (entry->body0->collisionEventMode_) {
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break;
 
-                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body1->GetNode();
-                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body1;
-                    it->second_->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                    eventData[NodeCollisionStart::P_OTHERNODE] =entry->body1->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] =entry->body1;
+                   entry->body0->GetNode()->SendEvent(E_NODECOLLISION, eventData);
                 }
 
-                if (it->second_->body1->collisionEventMode_) {
+                if (entry->body1->collisionEventMode_) {
 
-                    if (!it->second_->body0.Refs() || !it->second_->body1.Refs()) break;
+                    if (!entry->body0.Refs() || !entry->body1.Refs()) break;
 
-                    eventData[NodeCollisionStart::P_OTHERNODE] = it->second_->body0->GetNode();
-                    eventData[NodeCollisionStart::P_OTHERBODY] = it->second_->body0;
-                    it->second_->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
+                    eventData[NodeCollisionStart::P_OTHERNODE] =entry->body0->GetNode();
+                    eventData[NodeCollisionStart::P_OTHERBODY] =entry->body0;
+                   entry->body1->GetNode()->SendEvent(E_NODECOLLISION, eventData);
                 }
             }
-            else if (!it->second_->wakeFlag_ && !it->second_->wakeFlagPrev_)//no contact for one update. (mark for removal from the map)
+            else if (!entry->wakeFlag_ && !entry->wakeFlagPrev_)//no contact for one update. (mark for removal from the map)
             {
-                removeKeys += it->second_->hashKey_;
+                entry->expired_ = true;
             }
 
             //move on..
-            it->second_->wakeFlagPrev_ = it->second_->wakeFlag_;
-            it->second_->wakeFlag_ = false;
+           entry->wakeFlagPrev_ = entry->wakeFlag_;
+           entry->wakeFlag_ = false;
         }
 
 
-        //clean old contacts.
-        for (auto key : removeKeys)
-        {
-            bodyContactMap_[key]->hashKey_ = 0;
-            bodyContactMap_.Erase(key);
-        }
+
     }
 
 
@@ -1061,7 +1091,7 @@ namespace Urho3D {
     void RigidBodyContactEntry::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
     {
         //draw contact points
-        if (inContact_)
+        if (wakeFlag_)
         {
             for (int i = 0; i < numContacts; i++)
             {
