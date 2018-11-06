@@ -4,6 +4,7 @@
 #include "dVector.h"
 #include "../Scene/Node.h"
 
+
 class NewtonBody;
 
 namespace Urho3D
@@ -13,7 +14,7 @@ namespace Urho3D
     class Component;
     class PhysicsWorld;
     class CollisionShape;
-    class NewtonNodePhysicsGlue;
+    class RigidBodyContactEntry;
 
     /// Rigid body collision event signaling mode.
     enum RigidBodyCollisionEventMode
@@ -113,6 +114,14 @@ namespace Urho3D
             }
         }
         bool GetTriggerMode() const { return triggerMode_; }
+
+
+        void SetGenerateContacts(bool enable)
+        {
+            generateContacts_ = enable;
+        }
+        bool GetGenerateContacts() const { return generateContacts_; }
+
 
         ///enable or disable changes of the rigid body transform when the parent node changes. default is enabled.
         void SetRespondToNodeTransformChanges(bool enable) { respondToNodeTransformChange_ = enable; }
@@ -271,7 +280,11 @@ namespace Urho3D
         /// all currently used collision shape components.
         PODVector<CollisionShape*> collisionShapes_;
 
-        unsigned int contactPoolId_ = 0;
+
+        HashMap<unsigned int, RigidBodyContactEntry*> contactEntries_;
+        RigidBodyContactEntry* GetCreateContactEntry(RigidBody* otherBody);
+        void CleanContactEntries();
+
 
         bool sceneRootBodyMode_ = false;
         ///Continuous Collision
@@ -323,6 +336,8 @@ namespace Urho3D
 
         bool triggerMode_ = false;
 
+        bool generateContacts_ = true;
+
         ///dirty flag
         bool needsRebuilt_ = true;
         /// flag indicating the newton body has changed transforms and needs to update the node.
@@ -368,7 +383,6 @@ namespace Urho3D
 
 
         //interpolation
-
         void updateInterpolatedTransform();
         Vector3 targetNodePos_;
         Quaternion targetNodeRotation_;

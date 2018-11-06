@@ -142,9 +142,6 @@ namespace Urho3D
 
 
 
-        RigidBodyContactEntry* GetBodyContactEntry(unsigned int key);
-
-
 
 
         
@@ -202,9 +199,9 @@ namespace Urho3D
         Vector3 gravity_ = DEF_GRAVITY;
 
         /// number of thread to allow newton to use
-        int newtonThreadCount_ = 4;
+        int newtonThreadCount_ = 8;
         /// number of iterations newton will internally use.
-        int iterationCount_ = 8;
+        int iterationCount_ = 4;
         /// number of substeps per scene subsystem update. (1,2,4,8)
         int subStepFactor = 2;
 
@@ -251,8 +248,6 @@ namespace Urho3D
         Vector<SharedPtr<RigidBodyContactEntry>> contactEntryPool_;
         int contactEntryPoolCurIdx_ = 0;
         const int contactEntryPoolSize_ = 100;
-
-        unsigned int nextRigBodyPoolId_ = 0;
 
 
 

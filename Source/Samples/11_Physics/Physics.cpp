@@ -232,7 +232,7 @@ void Physics::SubscribeToEvents()
     SubscribeToEvent(E_MOUSEBUTTONDOWN, URHO3D_HANDLER(Physics, HandleMouseButtonDown));
 
 
-    SubscribeToEvent(E_PHYSICSCOLLISIONSTART, URHO3D_HANDLER(Physics, HandleCollisionStart));
+    //SubscribeToEvent(E_PHYSICSCOLLISIONSTART, URHO3D_HANDLER(Physics, HandleCollisionStart));
 
 
 }
@@ -896,6 +896,8 @@ void Physics::FireSmallBall()
         node->GetComponent<RigidBody>()->SetContinuousCollision(false);
         node->GetComponent<RigidBody>()->SetLinearDamping(0.01f);
         node->GetComponent<RigidBody>()->SetMassScale(Random(1.0f, 10.0f));
+        node->GetComponent<RigidBody>()->SetGenerateContacts(false);
+
     }
 
     //if (Random(2) == 0)
