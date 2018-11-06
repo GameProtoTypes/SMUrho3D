@@ -248,7 +248,6 @@ namespace Urho3D
         void applyNewtonWorldSettings();
 
 
-        HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>> bodyContactMap_;
         Vector<SharedPtr<RigidBodyContactEntry>> contactEntryPool_;
         int contactEntryPoolCurIdx_ = 0;
         const int contactEntryPoolSize_ = 100;

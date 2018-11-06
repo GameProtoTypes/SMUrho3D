@@ -260,10 +260,10 @@ namespace Urho3D {
             }
 
             //draw debug geometry for contacts
-            for (HashMap<unsigned int, SharedPtr<RigidBodyContactEntry>>::Iterator i = bodyContactMap_.Begin(); i != bodyContactMap_.End(); ++i)
+            for (int i = 0; i < contactEntryPool_.Size(); i++)
             {
-               
-                   i->second_->DrawDebugGeometry(debug, depthTest);
+               if(!contactEntryPool_[i]->expired_)
+                   contactEntryPool_[i]->DrawDebugGeometry(debug, depthTest);
             }
 
 
