@@ -232,8 +232,6 @@ namespace Urho3D
         /// number of substeps per scene subsystem update. (1,2,4,8)
         int subSteps_ = 2;
 
-        float timeStepTarget_;
-
         virtual void OnSceneSet(Scene* scene) override;
 
         void addCollisionShape(CollisionShape* collision);
