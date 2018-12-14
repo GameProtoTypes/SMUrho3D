@@ -116,7 +116,11 @@ int Application::Run()
         // Platforms other than iOS/tvOS and Emscripten run a blocking main loop
 #if !defined(IOS) && !defined(TVOS) && !defined(__EMSCRIPTEN__)
         while (!engine_->IsExiting())
+        {
             engine_->RunFrame();
+
+        }
+            
 
         Stop();
         // iOS/tvOS will setup a timer for running animation frames so eg. Game Center can run. In this case we do not

@@ -100,16 +100,11 @@ extern const char* logLevelPrefixes[];
 
 Engine::Engine(Context* context) :
     Object(context),
-    timeStep_(0.0f),
-    timeStepSmoothing_(2),
-    minFps_(10),
 #if defined(IOS) || defined(TVOS) || defined(__ANDROID__) || defined(__arm__) || defined(__aarch64__)
     maxFps_(60),
     maxInactiveFps_(10),
     pauseMinimized_(true),
 #else
-    maxFps_(200),
-    maxInactiveFps_(60),
     pauseMinimized_(false),
 #endif
 #ifdef URHO3D_TESTING
@@ -209,8 +204,8 @@ bool Engine::Initialize(const VariantMap& parameters)
     GetSubsystem<Time>()->SetTimerPeriod(1);
 
     // Configure max FPS
-    if (GetParameter(parameters, EP_FRAME_LIMITER, true) == false)
-        SetMaxFps(0);
+    //if (GetParameter(parameters, EP_FRAME_LIMITER, true) == false)
+    //    SetMaxFps(0);
 
     // Set amount of worker threads according to the available physical CPU cores. Using also hyperthreaded cores results in
     // unpredictable extra synchronization overhead. Also reserve one core for the main thread
@@ -478,6 +473,12 @@ bool Engine::InitializeResourceCache(const VariantMap& parameters, bool removeOl
 
 void Engine::RunFrame()
 {
+    while (frameTimer_.GetUSec(false) < 16666.66667f)
+    {
+    }
+    frameTimer_.Reset();
+
+
     URHO3D_PROFILE("RunFrame");
     {
         assert(initialized_);
@@ -523,8 +524,6 @@ void Engine::RunFrame()
 
         Render();
     }
-    ApplyFrameLimit();
-
     time->EndFrame();
 
     URHO3D_PROFILE_FRAME();
@@ -570,25 +569,7 @@ DebugHud* Engine::CreateDebugHud()
 #endif
 }
 
-void Engine::SetTimeStepSmoothing(int frames)
-{
-    timeStepSmoothing_ = (unsigned)Clamp(frames, 1, 20);
-}
 
-void Engine::SetMinFps(int fps)
-{
-    minFps_ = (unsigned)Max(fps, 0);
-}
-
-void Engine::SetMaxFps(int fps)
-{
-    maxFps_ = (unsigned)Max(fps, 0);
-}
-
-void Engine::SetMaxInactiveFps(int fps)
-{
-    maxInactiveFps_ = (unsigned)Max(fps, 0);
-}
 
 void Engine::SetPauseMinimized(bool enable)
 {
@@ -741,80 +722,6 @@ void Engine::Render()
     graphics->EndFrame();
 }
 
-void Engine::ApplyFrameLimit()
-{
-    if (!initialized_)
-        return;
-
-    unsigned maxFps = maxFps_;
-    auto* input = GetSubsystem<Input>();
-    if (input && !input->HasFocus())
-        maxFps = Min(maxInactiveFps_, maxFps);
-
-    long long elapsed = 0;
-
-#ifndef __EMSCRIPTEN__
-    // Perform waiting loop if maximum FPS set
-#if !defined(IOS) && !defined(TVOS)
-    if (maxFps)
-#else
-    // If on iOS/tvOS and target framerate is 60 or above, just let the animation callback handle frame timing
-    // instead of waiting ourselves
-    if (maxFps < 60)
-#endif
-    {
-        URHO3D_PROFILE("ApplyFrameLimit");
-
-        long long targetMax = 1000000LL / maxFps;
-
-        for (;;)
-        {
-            elapsed = frameTimer_.GetUSec(false);
-            if (elapsed >= targetMax)
-                break;
-
-            // Sleep if 1 ms or more off the frame limiting goal
-            if (targetMax - elapsed >= 1000LL)
-            {
-                auto sleepTime = (unsigned)((targetMax - elapsed) / 1000LL);
-                Time::Sleep(sleepTime);
-            }
-        }
-    }
-#endif
-
-    elapsed = frameTimer_.GetUSec(true);
-#ifdef URHO3D_TESTING
-    if (timeOut_ > 0)
-    {
-        timeOut_ -= elapsed;
-        if (timeOut_ <= 0)
-            Exit();
-    }
-#endif
-
-    // If FPS lower than minimum, clamp elapsed time
-    if (minFps_)
-    {
-        long long targetMin = 1000000LL / minFps_;
-        if (elapsed > targetMin)
-            elapsed = targetMin;
-    }
-
-    // Perform timestep smoothing
-    timeStep_ = 0.0f;
-    lastTimeSteps_.Push(elapsed / 1000000.0f);
-    if (lastTimeSteps_.Size() > timeStepSmoothing_)
-    {
-        // If the smoothing configuration was changed, ensure correct amount of samples
-        lastTimeSteps_.Erase(0, lastTimeSteps_.Size() - timeStepSmoothing_);
-        for (unsigned i = 0; i < lastTimeSteps_.Size(); ++i)
-            timeStep_ += lastTimeSteps_[i];
-        timeStep_ /= lastTimeSteps_.Size();
-    }
-    else
-        timeStep_ = lastTimeSteps_.Back();
-}
 
 void Engine::DefineParameters(CLI::App& commandLine, VariantMap& engineParameters)
 {
