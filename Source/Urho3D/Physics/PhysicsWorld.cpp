@@ -52,6 +52,8 @@ namespace Urho3D {
             contactEntryPool_.Insert(0, context->CreateObject<RigidBodyContactEntry>());
         }
 
+        //set timestep target to max fps
+        timeStepTarget_ = 1.0f / GetSubsystem<Engine>()->GetMaxFps();
     }
 
     PhysicsWorld::~PhysicsWorld()
