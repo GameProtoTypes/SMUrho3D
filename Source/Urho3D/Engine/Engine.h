@@ -53,8 +53,8 @@ public:
     bool Initialize(const VariantMap& parameters);
     /// Reinitialize resource cache subsystem using parameters given. Implicitly called by Initialize. Return true if successful.
     bool InitializeResourceCache(const VariantMap& parameters, bool removeOld = true);
-    /// Run one frame.
-    void RunFrame();
+    /// Run one frame. optionally render.  if realTime is true the function will wait until the current timestep has elapsed.
+    void RunFrame(bool render = true, bool realTime = true);
     /// Create the console and return it. May return null if engine configuration does not allow creation (headless mode.)
     Console* CreateConsole();
     /// Create the debug hud.
@@ -76,7 +76,7 @@ public:
     void DumpMemory();
 
     /// Get timestep of the next frame. Updated by ApplyFrameLimit().
-    float GetNextTimeStep() const { return timeStep_; }
+    float GetTimeStep() const { return timeStep_; }
 
     /// Return whether to pause update events and audio when minimized.
     bool GetPauseMinimized() const { return pauseMinimized_; }

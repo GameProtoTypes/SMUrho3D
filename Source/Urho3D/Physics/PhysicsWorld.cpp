@@ -81,7 +81,7 @@ namespace Urho3D {
         }
 
         //set timestep target to max fps
-        timeStepTarget_ = 1.0f / GetSubsystem<Engine>()->GetNextTimeStep();
+        timeStepTarget_ = GetSubsystem<Engine>()->GetTimeStep();
     }
 
     PhysicsWorld::~PhysicsWorld()
@@ -572,21 +572,10 @@ namespace Urho3D {
 
     void PhysicsWorld::HandleSceneUpdate(StringHash eventType, VariantMap& eventData)
     {
-       sceneUpdated_ = true;
+
 
        float timeStep = eventData[SceneSubsystemUpdate::P_TIMESTEP].GetFloat();
        timeStepTarget_ = timeStep;
-
-       if (timeStep <= 0.0001f) {
-           return;
-       }
-
-       //move the timestep target slowely towards the time step we actually get.  We dont want any sudden changes given to newton. (in fact ideally it is constant)
-       if(timeStepTarget_ < timeStep)
-           timeStepTarget_ += (timeStep - timeStepTarget_) * (1.0f / 32.0f);
-       else if(timeStepTarget_ > timeStep)
-           timeStepTarget_ += (timeStep - timeStepTarget_) * (1.0f / 32.0f);
-
 
 
 
