@@ -287,7 +287,6 @@ namespace Urho3D
         void HandleSceneUpdate(StringHash eventType, VariantMap& eventData);
 
         void rebuildDirtyPhysicsComponents();
-        bool sceneUpdated_ = false;
         bool simulationStarted_ = false;
 
         /// Internal newton world

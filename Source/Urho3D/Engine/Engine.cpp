@@ -471,13 +471,21 @@ bool Engine::InitializeResourceCache(const VariantMap& parameters, bool removeOl
     return true;
 }
 
-void Engine::RunFrame()
+void Engine::RunFrame(bool render, bool realTime)
 {
-    while (frameTimer_.GetUSec(false) < 16666.66667f)
-    {
-    }
-    frameTimer_.Reset();
+    if (realTime) {
+        while (frameTimer_.GetUSec(false) < timeStep_*1e6)
+        {
+            float bufferTimeS = timeStep_ / 16.0f;
 
+            if(frameTimer_.GetUSec(false) < timeStep_*1e6 - bufferTimeS*1e6)
+                Time::Sleep((timeStep_*1e6 - frameTimer_.GetUSec(false))/2000.0f);//sleep until the time is closer
+        }
+
+
+
+        frameTimer_.Reset();
+    }
 
     URHO3D_PROFILE("RunFrame");
     {
@@ -522,7 +530,8 @@ void Engine::RunFrame()
             Update();
         }
 
-        Render();
+        if(render)
+            Render();
     }
     time->EndFrame();
 
