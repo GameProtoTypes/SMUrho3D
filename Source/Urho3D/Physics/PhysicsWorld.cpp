@@ -577,6 +577,7 @@ namespace Urho3D {
        float timeStep = eventData[SceneSubsystemUpdate::P_TIMESTEP].GetFloat();
        timeStepTarget_ = timeStep;
 
+       //URHO3D_LOGINFO(String(timeStep));
 
 
        //do the update.
