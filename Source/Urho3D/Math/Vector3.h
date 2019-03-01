@@ -153,7 +153,7 @@ public:
     unsigned ToHash() const { return (unsigned)x_ * 31 * 31 + (unsigned)y_ * 31 + (unsigned)z_; }
 
     /// Return length.
-    float Length() const { return sqrtf((float)(x_ * x_ + y_ * y_ + z_ * z_)); }
+    UFloat Length() const { return sqrtf((UFloat)(x_ * x_ + y_ * y_ + z_ * z_)); }
 
     /// X coordinate.
     int x_;
@@ -196,7 +196,7 @@ public:
     Vector3(const Vector3& vector) noexcept = default;
 
     /// Construct from a two-dimensional vector and the Z coordinate.
-    Vector3(const Vector2& vector, float z) noexcept :
+    Vector3(const Vector2& vector, UFloat z) noexcept :
         x_(vector.x_),
         y_(vector.y_),
         z_(z)
@@ -213,14 +213,14 @@ public:
 
     /// Construct from an IntVector3.
     explicit Vector3(const IntVector3& vector) noexcept :
-        x_((float)vector.x_),
-        y_((float)vector.y_),
-        z_((float)vector.z_)
+        x_((UFloat)vector.x_),
+        y_((UFloat)vector.y_),
+        z_((UFloat)vector.z_)
     {
     }
 
     /// Construct from coordinates.
-    Vector3(float x, float y, float z) noexcept :
+    Vector3(UFloat x, UFloat y, UFloat z) noexcept :
         x_(x),
         y_(y),
         z_(z)
@@ -228,10 +228,18 @@ public:
     }
 
     /// Construct from two-dimensional coordinates (for Urho2D).
-    Vector3(float x, float y) noexcept :
+    Vector3(UFloat x, UFloat y) noexcept :
         x_(x),
         y_(y),
         z_(0.0f)
+    {
+    }
+
+    /// Construct from a UFloat array.
+    explicit Vector3(const UFloat* data) noexcept :
+        x_(data[0]),
+        y_(data[1]),
+        z_(data[2])
     {
     }
 
@@ -262,13 +270,13 @@ public:
     Vector3 operator -(const Vector3& rhs) const { return Vector3(x_ - rhs.x_, y_ - rhs.y_, z_ - rhs.z_); }
 
     /// Multiply with a scalar.
-    Vector3 operator *(float rhs) const { return Vector3(x_ * rhs, y_ * rhs, z_ * rhs); }
+    Vector3 operator *(UFloat rhs) const { return Vector3(x_ * rhs, y_ * rhs, z_ * rhs); }
 
     /// Multiply with a vector.
     Vector3 operator *(const Vector3& rhs) const { return Vector3(x_ * rhs.x_, y_ * rhs.y_, z_ * rhs.z_); }
 
     /// Divide by a scalar.
-    Vector3 operator /(float rhs) const { return Vector3(x_ / rhs, y_ / rhs, z_ / rhs); }
+    Vector3 operator /(UFloat rhs) const { return Vector3(x_ / rhs, y_ / rhs, z_ / rhs); }
 
     /// Divide by a vector.
     Vector3 operator /(const Vector3& rhs) const { return Vector3(x_ / rhs.x_, y_ / rhs.y_, z_ / rhs.z_); }
@@ -292,7 +300,7 @@ public:
     }
 
     /// Multiply-assign a scalar.
-    Vector3& operator *=(float rhs)
+    Vector3& operator *=(UFloat rhs)
     {
         x_ *= rhs;
         y_ *= rhs;
@@ -310,9 +318,9 @@ public:
     }
 
     /// Divide-assign a scalar.
-    Vector3& operator /=(float rhs)
+    Vector3& operator /=(UFloat rhs)
     {
-        float invRhs = 1.0f / rhs;
+        UFloat invRhs = 1.0f / rhs;
         x_ *= invRhs;
         y_ *= invRhs;
         z_ *= invRhs;
@@ -331,10 +339,10 @@ public:
     /// Normalize to unit length.
     void Normalize()
     {
-        float lenSquared = LengthSquared();
-        if (!Urho3D::Equals(lenSquared, 1.0f) && lenSquared > 0.0f)
+        UFloat lenSquared = LengthSquared();
+        if (!Urho3D::Equals(lenSquared, UFloat(1.0f)) && lenSquared > 0.0f)
         {
-            float invLen = 1.0f / sqrtf(lenSquared);
+            UFloat invLen = 1.0f / sqrtf(lenSquared);
             x_ *= invLen;
             y_ *= invLen;
             z_ *= invLen;
@@ -342,22 +350,22 @@ public:
     }
 
     /// Return length.
-    float Length() const { return sqrtf(x_ * x_ + y_ * y_ + z_ * z_); }
+    UFloat Length() const { return sqrtf(x_ * x_ + y_ * y_ + z_ * z_); }
 
     /// Return squared length.
-    float LengthSquared() const { return x_ * x_ + y_ * y_ + z_ * z_; }
+    UFloat LengthSquared() const { return x_ * x_ + y_ * y_ + z_ * z_; }
 
     /// Calculate dot product.
-    float DotProduct(const Vector3& rhs) const { return x_ * rhs.x_ + y_ * rhs.y_ + z_ * rhs.z_; }
+    UFloat DotProduct(const Vector3& rhs) const { return x_ * rhs.x_ + y_ * rhs.y_ + z_ * rhs.z_; }
 
     /// Calculate absolute dot product.
-    float AbsDotProduct(const Vector3& rhs) const
+    UFloat AbsDotProduct(const Vector3& rhs) const
     {
         return Urho3D::Abs(x_ * rhs.x_) + Urho3D::Abs(y_ * rhs.y_) + Urho3D::Abs(z_ * rhs.z_);
     }
 
     /// Project direction vector onto axis.
-    float ProjectOntoAxis(const Vector3& axis) const { return DotProduct(axis.Normalized()); }
+    UFloat ProjectOntoAxis(const Vector3& axis) const { return DotProduct(axis.Normalized()); }
 
     /// Project position vector onto plane with given origin and normal.
     Vector3 ProjectOntoPlane(const Vector3& origin, const Vector3& normal) const
@@ -370,20 +378,20 @@ public:
     Vector3 ProjectOntoLine(const Vector3& from, const Vector3& to, bool clamped = false) const
     {
         const Vector3 direction = to - from;
-        const float lengthSquared = direction.LengthSquared();
-        float factor = (*this - from).DotProduct(direction) / lengthSquared;
+        const UFloat lengthSquared = direction.LengthSquared();
+        UFloat factor = (*this - from).DotProduct(direction) / lengthSquared;
 
         if (clamped)
-            factor = Clamp(factor, 0.0f, 1.0f);
+            factor = Clamp(factor, UFloat(0.0f), UFloat(1.0f));
 
         return from + direction * factor;
     }
 
     /// Calculate distance to another position vector.
-    float DistanceToPoint(const Vector3& point) const { return (*this - point).Length(); }
+    UFloat DistanceToPoint(const Vector3& point) const { return (*this - point).Length(); }
 
     /// Calculate distance to the plane with given origin and normal.
-    float DistanceToPlane(const Vector3& origin, const Vector3& normal) const { return (*this - origin).ProjectOntoAxis(normal); }
+    UFloat DistanceToPlane(const Vector3& origin, const Vector3& normal) const { return (*this - origin).ProjectOntoAxis(normal); }
 
     /// Make vector orthogonal to the axis.
     Vector3 Orthogonalize(const Vector3& axis) const { return axis.CrossProduct(*this).CrossProduct(axis).Normalized(); }
@@ -402,7 +410,7 @@ public:
     Vector3 Abs() const { return Vector3(Urho3D::Abs(x_), Urho3D::Abs(y_), Urho3D::Abs(z_)); }
 
     /// Linear interpolation with another vector.
-    Vector3 Lerp(const Vector3& rhs, float t) const { return *this * (1.0f - t) + rhs * t; }
+    Vector3 Lerp(const Vector3& rhs, UFloat t) const { return *this * (1.0f - t) + rhs * t; }
 
     /// Test for equality with another vector with epsilon.
     bool Equals(const Vector3& rhs) const
@@ -411,7 +419,7 @@ public:
     }
 
     /// Returns the angle between this vector and another vector in degrees.
-    float Angle(const Vector3& rhs) const { return Urho3D::Acos(DotProduct(rhs) / (Length() * rhs.Length())); }
+    UFloat Angle(const Vector3& rhs) const { return Urho3D::Acos(DotProduct(rhs) / (Length() * rhs.Length())); }
 
     /// Return whether is NaN.
     bool IsNaN() const { return Urho3D::IsNaN(x_) || Urho3D::IsNaN(y_) || Urho3D::IsNaN(z_); }
@@ -419,10 +427,14 @@ public:
     /// Return normalized to unit length.
     Vector3 Normalized() const
     {
-        float lenSquared = LengthSquared();
-        if (!Urho3D::Equals(lenSquared, 1.0f) && lenSquared > 0.0f)
+        UFloat lenSquared = LengthSquared();
+        if (!Urho3D::Equals(lenSquared, UFloat(1.0f)) && lenSquared > 0.0f)
         {
-            float invLen = 1.0f / sqrtf(lenSquared);
+#ifdef URHO3D_DOUBLE_PRECISION
+            UFloat invLen = 1.0f / sqrt(lenSquared);
+#else
+            UFloat invLen = 1.0f / sqrtf(lenSquared);
+#endif
             return *this * invLen;
         }
         else
@@ -430,7 +442,7 @@ public:
     }
 
     /// Return float data.
-    const float* Data() const { return &x_; }
+    const UFloat* Data() const { return &x_; }
 
     /// Return as string.
     String ToString() const;
@@ -447,11 +459,11 @@ public:
     }
 
     /// X coordinate.
-    float x_;
+    UFloat x_;
     /// Y coordinate.
-    float y_;
+    UFloat y_;
     /// Z coordinate.
-    float z_;
+    UFloat z_;
 
     /// Zero vector.
     static const Vector3 ZERO;
@@ -472,7 +484,7 @@ public:
 };
 
 /// Multiply Vector3 with a scalar.
-inline Vector3 operator *(float lhs, const Vector3& rhs) { return rhs * lhs; }
+inline Vector3 operator *(UFloat lhs, const Vector3& rhs) { return rhs * lhs; }
 
 /// Multiply IntVector3 with a scalar.
 inline IntVector3 operator *(int lhs, const IntVector3& rhs) { return rhs * lhs; }
@@ -511,6 +523,6 @@ inline IntVector3 VectorMin(const IntVector3& lhs, const IntVector3& rhs) { retu
 inline IntVector3 VectorMax(const IntVector3& lhs, const IntVector3& rhs) { return IntVector3(Max(lhs.x_, rhs.x_), Max(lhs.y_, rhs.y_), Max(lhs.z_, rhs.z_)); }
 
 /// Return a random value from [0, 1) from 3-vector seed.
-inline float StableRandom(const Vector3& seed) { return StableRandom(Vector2(StableRandom(Vector2(seed.x_, seed.y_)), seed.z_)); }
+inline UFloat StableRandom(const Vector3& seed) { return StableRandom(Vector2(StableRandom(Vector2(seed.x_, seed.y_)), seed.z_)); }
 
 }

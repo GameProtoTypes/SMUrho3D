@@ -44,7 +44,7 @@ public:
     Vector4(const Vector4& vector) noexcept = default;
 
     /// Construct from a 3-dimensional vector and the W coordinate.
-    Vector4(const Vector3& vector, float w) noexcept :
+    Vector4(const Vector3& vector, UFloat w) noexcept :
         x_(vector.x_),
         y_(vector.y_),
         z_(vector.z_),
@@ -53,7 +53,7 @@ public:
     }
 
     /// Construct from coordinates.
-    Vector4(float x, float y, float z, float w) noexcept :
+    Vector4(UFloat x, UFloat y, UFloat z, UFloat w) noexcept :
         x_(x),
         y_(y),
         z_(z),
@@ -62,7 +62,7 @@ public:
     }
 
     /// Construct from a float array.
-    explicit Vector4(const float* data) noexcept :
+    explicit Vector4(const UFloat* data) noexcept :
         x_(data[0]),
         y_(data[1]),
         z_(data[2]),
@@ -89,13 +89,13 @@ public:
     Vector4 operator -(const Vector4& rhs) const { return Vector4(x_ - rhs.x_, y_ - rhs.y_, z_ - rhs.z_, w_ - rhs.w_); }
 
     /// Multiply with a scalar.
-    Vector4 operator *(float rhs) const { return Vector4(x_ * rhs, y_ * rhs, z_ * rhs, w_ * rhs); }
+    Vector4 operator *(UFloat rhs) const { return Vector4(x_ * rhs, y_ * rhs, z_ * rhs, w_ * rhs); }
 
     /// Multiply with a vector.
     Vector4 operator *(const Vector4& rhs) const { return Vector4(x_ * rhs.x_, y_ * rhs.y_, z_ * rhs.z_, w_ * rhs.w_); }
 
     /// Divide by a scalar.
-    Vector4 operator /(float rhs) const { return Vector4(x_ / rhs, y_ / rhs, z_ / rhs, w_ / rhs); }
+    Vector4 operator /(UFloat rhs) const { return Vector4(x_ / rhs, y_ / rhs, z_ / rhs, w_ / rhs); }
 
     /// Divide by a vector.
     Vector4 operator /(const Vector4& rhs) const { return Vector4(x_ / rhs.x_, y_ / rhs.y_, z_ / rhs.z_, w_ / rhs.w_); }
@@ -121,7 +121,7 @@ public:
     }
 
     /// Multiply-assign a scalar.
-    Vector4& operator *=(float rhs)
+    Vector4& operator *=(UFloat rhs)
     {
         x_ *= rhs;
         y_ *= rhs;
@@ -141,9 +141,9 @@ public:
     }
 
     /// Divide-assign a scalar.
-    Vector4& operator /=(float rhs)
+    Vector4& operator /=(UFloat rhs)
     {
-        float invRhs = 1.0f / rhs;
+        UFloat invRhs = 1.0f / rhs;
         x_ *= invRhs;
         y_ *= invRhs;
         z_ *= invRhs;
@@ -162,28 +162,28 @@ public:
     }
 
     /// Return const value by index.
-    float operator[](unsigned index) const { return (&x_)[index]; }
+    UFloat operator[](unsigned index) const { return (&x_)[index]; }
 
     /// Return mutable value by index.
-    float& operator[](unsigned index) { return (&x_)[index]; }
+    UFloat& operator[](unsigned index) { return (&x_)[index]; }
 
     /// Calculate dot product.
-    float DotProduct(const Vector4& rhs) const { return x_ * rhs.x_ + y_ * rhs.y_ + z_ * rhs.z_ + w_ * rhs.w_; }
+    UFloat DotProduct(const Vector4& rhs) const { return x_ * rhs.x_ + y_ * rhs.y_ + z_ * rhs.z_ + w_ * rhs.w_; }
 
     /// Calculate absolute dot product.
-    float AbsDotProduct(const Vector4& rhs) const
+    UFloat AbsDotProduct(const Vector4& rhs) const
     {
         return Urho3D::Abs(x_ * rhs.x_) + Urho3D::Abs(y_ * rhs.y_) + Urho3D::Abs(z_ * rhs.z_) + Urho3D::Abs(w_ * rhs.w_);
     }
 
     /// Project vector onto axis.
-    float ProjectOntoAxis(const Vector3& axis) const { return DotProduct(Vector4(axis.Normalized(), 0.0f)); }
+    UFloat ProjectOntoAxis(const Vector3& axis) const { return DotProduct(Vector4(axis.Normalized(), 0.0f)); }
 
     /// Return absolute vector.
     Vector4 Abs() const { return Vector4(Urho3D::Abs(x_), Urho3D::Abs(y_), Urho3D::Abs(z_), Urho3D::Abs(w_)); }
 
     /// Linear interpolation with another vector.
-    Vector4 Lerp(const Vector4& rhs, float t) const { return *this * (1.0f - t) + rhs * t; }
+    Vector4 Lerp(const Vector4& rhs, UFloat t) const { return *this * (1.0f - t) + rhs * t; }
 
     /// Test for equality with another vector with epsilon.
     bool Equals(const Vector4& rhs) const
@@ -195,7 +195,7 @@ public:
     bool IsNaN() const { return Urho3D::IsNaN(x_) || Urho3D::IsNaN(y_) || Urho3D::IsNaN(z_) || Urho3D::IsNaN(w_); }
 
     /// Return float data.
-    const float* Data() const { return &x_; }
+    const UFloat* Data() const { return &x_; }
 
     /// Return as string.
     String ToString() const;
@@ -213,13 +213,13 @@ public:
     }
 
     /// X coordinate.
-    float x_;
+    UFloat x_;
     /// Y coordinate.
-    float y_;
+    UFloat y_;
     /// Z coordinate.
-    float z_;
+    UFloat z_;
     /// W coordinate.
-    float w_;
+    UFloat w_;
 
     /// Zero vector.
     static const Vector4 ZERO;
@@ -228,7 +228,7 @@ public:
 };
 
 /// Multiply Vector4 with a scalar.
-inline Vector4 operator *(float lhs, const Vector4& rhs) { return rhs * lhs; }
+inline Vector4 operator *(UFloat lhs, const Vector4& rhs) { return rhs * lhs; }
 
 /// Per-component linear interpolation between two 4-vectors.
 inline Vector4 VectorLerp(const Vector4& lhs, const Vector4& rhs, const Vector4& t) { return lhs + (rhs - lhs) * t; }

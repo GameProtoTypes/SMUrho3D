@@ -113,7 +113,7 @@ void Sphere::Merge(const Sphere& sphere)
     }
 
     Vector3 offset = sphere.center_ - center_;
-    float dist = offset.Length();
+    UFloat dist = offset.Length();
 
     // If sphere fits inside, do nothing
     if (dist + sphere.radius_ < radius_)
@@ -138,9 +138,9 @@ void Sphere::Merge(const Sphere& sphere)
 
 Intersection Sphere::IsInside(const BoundingBox& box) const
 {
-    float radiusSquared = radius_ * radius_;
-    float distSquared = 0;
-    float temp;
+    UFloat radiusSquared = radius_ * radius_;
+    UFloat distSquared = 0;
+    UFloat temp;
     Vector3 min = box.min_;
     Vector3 max = box.max_;
 
@@ -211,9 +211,9 @@ Intersection Sphere::IsInside(const BoundingBox& box) const
 
 Intersection Sphere::IsInsideFast(const BoundingBox& box) const
 {
-    float radiusSquared = radius_ * radius_;
-    float distSquared = 0;
-    float temp;
+    UFloat radiusSquared = radius_ * radius_;
+    UFloat distSquared = 0;
+    UFloat temp;
     Vector3 min = box.min_;
     Vector3 max = box.max_;
 
@@ -254,7 +254,7 @@ Intersection Sphere::IsInsideFast(const BoundingBox& box) const
         return INSIDE;
 }
 
-Vector3 Sphere::GetLocalPoint(float theta, float phi) const
+Vector3 Sphere::GetLocalPoint(UFloat theta, UFloat phi) const
 {
     return Vector3(
         radius_ * Sin(theta) * Sin(phi),

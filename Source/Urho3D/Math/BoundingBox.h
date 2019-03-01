@@ -72,7 +72,7 @@ public:
     }
 
     /// Construct from minimum and maximum floats (all dimensions same.)
-    BoundingBox(float min, float max) noexcept :
+    BoundingBox(UFloat min, UFloat max) noexcept :
         min_(Vector3(min, min, min)),
         max_(Vector3(max, max, max))
     {
@@ -160,7 +160,7 @@ public:
     }
 
     /// Define from minimum and maximum floats (all dimensions same.)
-    void Define(float min, float max)
+    void Define(UFloat min, UFloat max)
     {
         min_ = Vector3(min, min, min);
         max_ = Vector3(max, max, max);
@@ -274,7 +274,7 @@ public:
     /// Return projected by a 4x4 projection matrix.
     Rect Projected(const Matrix4& projection) const;
     /// Return distance to point.
-    float DistanceToPoint(const Vector3& point) const;
+    UFloat DistanceToPoint(const Vector3& point) const;
 
     /// Test if a point is inside.
     Intersection IsInside(const Vector3& point) const
@@ -319,10 +319,10 @@ public:
 
     /// Minimum vector.
     Vector3 min_;
-    float dummyMin_{}; // This is never used, but exists to pad the min_ value to four floats.
+    UFloat dummyMin_{}; // This is never used, but exists to pad the min_ value to four floats.
     /// Maximum vector.
     Vector3 max_;
-    float dummyMax_{}; // This is never used, but exists to pad the max_ value to four floats.
+    UFloat dummyMax_{}; // This is never used, but exists to pad the max_ value to four floats.
 };
 
 }

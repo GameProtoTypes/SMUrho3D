@@ -44,8 +44,8 @@ public:
     Matrix2(const Matrix2& matrix) noexcept = default;
 
     /// Construct from values.
-    Matrix2(float v00, float v01,
-            float v10, float v11) noexcept :
+    Matrix2(UFloat v00, UFloat v01,
+            UFloat v10, UFloat v11) noexcept :
         m00_(v00),
         m01_(v01),
         m10_(v10),
@@ -54,7 +54,7 @@ public:
     }
 
     /// Construct from a float array.
-    explicit Matrix2(const float* data) noexcept :
+    explicit Matrix2(const UFloat* data) noexcept :
         m00_(data[0]),
         m01_(data[1]),
         m10_(data[2]),
@@ -68,8 +68,8 @@ public:
     /// Test for equality with another matrix without epsilon.
     bool operator ==(const Matrix2& rhs) const
     {
-        const float* leftData = Data();
-        const float* rightData = rhs.Data();
+        const UFloat* leftData = Data();
+        const UFloat* rightData = rhs.Data();
 
         for (unsigned i = 0; i != 4; ++i)
         {
@@ -115,7 +115,7 @@ public:
     }
 
     /// Multiply with a scalar.
-    Matrix2 operator *(float rhs) const
+    Matrix2 operator *(UFloat rhs) const
     {
         return Matrix2(
             m00_ * rhs,
@@ -144,7 +144,7 @@ public:
     }
 
     /// Set uniform scaling elements.
-    void SetScale(float scale)
+    void SetScale(UFloat scale)
     {
         m00_ = scale;
         m11_ = scale;
@@ -184,8 +184,8 @@ public:
     /// Test for equality with another matrix with epsilon.
     bool Equals(const Matrix2& rhs) const
     {
-        const float* leftData = Data();
-        const float* rightData = rhs.Data();
+        const UFloat* leftData = Data();
+        const UFloat* rightData = rhs.Data();
 
         for (unsigned i = 0; i != 4; ++i)
         {
@@ -200,18 +200,18 @@ public:
     Matrix2 Inverse() const;
 
     /// Return float data.
-    const float* Data() const { return &m00_; }
+    const UFloat* Data() const { return &m00_; }
 
     /// Return as string.
     String ToString() const;
 
-    float m00_;
-    float m01_;
-    float m10_;
-    float m11_;
+    UFloat m00_;
+    UFloat m01_;
+    UFloat m10_;
+    UFloat m11_;
 
     /// Bulk transpose matrices.
-    static void BulkTranspose(float* dest, const float* src, unsigned count)
+    static void BulkTranspose(UFloat* dest, const UFloat* src, unsigned count)
     {
         for (unsigned i = 0; i < count; ++i)
         {
@@ -232,6 +232,6 @@ public:
 };
 
 /// Multiply a 2x2 matrix with a scalar.
-inline Matrix2 operator *(float lhs, const Matrix2& rhs) { return rhs * lhs; }
+inline Matrix2 operator *(UFloat lhs, const Matrix2& rhs) { return rhs * lhs; }
 
 }

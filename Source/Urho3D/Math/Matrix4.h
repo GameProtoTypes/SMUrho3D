@@ -118,10 +118,10 @@ public:
     }
 
     /// Construct from values.
-    Matrix4(float v00, float v01, float v02, float v03,
-            float v10, float v11, float v12, float v13,
-            float v20, float v21, float v22, float v23,
-            float v30, float v31, float v32, float v33) noexcept :
+    Matrix4(UFloat v00, UFloat v01, UFloat v02, UFloat v03,
+            UFloat v10, UFloat v11, UFloat v12, UFloat v13,
+            UFloat v20, UFloat v21, UFloat v22, UFloat v23,
+            UFloat v30, UFloat v31, UFloat v32, UFloat v33) noexcept :
         m00_(v00),
         m01_(v01),
         m02_(v02),
@@ -142,7 +142,7 @@ public:
     }
 
     /// Construct from a float array.
-    explicit Matrix4(const float* data) noexcept
+    explicit Matrix4(const UFloat* data) noexcept
 #ifndef URHO3D_SSE
        :m00_(data[0]),
         m01_(data[1]),
@@ -238,8 +238,8 @@ public:
         c0 = _mm_and_ps(c0, hi);
         return _mm_cvtsi128_si32(_mm_castps_si128(c0)) == -1;
 #else
-        const float* leftData = Data();
-        const float* rightData = rhs.Data();
+        const UFloat* leftData = Data();
+        const UFloat* rightData = rhs.Data();
 
         for (unsigned i = 0; i < 16; ++i)
         {
@@ -276,7 +276,7 @@ public:
             _mm_cvtss_f32(_mm_shuffle_ps(vec, vec, _MM_SHUFFLE(1, 1, 1, 1))),
             _mm_cvtss_f32(_mm_movehl_ps(vec, vec)));
 #else
-        float invW = 1.0f / (m30_ * rhs.x_ + m31_ * rhs.y_ + m32_ * rhs.z_ + m33_);
+        UFloat invW = 1.0f / (m30_ * rhs.x_ + m31_ * rhs.y_ + m32_ * rhs.z_ + m33_);
 
         return Vector3(
             (m00_ * rhs.x_ + m01_ * rhs.y_ + m02_ * rhs.z_ + m03_) * invW,
@@ -381,7 +381,7 @@ public:
     }
 
     /// Multiply with a scalar.
-    Matrix4 operator *(float rhs) const
+    Matrix4 operator *(UFloat rhs) const
     {
 #ifdef URHO3D_SSE
         Matrix4 ret;
@@ -509,7 +509,7 @@ public:
     }
 
     /// Set uniform scaling elements.
-    void SetScale(float scale)
+    void SetScale(UFloat scale)
     {
         m00_ = scale;
         m11_ = scale;
@@ -617,8 +617,8 @@ public:
     /// Test for equality with another matrix with epsilon.
     bool Equals(const Matrix4& rhs) const
     {
-        const float* leftData = Data();
-        const float* rightData = rhs.Data();
+        const UFloat* leftData = Data();
+        const UFloat* rightData = rhs.Data();
 
         for (unsigned i = 0; i < 16; ++i)
         {
@@ -636,10 +636,10 @@ public:
     Matrix4 Inverse() const;
 
     /// Return float data.
-    const float* Data() const { return &m00_; }
+    const UFloat* Data() const { return &m00_; }
 
     /// Return matrix element.
-    float Element(unsigned i, unsigned j) const { return Data()[i * 4 + j]; }
+    UFloat Element(unsigned i, unsigned j) const { return Data()[i * 4 + j]; }
 
     /// Return matrix row.
     Vector4 Row(unsigned i) const { return Vector4(Element(i, 0), Element(i, 1), Element(i, 2), Element(i, 3)); }
@@ -650,25 +650,25 @@ public:
     /// Return as string.
     String ToString() const;
 
-    float m00_;
-    float m01_;
-    float m02_;
-    float m03_;
-    float m10_;
-    float m11_;
-    float m12_;
-    float m13_;
-    float m20_;
-    float m21_;
-    float m22_;
-    float m23_;
-    float m30_;
-    float m31_;
-    float m32_;
-    float m33_;
+    UFloat m00_;
+    UFloat m01_;
+    UFloat m02_;
+    UFloat m03_;
+    UFloat m10_;
+    UFloat m11_;
+    UFloat m12_;
+    UFloat m13_;
+    UFloat m20_;
+    UFloat m21_;
+    UFloat m22_;
+    UFloat m23_;
+    UFloat m30_;
+    UFloat m31_;
+    UFloat m32_;
+    UFloat m33_;
 
     /// Bulk transpose matrices.
-    static void BulkTranspose(float* dest, const float* src, unsigned count)
+    static void BulkTranspose(UFloat* dest, const UFloat* src, unsigned count)
     {
         for (unsigned i = 0; i < count; ++i)
         {
@@ -712,6 +712,6 @@ public:
 };
 
 /// Multiply a 4x4 matrix with a scalar.
-inline Matrix4 operator *(float lhs, const Matrix4& rhs) { return rhs * lhs; }
+inline Matrix4 operator *(UFloat lhs, const Matrix4& rhs) { return rhs * lhs; }
 
 }

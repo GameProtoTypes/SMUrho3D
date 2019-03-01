@@ -102,18 +102,18 @@ void Polyhedron::Clip(const Plane& plane)
     {
         PODVector<Vector3>& face = faces_[i];
         Vector3 lastVertex;
-        float lastDistance = 0.0f;
+        UFloat lastDistance = 0.0f;
 
         outFace_.Clear();
 
         for (unsigned j = 0; j < face.Size(); ++j)
         {
-            float distance = plane.Distance(face[j]);
+            UFloat distance = plane.Distance(face[j]);
             if (distance >= 0.0f)
             {
                 if (lastDistance < 0.0f)
                 {
-                    float t = lastDistance / (lastDistance - distance);
+                    UFloat t = lastDistance / (lastDistance - distance);
                     Vector3 clippedVertex = lastVertex + t * (face[j] - lastVertex);
                     outFace_.Push(clippedVertex);
                     clippedVertices_.Push(clippedVertex);
@@ -125,7 +125,7 @@ void Polyhedron::Clip(const Plane& plane)
             {
                 if (lastDistance >= 0.0f && j != 0)
                 {
-                    float t = lastDistance / (lastDistance - distance);
+                    UFloat t = lastDistance / (lastDistance - distance);
                     Vector3 clippedVertex = lastVertex + t * (face[j] - lastVertex);
                     outFace_.Push(clippedVertex);
                     clippedVertices_.Push(clippedVertex);
@@ -137,10 +137,10 @@ void Polyhedron::Clip(const Plane& plane)
         }
 
         // Recheck the distances of the last and first vertices and add the final clipped vertex if applicable
-        float distance = plane.Distance(face[0]);
+        UFloat distance = plane.Distance(face[0]);
         if ((lastDistance < 0.0f && distance >= 0.0f) || (lastDistance >= 0.0f && distance < 0.0f))
         {
-            float t = lastDistance / (lastDistance - distance);
+            UFloat t = lastDistance / (lastDistance - distance);
             Vector3 clippedVertex = lastVertex + t * (face[0] - lastVertex);
             outFace_.Push(clippedVertex);
             clippedVertices_.Push(clippedVertex);
@@ -182,12 +182,12 @@ void Polyhedron::Clip(const Plane& plane)
         {
             // Then add the vertex which is closest to the last added
             const Vector3& lastAdded = outFace_.Back();
-            float bestDistance = M_INFINITY;
+            UFloat bestDistance = M_INFINITY;
             unsigned bestIndex = 0;
 
             for (unsigned i = 0; i < clippedVertices_.Size(); ++i)
             {
-                float distance = (clippedVertices_[i] - lastAdded).LengthSquared();
+                UFloat distance = (clippedVertices_[i] - lastAdded).LengthSquared();
                 if (distance < bestDistance)
                 {
                     bestDistance = distance;

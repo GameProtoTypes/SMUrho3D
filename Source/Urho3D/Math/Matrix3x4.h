@@ -104,9 +104,9 @@ public:
     }
 
     /// Construct from values.
-    Matrix3x4(float v00, float v01, float v02, float v03,
-              float v10, float v11, float v12, float v13,
-              float v20, float v21, float v22, float v23) noexcept :
+    Matrix3x4(UFloat v00, UFloat v01, UFloat v02, UFloat v03,
+              UFloat v10, UFloat v11, UFloat v12, UFloat v13,
+              UFloat v20, UFloat v21, UFloat v22, UFloat v23) noexcept :
         m00_(v00),
         m01_(v01),
         m02_(v02),
@@ -123,7 +123,7 @@ public:
     }
 
     /// Construct from a float array.
-    explicit Matrix3x4(const float* data) noexcept
+    explicit Matrix3x4(const UFloat* data) noexcept
 #ifndef URHO3D_SSE
        :m00_(data[0]),
         m01_(data[1]),
@@ -147,7 +147,7 @@ public:
     }
 
     /// Construct from translation, rotation and uniform scale.
-    Matrix3x4(const Vector3& translation, const Quaternion& rotation, float scale) noexcept
+    Matrix3x4(const Vector3& translation, const Quaternion& rotation, UFloat scale) noexcept
     {
 #ifdef URHO3D_SSE
         __m128 t = _mm_set_ps(1.f, translation.z_, translation.y_, translation.x_);
@@ -234,8 +234,8 @@ public:
         c0 = _mm_and_ps(c0, hi);
         return _mm_cvtsi128_si32(_mm_castps_si128(c0)) == -1;
 #else
-        const float* leftData = Data();
-        const float* rightData = rhs.Data();
+        const UFloat* leftData = Data();
+        const UFloat* rightData = rhs.Data();
 
         for (unsigned i = 0; i < 12; ++i)
         {
@@ -365,7 +365,7 @@ public:
     }
 
     /// Multiply with a scalar.
-    Matrix3x4 operator *(float rhs) const
+    Matrix3x4 operator *(UFloat rhs) const
     {
 #ifdef URHO3D_SSE
         Matrix3x4 ret;
@@ -531,7 +531,7 @@ public:
     }
 
     /// Set uniform scaling elements.
-    void SetScale(float scale)
+    void SetScale(UFloat scale)
     {
         m00_ = scale;
         m11_ = scale;
@@ -635,8 +635,8 @@ public:
     /// Test for equality with another matrix with epsilon.
     bool Equals(const Matrix3x4& rhs) const
     {
-        const float* leftData = Data();
-        const float* rightData = rhs.Data();
+        const UFloat* leftData = Data();
+        const UFloat* rightData = rhs.Data();
 
         for (unsigned i = 0; i < 12; ++i)
         {
@@ -654,10 +654,10 @@ public:
     Matrix3x4 Inverse() const;
 
     /// Return float data.
-    const float* Data() const { return &m00_; }
+    const UFloat* Data() const { return &m00_; }
 
     /// Return matrix element.
-    float Element(unsigned i, unsigned j) const { return Data()[i * 4 + j]; }
+    UFloat Element(unsigned i, unsigned j) const { return Data()[i * 4 + j]; }
 
     /// Return matrix row.
     Vector4 Row(unsigned i) const { return Vector4(Element(i, 0), Element(i, 1), Element(i, 2), Element(i, 3)); }
@@ -668,18 +668,18 @@ public:
     /// Return as string.
     String ToString() const;
 
-    float m00_;
-    float m01_;
-    float m02_;
-    float m03_;
-    float m10_;
-    float m11_;
-    float m12_;
-    float m13_;
-    float m20_;
-    float m21_;
-    float m22_;
-    float m23_;
+    UFloat m00_;
+    UFloat m01_;
+    UFloat m02_;
+    UFloat m03_;
+    UFloat m10_;
+    UFloat m11_;
+    UFloat m12_;
+    UFloat m13_;
+    UFloat m20_;
+    UFloat m21_;
+    UFloat m22_;
+    UFloat m23_;
 
     /// Zero matrix.
     static const Matrix3x4 ZERO;
@@ -716,6 +716,6 @@ private:
 };
 
 /// Multiply a 3x4 matrix with a scalar.
-inline Matrix3x4 operator *(float lhs, const Matrix3x4& rhs) { return rhs * lhs; }
+inline Matrix3x4 operator *(UFloat lhs, const Matrix3x4& rhs) { return rhs * lhs; }
 
 }

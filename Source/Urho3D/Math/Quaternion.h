@@ -65,7 +65,7 @@ public:
 #endif
 
     /// Construct from values.
-    Quaternion(float w, float x, float y, float z) noexcept
+    Quaternion(UFloat w, UFloat x, UFloat y, UFloat z) noexcept
 #ifndef URHO3D_SSE
        :w_(w),
         x_(x),
@@ -79,7 +79,7 @@ public:
     }
 
     /// Construct from a float array.
-    explicit Quaternion(const float* data) noexcept
+    explicit Quaternion(const UFloat* data) noexcept
 #ifndef URHO3D_SSE
        :w_(data[0]),
         x_(data[1]),
@@ -93,19 +93,19 @@ public:
     }
 
     /// Construct from an angle (in degrees) and axis.
-    Quaternion(float angle, const Vector3& axis) noexcept
+    Quaternion(UFloat angle, const Vector3& axis) noexcept
     {
         FromAngleAxis(angle, axis);
     }
 
     /// Construct from an angle (in degrees, for Urho2D).
-    explicit Quaternion(float angle) noexcept
+    explicit Quaternion(UFloat angle) noexcept
     {
         FromAngleAxis(angle, Vector3::FORWARD);
     }
 
     /// Construct from Euler angles (in degrees.)
-    Quaternion(float x, float y, float z) noexcept
+    Quaternion(UFloat x, UFloat y, UFloat z) noexcept
     {
         FromEulerAngles(x, y, z);
     }
@@ -170,7 +170,7 @@ public:
     }
 
     /// Multiply-assign a scalar.
-    Quaternion& operator *=(float rhs)
+    Quaternion& operator *=(UFloat rhs)
     {
 #ifdef URHO3D_SSE
         _mm_storeu_ps(&w_, _mm_mul_ps(_mm_loadu_ps(&w_), _mm_set1_ps(rhs)));
@@ -200,7 +200,7 @@ public:
     bool operator !=(const Quaternion& rhs) const { return !(*this == rhs); }
 
     /// Multiply with a scalar.
-    Quaternion operator *(float rhs) const
+    Quaternion operator *(UFloat rhs) const
     {
 #ifdef URHO3D_SSE
         return Quaternion(_mm_mul_ps(_mm_loadu_ps(&w_), _mm_set1_ps(rhs)));
@@ -297,9 +297,9 @@ public:
     }
 
     /// Define from an angle (in degrees) and axis.
-    void FromAngleAxis(float angle, const Vector3& axis);
+    void FromAngleAxis(UFloat angle, const Vector3& axis);
     /// Define from Euler angles (in degrees.)
-    void FromEulerAngles(float x, float y, float z);
+    void FromEulerAngles(UFloat x, UFloat y, UFloat z);
     /// Define from the rotation difference between two direction vectors.
     void FromRotationTo(const Vector3& start, const Vector3& end);
     /// Define from orthonormal axes.
@@ -323,10 +323,10 @@ public:
         n = _mm_add_ps(e, _mm_mul_ps(half, _mm_sub_ps(e, _mm_mul_ps(n, e3))));
         _mm_storeu_ps(&w_, _mm_mul_ps(q, n));
 #else
-        float lenSquared = LengthSquared();
-        if (!Urho3D::Equals(lenSquared, 1.0f) && lenSquared > 0.0f)
+        UFloat lenSquared = LengthSquared();
+        if (!Urho3D::Equals(lenSquared, UFloat(1.0f)) && lenSquared > 0.0f)
         {
-            float invLen = 1.0f / sqrtf(lenSquared);
+            UFloat invLen = 1.0f / sqrtf(lenSquared);
             w_ *= invLen;
             x_ *= invLen;
             y_ *= invLen;
@@ -349,10 +349,10 @@ public:
         n = _mm_add_ps(e, _mm_mul_ps(half, _mm_sub_ps(e, _mm_mul_ps(n, e3))));
         return Quaternion(_mm_mul_ps(q, n));
 #else
-        float lenSquared = LengthSquared();
-        if (!Urho3D::Equals(lenSquared, 1.0f) && lenSquared > 0.0f)
+        UFloat lenSquared = LengthSquared();
+        if (!Urho3D::Equals(lenSquared, UFloat(1.0f)) && lenSquared > 0.0f)
         {
-            float invLen = 1.0f / sqrtf(lenSquared);
+            UFloat invLen = 1.0f / sqrtf(lenSquared);
             return *this * invLen;
         }
         else
@@ -370,7 +370,7 @@ public:
         n = _mm_add_ps(n, _mm_shuffle_ps(n, n, _MM_SHUFFLE(0, 1, 2, 3)));
         return Quaternion(_mm_div_ps(_mm_xor_ps(q, _mm_castsi128_ps(_mm_set_epi32((int)0x80000000UL, (int)0x80000000UL, (int)0x80000000UL, 0))), n));
 #else
-        float lenSquared = LengthSquared();
+        UFloat lenSquared = LengthSquared();
         if (lenSquared == 1.0f)
             return Conjugate();
         else if (lenSquared >= M_EPSILON)
@@ -381,7 +381,7 @@ public:
     }
 
     /// Return squared length.
-    float LengthSquared() const
+    UFloat LengthSquared() const
     {
 #ifdef URHO3D_SSE
         __m128 q = _mm_loadu_ps(&w_);
@@ -395,7 +395,7 @@ public:
     }
 
     /// Calculate dot product.
-    float DotProduct(const Quaternion& rhs) const
+    UFloat DotProduct(const Quaternion& rhs) const
     {
 #ifdef URHO3D_SSE
         __m128 q1 = _mm_loadu_ps(&w_);
@@ -432,36 +432,36 @@ public:
     /// Return Euler angles in degrees.
     Vector3 EulerAngles() const;
     /// Return yaw angle in degrees.
-    float YawAngle() const;
+    UFloat YawAngle() const;
     /// Return pitch angle in degrees.
-    float PitchAngle() const;
+    UFloat PitchAngle() const;
     /// Return roll angle in degrees.
-    float RollAngle() const;
+    UFloat RollAngle() const;
     /// Return rotation axis.
     Vector3 Axis() const;
     /// Return rotation angle.
-    float Angle() const;
+    UFloat Angle() const;
     /// Return the rotation matrix that corresponds to this quaternion.
     Matrix3 RotationMatrix() const;
     /// Spherical interpolation with another quaternion.
-    Quaternion Slerp(const Quaternion& rhs, float t) const;
+    Quaternion Slerp(const Quaternion& rhs, UFloat t) const;
     /// Normalized linear interpolation with another quaternion.
-    Quaternion Nlerp(const Quaternion& rhs, float t, bool shortestPath = false) const;
+    Quaternion Nlerp(const Quaternion& rhs, UFloat t, bool shortestPath = false) const;
 
     /// Return float data.
-    const float* Data() const { return &w_; }
+    const UFloat* Data() const { return &w_; }
 
     /// Return as string.
     String ToString() const;
 
     /// W coordinate.
-    float w_;
+    UFloat w_;
     /// X coordinate.
-    float x_;
+    UFloat x_;
     /// Y coordinate.
-    float y_;
+    UFloat y_;
     /// Z coordinate.
-    float z_;
+    UFloat z_;
 
     /// Identity quaternion.
     static const Quaternion IDENTITY;

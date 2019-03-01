@@ -60,7 +60,7 @@ public:
 
     /// Define with projection parameters and a transform matrix.
     void
-        Define(float fov, float aspectRatio, float zoom, float nearZ, float farZ, const Matrix3x4& transform = Matrix3x4::IDENTITY);
+        Define(UFloat fov, UFloat aspectRatio, UFloat zoom, UFloat nearZ, UFloat farZ, const Matrix3x4& transform = Matrix3x4::IDENTITY);
     /// Define with near and far dimension vectors and a transform matrix.
     void Define(const Vector3& near, const Vector3& far, const Matrix3x4& transform = Matrix3x4::IDENTITY);
     /// Define with a bounding box and a transform matrix.
@@ -69,9 +69,9 @@ public:
     void Define(const Matrix4& projection);
     /// Define with orthographic projection parameters and a transform matrix.
     void DefineOrtho
-        (float orthoSize, float aspectRatio, float zoom, float nearZ, float farZ, const Matrix3x4& transform = Matrix3x4::IDENTITY);
+        (UFloat orthoSize, UFloat aspectRatio, UFloat zoom, UFloat nearZ, UFloat farZ, const Matrix3x4& transform = Matrix3x4::IDENTITY);
     /// Define a split (limited) frustum from a projection matrix, with near & far distances specified.
-    void DefineSplit(const Matrix4& projection, float near, float far);
+    void DefineSplit(const Matrix4& projection, UFloat near, UFloat far);
     /// Transform by a 3x3 matrix.
     void Transform(const Matrix3& transform);
     /// Transform by a 3x4 matrix.
@@ -95,7 +95,7 @@ public:
         bool allInside = true;
         for (const auto& plane : planes_)
         {
-            float dist = plane.Distance(sphere.center_);
+            UFloat dist = plane.Distance(sphere.center_);
             if (dist < -sphere.radius_)
                 return OUTSIDE;
             else if (dist < sphere.radius_)
@@ -126,8 +126,8 @@ public:
 
         for (const auto& plane : planes_)
         {
-            float dist = plane.normal_.DotProduct(center) + plane.d_;
-            float absDist = plane.absNormal_.DotProduct(edge);
+            UFloat dist = plane.normal_.DotProduct(center) + plane.d_;
+            UFloat absDist = plane.absNormal_.DotProduct(edge);
 
             if (dist < -absDist)
                 return OUTSIDE;
@@ -146,8 +146,8 @@ public:
 
         for (const auto& plane : planes_)
         {
-            float dist = plane.normal_.DotProduct(center) + plane.d_;
-            float absDist = plane.absNormal_.DotProduct(edge);
+            UFloat dist = plane.normal_.DotProduct(center) + plane.d_;
+            UFloat absDist = plane.absNormal_.DotProduct(edge);
 
             if (dist < -absDist)
                 return OUTSIDE;
@@ -157,9 +157,9 @@ public:
     }
 
     /// Return distance of a point to the frustum, or 0 if inside.
-    float Distance(const Vector3& point) const
+    UFloat Distance(const Vector3& point) const
     {
-        float distance = 0.0f;
+        UFloat distance = 0.0f;
         for (const auto& plane : planes_)
             distance = Max(-plane.Distance(point), distance);
 

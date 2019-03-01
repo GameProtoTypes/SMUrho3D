@@ -39,22 +39,29 @@ namespace Urho3D
 {
 
 #undef M_PI
-static const float M_PI = 3.14159265358979323846264338327950288f;
-static const float M_HALF_PI = M_PI * 0.5f;
+
+#ifdef URHO3D_DOUBLE_PRECISION
+    typedef double UFloat;
+#else
+    typedef UFloat UFloat;
+#endif
+
+static const UFloat M_PI = 3.14159265358979323846264338327950288f;
+static const UFloat M_HALF_PI = M_PI * 0.5f;
 static const int M_MIN_INT = 0x80000000;
 static const int M_MAX_INT = 0x7fffffff;
 static const unsigned M_MIN_UNSIGNED = 0x00000000;
 static const unsigned M_MAX_UNSIGNED = 0xffffffff;
 
-static const float M_EPSILON = 0.000001f;
-static const float M_LARGE_EPSILON = 0.00005f;
-static const float M_MIN_NEARCLIP = 0.01f;
-static const float M_MAX_FOV = 160.0f;
-static const float M_LARGE_VALUE = 100000000.0f;
-static const float M_INFINITY = (float)HUGE_VAL;
-static const float M_DEGTORAD = M_PI / 180.0f;
-static const float M_DEGTORAD_2 = M_PI / 360.0f;    // M_DEGTORAD / 2.f
-static const float M_RADTODEG = 1.0f / M_DEGTORAD;
+static const UFloat M_EPSILON = 0.000001f;
+static const UFloat M_LARGE_EPSILON = 0.00005f;
+static const UFloat M_MIN_NEARCLIP = 0.01f;
+static const UFloat M_MAX_FOV = 160.0f;
+static const UFloat M_LARGE_VALUE = 100000000.0f;
+static const UFloat M_INFINITY = (UFloat)HUGE_VAL;
+static const UFloat M_DEGTORAD = M_PI / 180.0f;
+static const UFloat M_DEGTORAD_2 = M_PI / 360.0f;    // M_DEGTORAD / 2.f
+static const UFloat M_RADTODEG = 1.0f / M_DEGTORAD;
 
 /// Intersection test result.
 enum Intersection
@@ -93,7 +100,7 @@ template <class T>
 inline T Sign(T value) { return value > 0.0 ? 1.0 : (value < 0.0 ? -1.0 : 0.0); }
 
 /// Return a representation of the specified floating-point value as a single format bit layout.
-inline unsigned FloatToRawIntBits(float value)
+inline unsigned FloatToRawIntBits(UFloat value)
 {
     unsigned u = *((unsigned*)&value);
     return u;
@@ -232,25 +239,25 @@ inline unsigned CountSetBits(unsigned value)
 inline constexpr unsigned SDBMHash(unsigned hash, unsigned char c) { return c + (hash << 6u) + (hash << 16u) - hash; }
 
 /// Return a random float between 0.0 (inclusive) and 1.0 (exclusive.)
-inline float Random() { return Rand() / 32768.0f; }
+inline UFloat Random() { return Rand() / 32768.0f; }
 
 /// Return a random float between 0.0 and range, inclusive from both ends.
-inline float Random(float range) { return Rand() * range / 32767.0f; }
+inline UFloat Random(UFloat range) { return Rand() * range / 32767.0f; }
 
 /// Return a random float between min and max, inclusive from both ends.
-inline float Random(float min, float max) { return Rand() * (max - min) / 32767.0f + min; }
+inline UFloat Random(UFloat min, UFloat max) { return Rand() * (max - min) / 32767.0f + min; }
 
 /// Return a random integer between 0 and range - 1.
 inline int Random(int range) { return (int)(Random() * range); }
 
 /// Return a random integer between min and max - 1.
-inline int Random(int min, int max) { auto range = (float)(max - min); return (int)(Random() * range) + min; }
+inline int Random(int min, int max) { auto range = (UFloat)(max - min); return (int)(Random() * range) + min; }
 
 /// Return a random normal distributed number with the given mean value and variance.
-inline float RandomNormal(float meanValue, float variance) { return RandStandardNormal() * sqrtf(variance) + meanValue; }
+inline UFloat RandomNormal(UFloat meanValue, UFloat variance) { return RandStandardNormal() * sqrtf(variance) + meanValue; }
 
 /// Convert float to half float. From https://gist.github.com/martinkallman/5049614
-inline unsigned short FloatToHalf(float value)
+inline unsigned short FloatToHalf(UFloat value)
 {
     unsigned inu = FloatToRawIntBits(value);
     unsigned t1 = inu & 0x7fffffffu;         // Non-sign bits
@@ -272,7 +279,7 @@ inline unsigned short FloatToHalf(float value)
 }
 
 /// Convert half float to float. From https://gist.github.com/martinkallman/5049614
-inline float HalfToFloat(unsigned short value)
+inline UFloat HalfToFloat(unsigned short value)
 {
     unsigned t1 = value & 0x7fffu;           // Non-sign bits
     unsigned t2 = value & 0x8000u;           // Sign bit
@@ -287,7 +294,7 @@ inline float HalfToFloat(unsigned short value)
 
     t1 |= t2;                               // Re-insert sign bit
 
-    float out;
+    UFloat out;
     *((unsigned*)&out) = t1;
     return out;
 }
@@ -300,7 +307,7 @@ template<typename T> inline T Wrap(T value, T min, T max)
 }
 
 /// Calculate both sine and cosine, with angle in degrees.
-URHO3D_API void SinCos(float angle, float& sin, float& cos);
+URHO3D_API void SinCos(UFloat angle, UFloat& sin, UFloat& cos);
 
 }
 

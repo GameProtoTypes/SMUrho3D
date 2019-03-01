@@ -29,9 +29,9 @@
 namespace Urho3D
 {
 
-void SinCos(float angle, float& sin, float& cos)
+void SinCos(UFloat angle, UFloat& sin, UFloat& cos)
 {
-    float angleRadians = angle * M_DEGTORAD;
+    UFloat angleRadians = angle * M_DEGTORAD;
 #if defined(HAVE_SINCOSF)
     sincosf(angleRadians, &sin, &cos);
 #elif defined(HAVE___SINCOSF)

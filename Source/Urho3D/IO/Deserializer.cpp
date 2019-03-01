@@ -158,28 +158,28 @@ IntVector3 Deserializer::ReadIntVector3()
 
 Rect Deserializer::ReadRect()
 {
-    float data[4];
+    UFloat data[4];
     Read(data, sizeof data);
     return Rect(data);
 }
 
 Vector2 Deserializer::ReadVector2()
 {
-    float data[2];
+    UFloat data[2];
     Read(data, sizeof data);
     return Vector2(data);
 }
 
 Vector3 Deserializer::ReadVector3()
 {
-    float data[3];
+    UFloat data[3];
     Read(data, sizeof data);
     return Vector3(data);
 }
 
 Vector3 Deserializer::ReadPackedVector3(float maxAbsCoord)
 {
-    float invV = maxAbsCoord / 32767.0f;
+    UFloat invV = maxAbsCoord / 32767.0f;
     short coords[3];
     Read(coords, sizeof coords);
     Vector3 ret(coords[0] * invV, coords[1] * invV, coords[2] * invV);
@@ -188,14 +188,14 @@ Vector3 Deserializer::ReadPackedVector3(float maxAbsCoord)
 
 Vector4 Deserializer::ReadVector4()
 {
-    float data[4];
+    UFloat data[4];
     Read(data, sizeof data);
     return Vector4(data);
 }
 
 Quaternion Deserializer::ReadQuaternion()
 {
-    float data[4];
+    UFloat data[4];
     Read(data, sizeof data);
     return Quaternion(data);
 }
@@ -211,21 +211,21 @@ Quaternion Deserializer::ReadPackedQuaternion()
 
 Matrix3 Deserializer::ReadMatrix3()
 {
-    float data[9];
+    UFloat data[9];
     Read(data, sizeof data);
     return Matrix3(data);
 }
 
 Matrix3x4 Deserializer::ReadMatrix3x4()
 {
-    float data[12];
+    UFloat data[12];
     Read(data, sizeof data);
     return Matrix3x4(data);
 }
 
 Matrix4 Deserializer::ReadMatrix4()
 {
-    float data[16];
+    UFloat data[16];
     Read(data, sizeof data);
     return Matrix4(data);
 }

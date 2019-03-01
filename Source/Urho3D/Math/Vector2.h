@@ -54,7 +54,7 @@ public:
     }
 
     /// Construct from an float array.
-    explicit IntVector2(const float* data) :
+    explicit IntVector2(const UFloat* data) :
         x_((int)data[0]),
         y_((int)data[1])
     {
@@ -150,7 +150,7 @@ public:
     unsigned ToHash() const { return (unsigned)x_ * 31 + (unsigned)y_; }
 
     /// Return length.
-    float Length() const { return sqrtf((float)(x_ * x_ + y_ * y_)); }
+    UFloat Length() const { return sqrtf((UFloat)(x_ * x_ + y_ * y_)); }
 
     /// X coordinate.
     int x_;
@@ -187,20 +187,20 @@ public:
 
     /// Construct from an IntVector2.
     explicit Vector2(const IntVector2& vector) noexcept :
-        x_((float)vector.x_),
-        y_((float)vector.y_)
+        x_((UFloat)vector.x_),
+        y_((UFloat)vector.y_)
     {
     }
 
     /// Construct from coordinates.
-    Vector2(float x, float y) noexcept :
+    Vector2(UFloat x, UFloat y) noexcept :
         x_(x),
         y_(y)
     {
     }
 
     /// Construct from a float array.
-    explicit Vector2(const float* data) noexcept :
+    explicit Vector2(const UFloat* data) noexcept :
         x_(data[0]),
         y_(data[1])
     {
@@ -225,13 +225,13 @@ public:
     Vector2 operator -(const Vector2& rhs) const { return Vector2(x_ - rhs.x_, y_ - rhs.y_); }
 
     /// Multiply with a scalar.
-    Vector2 operator *(float rhs) const { return Vector2(x_ * rhs, y_ * rhs); }
+    Vector2 operator *(UFloat rhs) const { return Vector2(x_ * rhs, y_ * rhs); }
 
     /// Multiply with a vector.
     Vector2 operator *(const Vector2& rhs) const { return Vector2(x_ * rhs.x_, y_ * rhs.y_); }
 
     /// Divide by a scalar.
-    Vector2 operator /(float rhs) const { return Vector2(x_ / rhs, y_ / rhs); }
+    Vector2 operator /(UFloat rhs) const { return Vector2(x_ / rhs, y_ / rhs); }
 
     /// Divide by a vector.
     Vector2 operator /(const Vector2& rhs) const { return Vector2(x_ / rhs.x_, y_ / rhs.y_); }
@@ -253,7 +253,7 @@ public:
     }
 
     /// Multiply-assign a scalar.
-    Vector2& operator *=(float rhs)
+    Vector2& operator *=(UFloat rhs)
     {
         x_ *= rhs;
         y_ *= rhs;
@@ -269,9 +269,9 @@ public:
     }
 
     /// Divide-assign a scalar.
-    Vector2& operator /=(float rhs)
+    Vector2& operator /=(UFloat rhs)
     {
-        float invRhs = 1.0f / rhs;
+        UFloat invRhs = 1.0f / rhs;
         x_ *= invRhs;
         y_ *= invRhs;
         return *this;
@@ -288,38 +288,38 @@ public:
     /// Normalize to unit length.
     void Normalize()
     {
-        float lenSquared = LengthSquared();
-        if (!Urho3D::Equals(lenSquared, 1.0f) && lenSquared > 0.0f)
+        UFloat lenSquared = LengthSquared();
+        if (!Urho3D::Equals(lenSquared, UFloat(1.0f)) && lenSquared > 0.0f)
         {
-            float invLen = 1.0f / sqrtf(lenSquared);
+            UFloat invLen = 1.0f / sqrtf(lenSquared);
             x_ *= invLen;
             y_ *= invLen;
         }
     }
 
     /// Return length.
-    float Length() const { return sqrtf(x_ * x_ + y_ * y_); }
+    UFloat Length() const { return sqrtf(x_ * x_ + y_ * y_); }
 
     /// Return squared length.
-    float LengthSquared() const { return x_ * x_ + y_ * y_; }
+    UFloat LengthSquared() const { return x_ * x_ + y_ * y_; }
 
     /// Calculate dot product.
-    float DotProduct(const Vector2& rhs) const { return x_ * rhs.x_ + y_ * rhs.y_; }
+    UFloat DotProduct(const Vector2& rhs) const { return x_ * rhs.x_ + y_ * rhs.y_; }
 
     /// Calculate absolute dot product.
-    float AbsDotProduct(const Vector2& rhs) const { return Urho3D::Abs(x_ * rhs.x_) + Urho3D::Abs(y_ * rhs.y_); }
+    UFloat AbsDotProduct(const Vector2& rhs) const { return Urho3D::Abs(x_ * rhs.x_) + Urho3D::Abs(y_ * rhs.y_); }
 
     /// Project vector onto axis.
-    float ProjectOntoAxis(const Vector2& axis) const { return DotProduct(axis.Normalized()); }
+    UFloat ProjectOntoAxis(const Vector2& axis) const { return DotProduct(axis.Normalized()); }
 
     /// Returns the angle between this vector and another vector in degrees.
-    float Angle(const Vector2& rhs) const { return Urho3D::Acos(DotProduct(rhs) / (Length() * rhs.Length())); }
+    UFloat Angle(const Vector2& rhs) const { return Urho3D::Acos(DotProduct(rhs) / (Length() * rhs.Length())); }
 
     /// Return absolute vector.
     Vector2 Abs() const { return Vector2(Urho3D::Abs(x_), Urho3D::Abs(y_)); }
 
     /// Linear interpolation with another vector.
-    Vector2 Lerp(const Vector2& rhs, float t) const { return *this * (1.0f - t) + rhs * t; }
+    Vector2 Lerp(const Vector2& rhs, UFloat t) const { return *this * (1.0f - t) + rhs * t; }
 
     /// Test for equality with another vector with epsilon.
     bool Equals(const Vector2& rhs) const { return Urho3D::Equals(x_, rhs.x_) && Urho3D::Equals(y_, rhs.y_); }
@@ -330,10 +330,10 @@ public:
     /// Return normalized to unit length.
     Vector2 Normalized() const
     {
-        float lenSquared = LengthSquared();
-        if (!Urho3D::Equals(lenSquared, 1.0f) && lenSquared > 0.0f)
+        UFloat lenSquared = LengthSquared();
+        if (!Urho3D::Equals(lenSquared, UFloat(1.0f)) && lenSquared > 0.0f)
         {
-            float invLen = 1.0f / sqrtf(lenSquared);
+            UFloat invLen = 1.0f / sqrtf(lenSquared);
             return *this * invLen;
         }
         else
@@ -341,15 +341,15 @@ public:
     }
 
     /// Return float data.
-    const float* Data() const { return &x_; }
+    const UFloat* Data() const { return &x_; }
 
     /// Return as string.
     String ToString() const;
 
     /// X coordinate.
-    float x_;
+    UFloat x_;
     /// Y coordinate.
-    float y_;
+    UFloat y_;
 
     /// Zero vector.
     static const Vector2 ZERO;
@@ -366,7 +366,7 @@ public:
 };
 
 /// Multiply Vector2 with a scalar
-inline Vector2 operator *(float lhs, const Vector2& rhs) { return rhs * lhs; }
+inline Vector2 operator *(UFloat lhs, const Vector2& rhs) { return rhs * lhs; }
 
 /// Multiply IntVector2 with a scalar.
 inline IntVector2 operator *(int lhs, const IntVector2& rhs) { return rhs * lhs; }
@@ -406,9 +406,9 @@ inline IntVector2 VectorMax(const IntVector2& lhs, const IntVector2& rhs) { retu
 
 /// Return a random value from [0, 1) from 2-vector seed.
 /// http://stackoverflow.com/questions/12964279/whats-the-origin-of-this-glsl-rand-one-liner
-inline float StableRandom(const Vector2& seed) { return Fract(Sin(seed.DotProduct(Vector2(12.9898f, 78.233f)) * M_RADTODEG) * 43758.5453f); }
+inline UFloat StableRandom(const Vector2& seed) { return Fract(Sin(seed.DotProduct(Vector2(12.9898f, 78.233f)) * M_RADTODEG) * 43758.5453f); }
 
 /// Return a random value from [0, 1) from scalar seed.
-inline float StableRandom(float seed) { return StableRandom(Vector2(seed, seed)); }
+inline UFloat StableRandom(UFloat seed) { return StableRandom(Vector2(seed, seed)); }
 
 }

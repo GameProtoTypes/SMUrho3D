@@ -39,10 +39,10 @@ const Matrix2 Matrix2::IDENTITY;
 
 Matrix2 Matrix2::Inverse() const
 {
-    float det = m00_ * m11_ -
+    UFloat det = m00_ * m11_ -
                 m01_ * m10_;
 
-    float invDet = 1.0f / det;
+    UFloat invDet = 1.0f / det;
 
     return Matrix2(
         m11_, -m01_,

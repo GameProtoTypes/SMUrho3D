@@ -49,9 +49,9 @@ public:
     Matrix3(const Matrix3& matrix) noexcept = default;
 
     /// Construct from values.
-    Matrix3(float v00, float v01, float v02,
-            float v10, float v11, float v12,
-            float v20, float v21, float v22) noexcept :
+    Matrix3(UFloat v00, UFloat v01, UFloat v02,
+            UFloat v10, UFloat v11, UFloat v12,
+            UFloat v20, UFloat v21, UFloat v22) noexcept :
         m00_(v00),
         m01_(v01),
         m02_(v02),
@@ -65,7 +65,7 @@ public:
     }
 
     /// Construct from a float array.
-    explicit Matrix3(const float* data) noexcept :
+    explicit Matrix3(const UFloat* data) noexcept :
         m00_(data[0]),
         m01_(data[1]),
         m02_(data[2]),
@@ -84,8 +84,8 @@ public:
     /// Test for equality with another matrix without epsilon.
     bool operator ==(const Matrix3& rhs) const
     {
-        const float* leftData = Data();
-        const float* rightData = rhs.Data();
+        const UFloat* leftData = Data();
+        const UFloat* rightData = rhs.Data();
 
         for (unsigned i = 0; i < 9; ++i)
         {
@@ -142,7 +142,7 @@ public:
     }
 
     /// Multiply with a scalar.
-    Matrix3 operator *(float rhs) const
+    Matrix3 operator *(UFloat rhs) const
     {
         return Matrix3(
             m00_ * rhs,
@@ -182,7 +182,7 @@ public:
     }
 
     /// Set uniform scaling elements.
-    void SetScale(float scale)
+    void SetScale(UFloat scale)
     {
         m00_ = scale;
         m11_ = scale;
@@ -244,8 +244,8 @@ public:
     /// Test for equality with another matrix with epsilon.
     bool Equals(const Matrix3& rhs) const
     {
-        const float* leftData = Data();
-        const float* rightData = rhs.Data();
+        const UFloat* leftData = Data();
+        const UFloat* rightData = rhs.Data();
 
         for (unsigned i = 0; i < 9; ++i)
         {
@@ -260,10 +260,10 @@ public:
     Matrix3 Inverse() const;
 
     /// Return float data.
-    const float* Data() const { return &m00_; }
+    const UFloat* Data() const { return &m00_; }
 
     /// Return matrix element.
-    float Element(unsigned i, unsigned j) const { return Data()[i * 3 + j]; }
+    UFloat Element(unsigned i, unsigned j) const { return Data()[i * 3 + j]; }
 
     /// Return matrix row.
     Vector3 Row(unsigned i) const { return Vector3(Element(i, 0), Element(i, 1), Element(i, 2)); }
@@ -274,18 +274,18 @@ public:
     /// Return as string.
     String ToString() const;
 
-    float m00_;
-    float m01_;
-    float m02_;
-    float m10_;
-    float m11_;
-    float m12_;
-    float m20_;
-    float m21_;
-    float m22_;
+    UFloat m00_;
+    UFloat m01_;
+    UFloat m02_;
+    UFloat m10_;
+    UFloat m11_;
+    UFloat m12_;
+    UFloat m20_;
+    UFloat m21_;
+    UFloat m22_;
 
     /// Bulk transpose matrices.
-    static void BulkTranspose(float* dest, const float* src, unsigned count)
+    static void BulkTranspose(UFloat* dest, const UFloat* src, unsigned count)
     {
         for (unsigned i = 0; i < count; ++i)
         {
@@ -311,6 +311,6 @@ public:
 };
 
 /// Multiply a 3x3 matrix with a scalar.
-inline Matrix3 operator *(float lhs, const Matrix3& rhs) { return rhs * lhs; }
+inline Matrix3 operator *(UFloat lhs, const Matrix3& rhs) { return rhs * lhs; }
 
 }

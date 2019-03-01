@@ -46,7 +46,7 @@ public:
     }
 
     /// Construct from coordinates.
-    Rect(float left, float top, float right, float bottom) noexcept :
+    Rect(UFloat left, UFloat top, UFloat right, UFloat bottom) noexcept :
         min_(left, top),
         max_(right, bottom)
     {
@@ -60,7 +60,7 @@ public:
     }
 
     /// Construct from a float array.
-    explicit Rect(const float* data) noexcept :
+    explicit Rect(const UFloat* data) noexcept :
         min_(data[0], data[1]),
         max_(data[2], data[3])
     {
@@ -95,7 +95,7 @@ public:
     }
 
     /// Divide by scalar inplace.
-    Rect& operator /=(float value)
+    Rect& operator /=(UFloat value)
     {
         min_ /= value;
         max_ /= value;
@@ -103,7 +103,7 @@ public:
     }
 
     /// Multiply by scalar inplace.
-    Rect& operator *=(float value)
+    Rect& operator *=(UFloat value)
     {
         min_ *= value;
         max_ *= value;
@@ -111,13 +111,13 @@ public:
     }
 
     /// Divide by scalar.
-    Rect operator /(float value) const
+    Rect operator /(UFloat value) const
     {
         return Rect(min_ / value, max_ / value);
     }
 
     /// Multiply by scalar.
-    Rect operator *(float value) const
+    Rect operator *(UFloat value) const
     {
         return Rect(min_ * value, max_ * value);
     }
@@ -244,16 +244,16 @@ public:
     Vector2 Max() const { return max_; }
 
     /// Return left coordinate.
-    float Left() const { return min_.x_; }
+    UFloat Left() const { return min_.x_; }
 
     /// Return top coordinate.
-    float Top() const { return min_.y_; }
+    UFloat Top() const { return min_.y_; }
 
     /// Return right coordinate.
-    float Right() const { return max_.x_; }
+    UFloat Right() const { return max_.x_; }
 
     /// Return bottom coordinate.
-    float Bottom() const { return max_.y_; }
+    UFloat Bottom() const { return max_.y_; }
 
     /// Minimum vector.
     Vector2 min_;
@@ -341,7 +341,7 @@ public:
     }
 
     /// Divide by scalar inplace.
-    IntRect& operator /=(float value)
+    IntRect& operator /=(UFloat value)
     {
         left_ = static_cast<int>(left_ / value);
         top_ = static_cast<int>(top_ / value);
@@ -351,7 +351,7 @@ public:
     }
 
     /// Multiply by scalar inplace.
-    IntRect& operator *=(float value)
+    IntRect& operator *=(UFloat value)
     {
         left_ = static_cast<int>(left_ * value);
         top_ = static_cast<int>(top_ * value);
@@ -361,7 +361,7 @@ public:
     }
 
     /// Divide by scalar.
-    IntRect operator /(float value) const
+    IntRect operator /(UFloat value) const
     {
         return {
             static_cast<int>(left_ / value), static_cast<int>(top_ / value),
@@ -370,7 +370,7 @@ public:
     }
 
     /// Multiply by scalar.
-    IntRect operator *(float value) const
+    IntRect operator *(UFloat value) const
     {
         return {
             static_cast<int>(left_ * value), static_cast<int>(top_ * value),

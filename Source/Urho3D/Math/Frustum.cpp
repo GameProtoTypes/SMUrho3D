@@ -29,7 +29,7 @@
 namespace Urho3D
 {
 
-inline Vector3 ClipEdgeZ(const Vector3& v0, const Vector3& v1, float clipZ)
+inline Vector3 ClipEdgeZ(const Vector3& v0, const Vector3& v1, UFloat clipZ)
 {
     return Vector3(
         v1.x_ + (v0.x_ - v1.x_) * ((clipZ - v1.z_) / (v0.z_ - v1.z_)),
@@ -72,11 +72,11 @@ Frustum& Frustum::operator =(const Frustum& rhs) noexcept
     return *this;
 }
 
-void Frustum::Define(float fov, float aspectRatio, float zoom, float nearZ, float farZ, const Matrix3x4& transform)
+void Frustum::Define(UFloat fov, UFloat aspectRatio, UFloat zoom, UFloat nearZ, UFloat farZ, const Matrix3x4& transform)
 {
     nearZ = Max(nearZ, 0.0f);
     farZ = Max(farZ, nearZ);
-    float halfViewSize = tanf(fov * M_DEGTORAD_2) / zoom;
+    UFloat halfViewSize = tanf(fov * M_DEGTORAD_2) / zoom;
     Vector3 near, far;
 
     near.z_ = nearZ;
@@ -133,11 +133,11 @@ void Frustum::Define(const Matrix4& projection)
     UpdatePlanes();
 }
 
-void Frustum::DefineOrtho(float orthoSize, float aspectRatio, float zoom, float nearZ, float farZ, const Matrix3x4& transform)
+void Frustum::DefineOrtho(UFloat orthoSize, UFloat aspectRatio, UFloat zoom, UFloat nearZ, UFloat farZ, const Matrix3x4& transform)
 {
     nearZ = Max(nearZ, 0.0f);
     farZ = Max(farZ, nearZ);
-    float halfViewSize = orthoSize * 0.5f / zoom;
+    UFloat halfViewSize = orthoSize * 0.5f / zoom;
     Vector3 near, far;
 
     near.z_ = nearZ;
@@ -148,15 +148,15 @@ void Frustum::DefineOrtho(float orthoSize, float aspectRatio, float zoom, float 
     Define(near, far, transform);
 }
 
-void Frustum::DefineSplit(const Matrix4& projection, float near, float far)
+void Frustum::DefineSplit(const Matrix4& projection, UFloat near, UFloat far)
 {
     Matrix4 projInverse = projection.Inverse();
 
     // Figure out depth values for near & far
     Vector4 nearTemp = projection * Vector4(0.0f, 0.0f, near, 1.0f);
     Vector4 farTemp = projection * Vector4(0.0f, 0.0f, far, 1.0f);
-    float nearZ = nearTemp.z_ / nearTemp.w_;
-    float farZ = farTemp.z_ / farTemp.w_;
+    UFloat nearZ = nearTemp.z_ / nearTemp.w_;
+    UFloat farZ = farTemp.z_ / farTemp.w_;
 
     vertices_[0] = projInverse * Vector3(1.0f, 1.0f, nearZ);
     vertices_[1] = projInverse * Vector3(1.0f, -1.0f, nearZ);

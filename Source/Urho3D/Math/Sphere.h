@@ -46,7 +46,7 @@ public:
     Sphere(const Sphere& sphere) noexcept = default;
 
     /// Construct from center and radius.
-    Sphere(const Vector3& center, float radius) noexcept :
+    Sphere(const Vector3& center, UFloat radius) noexcept :
         center_(center),
         radius_(radius)
     {
@@ -92,7 +92,7 @@ public:
     }
 
     /// Define from center and radius.
-    void Define(const Vector3& center, float radius)
+    void Define(const Vector3& center, UFloat radius)
     {
         center_ = center;
         radius_ = radius;
@@ -118,11 +118,11 @@ public:
         }
 
         Vector3 offset = point - center_;
-        float dist = offset.Length();
+        UFloat dist = offset.Length();
 
         if (dist > radius_)
         {
-            float half = (dist - radius_) * 0.5f;
+            UFloat half = (dist - radius_) * 0.5f;
             radius_ += half;
             center_ += (half / dist) * offset;
         }
@@ -155,7 +155,7 @@ public:
     /// Test if a point is inside.
     Intersection IsInside(const Vector3& point) const
     {
-        float distSquared = (point - center_).LengthSquared();
+        UFloat distSquared = (point - center_).LengthSquared();
         if (distSquared < radius_ * radius_)
             return INSIDE;
         else
@@ -165,7 +165,7 @@ public:
     /// Test if another sphere is inside, outside or intersects.
     Intersection IsInside(const Sphere& sphere) const
     {
-        float dist = (sphere.center_ - center_).Length();
+        UFloat dist = (sphere.center_ - center_).Length();
         if (dist >= sphere.radius_ + radius_)
             return OUTSIDE;
         else if (dist + sphere.radius_ < radius_)
@@ -177,8 +177,8 @@ public:
     /// Test if another sphere is (partially) inside or outside.
     Intersection IsInsideFast(const Sphere& sphere) const
     {
-        float distSquared = (sphere.center_ - center_).LengthSquared();
-        float combined = sphere.radius_ + radius_;
+        UFloat distSquared = (sphere.center_ - center_).LengthSquared();
+        UFloat combined = sphere.radius_ + radius_;
 
         if (distSquared >= combined * combined)
             return OUTSIDE;
@@ -192,16 +192,16 @@ public:
     Intersection IsInsideFast(const BoundingBox& box) const;
 
     /// Return distance of a point to the surface, or 0 if inside.
-    float Distance(const Vector3& point) const { return Max((point - center_).Length() - radius_, 0.0f); }
+    UFloat Distance(const Vector3& point) const { return Max((point - center_).Length() - radius_, 0.0f); }
     /// Return point on the sphere relative to sphere position.
-    Vector3 GetLocalPoint(float theta, float phi) const;
+    Vector3 GetLocalPoint(UFloat theta, UFloat phi) const;
     /// Return point on the sphere.
-    Vector3 GetPoint(float theta, float phi) const { return center_ + GetLocalPoint(theta, phi); }
+    Vector3 GetPoint(UFloat theta, UFloat phi) const { return center_ + GetLocalPoint(theta, phi); }
 
     /// Sphere center.
     Vector3 center_;
     /// Sphere radius.
-    float radius_{};
+    UFloat radius_{};
 };
 
 }

@@ -97,7 +97,7 @@ public:
     Vector3 Project(const Vector3& point) const { return point - normal_ * (normal_.DotProduct(point) + d_); }
 
     /// Return signed distance to a point.
-    float Distance(const Vector3& point) const { return normal_.DotProduct(point) + d_; }
+    UFloat Distance(const Vector3& point) const { return normal_.DotProduct(point) + d_; }
 
     /// Reflect a normalized direction vector.
     Vector3 Reflect(const Vector3& direction) const { return direction - (2.0f * normal_.DotProduct(direction) * normal_); }
@@ -119,7 +119,7 @@ public:
     /// Plane absolute normal.
     Vector3 absNormal_;
     /// Plane constant.
-    float d_{};
+    UFloat d_{};
 
     /// Plane at origin with normal pointing up.
     static const Plane UP;
