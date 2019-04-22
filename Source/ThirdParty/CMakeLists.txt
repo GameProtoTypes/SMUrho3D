@@ -71,8 +71,15 @@ else ()
     endif ()
 
     if (URHO3D_PHYSICS)
-        add_subdirectory (Bullet)
-        add_subdirectory (StanHull)
+
+
+        if (URHO3D_STATIC_RUNTIME)
+            set(NEWTON_STATIC_RUNTIME_LIBRARIES ON CACHE BOOL "use windows system static libraries" FORCE)
+        else()
+            set(NEWTON_STATIC_RUNTIME_LIBRARIES OFF CACHE BOOL "use windows system static libraries" FORCE)
+        endif()
+
+        add_subdirectory (newton-dynamics)
     endif ()
 
     if (URHO3D_TOOLS)

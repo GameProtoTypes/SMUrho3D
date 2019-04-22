@@ -53,20 +53,13 @@ public:
     bool Initialize(const VariantMap& parameters);
     /// Reinitialize resource cache subsystem using parameters given. Implicitly called by Initialize. Return true if successful.
     bool InitializeResourceCache(const VariantMap& parameters, bool removeOld = true);
-    /// Run one frame.
-    void RunFrame();
+    /// Run one frame. optionally render.  if realTime is true the function will wait until the current timestep has elapsed.
+    void RunFrame(bool render = true, bool realTime = true);
     /// Create the console and return it. May return null if engine configuration does not allow creation (headless mode.)
     Console* CreateConsole();
     /// Create the debug hud.
     DebugHud* CreateDebugHud();
-    /// Set minimum frames per second. If FPS goes lower than this, time will appear to slow down.
-    void SetMinFps(int fps);
-    /// Set maximum frames per second. The engine will sleep if FPS is higher than this.
-    void SetMaxFps(int fps);
-    /// Set maximum frames per second when the application does not have input focus.
-    void SetMaxInactiveFps(int fps);
-    /// Set how many frames to average for timestep smoothing. Default is 2. 1 disables smoothing.
-    void SetTimeStepSmoothing(int frames);
+  
     /// Set whether to pause update events and audio when minimized.
     void SetPauseMinimized(bool enable);
     /// Set whether to exit automatically on exit request (window close button.)
@@ -83,19 +76,7 @@ public:
     void DumpMemory();
 
     /// Get timestep of the next frame. Updated by ApplyFrameLimit().
-    float GetNextTimeStep() const { return timeStep_; }
-
-    /// Return the minimum frames per second.
-    int GetMinFps() const { return minFps_; }
-
-    /// Return the maximum frames per second.
-    int GetMaxFps() const { return maxFps_; }
-
-    /// Return the maximum frames per second when the application does not have input focus.
-    int GetMaxInactiveFps() const { return maxInactiveFps_; }
-
-    /// Return how many frames to average for timestep smoothing.
-    int GetTimeStepSmoothing() const { return timeStepSmoothing_; }
+    float GetTimeStep() const { return timeStep_; }
 
     /// Return whether to pause update events and audio when minimized.
     bool GetPauseMinimized() const { return pauseMinimized_; }
@@ -116,8 +97,6 @@ public:
     void Update();
     /// Render after frame update.
     void Render();
-    /// Get the timestep for the next frame and sleep for frame limiting if necessary.
-    void ApplyFrameLimit();
 
     /// Parse the engine startup parameters map from command line arguments.
     static void DefineParameters(CLI::App& commandLine, VariantMap& engineParameters);
@@ -138,15 +117,7 @@ private:
     /// Previous timesteps for smoothing.
     PODVector<float> lastTimeSteps_;
     /// Next frame timestep in seconds.
-    float timeStep_;
-    /// How many frames to average for the smoothed timestep.
-    unsigned timeStepSmoothing_;
-    /// Minimum frames per second.
-    unsigned minFps_;
-    /// Maximum frames per second.
-    unsigned maxFps_;
-    /// Maximum frames per second when the application does not have input focus.
-    unsigned maxInactiveFps_;
+    float timeStep_ = 1.0f/60.0f;
     /// Pause when minimized flag.
     bool pauseMinimized_;
 #ifdef URHO3D_TESTING

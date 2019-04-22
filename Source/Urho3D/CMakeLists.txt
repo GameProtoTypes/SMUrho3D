@@ -51,6 +51,14 @@ macro (define_engine_source_files)
     endforeach ()
 endmacro()
 
+
+
+#check for UNIX and Define _POSIX_VER used by newton dynamics. (on linux this is needed to be defined at this scope to work. - find fix.)
+if (UNIX)
+      add_definitions(-D_POSIX_VER)
+endif(UNIX)
+
+
 define_engine_source_files (Container Core Engine IO Math)
 
 if (NOT MINI_URHO)
@@ -136,6 +144,8 @@ foreach(def LINUX ANDROID IOS APPLE MACOS MOBILE DESKTOP)
     endif ()
 endforeach()
 
+
+
 # Define generated source files
 if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/librevision.h)
     execute_process (COMMAND ${CMAKE_COMMAND} -DFILENAME=${CMAKE_CURRENT_BINARY_DIR}/librevision.h -P ${Urho3D_SOURCE_DIR}/CMake/Modules/GetUrhoRevision.cmake
@@ -161,6 +171,21 @@ set (THIRD_PARTY_DEPENDENCIES
     Recast
     Box2D
     WebP
+    
+    dAnimation
+    dContainers
+    dCustomJoints
+    dgCore
+    dgNewtonAvx
+    dgNewtonAvx2
+    dgNewtonSse4.2
+    #dgNewtonSse
+    dgPhysics
+    dNewton
+    dMath
+    newton
+
+    
     ImGui
     LibCpuId
     GLEW
