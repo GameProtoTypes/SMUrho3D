@@ -503,59 +503,92 @@ bool Engine::InitializeResourceCache(const VariantMap& parameters, bool removeOl
     return true;
 }
 
+void Engine::FrameSkip(float seconds, float timestep)
+{
+    doFrameSkip_ = true;
+    frameSkipTimeStepSave = timeStep_;
+    frameSkipTime_ = seconds;
+    timeStep_ = timestep;
+}
+
+
 void Engine::RunFrame()
 {
-    URHO3D_PROFILE("RunFrame");
-    {
-        assert(initialized_);
-
-        // If not headless, and the graphics subsystem no longer has a window open, assume we should exit
-        if (!headless_ && !GetSubsystem<Graphics>()->IsInitialized())
-            exiting_ = true;
-
-        if (exiting_)
-            return;
-    }
-
-    // Note: there is a minimal performance cost to looking up subsystems (uses a hashmap); if they would be looked up several
-    // times per frame it would be better to cache the pointers
-    auto* time = GetSubsystem<Time>();
-    auto* input = GetSubsystem<Input>();
-    auto* audio = GetSubsystem<Audio>();
-
-    {
-        URHO3D_PROFILE("DoFrame");
-        time->BeginFrame(timeStep_);
-
-        // If pause when minimized -mode is in use, stop updates and audio as necessary
-        if (pauseMinimized_ && input->IsMinimized())
+    do {
+        URHO3D_PROFILE("RunFrame");
         {
-            if (audio->IsPlaying())
-            {
-                audio->Stop();
-                audioPaused_ = true;
-            }
-        }
-        else
-        {
-            // Only unpause when it was paused by the engine
-            if (audioPaused_)
-            {
-                audio->Play();
-                audioPaused_ = false;
-            }
+            assert(initialized_);
 
-            Update();
+            // If not headless, and the graphics subsystem no longer has a window open, assume we should exit
+            if (!headless_ && !GetSubsystem<Graphics>()->IsInitialized())
+                exiting_ = true;
+
+            if (exiting_)
+                return;
         }
 
-        Render();
-    }
-    ApplyFrameLimit();
+        // Note: there is a minimal performance cost to looking up subsystems (uses a hashmap); if they would be looked up several
+        // times per frame it would be better to cache the pointers
+        auto* time = GetSubsystem<Time>();
+        auto* input = GetSubsystem<Input>();
+        auto* audio = GetSubsystem<Audio>();
 
-    time->EndFrame();
+        {
+            URHO3D_PROFILE("DoFrame");
+            time->BeginFrame(timeStep_);
 
-    // Mark a frame for profiling
-    URHO3D_PROFILE_FRAME();
+            // If pause when minimized -mode is in use, stop updates and audio as necessary
+            if (pauseMinimized_ && input->IsMinimized())
+            {
+                if (audio->IsPlaying())
+                {
+                    audio->Stop();
+                    audioPaused_ = true;
+                }
+            }
+            else
+            {
+                // Only unpause when it was paused by the engine
+                if (audioPaused_)
+                {
+                    audio->Play();
+                    audioPaused_ = false;
+                }
+
+                Update();
+            }
+
+
+            if(!doFrameSkip_)
+                Render();
+
+        }
+        if (!doFrameSkip_)
+            ApplyFrameLimit();
+
+        time->EndFrame();
+
+        // Mark a frame for profiling
+        URHO3D_PROFILE_FRAME();
+
+
+        if (doFrameSkip_)
+        {
+            frameSkipTime_ -= timeStep_;
+            if(frameSkipTime_ <= timeStep_ && frameSkipTime_ > 0.0f)
+            {
+                timeStep_ = frameSkipTime_;
+            }
+            else if (frameSkipTime_ <= 0.0f)
+            {
+                timeStep_ = frameSkipTimeStepSave;
+                doFrameSkip_ = false;
+            }
+
+        }
+
+
+    } while (doFrameSkip_);
 }
 
 Console* Engine::CreateConsole()
@@ -738,15 +771,22 @@ void Engine::Update()
     // Logic post-update event
     SendEvent(E_POSTUPDATE, eventData);
 
-    // Rendering update event
-    SendEvent(E_RENDERUPDATE, eventData);
 
-    // Post-render update event
-    SendEvent(E_POSTRENDERUPDATE, eventData);
+    if (!doFrameSkip_)
+    {
+        // Rendering update event
+        SendEvent(E_RENDERUPDATE, eventData);
+
+        // Post-render update event
+        SendEvent(E_POSTRENDERUPDATE, eventData);
+    }
+   
+
 }
 
 void Engine::Render()
 {
+
     if (headless_)
         return;
 

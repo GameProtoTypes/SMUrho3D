@@ -84,7 +84,7 @@ public:
     /// \param alpha value between 0.0f - 1.0f
     void ApplyStyleDefault(bool darkStyle, float alpha);
     /// Hold a reference to this texture until end of frame.
-    void ReferenceTexture(Texture2D* texture) { referencedTextures_.push_back(SharedPtr(texture)); }
+    void ReferenceTexture(Texture2D* texture) { referencedTextures_.push_back(SharedPtr<Texture2D>(texture)); }
 #ifndef SWIG    // Due to some quirk SWIG fails to ignore this API.
     /// Return value cache for storing temporary UI state that expires when unused.
     ValueCache& GetValueCache() { return cache_; }

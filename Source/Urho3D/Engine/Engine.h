@@ -53,6 +53,9 @@ public:
     bool Initialize(const VariantMap& parameters);
     /// Reinitialize resource cache subsystem using parameters given. Implicitly called by Initialize. Return true if successful.
     bool InitializeResourceCache(const VariantMap& parameters, bool removeOld = true);
+
+    /// Run for specified time as fast as possible with no rendering.
+    void FrameSkip(float seconds, float timestep);
     /// Run one frame.
     void RunFrame();
     /// Create the console and return it. May return null if engine configuration does not allow creation (headless mode).
@@ -189,6 +192,12 @@ private:
     bool headless_;
     /// Audio paused flag.
     bool audioPaused_;
+
+    bool doFrameSkip_ = false;
+
+    float frameSkipTime_ = 0.0f;
+
+    float frameSkipTimeStepSave = 0.0f;
 };
 
 }
