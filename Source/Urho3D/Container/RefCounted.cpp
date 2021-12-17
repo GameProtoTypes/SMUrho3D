@@ -37,7 +37,7 @@ namespace Urho3D
 
 RefCount* RefCount::Allocate()
 {
-    void* const memory = EASTLAlloc(*ea::get_default_allocator((Allocator*)nullptr), sizeof(RefCount));
+    void* const memory = EASTLAlloc(*ea::get_default_allocator((UrhoAllocator*)nullptr), sizeof(RefCount));
     assert(memory != nullptr);
     return ::new(memory) RefCount();
 }
@@ -45,7 +45,7 @@ RefCount* RefCount::Allocate()
 void RefCount::Free(RefCount* instance)
 {
     instance->~RefCount();
-    EASTLFree(*ea::get_default_allocator((Allocator*)nullptr), instance, sizeof(RefCount));
+    EASTLFree(*ea::get_default_allocator((UrhoAllocator*)nullptr), instance, sizeof(RefCount));
 }
 
 RefCounted::RefCounted()

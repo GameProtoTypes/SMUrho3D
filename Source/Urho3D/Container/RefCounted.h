@@ -33,7 +33,7 @@ namespace Urho3D
 struct URHO3D_API RefCount
 {
 protected:
-    using Allocator = EASTLAllocatorType;
+    using UrhoAllocator = EASTLAllocatorType;
 
     /// Construct.
     RefCount() = default;

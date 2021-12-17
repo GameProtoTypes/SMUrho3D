@@ -53,6 +53,7 @@
 #endif
 #ifdef URHO3D_NETWORK
 #include "../Network/Network.h"
+#include "../Network/GymClient.h"
 #endif
 #ifdef URHO3D_PHYSICS
 #include "../Physics/PhysicsWorld.h"
@@ -73,6 +74,8 @@
 #include "../Urho2D/Urho2D.h"
 #endif
 #include "../Engine/EngineEvents.h"
+
+
 
 #if defined(__EMSCRIPTEN__) && defined(URHO3D_TESTING)
 #include <emscripten/emscripten.h>
@@ -214,6 +217,8 @@ bool Engine::Initialize(const VariantMap& parameters)
         context_->RegisterSubsystem(new Graphics(context_));
         context_->RegisterSubsystem(new Renderer(context_));
     }
+
+    context_->RegisterSubsystem(new GymClient(context_));
 
 #ifdef URHO3D_URHO2D
     // 2D graphics library is dependent on 3D graphics library
@@ -502,19 +507,47 @@ bool Engine::InitializeResourceCache(const VariantMap& parameters, bool removeOl
 
     return true;
 }
+void Engine::StartFrameSkip(float timestep)
+{
+    doFrameSkip_ = true;
+    frameSkipTimeStepSave = timeStep_;
+    frameSkipTimeStep_ = timestep;
+    frameSkipForever_ = true;
+}
+void Engine::StopFrameSkip()
+{
+    doFrameSkip_ = false;
+    frameSkipForever_ = false;
+}
+
+
 
 void Engine::FrameSkip(float seconds, float timestep)
 {
     doFrameSkip_ = true;
     frameSkipTimeStepSave = timeStep_;
     frameSkipTime_ = seconds;
-    timeStep_ = timestep;
+    frameSkipTimeStep_ = timestep;
+    frameSkipForever_ = false;
 }
 
 
 void Engine::RunFrame()
 {
+
+    GymClient* gym = GetSubsystem<GymClient>();
+    if (gym->IsConnected())
+    {
+        gym->GetCommand();
+        timeStep_ = 1 / 60.0f;
+    }
+
+
+
     do {
+        if (doFrameSkip_)
+            timeStep_ = frameSkipTimeStep_;
+
         URHO3D_PROFILE("RunFrame");
         {
             assert(initialized_);
@@ -574,21 +607,31 @@ void Engine::RunFrame()
 
         if (doFrameSkip_)
         {
-            frameSkipTime_ -= timeStep_;
-            if(frameSkipTime_ <= timeStep_ && frameSkipTime_ > 0.0f)
+            if (!frameSkipForever_)
             {
-                timeStep_ = frameSkipTime_;
-            }
-            else if (frameSkipTime_ <= 0.0f)
-            {
-                timeStep_ = frameSkipTimeStepSave;
-                doFrameSkip_ = false;
+                frameSkipTime_ -= timeStep_;
+                if (frameSkipTime_ <= timeStep_ && frameSkipTime_ > 0.0f)
+                {
+                    timeStep_ = frameSkipTime_;
+                }
+                else if (frameSkipTime_ <= 0.0f)
+                {
+                    timeStep_ = frameSkipTimeStepSave;
+                    doFrameSkip_ = false;
+                }
             }
 
         }
 
 
     } while (doFrameSkip_);
+
+
+   
+    if (gym->IsConnected())
+    {
+        gym->SendResponse();
+    }
 }
 
 Console* Engine::CreateConsole()

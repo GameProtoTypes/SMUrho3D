@@ -91,3 +91,6 @@ bool BinaryFile::LoadObject(const char* name, T& object) const
 }
 
 }
+
+
+

@@ -68,11 +68,11 @@ URHO3D_API void* AllocatorReserve(AllocatorBlock* allocator);
 URHO3D_API void AllocatorFree(AllocatorBlock* allocator, void* ptr);
 
 /// %Allocator template class. Allocates objects of a specific class.
-template <class T> class Allocator : private NonCopyable
+template <class T> class UrhoAllocator : private NonCopyable
 {
 public:
     /// Construct.
-    explicit Allocator(unsigned initialCapacity = 0) :
+    explicit UrhoAllocator(unsigned initialCapacity = 0) :
         allocator_(nullptr)
     {
         if (initialCapacity)
@@ -80,7 +80,7 @@ public:
     }
 
     /// Destruct.
-    ~Allocator()
+    ~UrhoAllocator()
     {
         AllocatorUninitialize(allocator_);
     }

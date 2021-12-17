@@ -56,6 +56,13 @@ public:
 
     /// Run for specified time as fast as possible with no rendering.
     void FrameSkip(float seconds, float timestep);
+
+    void StartFrameSkip(float timestep);
+
+    void StopFrameSkip();
+
+    bool IsFrameSkipping() { return doFrameSkip_; }
+
     /// Run one frame.
     void RunFrame();
     /// Create the console and return it. May return null if engine configuration does not allow creation (headless mode).
@@ -195,7 +202,11 @@ private:
 
     bool doFrameSkip_ = false;
 
+    bool frameSkipForever_ = false;
+
     float frameSkipTime_ = 0.0f;
+
+    float frameSkipTimeStep_ = 0.0f;
 
     float frameSkipTimeStepSave = 0.0f;
 };
