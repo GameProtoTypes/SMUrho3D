@@ -538,8 +538,20 @@ void Engine::RunFrame()
     GymClient* gym = GetSubsystem<GymClient>();
     if (gym->IsConnected())
     {
-        gym->GetCommand();
-        timeStep_ = 1 / 60.0f;
+        GymClient::CommandType command = gym->GetCommand();
+        if (command == GymClient::CommandType_Action)
+        {
+            FrameSkip(1 / 60.0f, 1 / 60.0f);
+            frameSkipRenderAndWait_ = !gym->doRender;
+        }
+        else
+        {
+            frameSkipRenderAndWait_ = true;
+        }
+    }
+    else
+    {
+        frameSkipRenderAndWait_ = true;
     }
 
 
@@ -592,11 +604,11 @@ void Engine::RunFrame()
             }
 
 
-            if(!doFrameSkip_)
+            if(!doFrameSkip_ || doFrameSkip_ && frameSkipRenderAndWait_)
                 Render();
 
         }
-        if (!doFrameSkip_)
+        if (!doFrameSkip_ || doFrameSkip_ && frameSkipRenderAndWait_)
             ApplyFrameLimit();
 
         time->EndFrame();
@@ -815,7 +827,7 @@ void Engine::Update()
     SendEvent(E_POSTUPDATE, eventData);
 
 
-    if (!doFrameSkip_)
+    if (!doFrameSkip_ || doFrameSkip_ && frameSkipRenderAndWait_)
     {
         // Rendering update event
         SendEvent(E_RENDERUPDATE, eventData);

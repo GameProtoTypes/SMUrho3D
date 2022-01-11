@@ -35,6 +35,7 @@ public:
         }
 
 
+
         pipeHandle = CreateFile(
             "\\\\.\\pipe\\GYMPIPE",
             GENERIC_READ | GENERIC_WRITE,
@@ -134,13 +135,15 @@ public:
 
 
     //Read the next command
-    void GetCommand()
+    CommandType GetCommand()
     {
         if (IsConnected())
         {
             lastCommand = (CommandType)Read32();
             if (lastCommand == CommandType_Action)
             {
+                doRender = bool(Read32());
+
                 for (int g = 0; g < numGYMS; g++)
                 {
                     for (int v = 0; v < actionSets[g].size(); v++)
@@ -152,6 +155,7 @@ public:
             }
             else if (lastCommand == CommandType_Reset)
             {
+                
                 numGYMS = Read32();
 
 
@@ -163,7 +167,10 @@ public:
 
                 resetPending = true;
             }
+
+            return lastCommand;
         }
+        return CommandType_None;
     }
 
     void SendResponse()
@@ -222,6 +229,8 @@ public:
     ea::vector<float> rewards;
     ea::vector<int> ends;
     int numGYMS = 50;
+    bool doRender = false;
+
 
     ea::queue<SLNet::Packet*> readBuffer;
     int readBufferLoc = 0;

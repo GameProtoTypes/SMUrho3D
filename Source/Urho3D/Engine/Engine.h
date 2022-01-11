@@ -202,6 +202,8 @@ private:
 
     bool doFrameSkip_ = false;
 
+    bool frameSkipRenderAndWait_ = true;
+
     bool frameSkipForever_ = false;
 
     float frameSkipTime_ = 0.0f;
