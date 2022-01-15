@@ -542,7 +542,7 @@ void Engine::RunFrame()
         if (command == GymClient::CommandType_Action)
         {
             FrameSkip(1 / 60.0f, 1 / 60.0f);
-            frameSkipRenderAndWait_ = !gym->doRender;
+            frameSkipRenderAndWait_ = gym->doRender;
         }
         else
         {

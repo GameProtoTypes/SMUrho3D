@@ -48,7 +48,8 @@
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
 #include <ImGui/imgui_stdlib.h>
-
+#include <ImGui/implot.h>
+#include <ImGui/implot_internal.h>
 
 namespace Urho3D
 {

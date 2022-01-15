@@ -39,6 +39,8 @@
 #include <ImGuizmo/ImGuizmo.h>
 #include <ImGui/imgui_internal.h>
 #include <ImGui/imgui_freetype.h>
+#include <ImGui/implot.h>
+#include <ImGui/implot_internal.h>
 
 #define IMGUI_IMPL_API IMGUI_API
 #include <imgui_impl_sdl.h>
@@ -59,6 +61,7 @@ SystemUI::SystemUI(Urho3D::Context* context, ImGuiConfigFlags flags)
     , indexBuffer_(context)
 {
     imContext_ = ui::CreateContext();
+    ImPlot::CreateContext();
 
     ImGuiIO& io = ui::GetIO();
     io.UserData = this;
@@ -81,7 +84,9 @@ SystemUI::SystemUI(Urho3D::Context* context, ImGuiConfigFlags flags)
 SystemUI::~SystemUI()
 {
     PlatformShutdown();
+    ImPlot::DestroyContext();
     ui::DestroyContext(imContext_);
+
     imContext_ = nullptr;
 }
 
