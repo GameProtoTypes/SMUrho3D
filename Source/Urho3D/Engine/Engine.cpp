@@ -53,8 +53,8 @@
 #endif
 #ifdef URHO3D_NETWORK
 #include "../Network/Network.h"
-#include "../Network/GymClient.h"
 #endif
+#include "../MLControl/GymClient.h"
 #ifdef URHO3D_PHYSICS
 #include "../Physics/PhysicsWorld.h"
 #include "../Physics/RaycastVehicle.h"

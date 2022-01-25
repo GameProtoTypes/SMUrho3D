@@ -51,7 +51,7 @@ macro (define_engine_source_files)
     endforeach ()
 endmacro()
 
-define_engine_source_files (Container Core IO Math)
+define_engine_source_files (Container Core IO Math MLControl)
 
 if (NOT MINI_URHO)
     define_engine_source_files (Audio Engine Input RenderPipeline Resource Scene UI Utility)
