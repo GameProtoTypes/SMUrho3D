@@ -173,6 +173,8 @@ Context::~Context()
     RemoveSubsystem("Input");
     RemoveSubsystem("Renderer");
     RemoveSubsystem("Graphics");
+    RemoveSubsystem("RmlUI");
+
 
     subsystems_.Clear();
 
