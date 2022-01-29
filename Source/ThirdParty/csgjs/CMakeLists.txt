@@ -23,5 +23,13 @@
 file (GLOB SOURCE_FILES *.hpp *.cpp)
 add_library (csgjs STATIC ${SOURCE_FILES})
 target_include_directories(csgjs PRIVATE ../..)
-install (DIRECTORY ./ DESTINATION ${DEST_THIRDPARTY_HEADERS}/csgjs FILES_MATCHING PATTERN *.hpp)
-install_to_build_tree(csgjs)
+
+
+
+install (DIRECTORY include/ DESTINATION ${DEST_THIRDPARTY_HEADERS_DIR}/ FILES_MATCHING PATTERN *.hPP)
+
+
+if (NOT URHO3D_MERGE_STATIC_LIBS)
+    install(TARGETS csgjs EXPORT Urho3D ARCHIVE DESTINATION ${DEST_ARCHIVE_DIR_CONFIG})
+endif ()
+

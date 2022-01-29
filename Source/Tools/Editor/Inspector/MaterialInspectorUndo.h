@@ -26,7 +26,7 @@
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Resource/ResourceCache.h>
-#include <Toolbox/Common/UndoStack.h>
+#include <Tools/Toolbox/Common/UndoStack.h>
 
 
 namespace Urho3D
