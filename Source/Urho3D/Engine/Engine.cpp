@@ -556,7 +556,7 @@ void Engine::RunFrame()
 
 
     if ((minFps_ > 0) && (timeStep_ < 1.0f / minFps_))
-        timeStep_ = minFps_;
+        timeStep_ = 1.0f/minFps_;
 
 
     do {

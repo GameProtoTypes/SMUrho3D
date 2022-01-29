@@ -2,7 +2,6 @@
 
 #include <Urho3D/IO/Log.h>
 #include <Urho3D/Core/Object.h>
-#include <SLikeNet/TCPInterface.h>
 #include <EASTL/queue.h>
 #include <winbase.h>
 
@@ -218,7 +217,8 @@ public:
 
 	void Disconnect()
 	{
-		tcpClient.Stop();
+        DeleteFile("\\\\.\\pipe\\GYMPIPE");
+        pipeHandle = nullptr;
 	}
 
     CommandType lastCommand = CommandType_None;
@@ -232,10 +232,7 @@ public:
     bool doRender = false;
 
 
-    ea::queue<SLNet::Packet*> readBuffer;
     int readBufferLoc = 0;
-	SLNet::TCPInterface tcpClient;
     HANDLE pipeHandle = nullptr;
-	SLNet::SystemAddress hostAddr;
 };
 
