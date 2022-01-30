@@ -46,6 +46,7 @@
 #include "../Scene/SplinePath.h"
 #include "../Scene/UnknownComponent.h"
 #include "../Scene/ValueAnimation.h"
+#include "../Scene/ConstructiveSolidGeometry.h"
 
 #include "../DebugNew.h"
 
@@ -1628,6 +1629,7 @@ void RegisterSceneLibrary(Context* context)
     SplinePath::RegisterObject(context);
     SceneManager::RegisterObject(context);
     CameraViewport::RegisterObject(context);
+    CSGManipulator::RegisterObject(context);
 }
 
 }
