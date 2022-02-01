@@ -22,7 +22,7 @@
 
 #pragma once
 
-
+#include "ToolboxAPI.h"
 #include <Urho3D/Container/ValueCache.h>
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Core/Object.h>

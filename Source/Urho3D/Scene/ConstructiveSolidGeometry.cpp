@@ -59,72 +59,92 @@ std::vector<csgjs_polygon> CSGStaticModelToPolygons(StaticModel* staticModel,
     // Transform will be applied to vertices and normals.
     auto geom = staticModel->GetLodGeometry(0, 0);  // TODO: handle all LODs
 
-    assert(geom->GetNumVertexBuffers() == 1);       // TODO: should we support multiple vertex buffers?
+    const unsigned char* vertexData;
+    const unsigned char* indexData;
+    unsigned elementSize, indexSize;
+    const  ea::vector<VertexElement>* elements;
 
-    auto ib = geom->GetIndexBuffer();
-    auto vb = geom->GetVertexBuffer(0);
+    geom->GetRawData(vertexData, elementSize, indexData, indexSize, elements);
 
-    auto elements = vb->GetElements();
-    auto vertexSize = vb->GetVertexSize();
-    auto indexSize = ib->GetIndexSize();
-    auto vertexData = vb->GetShadowData();
 
-    for (auto i = 0; i < ib->GetIndexCount(); i += 3)
+    bool hasPosition = VertexBuffer::HasElement(*elements, TYPE_VECTOR3, SEM_POSITION);
+
+    if (vertexData && indexData && hasPosition)
     {
-        std::vector<csgjs_vertex> triangle(3);
+        unsigned vertexStart = geom->GetVertexStart();
+        unsigned vertexCount = geom->GetVertexCount();
+        unsigned indexStart = geom->GetIndexStart();
+        unsigned indexCount = geom->GetIndexCount();
 
-        for (int j = 0; j < 3; j++)
+        unsigned positionOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_POSITION);
+        unsigned normalOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR3, SEM_NORMAL);
+        unsigned texCoordOffset = VertexBuffer::GetElementOffset(*elements, TYPE_VECTOR2, SEM_TEXCOORD);
+
+
+
+        for (unsigned curIdx = indexStart; curIdx < indexStart + indexCount; curIdx += 3)
         {
-            unsigned index = 0;
-            if (indexSize > sizeof(uint16_t))
-                index = *(uint32_t*)(ib->GetShadowData() + (i + j) * indexSize);
-            else
-                index = *(uint16_t*)(ib->GetShadowData() + (i + j) * indexSize);
-
-            csgjs_vertex& vertex = triangle[j];
-            unsigned char* vertexInData = &vertexData[vertexSize * index];
-            for (unsigned k = 0; k < elements.size(); k++)
-            {
-                const auto& el = elements.at(k);
-                switch (el.semantic_)
-                {
-                case SEM_POSITION:
-                {
-                    assert(el.type_ == TYPE_VECTOR3);
-                    Vector3 pos = transform * Vector4(*reinterpret_cast<Vector3*>(vertexInData + el.offset_), 1);
-                    static_assert(sizeof(pos) == sizeof(vertex.pos), "Data size mismatch");
-                    memcpy(&vertex.pos, &pos, sizeof(pos));
-                    break;
-                }
-                case SEM_NORMAL:
-                {
-                    assert(el.type_ == TYPE_VECTOR3);
-                    Vector3 normal = transform * Vector4(*reinterpret_cast<Vector3*>(vertexInData + el.offset_), 0);
-                    static_assert(sizeof(normal) == sizeof(vertex.normal), "Data size mismatch");
-                    memcpy(&vertex.normal, &normal, sizeof(normal));
-                    break;
-                }
-                case SEM_TEXCOORD:
-                {
-                    assert(el.type_ == TYPE_VECTOR2);
-                    static_assert(sizeof(Vector2) <= sizeof(vertex.uv), "Data size mismatch");
-                    memcpy(&vertex.uv, reinterpret_cast<Vector2*>(vertexInData + el.offset_), sizeof(Vector2));
-                    break;
-                }
-                case SEM_COLOR:
-                {
-                    assert(el.type_ == TYPE_UBYTE4_NORM);
-                    static_assert(sizeof(vertex.color) == 4, "Data size mismatch");
-                    memcpy(&vertex.color, reinterpret_cast<unsigned*>(vertexInData + el.offset_), sizeof(vertex.color));
-                    break;
-                }
-                default:
-                    break;
-                }
+            //get indexes
+            unsigned i1, i2, i3;
+            if (indexSize == 2) {
+                i1 = *reinterpret_cast<const unsigned short*>(indexData + curIdx * indexSize);
+                i2 = *reinterpret_cast<const unsigned short*>(indexData + (curIdx + 1) * indexSize);
+                i3 = *reinterpret_cast<const unsigned short*>(indexData + (curIdx + 2) * indexSize);
             }
+            else if (indexSize == 4)
+            {
+                i1 = *reinterpret_cast<const unsigned*>(indexData + curIdx * indexSize);
+                i2 = *reinterpret_cast<const unsigned*>(indexData + (curIdx + 1) * indexSize);
+                i3 = *reinterpret_cast<const unsigned*>(indexData + (curIdx + 2) * indexSize);
+            }
+
+            //lookup triangle using indexes.
+            Vector3 v1 = *reinterpret_cast<const Vector3*>(vertexData + i1 * elementSize + positionOffset);
+            Vector3 v2 = *reinterpret_cast<const Vector3*>(vertexData + i2 * elementSize + positionOffset);
+            Vector3 v3 = *reinterpret_cast<const Vector3*>(vertexData + i3 * elementSize + positionOffset);
+
+            //Normal
+            Vector3 normal1 = *reinterpret_cast<const Vector3*>(vertexData + i1 * elementSize + normalOffset);
+            Vector3 normal2 = *reinterpret_cast<const Vector3*>(vertexData + i2 * elementSize + normalOffset);
+            Vector3 normal3 = *reinterpret_cast<const Vector3*>(vertexData + i3 * elementSize + normalOffset);
+
+            //UV
+            Vector2 UV1 = *reinterpret_cast<const Vector2*>(vertexData + i1 * elementSize + texCoordOffset);
+            Vector2 UV2 = *reinterpret_cast<const Vector2*>(vertexData + i2 * elementSize + texCoordOffset);
+            Vector2 UV3 = *reinterpret_cast<const Vector2*>(vertexData + i3 * elementSize + texCoordOffset);
+
+
+
+            //Apply Transform to vertex and rotate normals.
+            v1 = transform * Vector3(v1);
+            v2 = transform * Vector3(v2);
+            v3 = transform * Vector3(v3);
+
+            normal1 = transform.RotationMatrix() * Vector3(normal1);
+            normal2 = transform.RotationMatrix() * Vector3(normal2);
+            normal3 = transform.RotationMatrix() * Vector3(normal3);
+
+
+            std::vector<csgjs_vertex> triangle(3);
+
+            triangle[0].pos = csgjs_vector(v1.x_, v1.y_, v1.z_);
+            triangle[1].pos = csgjs_vector(v2.x_, v2.y_, v2.z_);
+            triangle[2].pos = csgjs_vector(v3.x_, v3.y_, v3.z_);
+
+            triangle[0].normal = csgjs_vector(normal1.x_, normal1.y_, normal1.z_);
+            triangle[1].normal = csgjs_vector(normal2.x_, normal2.y_, normal2.z_);
+            triangle[2].normal = csgjs_vector(normal3.x_, normal3.y_, normal3.z_);
+
+            triangle[0].uv = csgjs_vector(UV1.x_, UV1.y_, 0);
+            triangle[1].uv = csgjs_vector(UV2.x_, UV2.y_, 0);
+            triangle[2].uv = csgjs_vector(UV3.x_, UV3.y_, 0);
+
+
+            list.emplace_back(csgjs_polygon(std::move(triangle)));
         }
-        list.emplace_back(csgjs_polygon(std::move(triangle)));
+
     }
+
 
     return list;
 }
