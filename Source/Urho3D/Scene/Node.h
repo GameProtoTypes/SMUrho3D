@@ -556,12 +556,21 @@ public:
     Vector3 LocalToWorld(const Vector3& position) const;
     /// Convert a local space position or rotation to world space.
     Vector3 LocalToWorld(const Vector4& vector) const;
+    /// Convert a local space transform to world space.
+    Matrix3x4 LocalToWorld(const Matrix3x4& transform) const;
+    /// Convert a local space rotation to world space.
+    Quaternion LocalToWorld(const Quaternion& rotation) const;
+
     /// Convert a local space position or rotation to world space (for Urho2D).
     Vector2 LocalToWorld2D(const Vector2& vector) const;
     /// Convert a world space position to local space.
     Vector3 WorldToLocal(const Vector3& position) const;
     /// Convert a world space position or rotation to local space.
     Vector3 WorldToLocal(const Vector4& vector) const;
+    /// Convert a world space transform to local space.
+    Matrix3x4 WorldToLocal(const Matrix3x4& transform) const;
+    /// Convert a world space rotation to local space.
+    Quaternion WorldToLocal(const Quaternion& rotation) const;
     /// Convert a world space position or rotation to local space (for Urho2D).
     Vector2 WorldToLocal2D(const Vector2& vector) const;
 
