@@ -228,11 +228,11 @@ public:
     ea::vector<ea::vector<float>> states;
     ea::vector<float> rewards;
     ea::vector<int> ends;
-    int numGYMS = 1;
+    int numGYMS = 0;
     bool doRender = false;
 
 
     int readBufferLoc = 0;
-    HANDLE pipeHandle = nullptr;
+    HANDLE pipeHandle = INVALID_HANDLE_VALUE;
 };
 
