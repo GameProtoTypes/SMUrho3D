@@ -45,6 +45,7 @@ set (SDL_RENDER OFF CACHE BOOL "" FORCE)
 add_subdirectory(SDL)
 add_subdirectory(ETCPACK)
 add_subdirectory(csgjs)
+add_subdirectory(eigen)
 
 if (NOT MINI_URHO)
     add_subdirectory(tinygltf)
