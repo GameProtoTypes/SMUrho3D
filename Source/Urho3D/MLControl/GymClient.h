@@ -228,7 +228,7 @@ public:
     ea::vector<ea::vector<float>> states;
     ea::vector<float> rewards;
     ea::vector<int> ends;
-    int numGYMS = 0;
+    int numGYMS = 1;
     bool doRender = false;
 
 
