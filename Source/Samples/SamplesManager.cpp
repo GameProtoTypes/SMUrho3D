@@ -133,6 +133,13 @@
 #if URHO3D_PHYSICS
 #include "109_KinematicCharacter/KinematicCharacterDemo.h"
 #endif
+#if URHO3D_RMLUI
+#if URHO3D_NETWORK
+#if URHO3D_PHYSICS
+#include "110_AdvancedNetworking/AdvancedNetworking.h"
+#endif
+#endif
+#endif
 #include "Rotator.h"
 
 #include "SamplesManager.h"
@@ -179,7 +186,7 @@ void SamplesManager::Start()
         [](const std::string& str) { return ea::string(str.c_str()); });
 
     // Register an object factory for our custom Rotator component so that we can create them to scene nodes
-    context_->AddReflection<Rotator>();
+    context_->AddFactoryReflection<Rotator>();
 
     inspectorNode_ = MakeShared<Scene>(context_);
 
@@ -187,7 +194,8 @@ void SamplesManager::Start()
     input->SetMouseVisible(true);
 
 #if URHO3D_SYSTEMUI
-    context_->GetSubsystem<Engine>()->CreateDebugHud()->ToggleAll();
+    if (DebugHud* debugHud = context_->GetSubsystem<Engine>()->CreateDebugHud())
+        debugHud->ToggleAll();
 #endif
 
     SubscribeToEvent(E_RELEASED, [this](StringHash, VariantMap& args) { OnClickSample(args); });
@@ -328,6 +336,13 @@ void SamplesManager::Start()
     RegisterSample<RenderingShowcase>();
 #if URHO3D_PHYSICS
     RegisterSample<KinematicCharacterDemo>();
+#endif
+#if URHO3D_RMLUI
+#if URHO3D_NETWORK
+#if URHO3D_PHYSICS
+    RegisterSample<AdvancedNetworking>();
+#endif
+#endif
 #endif
 
     if (!commandLineArgs_.empty())
@@ -592,7 +607,7 @@ void SamplesManager::OnFrameStart()
 template<typename T>
 void SamplesManager::RegisterSample()
 {
-    context_->AddReflection<T>();
+    context_->AddFactoryReflection<T>();
 
     auto* button = context_->CreateObject<Button>().Detach();
     button->SetMinHeight(30);

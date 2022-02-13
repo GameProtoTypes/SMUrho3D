@@ -282,10 +282,13 @@ void PhysicsWorld2D::Update(float timeStep)
 
     using namespace PhysicsPreStep;
 
-    VariantMap& eventData = GetEventDataMap();
-    eventData[P_WORLD] = this;
-    eventData[P_TIMESTEP] = timeStep;
-    SendEvent(E_PHYSICSPRESTEP, eventData);
+    {
+        VariantMap& eventData = GetEventDataMap();
+        eventData[P_WORLD] = this;
+        eventData[P_TIMESTEP] = timeStep;
+        SendEvent(E_PHYSICSPREUPDATE, eventData);
+        SendEvent(E_PHYSICSPRESTEP, eventData);
+    }
 
     physicsStepping_ = true;
     world_->Step(timeStep, velocityIterations_, positionIterations_);
@@ -328,8 +331,15 @@ void PhysicsWorld2D::Update(float timeStep)
     SendBeginContactEvents();
     SendEndContactEvents();
 
-    using namespace PhysicsPostStep;
-    SendEvent(E_PHYSICSPOSTSTEP, eventData);
+    {
+        VariantMap& eventData = GetEventDataMap();
+        eventData[P_WORLD] = this;
+        eventData[P_TIMESTEP] = timeStep;
+        SendEvent(E_PHYSICSPOSTSTEP, eventData);
+
+        eventData[PhysicsPostUpdate::P_OVERTIME] = 0.0f;
+        SendEvent(E_PHYSICSPOSTUPDATE, eventData);
+    }
 }
 
 void PhysicsWorld2D::DrawDebugGeometry()
