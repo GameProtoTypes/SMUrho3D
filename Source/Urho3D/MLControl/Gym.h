@@ -78,7 +78,10 @@ public:
 
 	virtual void FormTotalReward()
 	{
-		reward = 0;
+        if (end)
+            return;
+
+		reward = 0;              
 		for (int i = 0; i < rewardParts.size(); i++)
 		{
 			reward += rewardParts[i];

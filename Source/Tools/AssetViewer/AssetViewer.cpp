@@ -79,8 +79,8 @@ public:
         engineParameters_[EP_FULL_SCREEN]    = false;
         engineParameters_[EP_HEADLESS]       = false;
         engineParameters_[EP_SOUND]          = false;
-        engineParameters_[EP_RESOURCE_PATHS] = "CoreData";
-        engineParameters_[EP_RESOURCE_PREFIX_PATHS] = ";..;../..";
+        engineParameters_[EP_RESOURCE_PATHS] = "CoreData;Data";
+        engineParameters_[EP_RESOURCE_PREFIX_PATHS] = ".;./../../../bin";
         engineParameters_[EP_WINDOW_RESIZABLE] = true;
 
         GetCommandLineParser().add_option("asset", assetFile_, "Asset file to be opened on application startup.");
