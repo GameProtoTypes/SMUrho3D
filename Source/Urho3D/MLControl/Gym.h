@@ -123,11 +123,6 @@ public:
 
 
 
-		ui::Begin("Frame Stats");
-		ui::Text("Time Step: %f", timeStep);
-
-		ui::End();
-
 
 		ui::Begin("Episode Rewards");
 		if (ImPlot::BeginPlot("Reward"))

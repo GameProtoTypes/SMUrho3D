@@ -78,9 +78,6 @@ public:
     /// Set maximum frames per second when the application does not have input focus.
     /// @property
     void SetMaxInactiveFps(int fps);
-    /// Set how many frames to average for timestep smoothing. Default is 2. 1 disables smoothing.
-    /// @property
-    void SetTimeStepSmoothing(int frames);
     /// Set whether to pause update events and audio when minimized.
     /// @property
     void SetPauseMinimized(bool enable);
@@ -111,14 +108,6 @@ public:
     /// Return the maximum frames per second.
     /// @property
     int GetMaxFps() const { return maxFps_; }
-
-    /// Return the maximum frames per second when the application does not have input focus.
-    /// @property
-    int GetMaxInactiveFps() const { return maxInactiveFps_; }
-
-    /// Return how many frames to average for timestep smoothing.
-    /// @property
-    int GetTimeStepSmoothing() const { return timeStepSmoothing_; }
 
     /// Return whether to pause update events and audio when minimized.
     /// @property
@@ -171,16 +160,14 @@ private:
     HiresTimer frameTimer_;
     /// Previous timesteps for smoothing.
     ea::vector<float> lastTimeSteps_;
+    /// lastFrame USeconds.
+    long long elapsedUS;
     /// Next frame timestep in seconds.
     float timeStep_;
-    /// How many frames to average for the smoothed timestep.
-    unsigned timeStepSmoothing_;
     /// Minimum frames per second.
     unsigned minFps_;
     /// Maximum frames per second.
     unsigned maxFps_;
-    /// Maximum frames per second when the application does not have input focus.
-    unsigned maxInactiveFps_;
     /// Pause when minimized flag.
     bool pauseMinimized_;
 #ifdef URHO3D_TESTING
