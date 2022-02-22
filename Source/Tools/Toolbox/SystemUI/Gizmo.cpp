@@ -34,6 +34,11 @@ Gizmo::~Gizmo()
     UnsubscribeFromAllEvents();
 }
 
+bool Gizmo::ManipulateNodeAround(const Camera* camera, Node* node, Matrix3x4 worldTransform)
+{
+    return Manipulate(camera, &node, &node + 1, true, worldTransform);
+}
+
 bool Gizmo::IsActive() const
 {
     return ImGuizmo::IsUsing();
@@ -66,7 +71,27 @@ void Gizmo::RenderUI()
     if (ui::RadioButton("Local", GetTransformSpace() == TS_LOCAL))
         SetTransformSpace(TS_LOCAL);
 }
+void Gizmo::RenderUI2()
+{
+    ui::TextUnformatted("Operation:");
 
+    if (ui::RadioButton("Translate", GetOperation() == GIZMOOP_TRANSLATE))
+        SetOperation(GIZMOOP_TRANSLATE);
+    ui::SameLine();
+    if (ui::RadioButton("Rotate", GetOperation() == GIZMOOP_ROTATE))
+        SetOperation(GIZMOOP_ROTATE);
+    ui::SameLine();
+    if (ui::RadioButton("Scale", GetOperation() == GIZMOOP_SCALE))
+        SetOperation(GIZMOOP_SCALE);
+
+    ui::TextUnformatted("Space:");
+    ui::SameLine(60);
+    if (ui::RadioButton("World", GetTransformSpace() == TS_WORLD))
+        SetTransformSpace(TS_WORLD);
+    ui::SameLine();
+    if (ui::RadioButton("Local", GetTransformSpace() == TS_LOCAL))
+        SetTransformSpace(TS_LOCAL);
+}
 int Gizmo::GetSelectionCenter(Vector3& outCenter, Node** begin, Node** end)
 {
     outCenter = Vector3::ZERO;
@@ -85,7 +110,7 @@ int Gizmo::GetSelectionCenter(Vector3& outCenter, Node** begin, Node** end)
     return count;
 }
 
-bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end)
+bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end, bool overrideOrigin, Matrix3x4 worldOrigin)
 {
     if (begin == end)
         return false;
@@ -106,6 +131,10 @@ bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end)
     }
     else if (*begin)
         currentOrigin = (*begin)->GetWorldTransform().ToMatrix4();
+
+    if (overrideOrigin)
+        currentOrigin = worldOrigin.ToMatrix4();
+
 
     // Enums are compatible.
     auto operation = static_cast<ImGuizmo::OPERATION>(operation_);
@@ -139,7 +168,13 @@ bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end)
         {
             // Just started modifying nodes.
             for (auto it = begin; it != end; it++)
-                initialTransforms_[*it] = (*it)->GetTransform();
+                initialTransforms_[*it] = (*it)->GetWorldTransform();
+
+            for (auto it = begin; it != end; it++)
+                nodeScaleStart_[*it] = (*it)->GetScale();
+
+            initialOrigin = currentOrigin;
+            accumulatedScale = Vector3::ZERO;
         }
 
         wasActive_ = true;
@@ -159,10 +194,24 @@ bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end)
 
             if (operation_ == GIZMOOP_SCALE)
             {
-                // A workaround for ImGuizmo bug where delta matrix returns absolute scale value.
-                if (!nodeScaleStart_.contains(node))
-                    nodeScaleStart_[node] = node->GetScale();
-                node->SetScale(nodeScaleStart_[node] * delta.Scale());
+                Matrix3x4 initialtransform = initialTransforms_.find(node)->second;
+
+                Vector3 deltaWorld = (initialtransform.Translation() - initialOrigin.Translation());
+
+                if ((delta.Scale() - Vector3::ONE).LengthSquared() < 0.1f)
+                    accumulatedScale += delta.Scale() - Vector3::ONE;
+
+
+                Vector3 scaleDeltaWorld = (initialtransform.RotationMatrix() * (accumulatedScale));
+
+
+
+                URHO3D_LOGINFO(accumulatedScale.ToString());
+                node->SetWorldPosition(initialtransform.Translation() + deltaWorld*scaleDeltaWorld*2.0f);
+
+                node->SetScale(initialtransform.Scale() + accumulatedScale);
+
+
             }
             // Delta matrix is always in world-space.
             else if (operation_ == GIZMOOP_ROTATE)
@@ -203,6 +252,7 @@ bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end)
         wasActive_ = false;
         initialTransforms_.clear();
         nodeScaleStart_.clear();
+        initialOrigin = Matrix3x4::IDENTITY;
     }
     return false;
 }

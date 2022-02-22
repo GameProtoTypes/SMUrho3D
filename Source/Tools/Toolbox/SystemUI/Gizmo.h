@@ -59,7 +59,7 @@ public:
     /// \param camera which observes the node.
     /// \param nodes to be manipulated. Specifying more than one node manipulates them in world space.
     /// \returns true if node was manipulated on current frame.
-    bool Manipulate(const Camera* camera, Node** begin, Node** end);
+    bool Manipulate(const Camera* camera, Node** begin, Node** end, bool overrideOrigin = false, Matrix3x4 worldOrigin = Matrix3x4::IDENTITY);
     template<typename Container>
     bool Manipulate(const Camera* camera, const Container& container)
     {
@@ -71,6 +71,9 @@ public:
         }
         return Manipulate(camera, manipulatedNodes_.begin(), manipulatedNodes_.end());
     }
+
+    bool ManipulateNodeAround(const Camera* camera, Node* node, Matrix3x4 worldTransform);
+
     /// Set operation mode. Possible modes: rotation, translation and scaling.
     void SetOperation(GizmoOperation operation) { operation_ = operation; }
     /// Get current manipulation mode.
@@ -84,6 +87,7 @@ public:
     bool IsActive() const;
     /// Render gizmo ui. This needs to be called between ui::Begin() / ui::End().
     void RenderUI();
+    void RenderUI2();
     /// Get the center of selected nodes.
     /// \param nodes The nodes to be calculated.
     /// \param outCenter If returns true, it gets the center, else it will be set to ZERO vector
@@ -101,6 +105,7 @@ public:
         return GetSelectionCenter(outCenter, manipulatedNodes_.begin(), manipulatedNodes_.end());
     }
 
+
 protected:
     /// Current gizmo operation. Translation, rotation or scaling.
     GizmoOperation operation_ = GIZMOOP_TRANSLATE;
@@ -114,6 +119,10 @@ protected:
     ea::unordered_map<Node*, Matrix3x4> initialTransforms_;
     ///
     ea::vector<Node*> manipulatedNodes_;
+
+    Matrix3x4 initialOrigin;
+    Vector3 accumulatedScale = Vector3::ZERO;
+
 };
 
 }
