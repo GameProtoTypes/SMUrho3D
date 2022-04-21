@@ -118,6 +118,8 @@ bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end, bool over
     ImGuizmo::SetOrthographic(camera->IsOrthographic());
 
     Matrix4 currentOrigin;
+
+
     if (begin + 1 != end)   // nodes.size() > 1
     {
         // Find center point of all nodes
@@ -162,7 +164,7 @@ bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end, bool over
     ImGuizmo::SetRect(window->Pos.x, window->Pos.y, window->Size.x, window->Size.y);
     ImGuizmo::Manipulate(&view.m00_, &proj.m00_, operation, mode, &tran.m00_, &delta.m00_, nullptr);
 
-    if (IsActive())
+    if (IsActive() )
     {
         if (!wasActive_)
         {
@@ -182,43 +184,49 @@ bool Gizmo::Manipulate(const Camera* camera, Node** begin, Node** end, bool over
         delta = delta.Transpose();
 
         currentOrigin = Matrix4(tran);
-
-        for (auto it = begin; it != end; it++)
+        if (applyToNodeTransform_)
         {
-            Node* node = *it;
-            if (node == nullptr)
+            for (auto it = begin; it != end; it++)
             {
-                URHO3D_LOGERROR("Gizmo received null pointer of node.");
-                continue;
+                Node* node = *it;
+                if (node == nullptr)
+                {
+                    URHO3D_LOGERROR("Gizmo received null pointer of node.");
+                    continue;
+                }
+
+                if (operation_ == GIZMOOP_SCALE)
+                {
+                    Matrix3x4 initialtransform = initialTransforms_.find(node)->second;
+
+                    Vector3 deltaWorld = (initialtransform.Translation() - initialOrigin.Translation());
+
+                    if ((delta.Scale() - Vector3::ONE).LengthSquared() < 0.1f)
+                        accumulatedScale += delta.Scale() - Vector3::ONE;
+
+
+                    Vector3 scaleDeltaWorld = (initialtransform.RotationMatrix() * (accumulatedScale));
+
+
+                    URHO3D_LOGINFO(accumulatedScale.ToString());
+                    node->SetWorldPosition(initialtransform.Translation() + deltaWorld * scaleDeltaWorld * 2.0f);
+
+                    node->SetScale(initialtransform.Scale() + accumulatedScale);
+
+
+                }
+                // Delta matrix is always in world-space.
+                else if (operation_ == GIZMOOP_ROTATE)
+                    node->RotateAround(currentOrigin.Translation(), -delta.Rotation(), TS_WORLD);
+                else
+                    node->Translate(delta.Translation(), TS_WORLD);
             }
-
-            if (operation_ == GIZMOOP_SCALE)
-            {
-                Matrix3x4 initialtransform = initialTransforms_.find(node)->second;
-
-                Vector3 deltaWorld = (initialtransform.Translation() - initialOrigin.Translation());
-
-                if ((delta.Scale() - Vector3::ONE).LengthSquared() < 0.1f)
-                    accumulatedScale += delta.Scale() - Vector3::ONE;
-
-
-                Vector3 scaleDeltaWorld = (initialtransform.RotationMatrix() * (accumulatedScale));
-
-
-
-                URHO3D_LOGINFO(accumulatedScale.ToString());
-                node->SetWorldPosition(initialtransform.Translation() + deltaWorld*scaleDeltaWorld*2.0f);
-
-                node->SetScale(initialtransform.Scale() + accumulatedScale);
-
-
-            }
-            // Delta matrix is always in world-space.
-            else if (operation_ == GIZMOOP_ROTATE)
-                node->RotateAround(currentOrigin.Translation(), -delta.Rotation(), TS_WORLD);
-            else
-                node->Translate(delta.Translation(), TS_WORLD);
         }
+        else
+        {
+            
+        }
+        deltaMatrix_ = delta;
 
         return true;
     }

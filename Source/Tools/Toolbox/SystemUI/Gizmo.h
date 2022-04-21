@@ -104,8 +104,8 @@ public:
         }
         return GetSelectionCenter(outCenter, manipulatedNodes_.begin(), manipulatedNodes_.end());
     }
-
-
+    bool applyToNodeTransform_ = true;
+    bool alwaysActive = false;
 protected:
     /// Current gizmo operation. Translation, rotation or scaling.
     GizmoOperation operation_ = GIZMOOP_TRANSLATE;
@@ -123,6 +123,7 @@ protected:
     Matrix3x4 initialOrigin;
     Vector3 accumulatedScale = Vector3::ZERO;
 
+    Matrix4 deltaMatrix_;
 };
 
 }
