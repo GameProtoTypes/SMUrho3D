@@ -131,8 +131,6 @@ void BillboardSet::RegisterObject(Context* context)
     URHO3D_COPY_BASE_ATTRIBUTES(Drawable);
     URHO3D_MIXED_ACCESSOR_ATTRIBUTE("Billboards", GetBillboardsAttr, SetBillboardsAttr, VariantVector, Variant::emptyVariantVector, AM_FILE)
         .SetMetadata(AttributeMetadata::P_VECTOR_STRUCT_ELEMENTS, billboardsStructureElementNames);
-    URHO3D_ACCESSOR_ATTRIBUTE("Network Billboards", GetNetBillboardsAttr, SetNetBillboardsAttr, ea::vector<unsigned char>,
-        Variant::emptyBuffer, AM_NET | AM_NOEDIT);
 }
 
 void BillboardSet::ProcessRayQuery(const RayOctreeQuery& query, ea::vector<RayQueryResult>& results)
@@ -178,6 +176,16 @@ void BillboardSet::ProcessRayQuery(const RayOctreeQuery& query, ea::vector<RayQu
             results.push_back(result);
         }
     }
+}
+
+unsigned BillboardSet::GetVertexBufferFormat() const
+{
+    if (faceCameraMode_ == FC_AXIS_ANGLE)
+        return MASK_POSITION | MASK_NORMAL | MASK_COLOR | MASK_TEXCOORD1 | MASK_TANGENT;
+    else if (faceCameraMode_ == FC_DIRECTION)
+        return MASK_POSITION | MASK_NORMAL | MASK_COLOR | MASK_TEXCOORD1 | MASK_TEXCOORD2;
+    else
+        return MASK_POSITION | MASK_COLOR | MASK_TEXCOORD1 | MASK_TEXCOORD2;
 }
 
 void BillboardSet::UpdateBatches(const FrameInfo& frame)
@@ -227,6 +235,15 @@ void BillboardSet::UpdateBatches(const FrameInfo& frame)
     else
         billboardRotation = node_->GetWorldRotation();
     transforms_[1] = Matrix3x4(Vector3::ZERO, billboardRotation, Vector3::ONE);
+
+    // Update buffer size and format
+    if (bufferSizeDirty_ || indexBuffer_->IsDataLost())
+        RequestUpdateBatchesDelayed(frame);
+}
+
+void BillboardSet::UpdateBatchesDelayed(const FrameInfo& frame)
+{
+    UpdateBufferSize();
 }
 
 void BillboardSet::UpdateGeometry(const FrameInfo& frame)
@@ -241,9 +258,6 @@ void BillboardSet::UpdateGeometry(const FrameInfo& frame)
         transforms_[1] = Matrix3x4(Vector3::ZERO, frame.camera_->GetFaceCameraRotation(node_->GetWorldPosition(),
             node_->GetWorldRotation(), faceCameraMode_, minAngle_), Vector3::ONE);
     }
-
-    if (bufferSizeDirty_ || indexBuffer_->IsDataLost())
-        UpdateBufferSize();
 
     if (bufferDirty_ || sortThisFrame_ || vertexBuffer_->IsDataLost())
         UpdateVertexBuffer(frame);
@@ -262,7 +276,6 @@ UpdateGeometryType BillboardSet::GetUpdateGeometryType()
 void BillboardSet::SetMaterial(Material* material)
 {
     batches_[0].material_ = material;
-    MarkNetworkUpdate();
 }
 
 void BillboardSet::SetNumBillboards(unsigned num)
@@ -339,26 +352,22 @@ void BillboardSet::SetFaceCameraMode(FaceCameraMode mode)
     else
     {
         faceCameraMode_ = mode;
-        MarkNetworkUpdate();
     }
 }
 
 void BillboardSet::SetMinAngle(float angle)
 {
     minAngle_ = angle;
-    MarkNetworkUpdate();
 }
 
 void BillboardSet::SetAnimationLodBias(float bias)
 {
     animationLodBias_ = Max(bias, 0.0f);
-    MarkNetworkUpdate();
 }
 
 void BillboardSet::Commit()
 {
     MarkPositionsDirty();
-    MarkNetworkUpdate();
 }
 
 Material* BillboardSet::GetMaterial() const
@@ -416,26 +425,6 @@ void BillboardSet::SetBillboardsAttr(const VariantVector& value)
     Commit();
 }
 
-void BillboardSet::SetNetBillboardsAttr(const ea::vector<unsigned char>& value)
-{
-    MemoryBuffer buf(value);
-    unsigned numBillboards = buf.ReadVLE();
-    SetNumBillboards(numBillboards);
-
-    for (auto i = billboards_.begin(); i != billboards_.end(); ++i)
-    {
-        i->position_ = buf.ReadVector3();
-        i->size_ = buf.ReadVector2();
-        i->uv_ = buf.ReadRect();
-        i->color_ = buf.ReadColor();
-        i->rotation_ = buf.ReadFloat();
-        i->direction_ = buf.ReadVector3();
-        i->enabled_ = buf.ReadBool();
-    }
-
-    Commit();
-}
-
 ResourceRef BillboardSet::GetMaterialAttr() const
 {
     return GetResourceRef(batches_[0].material_, Material::GetTypeStatic());
@@ -459,25 +448,6 @@ VariantVector BillboardSet::GetBillboardsAttr() const
     }
 
     return ret;
-}
-
-const ea::vector<unsigned char>& BillboardSet::GetNetBillboardsAttr() const
-{
-    attrBuffer_.Clear();
-    attrBuffer_.WriteVLE(billboards_.size());
-
-    for (auto i = billboards_.begin(); i != billboards_.end(); ++i)
-    {
-        attrBuffer_.WriteVector3(i->position_);
-        attrBuffer_.WriteVector2(i->size_);
-        attrBuffer_.WriteRect(i->uv_);
-        attrBuffer_.WriteColor(i->color_);
-        attrBuffer_.WriteFloat(i->rotation_);
-        attrBuffer_.WriteVector3(i->direction_);
-        attrBuffer_.WriteBool(i->enabled_);
-    }
-
-    return attrBuffer_.GetBuffer();
 }
 
 const char** BillboardSet::GetFaceCameraModeNames()
@@ -521,21 +491,8 @@ void BillboardSet::UpdateBufferSize()
 
     if (vertexBuffer_->GetVertexCount() != numBillboards * 4 || geometryTypeUpdate_)
     {
-        if (faceCameraMode_ == FC_AXIS_ANGLE)
-        {
-            vertexBuffer_->SetSize(numBillboards * 4, MASK_POSITION | MASK_NORMAL | MASK_COLOR | MASK_TEXCOORD1 | MASK_TANGENT, true);
-            geometry_->SetVertexBuffer(0, vertexBuffer_);
-        }
-        else if (faceCameraMode_ == FC_DIRECTION)
-        {
-            vertexBuffer_->SetSize(numBillboards * 4, MASK_POSITION | MASK_NORMAL | MASK_COLOR | MASK_TEXCOORD1 | MASK_TEXCOORD2, true);
-            geometry_->SetVertexBuffer(0, vertexBuffer_);
-        }
-        else
-        {
-            vertexBuffer_->SetSize(numBillboards * 4, MASK_POSITION | MASK_COLOR | MASK_TEXCOORD1 | MASK_TEXCOORD2, true);
-            geometry_->SetVertexBuffer(0, vertexBuffer_);
-        }
+        vertexBuffer_->SetSize(numBillboards * 4, GetVertexBufferFormat(), true);
+        geometry_->SetVertexBuffer(0, vertexBuffer_);
         geometryTypeUpdate_ = false;
     }
 
@@ -734,7 +691,7 @@ void BillboardSet::BuildAxisAngleVertexBuffer(unsigned enabledBillboards, float*
         SinCos(billboard.rotation_, rotation_sin, rotation_cos);
 
         Matrix3 rot(billboard.rotation_, billboard.direction_);
-        
+
         *reinterpret_cast<Vector3*>(dest) = billboard.position_ + rot * Vector3(-size.x_, size.y_);
         dest += 3;
         *reinterpret_cast<Vector3*>(dest) = rot.Column(2);

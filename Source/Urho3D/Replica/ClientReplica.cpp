@@ -204,7 +204,7 @@ bool ClientReplica::ProcessMessage(NetworkMessageId messageId, MemoryBuffer& mes
 
 void ClientReplica::ProcessSceneUpdate()
 {
-    VariantMap& eventData = GetEventDataMap();
+    VariantMap& eventData = scene_->GetEventDataMap();
 
     using namespace SceneNetworkUpdate;
     eventData[P_SCENE] = scene_;
@@ -256,7 +256,7 @@ void ClientReplica::ProcessAddObjects(MemoryBuffer& messageData)
             if (isOwned)
             {
                 networkObject->SetNetworkMode(NetworkObjectMode::ClientOwned);
-                ownedObjects_.insert(WeakPtr<NetworkObject>(networkObject));
+                ownedObjects_.emplace(WeakPtr<NetworkObject>(networkObject));
             }
             else
                 networkObject->SetNetworkMode(NetworkObjectMode::ClientReplicated);
@@ -386,12 +386,12 @@ void ClientReplica::OnInputReady(float timeStep)
     pendingClockUpdates_.clear();
 
     for (NetworkObject* networkObject : objectRegistry_->GetNetworkObjects())
-        networkObject->InterpolateState(GetInputTimeStep(), GetReplicaTime(), GetInputTime());
+        networkObject->InterpolateState(GetReplicaTimeStep(), GetInputTimeStep(), GetReplicaTime(), GetInputTime());
 
     if (IsNewInputFrame())
     {
         using namespace BeginClientNetworkFrame;
-        auto& eventData = GetEventDataMap();
+        auto& eventData = network_->GetEventDataMap();
         eventData[P_FRAME] = static_cast<long long>(GetInputTime().Frame());
         network_->SendEvent(E_BEGINCLIENTNETWORKFRAME);
     }
@@ -402,7 +402,7 @@ void ClientReplica::OnNetworkUpdate()
     if (IsNewInputFrame())
     {
         using namespace EndClientNetworkFrame;
-        auto& eventData = GetEventDataMap();
+        auto& eventData = network_->GetEventDataMap();
         eventData[P_FRAME] = static_cast<long long>(GetInputTime().Frame());
         network_->SendEvent(E_ENDCLIENTNETWORKFRAME);
 

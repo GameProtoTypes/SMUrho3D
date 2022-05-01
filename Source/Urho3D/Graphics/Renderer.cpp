@@ -44,11 +44,13 @@
 #include "../Graphics/VertexBuffer.h"
 #include "../Graphics/View.h"
 #include "../Graphics/Zone.h"
-#include "../RenderPipeline/RenderPipeline.h"
+#include "../Input/InputEvents.h"
 #include "../IO/Log.h"
+#include "../RenderPipeline/RenderPipeline.h"
 #include "../Resource/ResourceCache.h"
 #include "../Resource/XMLFile.h"
 #include "../Scene/Scene.h"
+#include "../UI/UI.h"
 
 #include <EASTL/bonus/adaptors.h>
 #include <EASTL/functional.h>
@@ -1598,11 +1600,11 @@ const Rect& Renderer::GetLightScissor(Light* light, Camera* camera)
 
 void Renderer::UpdateQueuedViewport(unsigned index)
 {
-    WeakPtr<RenderSurface>& renderTarget = queuedViewports_[index].first;
-    WeakPtr<Viewport>& viewport = queuedViewports_[index].second;
+    WeakPtr<RenderSurface> renderTarget = queuedViewports_[index].first;
+    Viewport* viewport = queuedViewports_[index].second;
 
     // Null pointer means backbuffer view. Differentiate between that and an expired rendersurface
-    if ((renderTarget && renderTarget.Expired()) || viewport.Expired())
+    if ((renderTarget && renderTarget.Expired()) || !viewport || !viewport->GetScene())
         return;
 
     // (Re)allocate the view structure if necessary
@@ -1759,7 +1761,16 @@ void Renderer::Initialize()
 
     initialized_ = true;
 
+    SubscribeToEvent(E_INPUTEND, [this](StringHash, VariantMap&)
+    {
+        UpdateMousePositionsForMainViewports();
+    });
+
     SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(Renderer, HandleRenderUpdate));
+    SubscribeToEvent(E_ENDFRAME, [this](StringHash, VariantMap&)
+    {
+        frameStats_ = FrameStatistics{};
+    });
 
     URHO3D_LOGINFO("Initialized renderer");
 }
@@ -2117,7 +2128,6 @@ void Renderer::HandleRenderUpdate(StringHash eventType, VariantMap& eventData)
     Update(eventData[P_TIMESTEP].GetFloat());
 }
 
-
 void Renderer::BlurShadowMap(View* view, Texture2D* shadowMap, float blurScale)
 {
     graphics_->SetBlendMode(BLEND_REPLACE);
@@ -2156,4 +2166,26 @@ void Renderer::BlurShadowMap(View* view, Texture2D* shadowMap, float blurScale)
     graphics_->SetTexture(TU_DIFFUSE, tmpBuffer);
     view->DrawFullscreenQuad(true);
 }
+
+void Renderer::UpdateMousePositionsForMainViewports()
+{
+    auto* ui = GetSubsystem<UI>();
+
+    for (Viewport* viewport : viewports_)
+    {
+        if (!viewport || !viewport->GetCamera())
+            continue;
+
+        const IntRect rect = viewport->GetEffectiveRect(nullptr);
+        const IntVector2 mousePosition = ui->GetSystemCursorPosition();
+
+        const auto rectPos = static_cast<Vector2>(rect.Min());
+        const auto rectSizeMinusOne = static_cast<Vector2>(rect.Size() - IntVector2::ONE);
+        const auto mousePositionNormalized = (static_cast<Vector2>(mousePosition) - rectPos) / rectSizeMinusOne;
+
+        Camera* camera = viewport->GetCamera();
+        camera->SetMousePosition(mousePositionNormalized);
+    }
+}
+
 }
