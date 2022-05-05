@@ -35,6 +35,7 @@
 #include "../Math/Vector4.h"
 #include "../SystemUI/SystemUIEvents.h"
 
+
 #define IM_VEC2_CLASS_EXTRA                                                                                            \
     operator Urho3D::Vector2() { return {x, y}; }                                                                      \
     ImVec2(const Urho3D::Vector2& vec) { x = vec.x_; y = vec.y_; }

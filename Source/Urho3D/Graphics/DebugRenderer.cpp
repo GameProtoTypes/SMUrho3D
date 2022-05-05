@@ -507,6 +507,27 @@ void DebugRenderer::AddCircle(const Vector3& center, const Vector3& normal, floa
     AddLine(center, p, uintColor, depthTest);
 }
 
+void DebugRenderer::AddElipse(const Vector3& center, const Vector3& normal, const Vector3& up, float radiusUp, float radiusRight, const Color& color, int steps, bool depthTest)
+{
+    Vector3 right;
+    right = normal.CrossProduct(up).Normalized();
+
+    Vector3 p = right*radiusRight + center;
+    unsigned uintColor = color.ToUInt();
+
+    for (int i = 1; i <= steps; ++i)
+    {
+        const float angle = (float)i / (float)steps * 360.0f;
+        //Vector3 v( 0, Sin(angle) * radiusUp, Cos(angle) * radiusRight);
+        Vector3 c = (right* Cos(angle) * radiusRight) + (up* Sin(angle) * radiusUp) + center;
+        AddLine(p, c, uintColor, depthTest);
+        p = c;
+    }
+
+    p = center + normal * (Min(radiusUp, radiusRight) / 4.0f);
+    AddLine(center, p, uintColor, depthTest);
+}
+
 void DebugRenderer::AddCross(const Vector3& center, float size, const Color& color, bool depthTest)
 {
     unsigned uintColor = color.ToUInt();
