@@ -362,7 +362,7 @@ public:
     /// Assign from another weak pointer allowing implicit upcasting.
     template <class U> WeakPtr<T>& operator =(const WeakPtr<U>& rhs)
     {
-        if (ptr_ == rhs.ptr_ && refCount_ == rhs.refCount_)
+        if (static_cast<T*>(ptr_) == static_cast<T*>(rhs.ptr_) && refCount_ == rhs.refCount_)
             return *this;
 
         ReleaseRef();
