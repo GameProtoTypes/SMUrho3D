@@ -366,7 +366,7 @@ public:
             return *this;
 
         ReleaseRef();
-        ptr_ = rhs.ptr_;
+        ptr_ = (T*)rhs.ptr_;
         refCount_ = rhs.refCount_;
         AddRef();
 
