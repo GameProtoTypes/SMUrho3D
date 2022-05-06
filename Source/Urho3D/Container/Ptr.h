@@ -341,7 +341,7 @@ public:
     /// Assign from a weak pointer.
     WeakPtr<T>& operator =(const WeakPtr<T>& rhs)
     {
-        if (ptr_ == rhs.ptr_ && refCount_ == rhs.refCount_)
+        if (static_cast<T*>(ptr_) == static_cast<T*>(rhs.ptr_) && refCount_ == rhs.refCount_)
             return *this;
 
         WeakPtr<T> copy(rhs);
