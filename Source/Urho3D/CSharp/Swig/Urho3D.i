@@ -358,6 +358,7 @@ namespace SDL
 %include "Urho3D/Engine/EngineDefs.h"
 %include "Urho3D/Engine/Engine.h"
 %include "Urho3D/Engine/Application.h"
+%include "Urho3D/Engine/SingleStateApplication.h"
 %include "Urho3D/Engine/PluginApplication.h"
 %include "generated/Urho3D/_pre_script.i"
 #if URHO3D_CSHARP
@@ -383,6 +384,7 @@ namespace SDL
 %include "Urho3D/Input/InputConstants.h"
 %include "Urho3D/Input/Controls.h"
 %include "Urho3D/Input/Input.h"
+%include "Urho3D/Input/MultitouchAdapter.h"
 
 // --------------------------------------- IO ---------------------------------------
 %ignore Urho3D::GetWideNativePath;
@@ -510,6 +512,10 @@ public:
 %include "Urho3D/Scene/ObjectAnimation.h"
 %include "Urho3D/Scene/SceneResolver.h"
 %include "Urho3D/Scene/UnknownComponent.h"
+%include "Urho3D/Scene/TrackedComponent.h"
+
+// --------------------------------------- Extra components ---------------------------------------
+%include "Urho3D/Input/FreeFlyController.h"
 
 // --------------------------------------- Audio ---------------------------------------
 %ignore Urho3D::BufferedSoundStream::AddData(const ea::shared_array<signed char>& data, unsigned numBytes);
@@ -739,18 +745,29 @@ public:
 
 %template(ConnectionVector) eastl::vector<Urho3D::SharedPtr<Urho3D::Connection>>;
 
+%typemap(csbase) Urho3D::NetworkFrame "long";
+%csconstvalue("long.MinValue") Urho3D::NetworkFrame::Min;
+%csconstvalue("long.MaxValue") Urho3D::NetworkFrame::Max;
+
+%template(TrackedNetworkObjectRegistry) Urho3D::TrackedComponent<Urho3D::ReferencedComponentBase, Urho3D::NetworkObjectRegistry>;
+%interface_custom("%s", "I%s", Urho3D::ClientNetworkCallback);
+%interface_custom("%s", "I%s", Urho3D::ServerNetworkCallback);
+%interface_custom("%s", "I%s", Urho3D::NetworkCallback);
+
+%include "Urho3D/Replica/NetworkCallbacks.h"
+%include "Urho3D/Replica/ReplicationManager.h"
+%include "Urho3D/Replica/NetworkObject.h"
+%include "Urho3D/Replica/StaticNetworkObject.h"
 %include "Urho3D/Replica/BehaviorNetworkObject.h"
 %include "Urho3D/Replica/ClientInputStatistics.h"
 %include "Urho3D/Replica/ClientReplica.h"
 %include "Urho3D/Replica/FilteredByDistance.h"
-%include "Urho3D/Replica/NetworkObject.h"
 %include "Urho3D/Replica/NetworkTime.h"
+%include "Urho3D/Replica/NetworkId.h"
 %include "Urho3D/Replica/PredictedKinematicController.h"
 %include "Urho3D/Replica/ReplicatedAnimation.h"
 %include "Urho3D/Replica/ReplicatedTransform.h"
-%include "Urho3D/Replica/ReplicationManager.h"
 %include "Urho3D/Replica/ServerReplicator.h"
-%include "Urho3D/Replica/StaticNetworkObject.h"
 %include "Urho3D/Replica/TickSynchronizer.h"
 %include "Urho3D/Replica/TrackedAnimatedModel.h"
 #endif
@@ -859,6 +876,7 @@ using ImGuiConfigFlags = unsigned;
 %include "Urho3D/UI/MessageBox.h"
 %include "Urho3D/UI/ScrollBar.h"
 %include "Urho3D/UI/Slider.h"
+%include "Urho3D/UI/SplashScreen.h"
 %include "Urho3D/UI/Text3D.h"
 %include "Urho3D/UI/ToolTip.h"
 %include "Urho3D/UI/UIComponent.h"

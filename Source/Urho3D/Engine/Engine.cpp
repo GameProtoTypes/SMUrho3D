@@ -37,9 +37,11 @@
 #endif
 #include "../Engine/Engine.h"
 #include "../Engine/EngineDefs.h"
+#include "../Engine/SingleStateApplication.h"
 #include "../Graphics/Graphics.h"
 #include "../Graphics/Renderer.h"
 #include "../Input/Input.h"
+#include "../Input/FreeFlyController.h"
 #include "../IO/FileSystem.h"
 #include "../IO/Log.h"
 #include "../IO/PackageFile.h"
@@ -91,7 +93,7 @@
 #include <emscripten/emscripten.h>
 #endif
 
-#include <Urho3D/Core/CommandLine.h>
+#include "../Core/CommandLine.h"
 
 #include "../DebugNew.h"
 
@@ -154,6 +156,7 @@ Engine::Engine(Context* context) :
 #ifdef URHO3D_NETWORK
     context_->RegisterSubsystem(new Network(context_));
 #endif
+    context_->AddReflection<SingleStateApplication>();
     // Required in headless mode as well.
     RegisterGraphicsLibrary(context_);
     // Register object factories for libraries which are not automatically registered along with subsystem creation
@@ -226,6 +229,8 @@ bool Engine::Initialize(const VariantMap& parameters)
 
     // Register the rest of the subsystems
     context_->RegisterSubsystem(new Input(context_));
+    context_->RegisterFactory<FreeFlyController>();
+
     context_->RegisterSubsystem(new Audio(context_));
     if (!headless_)
     {
@@ -385,10 +390,8 @@ bool Engine::InitializeResourceCache(const VariantMap& parameters, bool removeOl
     // Remove all resource paths and packages
     if (removeOld)
     {
-        ea::vector<ea::string> resourceDirs = cache->GetResourceDirs();
+        cache->RemoveAllResourceDirs();
         ea::vector<SharedPtr<PackageFile> > packageFiles = cache->GetPackageFiles();
-        for (unsigned i = 0; i < resourceDirs.size(); ++i)
-            cache->RemoveResourceDir(resourceDirs[i]);
         for (unsigned i = 0; i < packageFiles.size(); ++i)
             cache->RemovePackageFile(packageFiles[i].Get());
     }
