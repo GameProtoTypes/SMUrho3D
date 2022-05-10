@@ -449,13 +449,16 @@ void SceneReplication::HandlePostUpdate(StringHash eventType, VariantMap& eventD
     // We only rotate the camera according to mouse movement since last frame, so do not need the time step
     MoveCamera();
 
-    if (packetCounterTimer_.GetMSec(false) > 1000 && GetSubsystem<Network>()->GetServerConnection())
+
+    if ( GetSubsystem<Network>()->GetServerConnection())
     {
         packetsIn_->SetText("Packets  in: " + ea::to_string(GetSubsystem<Network>()->GetServerConnection()->GetPacketsInPerSec()));
         packetsOut_->SetText("Packets out: " + ea::to_string(GetSubsystem<Network>()->GetServerConnection()->GetPacketsOutPerSec()));
-        packetCounterTimer_.Reset();
+
+        ui::Text("roundtriptime: %f", GetSubsystem<Network>()->GetServerConnection()->GetRoundTripTime());
+        ui::Text("ping: %d", GetSubsystem<Network>()->GetServerConnection()->GetPing());
     }
-    if (packetCounterTimer_.GetMSec(false) > 1000 && GetSubsystem<Network>()->GetClientConnections().size())
+    if (GetSubsystem<Network>()->GetClientConnections().size())
     {
         int packetsIn = 0;
         int packetsOut = 0;
@@ -463,11 +466,17 @@ void SceneReplication::HandlePostUpdate(StringHash eventType, VariantMap& eventD
         for (auto it = connections.begin(); it != connections.end(); ++it ) {
             packetsIn += (*it)->GetPacketsInPerSec();
             packetsOut += (*it)->GetPacketsOutPerSec();
+
+            ui::Text("roundtriptime: %f", (*it)->GetRoundTripTime());
+            ui::Text("ping: %d", (*it)->GetPing());
         }
         packetsIn_->SetText("Packets  in: " + ea::to_string(packetsIn));
         packetsOut_->SetText("Packets out: " + ea::to_string(packetsOut));
-        packetCounterTimer_.Reset();
+
     }
+
+
+    
 }
 
 void SceneReplication::HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData)
